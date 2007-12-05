@@ -1,0 +1,3 @@
+[submodule "ImageJA"]
+	path = ImageJA
+	url = git://repo.or.cz/imageja.git
