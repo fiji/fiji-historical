@@ -8,5 +8,4 @@ launcher.o: launcher.cxx Makefile
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 run:
-	JAVA_HOME=linux/jdk1.6.0/jre \
-		./launcher
+	./launcher
