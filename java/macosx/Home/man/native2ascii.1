@@ -1,0 +1,84 @@
+'\" t
+.\" @(#)native2ascii.1 1.13 01/08/08 SMI;
+.\" Copyright 2000 Sun Microsystems, Inc. All rights reserved.
+.\" Copyright 2000 Sun Microsystems, Inc. Tous droits réservés.
+.\" 
+.TH native2ascii 1 "14 July 2000"
+.SH NAME
+native2ascii \- native to ASCII converter
+.\" 
+.\" This comment retained for historical purposes only: 
+.\"  This document was originally created by saving an HTML file as text
+.\"  from the JavaSoft web site:
+.\" 
+.\" http://java.sun.com/products/jdk/1.2/docs/tooldocs/tools.html
+.\" 
+.\"  and adding appropriate troff macros.
+.\" 
+.SH SYNOPSIS
+.B native2ascii 
+[
+.B \-encoding
+.IR encoding_name ]
+[ 
+.B \-reverse
+] [
+.B \-J " option"
+]
+.if n .ti +5n 
+[
+.IR inputfile " [" outputfile "]]"
+.SH DESCRIPTION
+.IX "native to ASCII converter" "" "native to ASCII converter \(em \fLnative2ascii\fP"
+.IX "native2ascii" "" "\fLnative2ascii\fP \(em native to ASCII converter"
+The 
+.BR javac (1) 
+compiler and other Java(tm) tools can only process files
+that contain Latin-1 or Unicode-encoded (\\udddd notation)
+characters.
+The 
+.B native2ascii 
+command converts files that contain other
+character encoding into files containing Latin-1 or
+Unicode-encoded charaters.
+.LP
+If
+.I outputfile 
+is omitted, standard output is used for output.
+If
+.I inputfile 
+is also omitted, standard input is used for input.
+.SH OPTIONS
+The following options are supported:
+.TP
+.B \-encoding \f2encoding_name\f1
+Specifies the encoding name that is used by the conversion
+procedure.
+The default encoding is taken from system property
+.BR file.encoding .
+The
+.I encoding_name 
+string must be one 
+taken from the first column of the table of supported
+encodings in the Supported Encodings document:
+
+http://java.sun.com/j2se/1.4/docs/guide/intl/encoding.doc.html
+.TP
+.B \-reverse
+Performs the reverse operation: converts a file with Latin-1
+or Unicode-encoded characters to one with native-encoded
+characters.
+.TP 
+\fB\-J\fR\fIoption\fR
+Pass \fIoption\fR to the Java virtual machine, where option is one of 
+the options described on the man page for the java application launcher, 
+java (1). For example, \fB\-J\-Xms48m\fR sets the startup memory to 48 
+megabytes. It is a common convention for \fB\-J\fR to pass options to 
+the underlying virtual machine.
+.TE
+.SH SEE ALSO
+.BR javac (1)
+.PP
+.TP 
+\fISupported Encodings\fR @
+http://java.sun.com/j2se/1.4/docs/guide/intl/encoding.doc.html

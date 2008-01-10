@@ -10,8 +10,14 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	JAVA_HOME=win32/jdk1.6.0_03
 	JAVA_LIB_PATH=jre/bin/client/jvm.dll
 	ARCH=win32
-	EXTRADEFS+=-DMINGW32
+	EXTRADEFS+= -DMINGW32
 	LIBDL=
+endif
+ifeq ($(uname_S),Darwin)
+	JAVA_HOME=macosx/Home
+	JAVA_LIB_PATH=../Libraries/libjvm.dylib
+	ARCH=macosx
+	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\"
 endif
 INCLUDE=$(JAVA_HOME)/include
 

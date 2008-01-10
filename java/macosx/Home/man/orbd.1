@@ -1,0 +1,80 @@
+.TH orbd 1  "23 Apr 2001"
+.SH NAME
+orbd \- Object Request Broker Daemon
+.SH SYNOPSIS
+\fBorbd\fR [ \fBoptions\fR ]
+.SH DESCRIPTION
+The orbd tool is used to enable clients to transparently locate and invoke persistent objects on servers in the CORBA environment. The persistent servers, while publishing the persistent object references in the Naming Service, include the port number of the ORBD in the object reference instead of the port number of the Server. The inclusion of the ORBD port number in the object reference for persistent object references has the following advantages:
+.TP 0.2i
+\(bu
+The object reference in the Naming Service remains independent of the server life cycle. For example, the object reference could be published by the server in the Naming Service when it is first installed, and then, independent of how many times the server is started or shut down, the ORBD will always return the correct object reference to the invoking client.
+.TP 0.2i
+\(bu
+The client needs to look up the object reference in the Naming Service only once, and can keep reusing this reference independent of the changes introduced due to server life cycle.
+.PP
+The orbd tool incorporates the following functionality:
+.TP 0.2i
+\(bu
+\fIServer Manager\fR
+.sp 1n
+When used in conjunction with the \fBservertool\fR(1), the Server Manager locates, registers, and activates a server when a client wants to access the server.
+.TP 0.2i
+\(bu
+\fIServer Manager\fR
+.sp 1n
+When used in conjunction with the \fBservertool\fR(1), the Server Manager locates, registers, and activates a server when a client wants to access the server.
+.TP 0.2i
+\(bu
+\fIInteroperable Naming Service (INS) \fR
+.sp 1n
+The naming service maps logical names to object references so that you can use the name to retrieve the object reference and invoke operations on that object. ORBD is used instead of the Transient Naming Service, \fBtnameserv\fR(1). ORBD includes both a Transient Naming Service and a Persistent Naming Service.
+.TP 0.2i
+\(bu
+\fIBootstrap Name Server\fR
+.sp 1n
+The persistent servers publish their object references in this Name Server. The clients can, in turn, contact this Name Server for looking up the object references. The advantage of providing this bootstrap name server as part of ORBD is that the user doesn't need to start an additional Name Server process for publishing and resolving object references.
+.PP
+The ORBD works with the \fBservertool\fR(1), which is used to register, unregister, and list server information.
+.SH OPTIONS
+The following options are supported:
+.TP 
+\fB\-port\fR \fIport\fR
+(Optional) Specifies the activation port where the ORBD should be started. The default value for this port is \fB1049\fR. This port number is added to the port field of the persistent IORs.
+.TP 
+\fB\-defaultdb\fR \fIdirectory\fR
+(Optional) Specifies the base where the ORBD persistent storage directory \fBorb.db\fR is created. If this option is not specified, the default value is "\fB./orb.db\fR".
+.TP 
+\fB\-serverid\fR \fIID\fR
+(Optional) Specifies the persistent server ID to be assigned to this ORBD. The default value is \fB1\fR.
+.TP 
+\fB\-ORBInitialPort\fR \fInameserverport\fR
+(Required) Specifies the port on which the bootstrap name server is running. Notice that when using Solaris software, you must become root to start a process on a port under \fB1024\fR. For this reason, we recommend that you use a port number greater than or equal to \fB1024\fR.
+.TP 
+\fB\-ORBInitialHost \fR \fInameserverhost\fR
+(Required) Specifies the host on which the bootstrap name server is running.
+.TP 
+\fB\-serverPollingTime\fR \fImilliseconds\fR
+Specifies how often the daemon thread checks for the health of registered servers. ORBD polls process health every \fImilliseconds\fR. The default value is \fB1,000\fR ms (or \fB1\fR second). The value specified for \fImilliseconds\fR must be a valid integer.
+.TP 
+\fB\-serverStartupDelay\fR \fImilliseconds\fR
+Specifies how long the \fBServerManager\fR waits before sending a location forward exception after the server is restarted. ORBD waits for \fImilliseconds\fR before raising a location forward exception. The default value is \fB1,000\fR ms (or \fB1\fR second). The value specified for \fImilliseconds\fR must be a valid integer.
+.TP 
+\fB\-J\fR\fIoption\fR
+Pass \fIoption\fR to the Java virtual machine, where option is one of the options described on the man page for the java application launcher, java (1). For example, \fB\-J\-Xms48m\fR sets the startup memory to 48 megabytes. It is a common convention for \fB\-J\fR to pass options to the underlying virtual machine.
+.SH ENVIRONMENT\ VARIABLES
+.TP 
+\fBCLASSPATH\fR 
+Used to provide the system with a path to user\-defined classes. Directories are separated by colons. For example: 
+.sp 1n
+\fB\&.:/Users/vlh/classes:/Library/Java/Home/Extensions\fR 
+.SH SEE\ ALSO
+\fBjava\fR(1), \fBjavac\fR(1), \fBservertool\fR(1)
+.PP
+See (or search \fBjava.sun.com\fR) for the following:
+.TP 
+\fISetting the Classpath\fR @
+.nf
+.if n http://java.sun.com/j2se/1.4/docs/tooldocs/solaris/classpath.html
+.if t http://java.sun.com/j2se/1.4/docs/tooldocs/solaris/\\
+.if t 		classpath.html
+.fi

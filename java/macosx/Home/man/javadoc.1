@@ -1,0 +1,3151 @@
+'\" t
+.\" @(#)javadoc.1 1.15 00/08/03 SMI;
+.\" Copyright 2000 Sun Microsystems, Inc. All rights reserved.
+.\" Copyright 2000 Sun Microsystems, Inc. Tous droits réservés.
+.\" 
+.TH javadoc 1 "14 July 2000"
+.hw javadoc
+.SH NAME
+javadoc \- Java API documentation generator
+.SH SYNOPSIS
+.B javadoc 
+[
+.I options
+] [
+.I packagenames
+] [
+.I sourcefilenames
+] 
+.ti +5n
+[
+.BI -subpackages " [pkg1:pkg2:...]"
+] [
+.I @argfiles
+]
+.SH ARGUMENTS
+Arguments can be in any order.  
+.TP
+.I options
+Command-line options, as specified in this
+document.
+To see a typical use of
+.B javadoc
+options, see Real World Example.
+.TP
+.I packagenames
+A series of names of packages, separated by spaces,
+such as
+.BR "java.lang java.lang.reflect java.awt" .
+You must separately specify each package you want to document.
+.B javadoc 
+uses
+.B \-sourcepath 
+to look for these package names.
+.B javadoc 
+does not recursively traverse subpackages.
+Wildcards such as asterisks (\f3*\f1) are not allowed.
+See 
+.BR EXAMPLES , 
+Documenting One or More Packages.
+.TP
+.I sourcefiles
+A series of source file names, separated by spaces,
+each of which can begin with a path and contain a wildcard such as an 
+asterisk (\fB*\fP). \fBjavadoc\fP will process every file whose name ends 
+with \fB.java\fP, and whose name, when stripped of that suffix, is actually 
+a legal class name (see \fBIdentifiers\fP). Therefore, you can name files 
+with dashes (such as \fBX-Buffer\fP), or other illegal characters, to 
+prevent them from being documented. This is useful for test files and files 
+generated from templates. 
+The path that
+precedes the source file name determines where
+.B javadoc
+will look for it.
+(\f3javadoc\f1 does not use
+.B \-sourcepath 
+to look for these source file names.)
+For example, passing in
+.B Button.java 
+is identical to
+.BR ./Button.java . 
+An example source file name with a
+full path is 
+.BR /home/src/java/awt/Graphics*.java . 
+See
+.BR EXAMPLES , 
+Documenting One or More Classes.
+You can
+also mix 
+.I packagenames 
+and
+.IR sourcefiles , 
+as in
+.BR EXAMPLES ,
+Documenting Both Packages and Classes.
+.TP
+.BI \-subpackages " pkg1:pkg2:..."
+Generates documentation from source files in the specified packages and recursively in their subpackages. An alternative to supplying \fIpackagenames\fP 
+or \fIsourcefilenames\fP.
+.TP
+.I @argfiles
+One or more files that contain a list of \fBjavadoc\fP options, 
+.I packagenames
+and
+.I sourcefiles 
+in any order. Wildcards (\fB*\fP) and \fI\-J\fP options are not allowed 
+in these files.
+.SH DESCRIPTION
+.B javadoc 
+parses the declarations and documentation comments in a
+set of Java source files and produces a corresponding set of HTML
+pages describing (by default) the public and protected classes, 
+nested classes (but not anonymous inner classes), 
+interfaces, constructors, methods, and fields.
+.LP
+You can run
+.B javadoc 
+on entire packages, individual source files, or both.
+In the first case, you pass in as an argument to
+.B javadoc 
+a series of package names.
+In the second case, you pass in a series
+of source (\f3.java\f1) file names.
+.B EXAMPLES
+are given at the end of this document.
+.LP
+Note: When you pass in package names to \fBjavadoc\fP, it currently 
+processes all \fB.java\fP classes in the specified package directories, even 
+if the \fB.java\fP files are code examples or other classes that are not 
+actually members of the specified packages. It does not parse each 
+\fB.java\fP file for a package declaration; this parsing may be added in a 
+future release.
+.LP
+During a run, \fBjavadoc\fP automatically adds cross\-reference links to 
+package, class and member names that are being documented as part of that 
+run. Links appear in several places: 
+.TP 2
+\(bu
+Declarations (return types, argument types, field types) 
+.TP 2
+\(bu
+"See Also" sections generated from \fB@see\fR tags
+.TP 2
+\(bu
+In\-line text generated from {\fB@link\fR} tags 
+.TP 2
+\(bu
+Exception names generated from \fB@throws\fR tags 
+.TP 2
+\(bu
+\fBSpecified by\fR links to members in interfaces and \fBOverrides links\fR to members in classes 
+.TP 2
+\(bu
+Summary tables listing packages, classes and members 
+.TP 2
+\(bu
+Package and class inheritance trees 
+.TP 2
+\(bu
+The index 
+.LP
+You can add hyperlinks to existing text for classes not included on 
+the command line (but generated separately) by way of the \fB\-link\fR 
+and \fB\-linkoffline\fR options. 
+.LP
+\fBjavadoc\fP produces one complete document each time it is run; it 
+cannot do incremental builds \(em that is, it cannot modify or 
+\fIdirectly\fR incorporate results from previous runs of \fBjavadoc\fP 
+tool. However, it can link to results from previous runs, as just mentioned.
+.LP
+As implemented,
+.B javadoc 
+requires and relies on the java compiler
+to do its job.
+.B javadoc 
+calls part of
+.B javac 
+to compile the
+declarations, ignoring the member implementation.
+It builds a rich
+internal representation of the classes, including the class
+hierarchy and "use" relationships, then generates the HTML from
+that.
+.B javadoc 
+also picks up user-supplied documentation from
+documentation comments in the source code.
+.LP
+In fact,
+.B javadoc 
+will run on 
+.B .java 
+source files that are pure stub
+files with no method bodies.
+This means you can write
+documentation comments and run
+.B javadoc 
+in the earliest stages of
+design while creating the API, before writing the implementation.
+.LP
+Relying on the compiler ensures that the HTML output
+corresponds
+exactly with the actual implementation, which may rely on
+implicit, rather than explicit, source code.
+For example,
+.B javadoc
+will document default constructors (section 8.6.7 of Java Language
+Specification) that are present in the
+.B .class 
+files but not in the
+source code.
+.LP 
+In many cases, \fBjavadoc\fP allows you to generate documentation 
+for source files whose code is incomplete or erroneous. This is a 
+benefit that enables you to generate documentation before all debugging 
+and troubleshooting is done. For example, according to the Java Language 
+Specification, a class that contains an abstract method should itself be 
+declared abstract. \fBjavadoc\fP does not check for this, and would 
+proceed without a warning, whereas the \fBjavac\fP compiler stops on 
+this error. \fBjavadoc\fP does do some primitive checking of doc 
+comments. Use the DocCheck doclet to check the doc comments more thoroughly. 
+.LP
+When
+.B javadoc 
+builds its internal structure for the
+documentation,
+it loads all referenced classes.
+Because of this,
+.B javadoc 
+must be
+able to find all referenced classes, whether bootstrap classes,
+extensions, or user classes.
+For more about this, see \fBHow
+Classes Are Found\fP.
+Generally speaking, classes you create must either
+be loaded as an extension or in
+the class path of
+.BR javadoc .
+.SS JAVADOC DOCLETS
+You can customize the content and format of 
+the output of 
+.B  javadoc
+by using doclets.
+.B javadoc 
+has a default "built-in" doclet, called
+the standard doclet, that generates HTML-formatted API documentation.
+You can modify or subclass the standard doclet, or write your
+own doclet to generate HTML, XML, MIF, RTF or whatever output
+format you prefer.
+Information about doclets and their use is at the
+following locations:
+.LP
+.TP 2
+\(bu
+.B javadoc 
+Doclets
+.TP 2
+\(bu
+The
+.B \-doclet 
+command-line option
+.LP
+When a custom doclet is not specified with the
+.B \-doclet 
+command line option,
+.B javadoc 
+uses the default standard doclet.
+The
+.B javadoc 
+tool has several command line options that are
+available regardless of which doclet is being used.
+The standard doclet
+adds a supplementary set of command line options.
+Both sets of
+options are described below in the options section.
+.SS RELATED\ DOCUMENTATION\ AND\ DOCLETS
+.TP 2
+\(bu
+\fBJavadoc Enhancements\fR for details about improvements added in Javadoc 1.4. 
+.TP 2
+\(bu
+\fBJavadoc FAQ\fR for answers to common questions, information about Javadoc\-related tools, and workarounds for bugs. 
+.TP 2
+\(bu
+\fBHow to Write Doc Comments for Javadoc\fR for more information about Sun conventions for writing documentation comments. 
+.TP 2
+\(bu
+\fBRequirements for Writing API Specifications\fR \- Standard requirements used when writing the Java 2 Platform Specification. It can be useful whether you are writing API specifications in source file documentation comments or in other formats. It covers requirements for packages, classes, interfaces, fields and methods to satisfy testable assertions. 
+.TP 2
+\(bu
+\fBDocumentation Comment Specification\fR \- The original specification on documentation comments, Chapter 18, Documentation Comments, in the Java Language Specification, First Edition, by James Gosling, Bill Joy, and Guy Steele. (This chapter was removed from the second edition.) 
+.TP 2
+\(bu
+\fBDocCheck Doclet\fR \- Checks doc comments in source files and generates a report listing the errors and irregularities it finds. It is part of the Sun Doc Check Utilities. 
+.TP 2
+\(bu
+\fBMIF Doclet\fR \- Can automate the generation of API documentation in MIF, FrameMaker and PDF formats. MIF is Adobe FrameMaker's interchange format. 
+.SS TERMINOLOGY
+A few terms have specific meanings within the context of
+.BR javadoc :
+.TP
+generated document
+The document generated by the
+.B javadoc 
+tool from the doc
+comments in Java source code.
+The default generated document
+is in HTML and is created by the standard doclet.
+.TP
+name
+A name in the Java Language, namely the name of a package,
+class, interface, field, constructor, or method.
+A name can be partially-qualified, such as
+.BR equals(Object) ,
+or fully-qualified, such as
+.BR java.lang.String.equals(java.lang.Object).
+.TP
+documented classes
+The classes and interfaces for which full documentation is
+generated during a
+.B javadoc 
+run. To be documented, the source
+files must be available, and either their source filenames or
+package names must be passed into the
+.B javadoc 
+command.
+We also refer to these as the classes included in the
+.B javadoc
+run, or the included classes.
+.TP
+excluded classes
+Classes and interface whose source filenames or package names are not 
+passed into the \fBjavadoc\fP command.
+.TP
+referenced classes
+The classes and interfaces that are explicitly referred to in
+the definition (implementation) or doc comments of
+the documented classes and interfaces.
+Examples of references include return type,
+parameter type, cast type, extended class, implemented
+interface, imported classes, classes used in method bodies, and 
+\fB@see\fP, {\fB@link\fP}, {\fB@linkplain\fP}, and {\fB@inheritDoc\fP} tags.
+(Notice that this definition has changed since 1.3.)
+When
+.B javadoc
+is run, it loads into memory all of the referenced classes in
+the bootclasspath and classpath of
+.BR  javadoc . 
+(\f3javadoc\f1 prints a
+"Class not found" warning for referenced classes not found.)
+.B javadoc 
+can derive enough information from the 
+.B .class
+files to determine their existence and the fully qualified
+names of their members.
+.TP
+external referenced classes
+The referenced classes whose documentation is not being generated 
+during a \fBjavadoc\fP run. In other words, these classes are not 
+passed into \fBjavadoc\fP on the command line. Links in the 
+generated documentation to those classes are said to be external 
+references or external links. For example, if you run \fBjavadoc\fP 
+on only the \fBjava.awt\fR package, then any class in 
+\fBjava.lang\fR, such as Object, is an external referenced 
+class. External referenced classes can be linked to using the 
+\fB\-link\fR and \fB\-linkoffline\fR options. An important property 
+of an external referenced class is that its source comments are 
+normally not available to the \fBjavadoc\fP run. In this case, these 
+comments cannot be inherited. 
+.SS SOURCE FILES
+.B javadoc 
+generates output originating from four different types
+of "source" files: Java language source files for
+classes (\f3.java\f1), package
+comment files, overview comment files, and miscellaneous
+unprocessed files.
+.SS CLASS SOURCE CODE FILES
+Each class or interface and its members can have their own documentation
+comments, contained in a
+.B .java
+file.
+For more details about these doc commments, see
+.B Documentation Comments.
+.SS PACKAGE COMMENT FILES
+Each package can have its own documentation comment, contained in its
+own "source" file, that
+.B javadoc 
+will merge into the package
+summary page that it generates.
+You typically include in this
+comment any documentation that applies to the entire package.
+.LP
+To create a package comment file, you must name it 
+.B package.html
+and place it in the package directory in the source tree along
+with the 
+.B .java 
+files.
+.B javadoc 
+will automatically look for this
+filename in this location.
+Notice that the filename is identical
+for all packages. For explicit details, see the example of \fBpackage.html\fP.
+.LP
+The content of the package comment file is one big documentation
+comment, written in HTML, like all other comments, with one
+exception: the documentation comment should not include the
+comment separators /** and */ or leading asterisks.
+When writing
+the comment, you should make the first sentence a summary about
+the package, and not put a title or any other text between 
+.B <body>
+and the first sentence.
+You can include package tags. As with any
+documentation comment, all tags except {\f3@link\f1} must appear after
+the description.
+If you add a 
+.B @see 
+tag in a package comment
+file, it must have a
+fully qualified name.
+.LP
+When
+.B javadoc 
+runs, it automatically looks for this file; if found,
+.B javadoc 
+does the following:
+.LP
+.TP 2
+\(bu
+Copies all content between
+.B <body> 
+and 
+.B </body> 
+tags for
+processing.
+.TP 2
+\(bu
+Processes any package tags that are present.
+.TP 2
+\(bu
+Inserts the processed text at the bottom of the package
+summary page it generates, as shown in Package Summary.
+.TP 2
+\(bu
+Copies the first sentence of the package comment to the top
+of the package summary page.
+It also adds the package name
+and this first sentence to the list of packages on the
+overview page, as shown in Overview Summary.
+The end-of-sentence is determined by the same rules used for the
+end of the first sentence of class and member descriptions.
+.SS OVERVIEW COMMENT FILE
+Each application or set of packages that you are documenting can
+have its own overview documentation comment, kept in its own
+"source" file, that
+.B javadoc 
+merges into the overview page that
+it generates.
+You typically include in this comment any
+documentation that applies to the entire application or set of
+packages.
+.LP
+To create an overview comment file, you can name the file anything
+you want, typically 
+.BR overview.html , 
+and place it anywhere, typically
+at the top level of the source tree.
+Notice that you can have multiple
+overview comment files for the same set of source files, in case
+you want to run
+.B javadoc 
+multiple times on different sets of packages.
+For example, if the source files for the
+.B java.applet
+package are contained in 
+.B /home/user/src/java/applet 
+directory, you
+could create an overview comment file at
+.BR /home/user/src/overview.html .
+.LP
+The content of the overview comment file is one big documentation
+comment, written in HTML, like the package comment file described
+previously.
+See that description for details.
+To reiterate, when
+writing the comment, you should make the first sentence a summary
+about the application or set of packages, and not put a title or
+any other text between 
+.B <body> 
+and the first sentence.
+You can
+include overview tags; as with any documentation comment, all tags
+except {\f3@link\f1} must appear after the description.
+If you add a
+.B @see 
+tag, it must have a fully-qualified name.
+.LP
+When you run
+.BR javadoc ,
+you specify the overview comment file name with the
+.B \-overview 
+option.
+The file is then processed, similar to
+that of a package comment file:
+.TP 2
+\(bu
+Copies all content between 
+.B <body> 
+and 
+.B </body> 
+tags for processing.
+.TP 2
+\(bu
+Processes any overview tags that are present.
+.TP 2
+\(bu
+Inserts the processed text at the bottom of the overview page
+it generates, as shown in Overview Summary.
+.TP 2
+\(bu
+Copies the first sentence of the overview comment to the top
+of the overview summary page.
+.SS MISCELLANEOUS UNPROCESSED FILES
+You can also include in your source any miscellaneous files that
+you want
+.B javadoc 
+to copy to the destination directory.
+These typically include
+graphic files (for example, Java source (\f3.java\f1) and
+class (\f3.class\f1) files) and self-standing HTML files whose content
+would overwhelm the documentation comment of a normal Java source
+file.
+.LP
+To include unprocessed files, put them in a directory called
+.BR doc-files ,
+which can be a subdirectory of any package directory.
+You can have one such subdirectory for each package.
+You might include images, example code, source files, 
+.B .class 
+files, applets, and HTML files.
+For example, if you want to include the image of a button
+.B button.gif 
+in the 
+.B java.awt.Button 
+class documentation,
+you place that file in the 
+.B /home/user/src/java/awt/doc-files/
+directory.
+.LP
+All links to these unprocessed files must be
+hard-coded, because
+.B javadoc 
+does not look at the files \(em it
+simply copies the directory and all its contents to the
+destination.
+For example, the link in the 
+.B Button.java 
+doc comment might look like this:
+.LP
+.ft 3
+.nf
+/**
+* This button looks like this:
+* <img src="doc-files/Button.gif">
+*/
+.fi
+.ft 1
+.SS GENERATED FILES
+By default,
+.B javadoc 
+uses a standard doclet that generates
+HTML-formatted documentation.
+This doclet generates the following
+kinds of files (where each HTML "page" corresponds to a separate
+file).
+Notice that
+.B javadoc 
+generates files with two types of names:
+those named after classes/interfaces, and those that are not (such
+as \f3package-summary.html\f1).
+Files in the latter group contain
+hyphens to prevent file name conflicts
+with those in the former group.
+.SS BASIC CONTENT PAGES
+.TP 2
+\(bu
+One class or interface page (\f3classname.html\f1) for each class
+or interface it is documenting.
+.TP 2
+\(bu
+One package page (\f3package-summary.html\f1) for each package it
+is documenting.
+.B javadoc 
+includes any HTML text provided
+in a file named 
+.B package.html 
+in the package directory of the
+source tree.
+.TP 2
+\(bu
+One overview page (\f3overview-summary.html\f1) for the entire set
+of packages.
+This is the front page of the generated document.
+.B javadoc 
+includes any HTML text provided in a
+file specified with the
+.B -overview 
+option.
+Notice that
+this file is created only if you pass into
+.B javadoc 
+two or more package
+names.
+For further explanation, see
+.B HTML Frames.
+.SS CROSS-REFERENCE PAGES
+.TP 2
+\(bu
+One class hierarchy page for the entire set of packages
+(\f3overview-tree.html\f1).
+To view this, click on "Overview" in
+the navigation bar, then click on "Tree".
+.TP 2
+\(bu
+One class hierarchy page for each package (\f3package-tree.html\f1).
+To view this, go to a particular package, class or interface
+page; click "Tree" to display the hierarchy for that package.
+.TP 2
+\(bu
+One "use" page for each package (\f3package-use.html\f1) and a
+separate one for each class and interface
+(\f3class-use/classname.html\f1). This page describes what
+packages, classes, methods, constructors, and fields use any
+part of the given class, interface, or package.
+Given a class
+or interface A, its "use" page includes subclasses of A,
+fields declared as A, methods that return A, and methods and
+constructors with parameters of type A.
+You can access this
+page by first going to the package, class, or interface, then
+clicking on the "Use" link in the navigation bar.
+.TP 2
+\(bu
+A deprecated API page (\f3deprecated-list.html\f1) listing all
+deprecated names.
+(A deprecated name is not recommended for
+use, generally due to improvements, and a replacement name is
+usually given.
+Deprecated APIs might be removed in future implementations.)
+.TP 2
+\(bu
+A constant field values page (\fBconstant\-values.html\fR) for 
+the values of static fields. 
+.TP 2
+\(bu
+A serialized form page (\fBserialized\-form.html\fR) for information 
+about serializable and externalizable classes. Each such class has a 
+description of its serialization fields and methods. This information 
+is of interest to re\-implementors, not to developers using the API. 
+While there is no link in the navigation bar, you can get to this 
+information by going to any serialized class and clicking "Serialized 
+Form" in the "See also" section of the class description. The standard 
+doclet automatically generates a serialized form page: any class 
+(\fBpublic\fR or \fBnon\-public\fR) that implements\fB Serializable\fR 
+is included, along with \fBreadObject\fR and \fBwriteObject\fR methods, 
+the fields that are serialized, and the doc comments from the 
+\fB@serial\fR, \fB@serialField\fR, and \fB@serialData\fR tags. 
+Public serializable classes can be excluded by marking them (or 
+their package) with\fB @serial exclude\fR, and package\-private 
+serializable classes can be included by marking them (or their 
+package) with \fB@serial include\fR. As of 1.4, you can generate 
+the complete serialized form for public and private classes by 
+running javadoc without specifying the \fB\-private\fR option. 
+.TP 2
+\(bu
+An index (\f3index-*.html\f1) of all class, interface, constructor,
+field and method names, alphabetically arranged.
+This is internationalized for Unicode and can be generated as a
+single file or as a separate file for each starting character
+(such as A-Z for English).
+.SS SUPPORT FILES
+.TP 2
+\(bu
+A help page (\f3help-doc.html\f1) that describes the navigation bar
+and the above pages.
+You can provide your own custom help
+file to override the default using
+.BR \-helpfile .
+.TP 2
+\(bu
+One 
+.B index.html 
+file that creates the HTML frames for display.
+This is the file you load to display the front page
+with frames.
+This file itself contains no text content.
+.TP 2
+\(bu
+Several frame files (\f3*-frame.html\f1) containing lists of
+packages, classes and interfaces, used when HTML frames are
+being displayed.
+.TP 2
+\(bu
+A package list file (\f3package-list\f1), used by the
+.B \-link 
+and
+.B \-linkoffline 
+options.
+This is a text file, not HTML, and is
+not reachable through any links.
+.TP 2
+\(bu
+A style sheet file (\f3stylesheet.css\f1) that controls a limited
+amount of color, font family, font size, font style, and
+positioning on the generated pages.
+.TP 2
+\(bu
+A doc-files directory that holds any image, example, source
+code, or other files that you want copied to the destination
+directory.
+These files are not processed by
+.B javadoc 
+in any
+manner, that is, any
+.B javadoc 
+tags in them will be ignored.
+This directory is not generated unless it exists in the
+source tree.
+.SS HTML FRAMES
+.B javadoc 
+generates either two or three HTML frames, as shown in
+the figure below.
+When you pass source files (*\f3.java\f1) or a single
+package name as arguments into the
+.B javadoc 
+command, it creates
+only one frame (C) in the left-hand column, that is,
+the list of classes.
+When you pass into
+.B javadoc 
+two or more package names, it creates a
+third frame (P) listing all packages, as well as an overview page
+(Detail).
+This overview page has the file name,
+.BR overview-summary.html . 
+Thus, this file is created only if you pass
+in two or more package names.
+You can bypass frames by clicking on
+the "No Frames" link or entering at 
+.BR overview-summary.html . 
+.LP
+If you are unfamiliar with HTML frames, you should be aware that
+frames can have focus for printing and scrolling.
+To give a frame
+focus, click on it.
+Then, on many browsers the arrow keys and page
+keys will scroll that frame,
+and the print menu command will print it.
+.LP
+.ft 3
+.nf
+    ------------                  ------------
+    |C| Detail |                  |P| Detail |
+    | |        |                  | |        |
+    | |        |                  |-|        |
+    | |        |                  |C|        |
+    | |        |                  | |        |
+    | |        |                  | |        |
+    ------------                  ------------
+   javadoc *.java           javadoc java.lang java.awt
+.fi
+.ft 1
+.LP
+Load one of the following two files as the starting page depending
+on whether you want HTML frames or not:
+.LP
+.TP 2
+\(bu
+.B index.html 
+(for frames)
+.TP 2
+\(bu
+.B overview-summary.html 
+(for no frames)
+.SS GENERATED FILE STRUCTURE
+The generated class and interface files are organized in the same
+directory hierarchy as Java source files and class files.
+This structure is one directory per subpackage.
+.LP
+For example, the document generated for the class
+.B java.applet.Applet
+would be located at
+.BR java/applet/Applet.html . 
+The file structure for the
+.B java.applet
+package follows, given that the destination directory is named
+.BR apidocs .
+All files that contain the word "frame" appear in the
+upper-left or lower-left frames, as noted.
+All other HTML files
+appear in the right-hand frame.
+.LP
+NOTE: Directories are shown in bold.
+The asterisks (*)
+indicate the files and directories that are omitted when
+the arguments to
+.B javadoc 
+are source file names (*\f3.java\f1)
+rather than package names.
+Also, when arguments are
+source file names,
+.B package-list 
+is created but is empty.
+The
+.B doc-files
+directory is not created in the
+destination unless it exists in the source tree.
+.LP
+.nf
+apidocs                         Top directory
+   index.html                   Initial page that sets up HTML frames
+ * overview\-summary.html        Lists all packages with first sentence 
+                                     summaries
+   overview\-tree.html           Lists class hierarchy for all packages
+   deprecated\-list.html         Lists deprecated API for all packages
+   serialized\-form.html         Lists serialized form for all packages
+ * overview\-frame.html          Lists all packages, used in upper\-left 
+                                     frame
+   allclasses\-frame.html        Lists all classes for all packages,
+                                     used in lower\-left frame
+   help\-doc.html                Lists user help for how these pages are
+                                     organized
+   index\-all.html               Default index created without \-splitindex
+   index\-files                  Directory created with \-splitindex
+   index\-<number>.html          Index files created with \-splitindex
+   package\-list                 Lists package names, used only for 
+                                     resolving external refs
+   stylesheet.css               HTML style sheet for defining fonts,
+                                     colors and positions
+   java                         Package directory
+     applet                     Subpackage directory
+       Applet.html              Page for Applet class
+       AppletContext.html       Page for AppletContext interface
+       AppletStub.html          Page for AppletStub interface
+       AudioClip.html           Page for AudioClip interface
+     * package\-summary.html     Lists classes with first sentence 
+                                     summaries for this package
+     * package\-frame.html       Lists classes in this package, used in 
+                                     lower left\-hand frame
+     * package\-tree.html        Lists class hierarchy for this package
+       package\-use              Lists where this package is used
+       doc\-files                Directory holding image and example files
+       class\-use                Directory holding pages API is used
+            Applet.html         Page for uses of Applet class
+            AppletContext.html  Page for uses of AppletContext interface
+            AppletStub.html     Page for uses of AppletStub interface
+            AudioClip.html      Page for uses of AudioClip
+   src\-html                     Source code directory
+     java                       Package directory
+       applet                   Subpackage directory
+         Applet.html            Page for Applet source code
+         AppletContext.html     Page for AppletContext source code
+         AppletStub.html        Page for AppletStub source code
+         AudioClip.html         Page for AudioClip source code
+.fi
+.fi
+.SS GENERATED API DECLARATIONS 
+.PP
+The Javadoc tool generates a declaration at the start of each class,
+interface, field, constructor, and method description\&. This declaration is
+the declaration for that \fBAPI\fR item\&. For example, the declaration
+for the Boolean class is:
+.sp
+.PP
+.nf
+public final class Boolean
+extends Object
+implements Serializable 
+.fi
+.sp
+and the declaration for the \fBBoolean\&.valueOfmethod\fR is:
+.sp
+.PP
+.nf
+public static Boolean valueOf(String s) 
+.fi
+.sp
+.PP
+The Javadoc tool can include the modifiers \fBpublic\fR, \fBprotected\fR, \fBprivate\fR, \fBabstract\fR, \fBfinal\fR, \fBstatic\fR, \fBtransient\fR,
+and \fBvolatile\fR, but not \fBsynchronized\fR or \fBnative\fR\&. These last two modifiers are considered implementation detail
+and not part of the \fBAPI\fR specification\&.
+.PP
+Rather than relying on the keyword \fBsynchronized\fR, \fBAPI\fRs should document their concurrency semantics in the comment
+description, as in "a single \fBEnumeration\fR cannot be used
+by multiple threads concurrently"\&. The document should not describe how to
+achieve these semantics\&. As another example, while \fBHashtable\fR
+should be thread-safe, there\&'s no reason to specify that we achieve this by
+synchronizing all of its exported methods\&. We should reserve the right to
+synchronize internally at the bucket level, thus offering higher concurrency\&.
+.SS DOCUMENTATION COMMENTS
+The original "Documentation Comment Specification" can be found under 
+related documentation.
+.LP
+\fICommenting the Source Code\fP
+.LP
+You can include documentation comments (\(lqdoc comments\(rq) in the 
+source code, ahead of declarations for any class, interface, method, 
+constructor, or field. You can also create doc comments for each package 
+and another one for the overview, though their syntax is slightly 
+different. Doc comments are also known as Javadoc comments. A doc 
+comment consists of the characters between the characters \fB/**\fR 
+that begin the comment and the characters \fB*/\fR that end it. Leading 
+asterisks are allowed on each line and are described further below. The 
+text in a comment can continue onto multiple lines.
+.LP
+.RS
+.ft 3
+.nf
+/**
+* This is the typical format of a simple documentation comment.
+*/
+.fi
+.ft 1
+.RE
+.LP
+To save space you can put a comment on one line:
+.LP
+.RS
+.ft 3
+.nf
+/** This comment takes up only one line. */
+.fi
+.ft 1
+.RE
+.LP
+Documentation comments are recognized only
+when placed immediately before class, interface, constructor,
+method, or field declarations (see the class example, method
+example, and field example).
+Documentation comments placed in the
+body of a method are ignored.
+Only one documentation comment per
+declaration statement is recognized by 
+.B javadoc.
+.LP
+A common mistake is to put an import statement between the class
+comment and the class declaration.
+Avoid this, as
+.B javadoc
+will ignore the class comment.
+.LP
+.RS
+.ft 3
+.nf
+/**
+* This is the class comment for the class Whatever.
+*/
+
+import com.sun;  // MISTAKE - Important not to put statements here
+
+public class Whatever {
+}
+.fi
+.ft 1
+.RE
+.LP
+\fIA comment is a description followed by a tag section\fR. 
+The \fIdescription\fR begins after the starting delimiter 
+\fB/**\fR and continues until the tag section. The tag section 
+starts with the first character \fB@\fR that begins a line 
+(ignoring leading asterisks, white space, and separator /**). 
+It is possible to have a comment with only tags and no description. 
+The description cannot continue after the tag section begins. The 
+argument to a tag can span multiple lines. There can be any number 
+of tags \(em some types of tags can be repeated while others cannot. 
+This \fB@see\fR starts the tag section:
+.LP
+.RS
+.ft 3
+.nf
+ /**
+ * This is a doc comment.
+ * @see java.lang.Object
+ */
+.fi
+.ft 1
+.RE
+.LP
+\fIStandalone and In\-line Tags\fR
+.PP
+A \fItag\fR is a special keyword within a doc comment that \fBjavadoc\fP 
+can process. \fBjavadoc\fP has standalone tags, which appear as 
+\fB@tag\fR, and in\-line tags, which appear within braces, as 
+{\fB@tag\fR}. To be interpreted, a standalone tag must appear 
+at the beginning of a line, ignoring leading asterisks, white 
+space, and separator (/**). This means you can use the @ character 
+elsewhere in the text and it will not be interpreted as the start 
+of a tag. If you want to start a line with the @ character and not 
+have it be interpreted, use the HTML entity \fB&#064;\fR. Each 
+standalone tag has associated text, which includes any text following 
+the tag up to, but not including, either the next tag, or the end of 
+the doc comment. This associated text can span multiple lines. An 
+in\-line tag is allowed and interpreted anywhere that text is allowed. 
+The following example contains the standalone tag \fB@deprecated\fR 
+and in\-line tag {\fB@link\fR}.
+.LP
+.RS
+.ft 3
+.nf
+/**
+ * @deprecated  As of JDK 1.1, replaced \\
+         by {@link #setBounds(int,int,int,int)}
+ */
+.fi
+.ft 1
+.RE
+.LP
+\fIComments are written in HTML\fR
+.LP
+The text must be written in HTML so that comments can use HTML 
+entities and HTML tags. You can use whichever version of HTML your 
+browser supports; we have written the standard doclet to generate 
+HTML 3.2\-compliant code elsewhere (outside of the documentation 
+comments) with the inclusion of cascading style sheets and frames. 
+(We preface each generated file with "HTML 4.0" because of the frame sets.)
+.LP
+For example, entities for the less\-than (<) and greater\-than (>) symbols 
+should be written \fB&lt;\fR and \fB&gt;\fR. Likewise, the ampersand (&) 
+should be written \fB&amp;\fR. The bold HTML tag <b> is shown in the 
+following example:
+.LP
+.RS
+.ft 3
+.nf
+/**
+* This is a <b>doc</b> comment.
+* @see java.lang.Object
+*/
+.fi
+.ft 1
+.RE
+.LP
+\fILeading Asterisks\fR
+.LP
+When \fBjavadoc\fP parses a doc comment, leading asterisk (*) 
+characters on each line are discarded. Blanks and tabs preceding 
+the initial asterisk (*) characters are also discarded. Starting 
+with 1.4, if you omit the leading asterisk on a line, the leading 
+white space is no longer removed. This enables you to paste code 
+examples directly into a doc comment inside a <pre> tag, and its 
+indentation will be honored. Spaces are generally interpreted by 
+browsers more uniformly than tabs. Indentation is relative to the 
+left margin (rather than the separator /** or tag). 
+.LP
+\fIFirst Sentence\fR
+.LP
+The first sentence of each doc comment should be a summary sentence, 
+containing a concise but complete description of the declared entity. 
+This sentence ends at the first period that is followed by a blank, 
+tab, or line terminator, or at the first standalone tag. \fBjavadoc\fP 
+copies this first sentence to the member summary at the top of the HTML 
+page. See \fB\-breakiterator\fR for a description of how we are planning 
+in a future release to change the way the sentence break is determined. 
+.LP
+\fIDeclaration With Multiple Fields\fR
+.LP
+Java allows declaring multiple fields in a single statement, but this 
+statement can have only one documentation comment, which is copied for 
+all fields. Therefore, if you want individual documentation comments for 
+each field, you must declare each field in a separate statement. For 
+example, the following documentation comment does not make sense when 
+written as a single declaration and would be better handled as two 
+declarations:
+.LP
+.RS
+.ft 3
+.nf
+/**
+* The horizontal and vertical distances of point (x,y)
+*/
+public int x, y;      // Avoid this
+.fi
+.ft 1
+.RE
+.LP
+.B javadoc 
+generates the following documentation from the above
+code:
+.LP
+.RS
+.ft 3
+public int x
+.fi
+.ft 1
+The horizontal and vertical distances of point
+(x,y).
+.ft 3
+.nf
+public int y
+.fi
+.ft 1
+The horizontal and vertical distances of point
+(x,y).
+.RE
+.LP
+\fIUse Header Tags Carefully\fP
+.LP
+When writing documentation comments
+for members, it is best not to use HTML heading tags such as
+.B <H1>
+and 
+.BR <H2> , 
+because
+.B javadoc 
+creates an entire structured document
+and these structural tags can interfere with the formatting
+of the generated document.
+However, it is fine to use these headings
+in class and package comments to provide your own structure.
+.LP
+\fIAutomatic Re\-use of Method Comments\fR
+.LP
+The Javadoc tool has the ability to automatically reuse or "inherit" 
+method comments in classes an interfaces. When a description, or 
+\fB@return\fR, \fB@param\fR, \fB@see\fR or \fB@throws\fR tag is 
+missing from a method comment, \fBjavadoc\fP instead copies the 
+corresponding description or tag comment from the method it overrides 
+or implements (if any), according to the algorithm below. 
+.LP
+More specifically, when a \fB@param\fR tag for a particular parameter 
+is missing, then the comment for that parameter is copied. When a 
+\fB@throws\fR tag for a particular exception is missing, the 
+\fB@throws\fR tag is copied only if that exception is declared. 
+.LP
+This behavior contrasts with version 1.3 and earlier, where the 
+presence of any description or tag would prevent all comments from 
+being inherited. 
+.LP
+Also of interest, if the inline tag {\fB@inheritDoc\fR} is present in 
+a description or any tag, the corresponding description or tag is 
+copied at that spot. 
+.LP
+The overridden method must be a member of a documented class, and 
+not an external referenced class for the doc comment to actually be 
+available to copy. 
+.LP
+Inheriting of comments occurs in three cases:
+.TP 2
+\(bu
+When a method in a class overrides a method in a superclass.
+.PD 0
+.TP 2
+\(bu
+When a method in an interface overrides a method in a
+superinterface.
+.TP 2
+\(bu
+When a method in a class implements a method in an interface.
+.PD
+.LP
+In the first two cases, for method overrides, the Javadoc tool generates a subheading "Overrides" in the documentation for the overriding method, with a link to the method it is overriding.
+.PP
+In the third case,when a method in a given class implements a method in an interface, the Javadoc tool generates a subheading "Specified by" in the documentation for the overriding method, with a link to the method it is implementing.
+.PP
+\fIAlgorithm for Inheriting Method Descriptions\fR
+.PP
+If a method does not have a doc comment, \fBjavadoc\fP searches for 
+an applicable comment using the following algorithm, which is designed 
+to find the most specific applicable doc comment, giving preference to 
+interfaces over superclasses: 
+.TP 3
+.B 1. 
+Look in each directly implemented (or extended) interface in the order 
+they appear following the word implements (or extends) in the method 
+declaration. Use the first doc comment found for this method. 
+.TP 3
+.B 2. 
+If step 1 failed to find a doc comment, recursively apply this entire 
+algorithm to each directly implemented (or extended) interface, in the 
+same order they were examined in step 1. 
+.TP 3
+.B 3. 
+If step 2 failed to find a doc comment and this is a class other than 
+\fBObject\fR (not an interface): 
+.RS 
+.TP 4
+.B 3a. 
+If the superclass has a doc comment for this method, use it. 
+.TP 4
+.B 3b.
+If step 3a failed to find a doc comment, recursively apply this entire 
+algorithm to the superclass. 
+.RE
+.SS JAVADOC TAGS
+.B javadoc 
+parses special tags when they are embedded within a 
+Javadoc comment.
+These doc tags enable you to autogenerate a complete,
+well-formatted API from your source code.
+The tags start with an
+"at" sign (\f3@\f1) and are case-sensitive;
+that is, they must be typed with
+the uppercase and lowercase letters as shown.
+A tag must start at
+the beginning of a line (after any leading spaces and an optional
+asterisk) or it is treated as normal text.
+By convention, tags with the same name are grouped together. 
+For example, put all 
+.B @see 
+tags together.
+.LP
+Tags come in two types: 
+.TP 2
+\(bu
+\fIStandalone tags\fR \- Can be placed only in the tag section that follows the description. These tags are not set off with curly braces: \fB@tag\fR. 
+.TP 2
+\(bu
+\fIInline tags\fR \- Can be placed anywhere in the comment description or in the comments for standalone tags. Inline tags are set off with curly braces: {\fB@tag\fR}. 
+.LP
+For information about tags might be introduced in future releases,
+see Proposed Tags.
+.LP
+The current tags are:
+.TS
+center, box;
+cbp-1 | cbp-1
+l | l .
+Tag	Introduced 
+	in JDK
+=
+@author	1.0
+{@docRoot}	1.3
+@deprecated	1.0
+@exception	1.0
+{@inheritDoc}	1.4
+{@link}	1.2
+{@linkplain}	1.4
+@param	1.0
+@return	1.0
+@see	1.0
+@serial	1.2
+@serialData	1.2
+@serialField	1.2
+@since	1.1
+@throws	1.2
+{@value}	1.4
+@version	1.0
+.TE
+.LP
+.LP
+For custom tags, see the \fB\-tag\fR option. 
+.TP
+.BI @author  " name-text"
+Adds an "Author" entry with the specified name-text to the
+generated docs when the
+.B \-author
+option is used.
+A doc comment can contain multiple 
+.B @author 
+tags.
+You can specify one name per 
+.B @author 
+tag or multiple names per tag.
+In the former case,
+.B javadoc 
+inserts a comma (\f3,\f1) and space between names.
+In the latter case, the entire text is copied to the
+generated document without being parsed.
+Therefore, use
+multiple names per line if you want a localized name
+separator other than a comma.
+.TP 7
+.BI @deprecated " deprecated-text"
+Adds a comment indicating that this API should no longer be
+used (even though it might continue to work).
+.B javadoc 
+moves the
+deprecated-text ahead of the description, placing it in
+italics and preceding it with a bold warning: "\f3Deprecated\f1".
+.LP
+.RS 
+The first sentence of deprecated-text should at least tell
+the user when the API was deprecated and what to use as a
+replacement.
+.B javadoc 
+copies just the first sentence to the
+summary section and index.
+Subsequent sentences can also
+explain why it has been deprecated.
+You should include a
+{\f3@link\f1} tag (for
+.B javadoc 
+1.2 or later) that points to the
+replacement API:
+.LP
+.TP 2
+\(bu
+For
+.B javadoc 
+1.2 and later, use a {\f3@link\f1} tag. This creates the
+link in-line, where you want it. For example:
+.LP
+.RS
+.ft 3
+.nf
+/**
+ * @deprecated  As of JDK 1.1, replaced by 
+ *    {@link #setBounds(int,int,int,int)}
+ */
+.fi
+.ft 1
+.RE
+.LP
+.TP 2
+\(bu
+For
+.B javadoc 
+1.1, the standard format is to create a 
+.B @see
+tag (which cannot be in-line) for each 
+.B @deprecated 
+tag.
+.LP
+For more about deprecation, see the 
+.B @deprecated 
+tag.
+.RE
+.TP
+.B {@docRoot}
+Represents the relative path to the generated document's
+(destination) root directory from any generated page.
+It is useful when you want to include a file, such as a
+copyright page or company logo, that you want to
+reference from all generated pages.
+Linking to the copyright page from the bottom of each page is common.
+.RS
+.LP
+This
+.B {@docRoot}
+tag can be used both on the command line
+and in a doc comment:
+.TP 4
+1.
+On the command line, where the header/footer/bottom
+are defined:
+.sp 1n
+.B javadoc \-bottom '<a href="{@docRoot}/copyright.html">Copyright</a>'
+.TP
+2.
+In a doc comment:
+.sp 1n
+.nf
+.ft 3
+/**
+* See the <a href="{@docRoot}/copyright.html">Copyright</a>.
+*/
+.ft 1
+.fi
+.LP
+The reason this tag is needed
+is because the generated docs
+are in hierarchical directories, as deep as the number of
+subpackages.
+This expression:
+.sp 1n
+.ti +5n
+.B <a href="{@docRoot}/copyright.html">
+.sp 1n
+would resolve to:
+.sp 1n
+.ti +5n
+\f3<a href=".\|.\|/.\|.\|/copyright.html">\f1   .\|.\|. for java/lang/Object.java
+.sp 1n
+and
+.sp 1n
+.ti +5n
+\f3<a href=".\|.\|/.\|.\|/.\|.\|/copyright.html">\f1 .\|.\|. for java/lang/ref/Reference.java
+.RE
+.TP
+.BI @exception  " class-name description"
+The 
+.B @exception 
+tag is a synonym for 
+.BR @throws . 
+.TP 
+{\fB@inheritDoc\fR}
+Inherits documentation from the nearest superclass into the current 
+doc comment. This allows comments to be abstracted up the inheritance 
+tree, and enables developers to write around the copied text. Also see 
+inheriting comments. 
+.sp 1n
+This tag can be placed in two positions: 
+.RS 
+.TP 2
+\(bu
+In the comment body (before the first standalone tag), where it will 
+copy the entire comment body from its superclass. 
+.TP 2
+\(bu
+In the text argument of a standalone tag, where it will copy the text 
+of the tag from its superclass. 
+.RE
+.TP
+{\f3@link \f2package.class#member label\f1}
+Inserts an in-line link with visible text label that points to the 
+documentation for the specified package, class or member name of 
+a referenced class. 
+.sp 1n
+This tag is very simliar to\fB @see\fR \-\- both require the same 
+references and accept exactly the same syntax for 
+\fIpackage.class#member\fR and \fIlabel\fR. The main difference 
+is that {\fB@link\fR} generates an in\-line link rather than placing 
+the link in the "See Also" section. Also, the {\fB@link\fR} tag begins 
+and ends with curly braces to separate it from the rest of the in\-line 
+text. If you need to use "}" inside the label, use the HTML entity 
+notation \fB&#125;\fR. 
+.sp 1n
+There is no limit to the number of {\f3@link\f1} tags allowed in a
+sentence.
+You can use this tag in the description part of a
+documentation comment or in the text portion of any tag (such
+as 
+.BR @deprecated , 
+.BR @return ,
+or 
+.BR @param ).
+.sp 1n
+For example, here is a comment that refers to the
+.B getComponentAt(int, int) 
+method:
+.sp 1n
+.ft 3
+.nf
+  Use the {@link #getComponentAt(int, int) getComponentAt} method.
+.fi
+.ft 1
+.sp 1n
+From this, the standard doclet would generate the following
+HTML (assuming it refers to another class in the same
+package):
+.sp 1n
+.ft 3
+.nf
+  Use the 
+  <a href="Component.html#getComponentAt(int, int)">\\
+               getComponentAt</a>method.
+.fi
+.ft 1
+.sp 1n
+which appears on the web page as:
+.sp 1n
+.ft 3
+.nf
+  Use the getComponentAt method.
+.fi
+.ft 1
+.TP 
+{\fB@linkplain\fR \fIpackage.class#member label\fR}
+Identical to \fB{@link}\fR, except the link's label is displayed in plain text than code font. Useful when the label is plain text. Example: 
+.sp 1n
+.ft 3
+.nf
+  Refer to {@linkplain add() the overridden method}.
+.fi
+.ft 1
+.sp 1n
+This would display as: 
+.sp 1n
+.ft 3
+.nf
+  Refer to the overridden method. 
+.fi
+.ft 1
+.sp 1n
+.TP
+.BI @param  " parameter-name description"
+Adds a parameter to the "Parameters" section.
+The description
+can continue on the next line.
+.TP
+.BI @return  " description"
+Adds a "Returns" section with the description text.
+This text
+should describe the return type and permissible range of values.
+.TP
+.BI @see  " reference"
+Adds a "See Also" heading with a link or text entry that
+points to
+.IR reference .
+A doc comment can contain any number of
+.B @see 
+tags, which are all grouped under the same heading.
+The
+.B @see 
+tag has three variations; the third form below is the
+most common.
+.TP
+.BI @see " string"     
+Note: This form is broken in JDK 1.2 (prints
+none of the quoted text) but is fixed in JDK 1.2.2.
+Adds a text entry for string. No link is generated.
+The string is a book or other reference to information not
+available by URL.
+.B javadoc 
+distinguishes this from the
+previous cases by looking for a double-quote (") as the
+first character.
+For example:
+.LP
+.RS 
+.ft 3
+.nf
+     @see "The Java Programming Language"
+.fi
+.ft 1
+.LP
+This generates text such as:
+.LP
+.ft 3
+.nf
+     See Also:
+          "The Java Programming Language"
+.fi
+.ft 1
+.RE
+.TP
+\f3@see <a href="\f2URL#value\f3">\f2label\f3</a>\f1
+Adds a link as defined by
+.IR URL#value .
+The
+.I URL#value
+is a relative or absolute URL.
+.B javadoc 
+distinguishes this
+from other cases by looking for a less-than symbol (\f3<\f1)
+as the first character.
+For example:
+.LP
+.RS 
+.ft 3
+.nf
+     @see <a href="spec.html#section">Java Spec</a>
+.fi
+.ft 1
+.LP
+This generates a link such as:
+.LP
+.ft 3
+.nf
+    See Also:
+          Java Spec
+.fi
+.ft 1
+.RE
+.TP
+.BI @see  " package.class#member label"
+Adds a link, with visible text label, that points to the
+documentation for the specified name in the Java Language.
+The label is optional; if omitted, the name
+appears instead as the visible text, suitably shortened
+(see How a Name Is Displayed).
+Use the label when you want the
+visible text to be abbreviated or different from the name.
+.LP
+.RS
+In only version 1.2, just the name but not the label would 
+automatically appear in
+.B <code>
+HTML tags.
+Starting with
+JDK 1.2.2, the
+.B <code>
+is always included around the visible
+text, whether or not a label is used.
+.TP 2
+\(bu
+.I package.class#member 
+is any valid name in the Java
+Language that is referenced (package, class,
+interface, constructor, method, or field name),
+except that you replace the dot ahead of the member
+name with a hash character (#).
+If this name is in
+the documented classes,
+.B javadoc 
+automatically
+creates a link to it.
+To create links to external
+referenced classes, use the
+.B \-link 
+option.
+Use
+either of the other two 
+.B @see 
+forms for referring to
+documentation of a name that does not belong to a
+referenced class.
+This argument is described
+at greater length below under Specifying a Name.
+.TP 2
+\(bu
+.I label
+is optional text that is visible as the
+link's label.
+The label can contain white space.
+If a label is omitted, then 
+.I package.class.member 
+will appear, suitably shortened relative to the current
+class and package (see How a Name Is Displayed).
+.TP 2
+\(bu
+A space is the delimiter between
+.I package.class#member 
+and
+.IR label .
+A space inside
+parentheses does not indicate the start of a label,
+so spaces can be used between parameters in a method.
+.LP
+In the example below, an
+.B @see 
+tag (in the Character
+class) refers to the equals method in the String class.
+The tag includes both arguments, that is, the name
+"\f3String#equals(Object)\f1" and the label "\f3equals\f1":
+.LP
+.ft 3
+.nf
+      /**
+      * @see String#equals(Object) equals
+      */
+.fi
+.ft 1
+.LP
+The standard doclet produces HTML something like this:
+.LP
+.ft 3
+.nf
+    <dl>
+    <dt><b>See Also:</b>
+    <dd><a href="../../java/lang/String#equals\\
+                 (java.lang.Object)"><code>equals</code></a>
+    </dl>
+.fi
+.ft 1
+.LP
+The above looks something like this in a browser, where the
+label is the visible link text:
+.LP
+.ft 3
+.nf
+     See Also:
+          equals
+.fi
+.ft 1
+.LP
+.B Specifying a Name:
+This 
+.I package.class#member 
+name can
+be either fully qualified, such as
+.BR java.lang.String#toUpperCase() ,
+or not, such as
+.B String#toUpperCase()
+or
+.BR #toUpperCase() .
+If less than fully-qualified,
+.B javadoc 
+uses the normal Java compiler
+search order to find it, further described below in
+Search order for 
+.BR @see . 
+The name can contain whitespace
+within parentheses, such as between method arguments.
+.LP
+The advantage to providing shorter,
+"partially-qualified" names is that they require less
+typing and make less clutter in the source code.
+The following
+table shows the different forms of the name, where Class
+can be a class or interface, Type can be a class,
+interface, array, or primitive, and method can be a
+method or constructor.
+.LP
+.TS
+box;
+cbp-1 
+l .
+T{
+Typical forms for
+.BI @see " package.class#member"
+T}
+=
+Referencing a member of the current class
+@see  #field
+@see  #method(Type, Type,...)
+@see  #method(Type argname, Type argname,...)
+Referencing another class in the current or imported
+packages
+@see  Class#field
+@see  Class#method(Type, Type,...)
+@see  Class#method(Type argname, Type argname,...)
+@see  Class
+Referencing another package (fully qualified)
+@see  package.Class#field
+@see  package.Class#method(Type, Type,...)
+@see  package.Class#method(Type argname, Type argname,...)
+@see  package.Class
+@see  package
+.TE
+.LP
+The following notes apply to the above table:
+.LP
+.TP 2
+\(bu
+The first set of forms (with no class or package)
+will cause
+.B javadoc 
+to search only through the
+current class's hierarchy.
+It finds a member of
+the current class or interface, one of its
+superclasses or superinterfaces, or one of its
+enclosing classes or interfaces (search steps 1-3).
+It will not search the rest of the current package
+or other packages (search steps 4-5).
+.TP 2
+\(bu
+If any method or constructor is entered as a name
+with no parentheses, such as getValue, and if
+no field with the same name exists,
+.B javadoc 
+will correctly create a link to it, but will print a
+warning message reminding you to add the
+parentheses and arguments.
+If this method is overloaded,
+.B javadoc 
+links to the first method
+that its search encounters, which is unspecified.
+.TP 2
+\(bu
+Nested classes must be specified as
+.BR outer.inner ,
+not only
+.BR inner ,
+for all forms.
+.TP 2
+\(bu
+As stated, the hash character (\f3#\f1), rather than a
+dot (\f3.\f1), separates a member from its class.
+This enables
+.B javadoc 
+to resolve ambiguities, since the
+dot also separates classes, inner classes,
+packages, and subpackages.
+The hash character is
+absolutely necessary in the forms above where it is
+the first character.
+However, in other forms,
+.B javadoc 
+is generally lenient and allows a dot
+if it does not produce an ambiguity, though it does
+print a warning.
+.LP
+.B Search Order for @see:
+.B javadoc 
+will process an
+.B @see 
+tag that appears in a source file (\f3.java\f1), package file
+(\f3package.html\f1), or overview file (\f3overview.html\f1).
+In the latter two files, you must fully qualify the name you
+supply with 
+.BR @see . 
+In a source file, you can specify a
+name that is fully qualified or partially qualified.
+.LP
+When
+.B javadoc 
+encounters an 
+.B @see 
+tag in a 
+.B .java 
+file that
+is not fully qualified, it searches for the specified
+name in the same order as the Java compiler would
+(except
+.B javadoc 
+will not detect certain namespace
+ambiguities, since it assumes the source code is free of
+these errors).
+This search order is formally defined in
+Chapter 6, "Names" of the
+.IR "Java Language Specification" ,
+modified by the Inner Classes Specification.
+.B javadoc
+searches for that name through all related and imported
+classes and packages.
+In particular, it searches in this order:
+.LP
+.TP 4
+1. 
+The current class or interface
+.PD 0
+.TP 4
+2. 
+Any enclosing classes and interfaces, searching
+closest first
+.TP 4
+3. 
+Any superclasses and superinterfaces, searching
+closest first
+.TP 4
+4. 
+The current package
+.TP 4
+5. 
+Any imported packages, classes and interfaces,
+searching in the order of the import statement
+.PD
+.LP
+.B javadoc 
+continues to search recursively through steps
+1-3 for each class it encounters until it finds a match.
+That is, after it searches through the current class and
+its enclosing class E, it searches through E's
+superclasses before E's enclosing classes.
+In steps 4 and 5,
+.B javadoc 
+does not search classes or interfaces
+within a package in any specified order (that order
+depends on the particular compiler).
+In step 5,
+.B javadoc
+will look in
+.BR java.lang , 
+since that is automatically
+imported by all programs.
+.LP
+.B javadoc 
+will not necessarily look in subclasses, nor will
+it look in other packages even if their documentation is
+being generated in the same run.
+For example, if the
+.B @see 
+tag is in 
+.B java.awt.event.KeyEvent 
+class and refers
+to a name in the 
+.B java.awt 
+package,
+.B javadoc 
+will not look
+in that package unless that class imports it.
+.LP
+.B How a Name is Displayed:
+If
+.I label
+is omitted, then
+.I package.class.member 
+will appear.
+In general, it will be
+suitably shortened relative to the current class and
+package.
+By "shortened", we mean
+.B javadoc 
+will display
+only the minimum name necessary.
+For example, if the
+String.toUpperCase() method contains references to a
+member of the same class and to a member of a different
+class, the class name will be displayed only in the
+latter case:
+.sp 1n
+.TS
+lb lb lb
+l  lb l.
+T{
+.nf
+Type
+of
+Ref-
+erence
+T}	Example	Displays As
+
+T{
+.nf
+@see tag
+refers
+to
+member
+of
+the
+same
+class
+T}	T{
+.nf
+@see
+String#toLowerCase()
+T}	T{
+.nf
+toLowerCase()
+(omits the class name)
+T}
+
+T{
+.nf
+@see
+tag
+refers
+to
+member
+of a
+differ-
+ent
+class
+T}	T{
+.nf
+@see
+Character#toLowerCase(char)
+T}	T{
+.nf
+Character.toLowerCase(char)
+(includes the class name)
+T}
+.TE
+.LP
+.B Examples of @see:
+The comment to the right shows how the name would be
+displayed if the 
+.B @see 
+tag is in a class in another package,
+such as
+.BR java.applet.Applet :
+.LP
+.sp 1n
+.TS
+li li
+lb l.
+Example	See also:
+
+@see java.lang.String	// String
+@see java.lang.String The String class	// The String class
+@see String	// String
+@see String#equals(Object)	// String.equals(Object)
+@see String#equals	T{
+.nf
+// String.equals\e
+      (java.lang.Object)
+T}
+@see java.lang.Object#wait(long)	T{
+.nf
+// java.lang.Object.\e
+      wait(long)
+T}
+@see Character#MAX_RADIX	// Character.MAX_RADIX
+@see <a href="spec.html">Java Spec</a>	// Java Spec
+@see "The Java Programming Language"	T{
+.nf
+// "The Java Programming \e
+      Language"
+T}
+.TE
+.sp 1n
+You can extend \fB@see\fR to link to classes not being documented by 
+using the \fB\-link\fR option. Notice that this works only for classes 
+that are referenced in a particular way as described at \fBHow an 
+Excluded Class Must Be Referenced for a Link to Appear\fR.
+.RE
+.TP
+.BI @since  " since-text"
+Adds a "Since" heading with the specified
+.I since-text
+to the generated documentation.
+The text has no special internal structure.
+This tag means that this change or feature has
+existed since the software release specified by the
+.IR since-text .
+For example:
+.RS 
+.LP
+.ft 3
+.nf
+@since 1.4
+.fi
+.ft 1
+.sp 1n
+For source code in the Java platform, this tag indicates the version 
+of the Java platform API specification (not necessarily when it was 
+added to the reference implementation). 
+.RE
+.TP
+\fB@serial\fP \fIfield-description\fP | \fBinclude\fP | \fBexclude\fP
+Used in the doc comment for a default serializable field.
+.RS 
+.LP
+An optional \fIfield\-description\fR should explain the meaning of the 
+field and list the acceptable values. If needed, the description can 
+span multiple lines. The standard doclet adds this information to the 
+\fBserialized form page\fR.
+.LP
+If a serializable field was added to a class some time after the class 
+was made serializable, a statement should be added to its description 
+to identify at which version it was added. 
+.LP
+The \fBinclude\fR and \fBexclude\fR arguments identify whether a class 
+or package should be included or excluded from the serialized form page. 
+They work as follows:
+.TP 0.2i
+\(bu
+A public or protected class that implements \fBSerializable\fR is included 
+unless that class (or its package) is marked \fB@serial exclude\fR.
+.TP 0.2i
+\(bu
+A private or package\-private class that implements \fBSerializable\fR is 
+excluded unless that class (or its package) is marked \fB@serial include\fR.
+.LP
+\fIExamples:\fR The \fBjavax.swing\fR package is marked \fB@serial 
+exclude\fR (in \fBpackage.html\fR). The public class 
+\fBjava.security.BasicPermission\fR is marked \fB@serial exclude\fR. 
+The package\-private class \fBjava.util.PropertyPermissionCollection\fR 
+is marked \fB@serial include\fR.
+.LP
+The tag \fB@serial\fR at a class level overrides \fB@serial\fR at a 
+package level.
+.LP
+The 
+.B @since 
+tag should be added to each serializable field
+that has been added since the initial version of a
+Serializable class to identify when it was added.
+.LP
+For more information about how to use these tags, along with
+an example, see "Documenting Serializable Fields and Data for
+a Class," Section 1.6 of the
+.IR "Java Object Serialization Specification" .
+Also see the "Serialization FAQ," which covers
+questions such as "Why do I see \fBjavadoc\fP warnings stating that I am 
+missing \fB@serial\fP tags for private fields if I am not running 
+\fBjavadoc\fP with the \fB\-private\fP switch?"
+.RE
+.TP
+.BI @serialField  " field-name  field-type  field-description"
+Documents an ObjectStreamField component of a Serializable
+class's serialPersistentFields member.
+One 
+.B @serialField 
+tag
+should be used for each ObjectStreamField component.
+.TP
+.BI @serialData  " data-description"
+A
+.I data-description
+documents the sequences and types of data,
+specifically the optional data written by the writeObject
+method and all data written by the
+Externalizable.writeExternal method.
+.LP
+.RS 
+The 
+.B @serialData 
+tag can be used in the doc comment for the
+writeObject, readObject, writeExternal, and readExternal
+methods.
+.RE
+.TP
+.BI @throws  " class-name  description"
+The \fB@throws\fR and \fB@exception\fR tags are synonyms. Adds a "Throws" 
+subheading to the generated documentation, with the 
+\fIclass\-name\fR and \fIdescription\fR text. The \fIclass\-name\fR 
+is the name of the exception that can be thrown by the method. If 
+this class is not fully specified, the Javadoc tool uses the search 
+order to look up this class. A \fB@throws\fR tag's comment documented 
+in a superclass or interface is inherited in two cases: (1) for a 
+corresponding exception declared in a throws clause of the subclass 
+and (2) for all runtime exceptions. If neither is the case and you want 
+to force the documentation to be inherited, then use {\fB@inheritDoc\fR}. 
+.TP 
+{\fB@value\fP}
+When used in a static field comment, displays the value of the constant. 
+These are the values displayed on the \fBConstant Field Values\fR page. 
+.BI @version  " version-text"
+Adds a "Version" subheading with the specified
+.I version-text
+to the generated docs when the 
+.B \-version 
+option is used.
+The text has no special internal structure.
+A doc comment can
+contain at most one 
+.B @version 
+tag.
+Version normally refers to
+the version of the software (such as the JDK) that contains
+this class or member.
+.SS WHERE TAGS CAN BE USED
+The following sections describe where the tags can be used.
+Notice that these four tags can be used in all doc comments: 
+.BR @see , 
+.BR @link ,
+.BR @since , 
+.BR @deprecated .
+.SS OVERVIEW DOCUMENTATION TAGS
+Overview tags are tags that can appear in the documentation
+comment for the overview page, which resides in the source file
+typically named (\f3overview.html\f1).
+As in any other documentation
+comments, these tags must appear after the description.
+.LP
+NOTE: The {\f3@link\f1} tag has a bug in overview documents in version 
+1.2 \em( text appears properly but has no link. The {\fB@docRoot\fP} tag does not currently work in overview documents.
+.RS
+.TS
+box;
+cbp-1
+l.
+Overview Tags
+=
+@see
+@since
+@author
+@version
+{@link}
+{@linkplain}
+{@docRoot}
+.TE
+.RE
+.LP
+.SS PACKAGE DOCUMENTATION TAGS
+Package tags are tags that can appear in the documentation comment
+for a package (which resides in the source file 
+named \f3package.html\f1). The \fB@serial\fP tag can only be used 
+here with the \fBinclude\fP or \fBexclude\fP argument.
+.RS
+.TS
+box;
+cbp-1
+l.
+Package Tags
+=
+@see
+@since
+@deprecated
+@serial
+@author
+@version
+{@link}
+{@linkplain}
+{@docRoot}
+.TE
+.RE
+.LP
+.SS CLASS AND INTERFACE DOCUMENTATION TAGS
+The following are tags that can appear in the documentation
+comment for a class or interface. The \fB@serial\fP tag can only be used 
+here with the \fBinclude\fP or \fBexclude\fP argument.
+.RS
+.TS
+box;
+cbp-1
+l.
+Class/Interface Tags
+=
+@see
+@since
+@deprecated
+@serial
+@author
+@version
+{@link}
+{@linkplain}
+{@docRoot}
+.TE
+.RE
+.LP
+.LP
+An example of a class comment:
+.LP
+.RS
+.ft 3
+.nf
+/**
+* A class representing a window on the screen.
+* For example:
+* <pre>
+*    Window win = new Window(parent);
+*    win.show();
+* </pre>
+*
+* @author  Sami Shaio
+* @version 1.15, 08/03/00
+* @see     java.awt.BaseWindow
+* @see     java.awt.Button
+*/
+class Window extends BaseWindow {
+...
+}
+.fi
+.ft 1
+.RE
+.SS FIELD DOCUMENTATION TAGS
+The following are the tags that can appear in the documentation
+comment for a field.
+.RS
+.TS
+box;
+cbp-1
+l.
+Field Tags
+=
+@see
+@since
+@deprecated
+@serial
+@serialField
+{@link}
+{@linkplain}
+{@docRoot}
+{@value}
+.TE
+.RE
+.LP
+.LP
+An example of a field comment:
+.LP
+.RS
+.ft 3
+.nf
+/**
+* The X-coordinate of the component.
+*
+* @see #getLocation()
+*/
+int x = 1263732;
+.fi
+.ft 1
+.RE
+.SS CONSTRUCTOR AND METHOD DOCUMENTATION TAGS
+The following are the tags that can appear in the documentation
+comment for a constructor or method, except for {\fB@inheritDoc\fP}, which 
+cannot appear in a constructor.
+.RS
+.TS
+box;
+cbp-1
+l.
+Method/Constructor Tags
+=
+@see
+@since
+@deprecated
+@param
+@return
+@throws (@exception)
+@serialData
+{@link}
+{@linkplain}
+{@inheritDoc}
+{@docRoot}
+.TE
+.RE
+.LP
+.LP
+An example of a method doc comment:
+.LP
+.RS
+.ft 3
+.nf
+/**
+* Returns the character at the specified index. An index
+* ranges from <code>0</code> to <code>length() - 1</code>.
+*
+* @param     index  the index of the desired character.
+* @return    the desired character.
+* @exception StringIndexOutOfRangeException
+*              if the index is not in the range <code>0</code>
+*              to <code>length()-1</code>.
+* @see       java.lang.Character#charValue()
+*/
+public char charAt(int index) {
+...
+}
+.fi
+.ft 1
+.RE
+.SH OPTIONS
+The
+.B javadoc 
+tool uses doclets to determine its output.
+.B javadoc
+uses the default standard doclet unless a custom doclet is
+specified with the
+.B \-doclet 
+option.
+.B javadoc 
+provides a set of
+command-line options that can be used with any doclet.
+These options are described below under the sub-heading
+.B javadoc 
+Options.
+The standard doclet provides an additional set of command-line
+options that are described below, under the sub-heading Options
+Provided by the Standard Doclet.
+All option names are
+case-insensitive, though their arguments can be case-sensitive.
+.LP
+The options are:
+.LP
+.sp 1n
+.RS
+.TS
+lb lb lb.
+\-1.1	\-header	\-private
+\-author	\-help	\-protected
+\-bootclasspath	\-helpfile	\-public
+\-bottom	\-J	\-quiet
+\-breakiterator	\-link	\-serialwarn
+\-charset	\-linkoffline	\-source
+\-classpath	\-linksource	\-sourcepath
+\-d	\-locale	\-splitindex
+\-docencoding	\-nocomment	\-stylesheetfile
+\-docfilessubdirs	\-nodeprecated	\-subpackages
+\-doclet	\-nodeprecatedlist	\-tag
+\-docletpath	\-nohelp	\-taglet
+\-doctitle	\-noindex	\-tagletpath
+\-encoding	\-nonavbar	\-title
+\-exclude	\-noqualifier	\-use
+.nf
+\-excludedocfilessubdir	\-nosince	\-verbose
+.fi
+\-extdirs	\-notree	\-version
+\-footer	\-overview	\-windowtitle
+\-group	\-package
+.TE
+.RE
+.SS JAVADOC OPTIONS
+.TP
+.BI \-overview  " path/filename"
+Specifies that
+.B javadoc 
+should retrieve the text for the
+overview documentation from the "source" file specified by
+.I path/filename
+and place it on the Overview page
+(\f3overview-summary.html\f1).
+The
+.I path/filename
+is relative to the
+.BR \-sourcepath .
+.LP
+.RS 
+While you can use any name you want for
+.I filename
+and place it
+anywhere you want for
+.IR path ,
+a typical thing to do is to name it 
+.B overview.html 
+and place it in the source tree at the
+directory that contains the topmost package directories.
+In this location, no path is needed when documenting packages,
+since
+.B \-sourcepath 
+will point to this file.
+For example, if
+the source tree for the
+.B java.lang
+package is
+.BR /src/classes/java/lang/ , 
+then you could place the overview
+file at 
+.BR /src/classes/overview.html . 
+See Real World Example.
+.LP
+For information about the file specified by
+.IR path/filename ,
+see overview comment file.
+.LP
+Notice that the overview page is created only if you pass into
+.B javadoc 
+two or more package names.
+For further explanation,
+see HTML Frames.
+.LP
+The title on the overview page is set by \fB\-doctitle\fP.
+.RE
+.TP
+.B \-public
+Shows only public classes and members.
+.TP
+.B \-protected
+Shows only protected and public classes and members.
+This is the default.
+.TP
+.B \-package
+Shows only package, protected, and public classes and
+members.
+.TP
+.B \-private
+Shows all classes and members.
+.TP
+.B \-help
+Displays the online help, which lists these
+.B javadoc 
+and doclet command line options.
+.TP
+.BI \-doclet  " class"
+Specifies the class file that starts the doclet used in
+generating the documentation. Use the fully-qualified name. 
+This doclet defines the content
+and formats the output.
+If the
+.B \-doclet 
+option is not used,
+.B javadoc 
+uses the standard doclet for generating the default
+HTML format.
+This class must contain the start(Root) method.
+The path to this starting class is defined by the
+.B \-docletpath
+option.
+.RS
+.LP
+For example, to call the MIF doclet, use:
+.ft 3
+.nf
+       -doclet com.sun.tools.doclets.mif.MIFDoclet
+.fi
+.ft 1
+.RE
+.TP
+.BI \-docletpath  " classpathlist"
+Specifies the path to the doclet starting class file (specified
+with the 
+.B \-doclet 
+option) and any JAR files it depends on. 
+If the starting class file is in a jar file, the this specifies the path 
+to that jar file, as shown in the example below. You can specify an 
+absolute path or a path relative to the current directory. If 
+\fIclasspathlist\fP contains multiple paths or JAR files, they should 
+be separated with a colon (:). 
+This option is not necessary if the
+doclet is already in the search path.
+.RS
+.LP
+Example of path to jar file that contains the starting doclet class file. 
+Notice the jar filename is included.
+.LP
+.ft 3
+.nf
+       -docletpath /home/user/mifdoclet/lib/mifdoclet.jar
+.fi
+.ft 1
+.LP
+Example of path to starting doclet class file. Notice the class filename is 
+omitted. 
+.LP
+.ft 3
+.nf
+       -docletpath /home/user/mifdoclet/classes/com/sun/tools/doclets/mif/
+.fi
+.ft 1
+.RE
+.TP
+.B \-1.1
+This feature has been removed from javadoc 1.4. There is no replacement 
+for it. This option created documentation with the appearance and 
+functionality of documentation generated by javadoc 1.1 (including 
+never supporting nested classes). If you need this option, use javadoc 
+1.2 or 1.3 instead.
+.TP
+.BI \-sourcepath  " sourcepathlist"
+Specifies the search paths for finding source files (\f3.java\f1)
+when passing package names into the
+.B javadoc 
+command. The \fIsourcepathlist\fP can contain multiple paths by separating 
+them with a colon (:). \fBjavadoc\fP will search in all subdirectories 
+of the specified paths. Note that this option is not only used to locate 
+the source files being documented, but also to find source files that are 
+not being documented but whose comments are inherited by the source files 
+being documented.
+.RS
+.LP
+Notice that you can use the
+.B \-sourcepath 
+option only when passing
+package names into the
+.B javadoc 
+command; it will not locate
+.B .java 
+files passed into the
+.B javadoc 
+command.
+(To locate 
+.B .java
+files, cd to that directory or include the path ahead of each
+file, as shown at Documenting One or More Classes.)  If
+.B \-sourcepath 
+is omitted,
+.B javadoc 
+uses the class path to find
+the source files (see
+.BR \-classpath ).
+Therefore, the default
+.B \-sourcepath 
+is the value of class path.
+If 
+.B \-classpath 
+is omitted and you are passing package names into
+.BR javadoc ,
+it looks in the current directory (and subdirectories) for the
+source files.
+.LP
+Set
+.I sourcepathlist
+to the root directory of the source tree
+for the package you are documenting.
+For example, suppose you
+want to document a package called
+.B com.mypackage
+whose source
+files are located at:
+.LP
+.RS
+.ft 3
+.nf
+/home/user/src/com/mypackage/*.java
+.fi
+.ft 1
+.RE
+.LP
+In this case, you would specify the source path to
+.BR /home/user/src , 
+the directory that contains
+.BR com/mypackage ,
+and then supply the package name 
+.BR com.mypackage :
+.LP
+.RS
+.nf
+example% \fBjavadoc \-sourcepath /home/user/src/ com.mypackage\fP
+.fi
+.RE
+.LP 
+This is easy to remember by noticing that if you concatenate
+the value of the source path and the package name together and
+change the dot to a slash "/", you end up with the full path
+to the package: 
+.LP
+.RS
+.ft 3
+/home/user/src/com/mypackage
+.RE
+.LP
+To point to two source paths:
+.LP
+.RS
+.nf
+example% \fBjavadoc -sourcepath /home/u1/src:/home/u2/src \\
+         com.mypackage\fP
+.fi
+.RE
+.RE
+.TP
+.BI \-classpath  " classpathlist"
+Specifies the paths where
+.B javadoc 
+looks for referenced
+classes (\f3.class\f1); these are the documented classes plus any
+classes referenced by those classes. 
+.B javadoc 
+searches in
+all subdirectories of the specified paths.
+The class path list
+can contain multiple paths by separating them with a colon.
+\fBjavadoc\fP will search in all subdirectories of the specified paths. 
+Follow the instructions in class path documentation for
+specifying
+.IR classpathlist .
+.LP
+.RS
+If 
+.B \-sourcepath 
+is omitted, 
+.B javadoc 
+uses 
+.B \-classpath 
+to find
+the source files as well as class files (for backward
+compatibility).
+Therefore, if you want to search for source
+and class files in separate paths, use both
+.B \-sourcepath 
+and
+.BR \-classpath .
+.LP
+For example, if you want to document
+.BR com.mypackage ,
+whose source files reside in the directory 
+.BR /home/user/src/com/mypackage ,
+and if this package relies on a library in 
+.BR /home/user/lib , 
+you would specify:
+.LP
+.RS
+.nf
+example% \fBjavadoc \-classpath /home/user/lib \-sourcepath \\
+               /home/user/src com.mypackage\fP
+.fi
+.RE
+.LP
+As with other tools, if you do not specify
+.BR \-classpath ,
+.B javadoc
+uses the CLASSPATH environment variable, if it is set.
+If both are not set,
+.B javadoc
+searches for classes from
+the current directory.
+.LP
+For an in-depth description of how
+.B javadoc
+uses
+.B \-classpath 
+to find user classes as it relates to extension classes and
+bootstrap classes, see How Classes Are Found.
+.RE
+.TP
+.BI \-bootclasspath  " classpathlist"
+Specifies the paths where the boot classes reside.
+These are
+nominally the Java platform classes.
+The
+.B bootclasspath
+is part of
+the search path
+.B javadoc 
+will use to look up source and class
+files.
+See How Classes Are Found for more details.
+Separate directories in
+.I dirlist
+with colons (:).
+.TP
+.BI \-extdirs  " dirlist"
+Specifies the directories where extension classes reside.
+These are any classes that use the Java Extension mechanism.
+The
+.B extdirs
+is part of the search path
+.B javadoc 
+uses to
+look up source and class files.
+See
+.B \-classpath 
+(above) for
+more details.
+Separate directories in
+.I dirlist
+with colons (:).
+.TP
+.B \-verbose
+Provides more detailed messages while
+.B javadoc 
+is running.
+Without the \fB-verbose\fP option, messages appear for loading the
+source files, generating the documentation (one message per
+source file), and sorting.
+The \fB\-verbose\fP option causes the
+printing of additional messages specifying the number of
+milliseconds to parse each Java source file.
+.TP
+.B \-quiet
+Shuts off non-error and non-warning messages, leaving only the warnings and 
+errors visible, making them easier to view. Also suppresses the version string.
+.TP
+.BI \-locale  " language_country_variant"
+\fBImportant:\fP The \fB\-locale\fP option must be placed ahead (to the left) 
+of any options provided by the standard doclet or any other doclet. Otherwise, 
+the navigation bars will appear in English. This is the only command-line 
+option that is order-dependent.
+.RS
+Specifies the locale that
+.B javadoc 
+uses when generating
+documentation.
+The argument is the name of the locale, as
+described in java.util.Locale documentation, such as en_US
+(English, United States) or en_US_WIN (Windows variant).
+.LP
+Specifying a locale causes
+.B javadoc 
+to choose the resource
+files of that locale for messages (strings in the navigation
+bar, headings for lists and tables, help file contents,
+comments in
+.BR stylesheet.css ,
+and so forth).
+It also specifies
+the sorting order for lists sorted alphabetically, and the
+sentence separator to determine the end of the first sentence.
+It does not determine the locale of the doc comment
+text specified in the source files of the documented classes.
+.RE
+.TP
+.BI \-encoding  " name"
+Specifies the source file encoding name, such as EUCJIS/SJIS.
+If this option is not specified, the platform default
+converter is used.
+.TP
+.BI \-J flag
+Passes \fIflag\fP directly to the Java runtime system that runs
+.BR javadoc . 
+Notice there must be no space between the \fB\-J\fP and the
+flag.
+For example, if you need to ensure that the system sets
+aside 32 megabytes of memory in which to process the
+generated documentation, then you would use this flag as
+follows:
+.LP
+.RS 
+.nf
+example% \fBjavadoc \-J\-Xmx32m \-J\-Xms32m com.mypackage\fP
+.fi
+.RE
+.TP
+.B \-noindex
+Omits the index from the generated docs.
+The index is
+produced by default.
+.TP
+.B \-nohelp
+Omits the HELP link in the navigation bars at the top and
+bottom of each page of output.
+.TP
+.B \-nonavbar
+Prevents the generation of the navigation bar, header and
+footer, otherwise found at the top and bottom of the
+generated pages.
+Has no effect on the "bottom" option.
+The
+.B \-nonavbar 
+option is useful when you are interested only in
+the content and have no need for navigation, such as
+converting the files to PostScript or PDF for print only.
+.TP
+.BI \-helpfile  " path/filename"
+Specifies the path of an alternate help file
+.I path/filename
+that the HELP link in the top and bottom navigation bars link
+to. Without this option,
+.B javadoc 
+automatically creates a help file 
+.B help-doc.html 
+that is hard-coded in
+.BR javadoc . 
+This option
+enables you to override this default.
+The file name can be any
+name and is not restricted to \f3help-doc.html\f1;
+.B javadoc 
+will adjust the links in the navigation bar accordingly.
+For example:
+.LP
+.RS 
+.RS 
+.nf
+example% \fBjavadoc \-helpfile /home/doc/myhelp.html java.awt\fP
+.fi
+.RE
+.RE
+.TP
+.BI \-stylesheetfile  " path/filename"
+Specifies the path of an alternate HTML stylesheet file.
+Without this option,
+.B javadoc 
+automatically creates a
+stylesheet file,
+.BR stylesheet.css ,
+that is hard-coded in
+.BR javadoc .
+This option enables you to override this default.
+The file name can be any name and is not restricted to
+.BR stylesheet.css .
+For example:
+.LP
+.RS
+.RS
+.nf
+example% \fBjavadoc \-stylesheetfile \\
+            /home/doc/mystylesheet.css java.awt\fP
+.fi
+.RE
+.RE
+.TP
+.B \-serialwarn
+Generates compile-time warnings for missing
+.B @serial
+tags.
+By default,
+.B javadoc
+1.2.2 (and later versions) generates no serial warnings.
+(This is a reversal from earlier versions.)  Use this option to
+display the serial warnings, which helps
+to properly document default serializable fields and
+writeExternal methods.
+.TP
+.BI \-charset  " name"
+Specifies the HTML character set for this document.
+For example:
+.LP
+.RS
+.RS
+.ft 3
+% javadoc \-charset "iso-8859-1" mypackage
+.ft 1
+.RE
+.LP
+would insert the following line in the head of every
+generated page:
+.RE
+.LP
+.RS
+.ft 3
+.nf
+<META http-equiv="Content-Type" content="text/html; charset=iso-885 9-1">
+.fi
+.ft 1
+.LP
+This META tag is described in the HTML standard
+(4197265 and 4137321).
+.RE
+.TP
+.BI \-docencoding  " name"
+Specifies the encoding of the generated HTML files.
+.SH EXAMPLES
+You can run
+.B javadoc 
+on entire packages or individual classes.
+Each package name has a corresponding directory name.
+In the following
+examples, the source files are located at
+.BR /home/src/java/awt/*java . 
+The destination directory is 
+.BR /home/html .
+.SS Documenting One or More Packages
+To document a package, the source files (*\f3.java\f1) for that package
+must be located in a directory having the same name as the package.
+If a package name is made up of several identifiers
+(separated by dots), each identifier represents a different
+directory.
+Thus, all java.awt classes must reside in a directory named 
+.BR java/awt/ . 
+You can run
+.B javadoc 
+either of the following two
+ways: by changing directories (with cd) or by using
+.B \-sourcepath
+option.
+You cannot use wildcards to specify groups of packages.
+.TP 2
+\(bu
+.B "Case 1 Changing to the package directory:"
+Change to the
+parent directory of the fully qualified package.
+Then run
+.BR javadoc , 
+supplying names of one or more packages you want to document:
+.LP
+.RS 
+.nf
+example% \fBcd /home/src/\fP
+example% \fBjavadoc \-d /home/html java.awt java.awt.event\fP
+.fi
+.RE
+.TP 2
+\(bu
+.B "Case 2 From any directory:"
+In this case, it does not matter
+what the current directory is.
+Run
+.B javadoc 
+supplying
+.B \-sourcepath 
+with the parent directory of the fully qualified
+package, and supply names of one or more packages you want to
+document:
+.LP
+.RS 
+.nf
+example% \fBjavadoc \-d /home/html \-sourcepath /home/src \\
+           java.awt java.awt.event\fP
+.fi
+.RE
+.LP
+Both cases generate HTML-formatted documentation for the public
+and protected classes and interfaces in packages
+.B java.awt
+and
+.B java.awt.event
+and save the HTML files in the specified
+destination directory (\f3/home/html\f1).
+Because two or more packages
+are being generated, the document has three frames: for the list
+of packages, the list of classes, and the main page.
+.SS Documenting One or More Classes
+The second way to run
+.B javadoc
+is by passing in one or more source
+files (\f3.java\f1).
+You can run
+.B javadoc 
+either of the following two
+ways: by changing directories (with cd) or by
+fully specifying
+the path to the 
+.B .java 
+files.
+Relative paths are relative to the
+current directory.
+The 
+.B \-sourcepath 
+option is ignored when
+passing in source files.
+You can use command line wildcards, such as asterisk (*),
+to specify groups of classes.
+.TP 2
+\(bu
+.B "Case 1 Changing to the source directory:"
+Change to the
+directory holding the
+.B .java 
+files.
+Then run
+.BR javadoc ,
+supplying names of one or more source files you want to document.
+.LP
+.RS 
+.nf
+example% \fBcd /home/src/java/awt\fP
+example% \fBjavadoc \-d /home/html Button.java Canvas.java \\
+               Graphics*.java\fP
+.fi
+.RE
+.LP
+.RS 2
+This example generates HTML-formatted documentation for the
+classes Button, Canvas, and classes beginning with Graphics.
+Because source files rather than package names were passed in
+as arguments to
+.BR javadoc , 
+the document has two frames, for
+the list of classes and the main page.
+.RE
+.TP 2
+\(bu
+.B Case 2 Changing to the package root directory:
+This is
+useful for documenting individual source files from different
+subpackages off the same root.
+Change to the package root
+directory, and supply the source files with paths from the root.
+.LP
+.RS 
+.nf
+example% \fBcd /home/src/\fP
+example% \fBjavadoc \-d /home/html java/awt/Button.java \\
+                 java/applet/Applet.java\fP
+.fi
+.RE
+.LP
+.RS 2
+This example generates HTML-formatted documentation for the
+classes Button and Applet.
+.RE
+.TP 2
+\(bu
+.B Case 3 From any directory:
+In this case, it does not matter
+what the current directory is.
+Run
+.BR javadoc , 
+supplying the
+absolute path (or path relative to the current directory) to the
+.B .java 
+files you want to document:
+.LP
+.RS 
+.nf
+example% \fBjavadoc \-d /home/html /home/src/java/awt/Button.java \\
+               /home/src/java/awt/Graphics*.java\fP
+.fi
+.RE
+.LP
+.RS 2
+This example generates HTML-formatted documentation for the class
+.B Button
+and classes beginning with
+.BR Graphics .
+.RE
+.SS Documenting Both Packages and Classes
+You can document entire packages and individual classes at the
+same time.
+Here is an example that mixes the two previous examples.
+You can use 
+.B \-sourcepath 
+for the path to the packages but not for
+the path to the individual classes:
+.LP
+.RS
+.nf
+example% \fBjavadoc \-d /home/html \-sourcepath /home/src java.awt \\
+               /home/src/java/applet/Applet.java\fP
+.fi
+.RE
+.LP
+This example generates HTML-formatted documentation for the
+package
+.B java.awt and
+.B class Applet.
+(\f3javadoc\f1 determines the package
+name for
+.B Applet
+from the package declaration, if any, in the
+.B Applet.java 
+source file.)
+.SS  Real World Example
+.B javadoc 
+has many useful options, some of which are more commonly
+used than others.
+Here is effectively the command you need to run
+.B javadoc 
+on the Java platform API, using makefile variables (except not
+all packages to be documented are listed):
+.LP
+.ft 3
+.nf
+.if n .ta 52n
+.if t .ta 27
+example% javadoc \-sourcepath /jdk/src/share/classes	/* Path for
+.if t .ta 29
+	source files  */
+.if n .ta 28n
+.if t .ta 20
+\-d /jdk/build/api	/* Destination directory */
+\-use	/* Adds "Use" files      */
+\-splitIndex	/* Splits index A-Z      */
+\-windowtitle $(WINDOWTITLE)	/* Adds a window title   */
+\-doctitle $(DOCTITLE)	/* Adds a doc title      */
+\-header $(HEADER)	/* Adds running header text       */
+\-bottom $(BOTTOM)	/* Adds text at bottom            */
+\-group $(GROUPCORE)	/* Core heading for overview page */
+\-group $(GROUPEXT)	/* Ext heading for overview page  */
+.if n .ta 37
+\-overview $ (SCRDIR) /overview.html	/* For overview text     */
+\-J\-Xmx180m	/* For 180MB memory      */
+java.lang java.lang.reflect	/* Packages to document  */
+java.util java.io java.net	java.applet
+
+WINDOWTITLE = 'Java Platform 1.2 Final API Specification'
+DOCTITLE = 'Java<sup><font size="-2">TM</font></sup> Platform 1.2 \\
+                 Final API Specification'
+HEADER = '<b>Java Platform 1.2</b><br><font size="-1">Final</font>'
+.if t .ig IG
+BOTTOM = '<font size="-1"><a href="http://java.sun.com/cgi-bin/\\
+              bugreport.cgi">Submit a bug or feature</a><br><br>Java \\
+              is a trademark or registered trademark of Sun \\
+              Microsystems, Inc. in the US and other countries.<br>\\
+              Copyright 1993-1998 Sun Microsystems, Inc. 901 San \\
+              Antonio Road,<br>Palo Alto, California, 94303, U.S.A.\\
+              </font>'
+.IG
+.if n .ig IG
+BOTTOM = '<font size="-1"><a href="http://java.sun.com/cgi-bin/bugreport.cgi">\\
+              Submit a bug or feature</a><br><br>Java is a trademark or registered \\
+              trademark of Sun Microsystems, Inc. in the US and other countries.<br> \\
+              Copyright 1993-1998 Sun Microsystems, Inc. 901 San Antonio Road,<br>\\
+              Palo Alto, California, 94303, U.S.A.</font>'
+.IG
+GROUPCORE = '"Core Packages" "java.*:com.sun.java.*:org.omg.*"
+GROUPEXT  = '"Extension Packages" "javax.*"'
+SRCDIR = '/java/jdk/1.2/src/share/classes'
+.fi
+.ft 1
+.LP
+If you omit the 
+.B \-windowtitle 
+option,
+.B javadoc 
+copies the doc title
+to the window title. The 
+.B \-windowtitle 
+option would not be needed
+except that the doc title contains HTML tags
+(which
+would appear as raw text in the window title).
+.LP
+If you omit the
+.B \-footer 
+option, as done here,
+.B javadoc 
+copies the
+header text to the footer.
+.LP
+Other important options not needed in this example 
+are 
+.B \-classpath 
+and 
+.BR \-link .
+.LP
+.SH "ENVIRONMENT VARIABLES"
+.TP 20
+.SB CLASSPATH
+Environment variable that provides the path that
+.B javadoc
+uses to find user class files.
+This environment variable is
+overridden by the
+.B \-classpath 
+option.
+Separate your directories
+with a colon, as for example:
+.RS 20
+.sp 1n
+.B .:/Users/vlh/classes:/Users/Shared/classes
+.RE
+.br
+.ne 11
+.TE
+.SH SEE ALSO
+.LP
+.BR javac (1), 
+.BR java (1), 
+.BR jdb (1), 
+.BR javah (1),
+.BR javap (1)
+.LP 
+See (or search
+.BR java.sun.com )
+for the following:
+.TP 10
+.B The Javadoc Home Page @
+http://java.sun.com/products/jdk/javadoc/index.html
+.TP 10
+.B Javadoc Enhancements @
+http://java.sun.com/j2se/1.4/docs/tooldocs/javadoc/index.html
+.TP 10
+.B Javadoc FAQ @
+http://java.sun.com/products/jdk/javadoc/faq.html
+.TP 10
+.B How to Write Doc Comments for Javadoc @ 
+.nf
+.if n http://java.sun.com/products/jdk/javadoc/writingdoccomments.html
+.if t http://java.sun.com/products/jdk/javadoc/\\
+.if t 		writingdoccomments.html
+.fi
+.TP 10
+.B How Classes Are Found @ 
+.nf
+.if n http://java.sun.com/j2se/1.4/docs/tooldocs/findingclasses.html#srcfiles
+.if t http://java.sun.com/j2se/1.4/docs/tooldocs/\\
+.if t 		findingclasses.html#srcfiles	
+.fi
