@@ -38,5 +38,5 @@ launcher: launcher.o
 launcher.o: launcher.cxx Makefile
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-run:
+run: launcher
 	./launcher
