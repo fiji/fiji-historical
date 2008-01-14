@@ -1,9 +1,15 @@
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 
 LIBDL=-ldl
 ifeq ($(uname_S),Linux)
+ifeq ($(uname_M),x86_64)
+	JAVA_HOME=linux-x64/jdk1.6.0_04
+	JAVA_LIB_PATH=jre/lib/amd64/server/libjvm.so
+else
 	JAVA_HOME=linux/jdk1.6.0
 	JAVA_LIB_PATH=jre/lib/i386/client/libjvm.so
+endif
 	ARCH=linux
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
