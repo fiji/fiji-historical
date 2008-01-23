@@ -3,7 +3,6 @@ A loose TODO list for Fiji
 
 - install Java3D on all platforms (gonna be tricky on MacOSX, I guess)
 - support MacOSX/Intel (needs someone with an Intel Mac)
-- start framework for plugins (see below)
 - actually add VIB_compat.jar and TrakEM2.jar (hopefully also BioFormats)
 - add a root Makefile
 - Makefile's "all" target should make the java wrapper, make ImageJA (if
@@ -17,17 +16,4 @@ A loose TODO list for Fiji
 - clean up (the java/ subdirectory is not needed, I guess, the wrapper should
   be moved to the root directory, the ImageJ/ directory should be dissolved)
 - find a way to determine the optimal heap size in the wrapper
-
-Plugin framework
-----------------
-
-- Make a directory plugins/
-- Make a directory staged-plugins/
-- Add files of the form staged-plugins/VIB_compat.jar.config
-- Add a Makefile which picks up all staged-plugins/*.jar,
-	- checks if they are newer than the plugins/*.jar equivalent
-	- if yes, adds the config as plugins.config, and copies it
-- Plugins will only be checked in in plugins/, the config files only in
-  staged-plugins/, to prevent jars from being checked in in staged-plugins/,
-  they will be ignored there
 

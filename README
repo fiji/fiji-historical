@@ -37,6 +37,28 @@ there are good reasons for a non-open sourced component to be included.
 
 But those would need to be _very_ compelling reasons.
 
+How to add new plugins
+----------------------
+
+Just move the .jar into staged-plugins/, and create/adjust the corresponding
+.config file (also in staged-plugins/).  Then type "make" and it will be
+added/updated and committed.
+
+The .config file should look something like this:
+
+	File, "Show Prime Numbers", Primes_("")
+
+where "File" is the menu you want to add the item to -- at the moment, the
+only valid choices are "Plugins", "Plugins><submenu>", "File>Import",
+"File>Save", "Analyze>Tools", "Help>About" and "Edit>Options".
+
+Next comes the title of the menu item, and lastly the class name of the
+plugin with a parameter that will be passed to the run() method of that
+class.
+
+In other words, the .config file will become the plugins.config of the
+.jar file.
+
 Authors
 -------
 
