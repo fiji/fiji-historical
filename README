@@ -1,0 +1,57 @@
+This is Fiji
+============
+
+Fiji will provide an easy way to set up Java+ImageJA+TrakEM2+VIB+a lot of
+other plugins that are useful, at least to neuroscientists.
+
+At the moment, the following platforms are supported:
+
+- Windows-x86
+- Linux-x86
+- Linux-x86_64
+- MacOSX-PowerPC
+
+Setup should be as easy as unpacking the (portable) application and starting
+the Java wrapper.  The wrapper is a program that starts the Java machine
+hands-free, i.e. it sets the correct settings to start up ImageJ with the
+plugins directory and heap size set up for you.
+
+In a way, you could say that the "F" in "Fiji" stands for "painless",
+"easy", "quick" and "convenient" :-)
+
+Open Source
+-----------
+
+We are dedicated to open source.  Not only does open source allow other
+developers to port the application to new platforms that the original
+authors did not begin to think of, it permits others to use the program
+in totally new ways, and enhance it in all imaginable ways.
+
+Therefore, Fiji is licensed under the GNU Public License, version 2 (of
+course, this license only applies to Fiji: the build system and the Java
+wrapper).  Not version 3, because we think that it is not our job to
+educate everybody to be a decent person; that's every person's own job.
+
+In the same vein, Fiji will contain only Open Source software, unless
+there are good reasons for a non-open sourced component to be included.
+
+But those would need to be _very_ compelling reasons.
+
+Authors
+-------
+
+Albert Cardona
+Johannes Schindelin
+and all the good people providing ImageJ and plugins
+
+Thanks
+------
+
+Our first and foremost thanks go to Wayne Rasband, who is not only a very
+dedicated developer; he also fosters an active and friendly community
+around ImageJ.
+
+The rest of our thanks go to everybody who helped this project prosper.
+
+Oh, and Fiji is also an island.  We just wanted to let you know.
+
