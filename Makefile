@@ -1,3 +1,18 @@
+NEW_JARS=$(wildcard staged-plugins/*.jar)
+JARS=$(patsubst staged-plugins/%,plugins/%,$(NEW_JARS))
+
+all: $(JARS)
+
+plugins/%.jar: staged-plugins/%.jar staged-plugins/%.config
+	CONFIG=$(patsubst plugins/%.jar,staged-plugins/%.config,$@) && \
+	cp $$CONFIG plugins.config && \
+	jar uvf $< plugins.config && \
+	rm plugins.config && \
+	MSG="$$(if [ -f $@ ]; then echo Updated; else echo Added; fi) $@" && \
+	mv $< $@ && \
+	git add $$CONFIG $@ && \
+	git commit -s -m "$$MSG" $$CONFIG $@
+
 # Java wrapper
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
