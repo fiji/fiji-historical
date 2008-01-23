@@ -1,7 +1,7 @@
 NEW_JARS=$(wildcard staged-plugins/*.jar)
 JARS=$(patsubst staged-plugins/%,plugins/%,$(NEW_JARS))
 
-all: $(JARS)
+all: $(JARS) run
 
 plugins/%.jar: staged-plugins/%.jar staged-plugins/%.config
 	CONFIG=$(patsubst plugins/%.jar,staged-plugins/%.config,$@) && \

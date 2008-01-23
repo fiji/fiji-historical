@@ -1,7 +1,0 @@
-# read available RAM in kB
-MEM=`cat /proc/meminfo | grep MemTotal | sed -e 's/[^0-9]//g'`
-# use only 90%
-MEM=$(($MEM * 90 / 100))
-# for plugins folder to be found
-cd ImageJ
-LD_LIBRARY_PATH=/home/albert/Applications/ImageJ/libs/jfftw-1.4 ./jdk1.6.0/bin/java -Xmx`echo $MEM`k -Dj3d.noOffScreen=true -classpath ./ij.jar:$(find ./jars -name "*.jar" -print0 | sed -e 's/\(.*\)/\1:/g'):$(find ./plugins -name "*.jar" -print0 | sed -e 's/\(.*\)/\1:/g'):jdk1.6.0/lib/tools.jar:. ij.ImageJ
