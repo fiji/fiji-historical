@@ -1,7 +1,14 @@
+TARGET=fiji
+
 NEW_JARS=$(wildcard staged-plugins/*.jar)
 JARS=$(patsubst staged-plugins/%,plugins/%,$(NEW_JARS))
 
-all: $(JARS) run
+SUBMODULE_TARGETS=ImageJA/ij.jar TrakEM2/TrakEM2_.jar
+SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
+	sed -e "s|[^ ]*/ij.jar|ij.jar|" \
+		-e "s|[^ ]*/\([^ /]*\.jar\)|plugins/\1|g")
+
+all: $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) $(TARGET) run
 
 plugins/%.jar: staged-plugins/%.jar staged-plugins/%.config
 	CONFIG=$(patsubst plugins/%.jar,staged-plugins/%.config,$@) && \
@@ -48,11 +55,26 @@ CXXFLAGS=-g -I$(INCLUDE) -I$(INCLUDE)/$(ARCH) $(EXTRADEFS) \
 	-DJAVA_HOME=\"$(JAVA_HOME)\" -DJAVA_LIB_PATH=\"$(JAVA_LIB_PATH)\"
 LIBS=$(LIBDL) $(LIBMACOSX)
 
-fiji: fiji.o
+$(TARGET): $(TARGET).o
 	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
 
-fiji.o: fiji.cxx Makefile
+$(TARGET).o: $(TARGET).cxx Makefile
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-run: fiji
-	./fiji
+run: $(TARGET)
+	./$(TARGET)
+
+# submodules
+
+.PHONY: $(SUBMODULE_TARGETS_IN_FIJI)
+$(SUBMODULE_TARGETS_IN_FIJI):
+	export JAVA_HOME="$$(pwd)/$(JAVA_HOME)" && \
+	ORIGINAL_TARGET=$(shell echo " $(SUBMODULE_TARGETS) " | \
+		sed "s/.* \([^ ]*$$(basename "$@")\) .*/\1/") && \
+	DIR=$$(dirname $$ORIGINAL_TARGET) && \
+	test ! -e $$DIR/Makefile || { \
+		(cd $$DIR && make) && \
+		(test ! $$ORIGINAL_TARGET -nt $@ || cp $$ORIGINAL_TARGET $@) \
+	}
+
+
