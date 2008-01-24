@@ -1,17 +1,16 @@
 A loose TODO list for Fiji
 ==========================
 
-- install Java3D on all platforms (gonna be tricky on MacOSX, I guess)
+- install Java3D on all platforms (is not as easy as unpacking
+  java3d-1.5.1-macosx.zip on MacOSX -- it crashes -- so probably need
+  to recompile)
 - support MacOSX/Intel (needs someone with an Intel Mac)
-- actually add VIB_compat.jar and TrakEM2.jar (hopefully also BioFormats)
-- Makefile's "all" target should make the java wrapper, make ImageJA (if
-  present), copy ImageJA's ij.jar into the root directory if it exists
-  and is newer than the current copy, and make the plugins
-- (For the Makefile, it would be nice to find out how to make a target
-  depend on a file, but only if that file is present, so that you do not
-  have to check out ImageJA, TrakEM2, or VIB.)
+- actually add VIB_compat.jar (hopefully also BioFormats).
 - add targets for all platforms which make wrappers, such as a .zip or
   a .dmg file.
-- find a way to determine the optimal heap size in the wrapper
-- solve LD_LIBRARY_PATH problem.  Maybe by linking with dlopen()?
+- find a way to determine the optimal heap size in the wrapper (is that
+  still necessary?  For example, on instar, it seems that a sensible
+  default is chosen by java already).
+- solve LD_LIBRARY_PATH problem for jfftw.  Maybe by linking with dlopen()?
+  Or is it enough to put jfftw.so into lib/i386/?
 - maybe change the path of IJ_Prefs.txt also on other platforms than Win32?
