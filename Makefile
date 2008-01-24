@@ -27,7 +27,7 @@ uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 LIBDL=-ldl
 ifeq ($(uname_S),Linux)
 ifeq ($(uname_M),x86_64)
-	JAVA_HOME=java/linux-x64/jdk1.6.0_04
+	JAVA_HOME=java/linux-amd64/jdk1.6.0_04
 	JAVA_LIB_PATH=jre/lib/amd64/server/libjvm.so
 else
 	JAVA_HOME=java/linux/jdk1.6.0
