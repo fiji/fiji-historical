@@ -14,4 +14,4 @@ A loose TODO list for Fiji
   a .dmg file.
 - find a way to determine the optimal heap size in the wrapper
 - solve LD_LIBRARY_PATH problem.  Maybe by linking with dlopen()?
-
+- maybe change the path of IJ_Prefs.txt also on other platforms than Win32?
