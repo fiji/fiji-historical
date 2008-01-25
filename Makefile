@@ -3,7 +3,7 @@ TARGET=fiji
 NEW_JARS=$(wildcard staged-plugins/*.jar)
 JARS=$(patsubst staged-plugins/%,plugins/%,$(NEW_JARS))
 
-SUBMODULE_TARGETS=ImageJA/ij.jar TrakEM2/TrakEM2_.jar
+SUBMODULE_TARGETS=ImageJA/ij.jar TrakEM2/TrakEM2_.jar VIB/VIB_.jar
 SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
 	sed -e "s|[^ ]*/ij.jar|ij.jar|" \
 		-e "s|[^ ]*/\([^ /]*\.jar\)|plugins/\1|g")
@@ -74,8 +74,9 @@ $(SUBMODULE_TARGETS_IN_FIJI):
 		sed "s/.* \([^ ]*$$(basename "$@")\) .*/\1/") && \
 	DIR=$$(dirname $$ORIGINAL_TARGET) && \
 	test ! -e $$DIR/Makefile || { \
-		(cd $$DIR && make) && \
-		(test ! $$ORIGINAL_TARGET -nt $@ || cp $$ORIGINAL_TARGET $@) \
+		$(MAKE) -C $$DIR $$(basename $$ORIGINAL_TARGET) && \
+		(test -f $$ORIGINAL_TARGET -a ! $$ORIGINAL_TARGET -nt $@ || \
+			cp $$ORIGINAL_TARGET $@) \
 	}
 
 
