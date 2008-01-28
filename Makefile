@@ -27,17 +27,17 @@ uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 LIBDL=-ldl
 ifeq ($(uname_S),Linux)
 ifeq ($(uname_M),x86_64)
-	JAVA_HOME=java/linux-amd64/jdk1.6.0_04
-	JAVA_LIB_PATH=jre/lib/amd64/server/libjvm.so
+	JAVA_HOME=java/linux-amd64/jdk1.6.0_04/jre
+	JAVA_LIB_PATH=lib/amd64/server/libjvm.so
 else
-	JAVA_HOME=java/linux/jdk1.6.0
-	JAVA_LIB_PATH=jre/lib/i386/client/libjvm.so
+	JAVA_HOME=java/linux/jdk1.6.0/jre
+	JAVA_LIB_PATH=lib/i386/client/libjvm.so
 endif
 	ARCH=linux
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
-	JAVA_HOME=java/win32/jdk1.6.0_03
-	JAVA_LIB_PATH=jre/bin/client/jvm.dll
+	JAVA_HOME=java/win32/jdk1.6.0_03/jre
+	JAVA_LIB_PATH=bin/client/jvm.dll
 	ARCH=win32
 	EXTRADEFS+= -DMINGW32
 	LIBDL=
