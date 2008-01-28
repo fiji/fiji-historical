@@ -1,9 +1,6 @@
 A loose TODO list for Fiji
 ==========================
 
-- install Java3D on all platforms (is not as easy as unpacking
-  java3d-1.5.1-macosx.zip on MacOSX -- it crashes -- so probably need
-  to recompile)
 - support MacOSX/Intel (needs someone with an Intel Mac)
 - add BioFormats.
 - add targets for all platforms which make wrappers, such as a .zip or
