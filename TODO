@@ -14,3 +14,4 @@ A loose TODO list for Fiji
 - solve LD_LIBRARY_PATH problem for jfftw.  Maybe by linking with dlopen()?
   Or is it enough to put jfftw.so into lib/i386/?
 - maybe change the path of IJ_Prefs.txt also on other platforms than Win32?
+- make absolute path from argv0 in get_fiji_dir().
