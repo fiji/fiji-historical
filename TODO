@@ -14,3 +14,5 @@ A loose TODO list for Fiji
   Or is it enough to put jfftw.so into lib/i386/?
 - maybe change the path of IJ_Prefs.txt also on other platforms than Win32?
 - make absolute path from argv0 in get_fiji_dir().
+- in ImageJA: enable plugin .config files to access any directory. A flag
+  to 'add after <existing_default_menu_entry>' would be awesome.
