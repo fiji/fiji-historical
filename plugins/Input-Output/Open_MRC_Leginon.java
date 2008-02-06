@@ -1,3 +1,7 @@
+/**
+ * Open .mrc files from numerous sources, including Leginon (software for automated imaging in FEI electron microscopes, see http://ami.scripps.edu )
+ * Copyright Albert Cardona. This work is in the public domain.
+ */
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
@@ -14,34 +18,42 @@ import java.io.IOException;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-/** The file ends up opened 3 times: at HandleExtraFileTypes.java, here to read the header again, and at openRaw. */
-
 public class Open_MRC_Leginon extends ImagePlus implements PlugIn {
 
 	/** Expects path as argument, or will ask for it and then open the image.*/
-	public void run(String arg) {
+	public void run(final String arg) {
 		String path = arg;
 		String directory = null;
 		String filename = null;
-		File f = new File(arg);
-		if (!f.exists()) {
+		if (null == path || 0 == path.length()) {
 			OpenDialog od = new OpenDialog("Choose .mrc file", null);
 			directory = od.getDirectory();
 			if (null == directory) return;
 			filename = od.getFileName();
 			path = directory + "/" + filename;
 		} else {
-			try {
-				directory = f.getParentFile().getAbsolutePath();
-				filename = f.getName();
-			} catch (Exception e) { return; }
+			// the argument is the path
+			File file = new File(path);
+			directory = file.getParent(); // could be a URL
+			filename = file.getName();
+			if (directory.startsWith("http:/")) directory = "http://" + directory.substring(6); // the double '//' has been eliminated by the File object call to getParent()
 		}
-		if (!filename.toLowerCase().endsWith(".mrc")) return;
+
+		if (!filename.toLowerCase().endsWith(".mrc")) {
+			this.width = this.height = -1;
+			return;
+		}
+
+		if (!directory.endsWith("/")) directory += "/"; // works in windows too
 
 		InputStream is;
 		byte[] buf = new byte[136];
 		try {
-			is = new FileInputStream(path);
+			if (0 == path.indexOf("http://")) {
+				is = new java.net.URL(path).openStream();
+			} else {
+				is = new FileInputStream(path);
+			}
 			is.read(buf, 0, 136);
 			is.close();
 		} catch (IOException e) {
@@ -72,7 +84,10 @@ public class Open_MRC_Leginon extends ImagePlus implements PlugIn {
 		if (null != obinfo) setProperty("Info", obinfo);
 		setFileInfo(imp.getOriginalFileInfo());
 
-		if (!f.exists()) this.show();
+		if (null == arg || 0 == arg.length()) {
+			// was opened with a dialog
+			this.show();
+		}
 	}
 
 	private int getType(int datatype) {
@@ -96,7 +111,11 @@ public class Open_MRC_Leginon extends ImagePlus implements PlugIn {
 		fi.fileType = imageType;
 		fi.fileFormat = fi.RAW;
 		fi.fileName = fileName;
-		fi.directory = directory;
+		if (0 == directory.indexOf("http://")) {
+			fi.url = directory; // the ij.io.FileOpener will open a java.net.URL(fi.url).openStream() from it
+		} else {
+			fi.directory = directory;
+		}
 		fi.width = width;
 		fi.height = height;
 		if (offset>2147483647)

@@ -34,7 +34,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		if (directory == null) directory = "";
 
 		// Try and recognise file type and load the file if recognised
-		ImagePlus imp = openImage(directory, fileName);
+		ImagePlus imp = openImage(directory, fileName, path);
 		if (imp==null) {
 			// failed to load file or plugin has opened and displayed it
 			IJ.showStatus("");
@@ -54,29 +54,26 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 	}
 	
 
-	private ImagePlus openImage(String directory, String name) {
-		Object o = null;
+	private Object tryOpen(String directory, String name, String path) {
 
-		// Set out file name and path
-		if (directory.length()>0 && !directory.endsWith(Prefs.separator))
-			directory += Prefs.separator;
-		String path = directory+name;
-
-		// set up a stream to read in 136 bytes from the file header
+		// set up a stream to read in 132 bytes from the file header
 		// These can be checked for "magic" values which are diagnostic
 		// of some image types
 		InputStream is;
-		byte[] buf = new byte[136];
+		byte[] buf = new byte[132];
 		try {
-			is = new FileInputStream(path);
-			is.read(buf, 0, 136);
+			if (0 == path.indexOf("http://")) {
+				is = new java.net.URL(path).openStream();
+			} else {
+				is = new FileInputStream(path);
+			}
+			is.read(buf, 0, 132);
 			is.close();
 		}
 		catch (IOException e) {
 			// couldn't open the file for reading
 			return null;
 		}
-		String original_name = name;
 		name = name.toLowerCase();
 		width = PLUGIN_NOT_FOUND;
 
@@ -86,94 +83,19 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 
 		// OK now we get to the interesting bit
 
-		/** Albert Cardona: try to see if it's a TrakEM2 file */
-		if (name.endsWith(".xml")) {
-			if (-1 != new String(buf).toLowerCase().indexOf("trakem2")) {
-				try {
-					// portable way, resists absence of TrakEM2_.jar in the classpath
-					final Class cla = Class.forName("ini.trakem2.Project");
-					if (null != cla) {
-						final java.lang.reflect.Method method = cla.getMethod("openFSProject", new Class[]{String.class});
-						method.invoke(null, new Object[]{directory + original_name});
-					}
-					// assume success in any case
-					width = IMAGE_OPENED;
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				return null;
-			}
-		}
-
-		/** Albert Cardona: .mrc files are little endian! Documentation at: http://ami.scripps.edu/prtl_data/mrc_specification.htm . The parsing of the header is a bare minimum. */
-		if (name.endsWith(".mrc")) {
-			ImagePlus imp = (ImagePlus)IJ.runPlugIn("Open_MRC_Leginon", directory + original_name);
-			if (imp==null) width = PLUGIN_NOT_FOUND;
-			if (imp!=null&&imp.getWidth()==0) imp = null;
-			return imp;
-		}
-
-		// Albert Cardona: read .dat files from the EMMENU software
-		if (name.endsWith(".dat") && 1 == buf[1] && 0 == buf[2]) { // 'new format' only
-			// assuming 'int' is 32-bit (4 byte) in java
-
-			int datatype = (int)buf[3]; // 1-byte, 2-int (16bit), 4-int(32bit, 5-float(32bit), 8-complex(2*float)
-			int width = (buf[4]<<24) + (buf[5]<<16) + (buf[6]<<8) + buf[7];
-			int height = (buf[8]<<24) + (buf[9]<<16) + (buf[10]<<8) + buf[11];
-			int n_images = (buf[12]<<24) + (buf[13]<<16) + (buf[14]<<8) + buf[15];
-			byte[] b_msg = new byte[80];
-			System.arraycopy(buf, 16, b_msg, 0, 80);
-			String comment = new String(b_msg);
-			int high_tension = (buf[96]<<24) + (buf[97]<<16) + (buf[98]<<8) + buf[99];
-			int spherical_aberration = (buf[100]<<24) + (buf[101]<<16) + (buf[102]<<8) + buf[103]; // in Cs [m m]
-			int illum_aperture = (buf[104]<<24) + (buf[105]<<16) + (buf[106]<<8) + buf[107]; // illum. aperture [m rad]
-			int magnification = (buf[108]<<24) + (buf[109]<<16) + (buf[110]<<8) + buf[111]; // electron optical magnification [x 1]
-			int post_magnification = (buf[112]<<24) + (buf[113]<<16) + (buf[114]<<8) + buf[115]; // [x 0.001]
-			int ccd_exposure = (buf[116]<<24) + (buf[117]<<16) + (buf[118]<<8) + buf[119]; // in ms
-			int ccd_pixels = (buf[120]<<24) + (buf[121]<<16) + (buf[122]<<8) + buf[123];// in x and y direction
-			int ccd_pixel_size = (buf[124]<<24) + (buf[125]<<16) + (buf[126]<<8) + buf[127]; // [m m]
-			int image_length = (buf[128]<<24) + (buf[129]<<16) + (buf[130]<<8) + buf[131]; // in nm
-			int defocus = (buf[132]<<24) + (buf[133]<<16) + (buf[134]<<8) + buf[135]; // [0.1 nm]
-			// prepare big String
-			StringBuffer sb = new StringBuffer();
-			sb.append("directory=").append(directory)
-			  .append(" name=").append(original_name)
-			  .append(" datatype=").append(datatype)
-			  .append(" width=").append(width)
-			  .append(" height=").append(height)
-			  .append(" n_images=").append(n_images)
-			  .append(" comment=").append(comment.replaceAll(" ", "QQQQ"))
-			  .append(" high_tension=").append(high_tension)
-			  .append(" spherical_aberration=").append(spherical_aberration)
-			  .append(" illum_aperture=").append(illum_aperture)
-			  .append(" magnification=").append(magnification)
-			  .append(" post_magnification=").append(post_magnification)
-			  .append(" ccd_exposure=").append(ccd_exposure)
-			  .append(" ccd_pixels=").append(ccd_pixels)
-			  .append(" ccd_pixel_size=").append(ccd_pixel_size)
-			  .append(" image_length=").append(image_length)
-			  .append(" defocus=").append(defocus)
-			;
-
-			ImagePlus imp = (ImagePlus)IJ.runPlugIn("Open_DAT_EMMENU", sb.toString());
-			if (imp==null) width = PLUGIN_NOT_FOUND;
-			if (imp!=null&&imp.getWidth()==0) imp = null;
-			return imp;
-		}
-
 		// GJ: added Biorad PIC confocal file handler
 		// ------------------------------------------
 		// These make 12345 if you read them as the right kind of short
 		// and should have this value in every Biorad PIC file
 		if (buf[54]==57 && buf[55]==48) {
-			o = tryPlugIn("Biorad_Reader", path);
+			return tryPlugIn("Biorad_Reader", path);
 		}
 		// GJ: added Gatan Digital Micrograph DM3 handler
 		// ----------------------------------------------
 		// check if the file ends in .DM3 or .dm3,
 		// and bytes make an int value of 3 which is the DM3 version number
 		if (name.endsWith(".dm3") && buf[0]==0 && buf[1]==0 && buf[2]==0 && buf[3]==3) {
-			o = tryPlugIn("DM3_Reader", path);
+			return tryPlugIn("DM3_Reader", path);
 		}
 
 		// IPLab file handler
@@ -181,42 +103,42 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		if (name.endsWith(".ipl") ||
 			(buf[0]==105 && buf[1]==105 && buf[2]==105 && buf[3]==105) ||
 			(buf[0]==109 && buf[1]==109 && buf[2]==109 && buf[3]==109)) {
-				o = tryPlugIn("IPLab_Reader", path);
+				return tryPlugIn("IPLab_Reader", path);
 		}
 
 		// Packard InstantImager format (.img) handler -> check HERE
 		// before Analyze check below!
 		// Check extension and signature bytes KAJ_
 		if (name.endsWith(".img") && buf[0]==75 && buf[1]==65 && buf[2]==74 && buf[3]==0) {
-			o = tryPlugIn("InstantImager_Reader", path);
+			return tryPlugIn("InstantImager_Reader", path);
 		}
 
 		// Analyze format (.img/.hdr) handler
 		// Note that the Analyze_Reader plugin opens and displays the
 		// image and does not implement the ImagePlus class.
 		if (name.endsWith(".img") || name.endsWith(".hdr")) {
-			o = tryPlugIn("Analyze_Reader", path);
+			return tryPlugIn("Analyze_Reader", path);
 		}
 
 		// Image Cytometry Standard (.ics) handler
 		// http://valelab.ucsf.edu/~nico/IJplugins/Ics_Opener.html
 		if (name.endsWith(".ics")) {
-			o = tryPlugIn("Ics_Opener", path);
+			return tryPlugIn("Ics_Opener", path);
 		}
 
 		// Princeton Instruments SPE image file (.spe) handler
 		// http://rsb.info.nih.gov/ij/plugins/spe.html
 		if (name.endsWith(".spe")) {
-			o = tryPlugIn("OpenSPE_", path);
+			return tryPlugIn("OpenSPE_", path);
 		}
 
 		// Zeiss Confocal LSM 510 image file (.lsm) handler
 		// http://rsb.info.nih.gov/ij/plugins/lsm-reader.html
 		if (name.endsWith(".lsm")) {
 			if (Menus.getCommands().get("Show LSMToolbox")!=null)
-				o = tryPlugIn("LSM_Toolbox", "file="+path);
+				return tryPlugIn("LSM_Toolbox", "file="+path);
 			else
-				o = tryPlugIn("LSM_Reader", path);
+				return tryPlugIn("LSM_Reader", path);
 		}
 
 		// BM: added Bruker file handler 29.07.04
@@ -224,31 +146,31 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		name.equals("2ii") || name.equals("3rrr") || name.equals("3iii") ||
 		name.equals("2dseq")) {
 			ij.IJ.showStatus("Opening Bruker " + name + " File");
-			o = tryPlugIn("BrukerOpener", name + "|" + path);
+			return tryPlugIn("BrukerOpener", name + "|" + path);
 		}
 
 		// AVI: open AVI files using AVI_Reader plugin
 		if (name.endsWith(".avi")) {
-			o = tryPlugIn("AVI_Reader", path);
+			return tryPlugIn("AVI_Reader", path);
 		}
 
 		// QuickTime: open .mov and .pict files using QT_Movie_Opener plugin
 		if (name.endsWith(".mov") || name.endsWith(".pict")) {
-			o = tryPlugIn("QT_Movie_Opener", path);
+			return tryPlugIn("QT_Movie_Opener", path);
 		}
 
 		// ZVI file handler
 		// Little-endian ZVI and Thumbs.db files start with d0 cf 11 e0
 		// so we can only look at the extension.
 		if (name.endsWith(".zvi")) {
-			o = tryPlugIn("ZVI_Reader", path);
+			return tryPlugIn("ZVI_Reader", path);
 		}
 
 		// University of North Carolina (UNC) file format handler
 		// 'magic' numbers are (int) offsets to data structures and
 		// may change in future releases.
 		if (name.endsWith(".unc") || (buf[3]==117 && buf[7]==-127 && buf[11]==36 && buf[14]==32 && buf[15]==-127)) {
-			o = tryPlugIn("UNC_Reader", path);
+			return tryPlugIn("UNC_Reader", path);
 		}
 
 		//  Leica SP confocal .lei file handler
@@ -262,7 +184,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 				IJ.error("Cannot find the Leica information file: "+path);
 				return null;
 			}
-			o = tryPlugIn("Leica_TIFF_sequence", path);
+			return tryPlugIn("Leica_TIFF_sequence", path);
 		} 
 
 		// Amira file handler 
@@ -271,15 +193,43 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 				&& buf[3]==0x6d && buf[4]==0x69 && buf[5]==0x72
 				&& buf[6]==0x61 && buf[7]==0x4d && buf[8]==0x65
 				&& buf[9]==0x73&&buf[10]==0x68 && buf[11]==0x20) {
-			o = tryPlugIn("AmiraMeshReader_", path);
+			return tryPlugIn("AmiraMeshReader_", path);
 		} 
 
 		// Deltavision file handler
 		// Open DV files generated on Applied Precision DeltaVision systems
 		if (name.endsWith(".dv") || name.endsWith(".r3d")) {
-			o = tryPlugIn("Deltavision_Opener", path);
+			return tryPlugIn("Deltavision_Opener", path);
 		}
 
+		// Albert Cardona: read .mrc files (little endian). Documentation at: http://ami.scripps.edu/prtl_data/mrc_specification.htm . The parsing of the header is a bare minimum of what could be done.
+		if (name.endsWith(".mrc")) {
+			return tryPlugIn("Open_MRC_Leginon", path);
+		}
+
+		// Albert Cardona: read .dat files from the EMMENU software
+		if (name.endsWith(".dat") && 1 == buf[1] && 0 == buf[2]) { // 'new format' only
+			return tryPlugIn("Open_DAT_EMMENU", path);
+		}
+
+		// Albert Cardona: read TrakEM2 .xml files
+		if (name.endsWith(".xml")) {
+			if (-1 != new String(buf).toLowerCase().indexOf("trakem2")) {
+				try {
+					// portable way, resists absence of TrakEM2_.jar in the classpath
+					final Class cla = Class.forName("ini.trakem2.Project");
+					if (null != cla) {
+						final java.lang.reflect.Method method = cla.getMethod("openFSProject", new Class[]{String.class});
+						method.invoke(null, new Object[]{path});
+					}
+					// assume success in any case
+					width = IMAGE_OPENED;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return null;
+			}
+		}
 
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type
@@ -292,16 +242,21 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		// check if the file ends in .xyz, and bytes 0 and 1 equal 42
 		if (name.endsWith(".xyz") && buf[0]==42 && buf[1]==42) {
 		// Ok we've identified the file type - now load it
-			o = tryPlugIn("XYZ_Reader", path);
+			return tryPlugIn("XYZ_Reader", path);
 		}
 		*/
 
+		return null;
+	}
+
+	private ImagePlus openImage(String directory, String name, String path) {
+		Object o = tryOpen(directory, name, path);
 		// if an image was returned, assume success
 		if (o instanceof ImagePlus) return (ImagePlus)o;
 
 		// try opening the file with LOCI Bio-Formats plugin - always check this last!
 		// Do not call Bio-Formats if File>Import>Image Sequence is opening this file.
-		if (o==null && (IJ.getVersion().compareTo("1.38j")<0||!IJ.redirectingErrorMessages())) {
+		if (o==null && (IJ.getVersion().compareTo("1.38j")<0||!IJ.redirectingErrorMessages()) && width != IMAGE_OPENED) {
 			Object loci = IJ.runPlugIn("loci.plugins.LociImporter", path);
 			if (loci!=null) {
 				// plugin exists and was launched
