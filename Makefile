@@ -66,6 +66,12 @@ $(TARGET): $(TARGET).o
 $(TARGET).o: $(TARGET).cxx Makefile
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
+ifeq ($(FIJI_ARGS),)
+ifneq ($(FIJI_RUN_PLUGIN),)
+FIJI_ARGS=-eval 'run("$(FIJI_RUN_PLUGIN)");'
+endif
+endif
+
 run: $(JDK) $(TARGET)
 	./$(TARGET) $(FIJI_ARGS)
 
