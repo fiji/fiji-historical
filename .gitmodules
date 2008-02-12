@@ -7,3 +7,15 @@
 [submodule "VIB"]
 	path = VIB
 	url = dumbo:/home/vibcvs/cvs
+[submodule "java/linux"]
+	path = java/linux
+	url = .
+[submodule "java/linux-amd64"]
+	path = java/linux-amd64
+	url = .
+[submodule "java/macosx"]
+	path = java/macosx
+	url = .
+[submodule "java/win32"]
+	path = java/win32
+	url = .

@@ -2,7 +2,6 @@ A loose TODO list for Fiji
 ==========================
 
 - menu structure!
-- only check out needed java (probably needs submodules)
 - support MacOSX/Intel (needs someone with an Intel Mac)
 - add BioFormats.
 - add targets for all platforms which make wrappers, such as a .zip or

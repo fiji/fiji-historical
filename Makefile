@@ -8,8 +8,6 @@ SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
 	sed -e "s|[^ ]*/ij.jar|ij.jar|" \
 		-e "s|[^ ]*/\([^ /]*\.jar\)|plugins/\1|g")
 
-all: $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) $(TARGET) run
-
 plugins/%.jar: staged-plugins/%.jar staged-plugins/%.config
 	CONFIG=$(patsubst plugins/%.jar,staged-plugins/%.config,$@) && \
 	cp $$CONFIG plugins.config && \
@@ -27,23 +25,27 @@ uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 LIBDL=-ldl
 ifeq ($(uname_S),Linux)
 ifeq ($(uname_M),x86_64)
-	JAVA_HOME=java/linux-amd64/jdk1.6.0_04/jre
+	JDK=java/linux-amd64
+	JAVA_HOME=$(JDK)/jdk1.6.0_04/jre
 	JAVA_LIB_PATH=lib/amd64/server/libjvm.so
 else
-	JAVA_HOME=java/linux/jdk1.6.0/jre
+	JDK=java/linux
+	JAVA_HOME=$(JDK)/jdk1.6.0/jre
 	JAVA_LIB_PATH=lib/i386/client/libjvm.so
 endif
 	ARCH=linux
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
-	JAVA_HOME=java/win32/jdk1.6.0_03/jre
+	JDK=java/win32
+	JAVA_HOME=$(JDK)/jdk1.6.0_03/jre
 	JAVA_LIB_PATH=bin/client/jvm.dll
 	ARCH=win32
 	EXTRADEFS+= -DMINGW32
 	LIBDL=
 endif
 ifeq ($(uname_S),Darwin)
-	JAVA_HOME=java/macosx/Home
+	JDK=java/macosx
+	JAVA_HOME=$(JDK)/Home
 	JAVA_LIB_PATH=../Libraries/libjvm.dylib
 	ARCH=macosx
 	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
@@ -55,13 +57,16 @@ CXXFLAGS=-g -I$(INCLUDE) -I$(INCLUDE)/$(ARCH) $(EXTRADEFS) \
 	-DJAVA_HOME=\"$(JAVA_HOME)\" -DJAVA_LIB_PATH=\"$(JAVA_LIB_PATH)\"
 LIBS=$(LIBDL) $(LIBMACOSX)
 
+.PHONY: $(JDK)
+all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) $(TARGET) run
+
 $(TARGET): $(TARGET).o
 	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
 
 $(TARGET).o: $(TARGET).cxx Makefile
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-run: $(TARGET)
+run: $(JDK) $(TARGET)
 	./$(TARGET)
 
 # submodules
@@ -79,4 +84,22 @@ $(SUBMODULE_TARGETS_IN_FIJI):
 			cp $$ORIGINAL_TARGET $@) \
 	}
 
+# JDK
+$(JDK):
+	@echo "Making $@"
+	@test -d "$(JDK)/.git" || \
+		(OBJECTSDIR="$$(pwd)/.git/objects" && \
+		 cd "$(JDK)" && \
+		 git init && \
+		 echo "$$OBJECTSDIR" > .git/objects/info/alternates && \
+		 BRANCH="refs/remotes/origin/$(JDK)" && \
+		 SHA1=$$(cd ../.. && git rev-parse --verify $$BRANCH) && \
+		 git update-ref "$$BRANCH" $$SHA1 && \
+		 git config remote.origin.url ../.. && \
+		 git config remote.origin.fetch +"$$BRANCH:$$BRANCH" && \
+		 git config branch.master.remote origin && \
+		 git config branch.master.merge "$$BRANCH" && \
+		 git fetch)
+	@echo "Updating $@"
+	@(cd "$(JDK)" && git pull)
 
