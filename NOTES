@@ -67,3 +67,77 @@ Then just "make", and the plugin will be automatically installed and
 committed (this needs "git" installed, though).
 
 
+Adding a JDK
+------------
+
+To add a new JDK, copy it into a directory java/<name>, where <name> is
+something similar to "linux", "win32", etc.
+
+Then, call "uname -s", and introduce a section in the Makefile for it:
+
+	ifeq ($(uname_S),Darwin)
+		JDK=java/macosx
+		JAVA_HOME=$(JDK)/Home
+		JAVA_LIB_PATH=../Libraries/libjvm.dylib
+		ARCH=macosx
+	endif
+
+You need to find out the JRE home and the location of the library libjvm.
+
+In this example, "Darwin" is the output of "uname -s", the JDK was copied
+to java/macosx, the JRE lives in $(JDK)/Home, libjvm is in
+$(JAVA_HOME)/../Libraries/libjvm.dylib, and Java's idea of the platform
+name is "macosx".
+
+Now call "make".  Fix all errors you encounter ;-)
+
+When everything works, initialise a git repository in $(JDK):
+
+	$ cd java/<whatever>
+	$ git init
+	$ git add .
+	  <wait until it finished; this takes a while>
+	$ git commit -m "Initial JDK for <whatever>"
+
+Then, push this branch to instar, as "java/<whatever>":
+
+	$ git push instar:/backup/repos/fiji.git/ \
+		master:refs/heads/java/<whatever>
+
+Now, commit the submodule in the superproject:
+
+	$ cd ../..
+	$ git fetch
+	  <the fetch is necessary to fetch java in the superproject>
+	$ git add Makefile
+	$ git add java/<whatever>
+	$ git commit -m "Inital JDK for <whatever>"
+
+To verify that it all worked, just delete the JDK and try to let "make"
+recreate it:
+
+	$ rm -rf java/<whatever>
+	$ mkdir java/<whatever>
+	$ make
+
+
+Upgrading a JDK / Adding Java3D
+-------------------------------
+
+It is much easier to upgrade a JDK than to add it:
+
+	$ cd java/<whatever>
+	$ rm -rf *
+	$ cp -R /wherever/<jdk> ./
+	$ git add -u
+	$ git add .
+	$ git commit -m "Upgrade JDK for <whatever>"
+
+and push it:
+
+	$ git push instar:/backup/repos/fiji.git/ \
+		master:refs/heads/java/<whatever>
+
+The procedure to add/upgrade Java3D is almost the same, except that you
+skip the "rm -rf *" step, and that you copy the Java3D files, not the
+JDK files, of course.
