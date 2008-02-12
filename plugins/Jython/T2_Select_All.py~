@@ -1,7 +1,0 @@
-layer = Display.getFront().getLayer()
-if layer is None:
-	IJ.showMessage("No TrakEM2 displays are open.")
-else:
-	sel = Display.getFront().getSelection()
-	for d in layer.getDisplayables():
-		sel.add(d)
