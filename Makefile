@@ -73,7 +73,8 @@ run: $(JDK) $(TARGET)
 
 .PHONY: $(SUBMODULE_TARGETS_IN_FIJI)
 $(SUBMODULE_TARGETS_IN_FIJI):
-	export JAVA_HOME="$$(pwd)/$(JAVA_HOME)" && \
+	@echo "Making $@"
+	@export JAVA_HOME="$$(pwd)/$(JAVA_HOME)" && \
 	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
 	ORIGINAL_TARGET=$(shell echo " $(SUBMODULE_TARGETS) " | \
 		sed "s/.* \([^ ]*$$(basename "$@")\) .*/\1/") && \
