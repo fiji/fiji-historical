@@ -51,7 +51,7 @@ ifeq ($(uname_S),Darwin)
 	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
 	LIBMACOSX=-lpthread -framework CoreFoundation
 endif
-INCLUDE=$(JAVA_HOME)/include
+INCLUDE=$(JAVA_HOME)/../include
 
 CXXFLAGS=-g -I$(INCLUDE) -I$(INCLUDE)/$(ARCH) $(EXTRADEFS) \
 	-DJAVA_HOME=\"$(JAVA_HOME)\" -DJAVA_LIB_PATH=\"$(JAVA_LIB_PATH)\"
