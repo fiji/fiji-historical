@@ -67,7 +67,7 @@ $(TARGET).o: $(TARGET).cxx Makefile
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 run: $(JDK) $(TARGET)
-	./$(TARGET)
+	./$(TARGET) $(FIJI_ARGS)
 
 # submodules
 
