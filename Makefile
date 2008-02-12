@@ -81,7 +81,7 @@ $(SUBMODULE_TARGETS_IN_FIJI):
 	DIR=$$(dirname $$ORIGINAL_TARGET) && \
 	test ! -e $$DIR/Makefile || { \
 		$(MAKE) -C $$DIR $$(basename $$ORIGINAL_TARGET) && \
-		(test -f $$ORIGINAL_TARGET -a ! $$ORIGINAL_TARGET -nt $@ || \
+		(test -f $$@ -a ! $$ORIGINAL_TARGET -nt $@ || \
 			cp $$ORIGINAL_TARGET $@) \
 	}
 
