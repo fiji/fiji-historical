@@ -23,6 +23,7 @@ uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 
 LIBDL=-ldl
+INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH)
 ifeq ($(uname_S),Linux)
 ifeq ($(uname_M),x86_64)
 	JDK=java/linux-amd64
@@ -44,16 +45,19 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	LIBDL=
 endif
 ifeq ($(uname_S),Darwin)
+ifeq ($(uname_M),Power Macintosh)
 	JDK=java/macosx
+else
+	JDK=java/macosx-intel
+endif
 	JAVA_HOME=$(JDK)/Home
 	JAVA_LIB_PATH=../Libraries/libjvm.dylib
-	ARCH=macosx
+	INCLUDES=-I$(JDK)/Headers
 	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
 	LIBMACOSX=-lpthread -framework CoreFoundation
 endif
-INCLUDE=$(JAVA_HOME)/../include
 
-CXXFLAGS=-g -I$(INCLUDE) -I$(INCLUDE)/$(ARCH) $(EXTRADEFS) \
+CXXFLAGS=-g $(INCLUDES) $(EXTRADEFS) \
 	-DJAVA_HOME=\"$(JAVA_HOME)\" -DJAVA_LIB_PATH=\"$(JAVA_LIB_PATH)\"
 LIBS=$(LIBDL) $(LIBMACOSX)
 
