@@ -126,15 +126,21 @@ public class Refresh_Jython_List implements PlugIn, ActionListener {
 		Object source = ae.getSource();
 		if (source instanceof MenuItem) {
 			MenuItem item = (MenuItem)source;
-			String file_name = item.getActionCommand();
+			final String file_name = item.getActionCommand();
 			if (file_name.indexOf(".py") == file_name.length() -3) {
-				try {
-					PythonInterpreter PI = new PythonInterpreter();
-					Jython_Interpreter.importAll(PI); //PI.exec("from ij import *\nfrom ij.gui import *\nfrom ij.io import *\nfrom ij.macro import *\nfrom ij.measure import *\nfrom ij.plugin import *\nfrom ij.plugin.filter import *\nfrom ij.plugin.frame import *\nfrom ij.process import *\nfrom ij.text import *\nfrom ij.util import *");
-					PI.execfile(jython_dir.getCanonicalPath() + File.separator + file_name);
-				} catch (Exception e) {
-					IJ.log(e.toString());
-				}
+				// fork to avoid running on the EventDispatchThread
+				new Thread() {
+					public void run() {
+						setPriority(Thread.NORM_PRIORITY);
+						try {
+							PythonInterpreter PI = new PythonInterpreter();
+							Jython_Interpreter.importAll(PI);
+							PI.execfile(jython_dir.getCanonicalPath() + File.separator + file_name);
+						} catch (Exception e) {
+							IJ.log(e.toString());
+						}
+					}
+				}.start();
 			}
 		}
 	}

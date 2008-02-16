@@ -66,15 +66,14 @@ import org.python.core.PyObject;
  */
 public class Jython_Interpreter implements PlugIn {
 	
-	JFrame window = new JFrame("Jython interpreter");
-	JTextArea screen = new JTextArea();
-	//JTextField prompt = new JTextField(60);
-	JTextArea prompt = new JTextArea(1, 60);//new JTextField(60);
+	final JFrame window = new JFrame("Jython interpreter");
+	final JTextArea screen = new JTextArea();
+	final JTextArea prompt = new JTextArea(1, 60);//new JTextField(60);
 	int active_line = 0;
-	ArrayList al_lines = new ArrayList();
-	PythonInterpreter pi = new PythonInterpreter();
-	ByteArrayOutputStream byte_out = new ByteArrayOutputStream();
-	BufferedOutputStream out = new BufferedOutputStream(byte_out);
+	final ArrayList al_lines = new ArrayList();
+	final PythonInterpreter pi = new PythonInterpreter();
+	final ByteArrayOutputStream byte_out = new ByteArrayOutputStream();
+	final BufferedOutputStream out = new BufferedOutputStream(byte_out);
 	Thread reader;
 	boolean reader_run = true;
 	JPopupMenu popup_menu;
@@ -82,6 +81,7 @@ public class Jython_Interpreter implements PlugIn {
 	String multiline = "";
 	String selection = null;
 	String last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
+	RunOnEnter runner;
 
 	public void run(String arghhh) {
 		//redirect stdout and stderr to the screen for the interpreter
@@ -109,12 +109,12 @@ public class Jython_Interpreter implements PlugIn {
 		//pre-import all ImageJ java classes and TrakEM2 java classes
 		String msg = importAll(pi);
 		screen.append(msg);
+		runner = new RunOnEnter(this);
 	}
 
 	void makeGUI() {
 		//JPanel panel = new JPanel();
 		//panel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
-		screen = new JTextArea();//30, 60);
 		//screen.setEditable(false);
 		screen.setLineWrap(true);
 		Font font = new Font("Courier", Font.PLAIN, 12);
@@ -224,7 +224,7 @@ public class Jython_Interpreter implements PlugIn {
 		prompt.getActionMap().put("enter",
 				new AbstractAction("enter") {
 					public void actionPerformed(ActionEvent ae) {
-						doEnter();
+						runner.doEnter();
 					}
 				});
 		DefaultFocusManager manager = new DefaultFocusManager() {
@@ -296,6 +296,7 @@ public class Jython_Interpreter implements PlugIn {
 		window.addWindowListener(
 				new WindowAdapter() {
 					public void windowClosing(WindowEvent we) {
+						runner.quit();
 						reader_run = false;
 						pi.setOut(System.out);
 						pi.setErr(System.err);
@@ -313,6 +314,40 @@ public class Jython_Interpreter implements PlugIn {
 		item.addActionListener(listener);
 		menu.add(item);
 	}
+
+	private class RunOnEnter extends Thread {
+		private Object lock = new Object();
+		private boolean go = true;
+		private Jython_Interpreter ji;
+		RunOnEnter(Jython_Interpreter ji) {
+			this.ji = ji;
+			setPriority(Thread.NORM_PRIORITY);
+			try { setDaemon(true); } catch (Exception e) { e.printStackTrace(); }
+			start();
+		}
+		public void quit() {
+			go = false;
+			synchronized (this) { notify(); }
+		}
+		public void doEnter() {
+			prompt.setEnabled(false);
+			synchronized (this) { notify(); }
+		}
+		public void run() {
+			while (go) {
+				try {
+					synchronized (this) { wait(); }
+					if (!go) return;
+					ji.doEnter();
+				 } catch (InterruptedException e) {
+					 e.printStackTrace();
+				 } finally {
+					 prompt.setEnabled(true);
+				 }
+			}
+		}
+	}
+
 
 	boolean previous_line_empty = false;
 	
