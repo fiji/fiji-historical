@@ -62,7 +62,7 @@ CXXFLAGS=-g $(INCLUDES) $(EXTRADEFS) \
 LIBS=$(LIBDL) $(LIBMACOSX)
 
 .PHONY: $(JDK)
-all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) $(TARGET) run
+all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) plugins-src $(TARGET) run
 
 $(TARGET): $(TARGET).o
 	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
@@ -113,4 +113,10 @@ $(JDK):
 		 git fetch)
 	@echo "Updating $@"
 	@(cd "$(JDK)" && git pull)
+
+.PHONY: plugins-src
+plugins-src:
+	@export JAVA_HOME="$$(pwd)/$(JAVA_HOME)/.." && \
+	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
+	$(MAKE) -C $@
 
