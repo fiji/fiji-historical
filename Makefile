@@ -120,3 +120,6 @@ plugins-src:
 	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
 	$(MAKE) -C $@
 
+check: plugins-src $(TARGET)
+	./$(TARGET) -eval 'run("Get Class Versions"); run("Quit");' | \
+		sort
