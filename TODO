@@ -2,16 +2,18 @@ A loose TODO list for Fiji
 ==========================
 
 - menu structure!
-- support MacOSX/Intel (needs someone with an Intel Mac)
+- support MacOSX/Intel Java3D (J-Y said that JOGL might be the problem)
 - add BioFormats.
+- add portable app
 - add targets for all platforms which make wrappers, such as a .zip or
-  a .dmg file.
+  a .dmg file
+- maybe make a live CD from detaolb or some such
 - find a way to determine the optimal heap size in the wrapper (is that
   still necessary?  For example, on instar, it seems that a sensible
-  default is chosen by java already).
+  default is chosen by java already)
 - solve LD_LIBRARY_PATH problem for jfftw.  Maybe by linking with dlopen()?
   Or is it enough to put jfftw.so into lib/i386/?
 - maybe change the path of IJ_Prefs.txt also on other platforms than Win32?
 - make absolute path from argv0 in get_fiji_dir().
-- in ImageJA: enable plugin .config files to access any directory. A flag
+- in ImageJA: enable plugin .config files to access any menu. A flag
   to 'add after <existing_default_menu_entry>' would be awesome.
