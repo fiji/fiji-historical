@@ -100,7 +100,7 @@ $(SUBMODULE_TARGETS_IN_FIJI):
 $(JDK):
 	@echo "Making $@"
 	@test -d "$(JDK)/.git" || \
-		(OBJECTSDIR="$$(pwd)/.git/objects" && \
+		(OBJECTSDIR="$$(pwd -W 2> /dev/null || pwd)/.git/objects" && \
 		 cd "$(JDK)" && \
 		 git init && \
 		 echo "$$OBJECTSDIR" > .git/objects/info/alternates && \
