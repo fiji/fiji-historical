@@ -1,4 +1,4 @@
-TARGET=fiji
+TARGET=fiji-$(ARCH)
 
 NEW_JARS=$(wildcard staged-plugins/*.jar)
 JARS=$(patsubst staged-plugins/%,plugins/%,$(NEW_JARS))
@@ -23,32 +23,33 @@ uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 
 LIBDL=-ldl
-INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH)
+INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH_INCLUDE)
+JDK=java/$(ARCH)
+ARCH_INCLUDE=$(ARCH)
 ifeq ($(uname_S),Linux)
 ifeq ($(uname_M),x86_64)
-	JDK=java/linux-amd64
+	ARCH=linux-amd64
+	ARCH_INCLUDE=linux
 	JAVA_HOME=$(JDK)/jdk1.6.0_04/jre
 	JAVA_LIB_PATH=lib/amd64/server/libjvm.so
 else
-	JDK=java/linux
+	ARCH=linux
 	JAVA_HOME=$(JDK)/jdk1.6.0/jre
 	JAVA_LIB_PATH=lib/i386/client/libjvm.so
 endif
-	ARCH=linux
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
-	JDK=java/win32
+	ARCH=win32
 	JAVA_HOME=$(JDK)/jdk1.6.0_03/jre
 	JAVA_LIB_PATH=bin/client/jvm.dll
-	ARCH=win32
 	EXTRADEFS+= -DMINGW32
 	LIBDL=
 endif
 ifeq ($(uname_S),Darwin)
 ifeq ($(uname_M),Power Macintosh)
-	JDK=java/macosx
+	ARCH=macosx
 else
-	JDK=java/macosx-intel
+	ARCH=macosx-intel
 endif
 	JAVA_HOME=$(JDK)/Home
 	JAVA_LIB_PATH=../Libraries/libjvm.dylib
@@ -64,10 +65,10 @@ LIBS=$(LIBDL) $(LIBMACOSX)
 .PHONY: $(JDK)
 all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) plugins-src $(TARGET) run
 
-$(TARGET): $(TARGET).o
+$(TARGET): fiji.o
 	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
 
-$(TARGET).o: $(TARGET).cxx Makefile
+fiji.o: fiji.cxx Makefile
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 ifeq ($(FIJI_ARGS),)
