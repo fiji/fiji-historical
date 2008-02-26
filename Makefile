@@ -124,3 +124,55 @@ plugins-src:
 check: plugins-src $(TARGET)
 	./$(TARGET) -eval 'run("Get Class Versions"); run("Quit");' | \
 		sort
+
+portable-app: Fiji.app
+	for arch in linux linux-amd64 win32; do \
+		case $$arch in win32) exe=.exe;; *) exe=;; esac; \
+		cp fiji-$$arch$$exe $</; \
+		jdk=$$(git ls-tree --name-only origin/java/$$arch:); \
+		jre=$$jdk/jre; \
+		git archive --prefix=$</java/$$arch/$$jre/ \
+				origin/java/$$arch:$$jre | \
+			tar xvf -; \
+	done
+
+Fiji.app: MACOS=$@/Contents/MacOS
+Fiji.app: PLIST=$@/Contents/Info.plist
+
+# TODO: use universal Java instead of PPC only?
+#	Maybe need both, for older MacOSX...
+Fiji.app: fiji-macosx
+	mkdir -p $(MACOS)
+	echo '<?xml version="1.0" encoding="UTF-8"?>' > $(PLIST)
+	echo '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> $(PLIST)
+	echo '<plist version="1.0">' >> $(PLIST)
+	echo '<dict>' >> $(PLIST)
+	echo '	<key>CFBundleExecutable</key>' >> $(PLIST)
+	echo '		<string>fiji-macosx</string>' >> $(PLIST)
+	echo '	<key>CFBundleGetInfoString</key>' >> $(PLIST)
+	echo '		<string>Fiji for Mac OS X</string>' >> $(PLIST)
+	echo '	<key>CFBundleIconFile</key>' >> $(PLIST)
+	echo '		<string>fiji.icns</string>' >> $(PLIST)
+	echo '	<key>CFBundleIdentifier</key>' >> $(PLIST)
+	echo '		<string>org.fiji</string>' >> $(PLIST)
+	echo '	<key>CFBundleInfoDictionaryVersion</key>' >> $(PLIST)
+	echo '		<string>6.0</string>' >> $(PLIST)
+	echo '	<key>CFBundleName</key>' >> $(PLIST)
+	echo '		<string>Fiji</string>' >> $(PLIST)
+	echo '	<key>CFBundlePackageType</key>' >> $(PLIST)
+	echo '		<string>APPL</string>' >> $(PLIST)
+	echo '	<key>CFBundleVersion</key>' >> $(PLIST)
+	echo '		<string>1.0</string>' >> $(PLIST)
+	echo '	<key>NSPrincipalClass</key>' >> $(PLIST)
+	echo '		<string>NSApplication</string>' >> $(PLIST)
+	echo '</dict>' >> $(PLIST)
+	echo '</plist>"' >> $(PLIST)
+	cp $< $(MACOS)/
+	for d in java plugins macros ij.jar; do \
+		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
+	done
+	git archive --prefix=$@/java/macosx/ origin/java/macosx: | \
+		tar xvf -
+	cp ij.jar $@/
+	cp -R plugins $@/
+	cp -R macros $@/
