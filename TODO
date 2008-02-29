@@ -1,6 +1,8 @@
 A loose TODO list for Fiji
 ==========================
 
+- look into the ImageJUpdater (maybe we need to disable it)
+- use -port0
 - add portable app (make target have suffix -$(ARCH) and commit them, so that
   the portable app can support all platforms)
 - menu structure!
