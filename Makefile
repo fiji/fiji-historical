@@ -44,6 +44,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	JAVA_LIB_PATH=bin/client/jvm.dll
 	EXTRADEFS+= -DMINGW32
 	LIBDL=
+	EXE=.exe
 endif
 ifeq ($(uname_S),Darwin)
 ifeq ($(uname_M),Power Macintosh)
@@ -63,9 +64,9 @@ CXXFLAGS=-g $(INCLUDES) $(EXTRADEFS) \
 LIBS=$(LIBDL) $(LIBMACOSX)
 
 .PHONY: $(JDK)
-all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) plugins-src $(TARGET) run
+all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) plugins-src run
 
-$(TARGET): fiji.o
+$(TARGET)$(EXE): fiji.o
 	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
 
 fiji.o: fiji.cxx Makefile
@@ -77,8 +78,8 @@ FIJI_ARGS=-eval 'run("$(FIJI_RUN_PLUGIN)");'
 endif
 endif
 
-run: $(JDK) $(TARGET)
-	./$(TARGET) $(FIJI_ARGS)
+run: $(JDK) $(TARGET)$(EXE)
+	./$(TARGET)$(EXE) $(FIJI_ARGS)
 
 # submodules
 
@@ -121,8 +122,8 @@ plugins-src:
 	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
 	$(MAKE) -C $@
 
-check: plugins-src $(TARGET)
-	./$(TARGET) -eval 'run("Get Class Versions"); run("Quit");' | \
+check: plugins-src $(TARGET)$(EXE)
+	./$(TARGET)$(EXE) -eval 'run("Get Class Versions"); run("Quit");' | \
 		sort
 
 portable-app: Fiji.app
