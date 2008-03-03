@@ -56,13 +56,20 @@ import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Collections;
 import org.python.util.PythonInterpreter;
 import org.python.core.PyObject;
 
 /** A dynamic Jython interpreter for ImageJ.
  *	It'd be nice to have TAB expand ImageJ class names and methods.
  *
- *	Version: 2005-11-01 18:36
+ *	Version: 2008-02-25 12:!2
+ *
+ *	$ PATH=/usr/local/jdk1.5.0_14/bin:$PATH javac -classpath .:../../ij.jar:../jython21/jython.jar Jython_Interpreter.java Refresh_Jython_List.java
+ *	$ jar cf Jython_Interpreter.jar *class plugins.config
  */
 public class Jython_Interpreter implements PlugIn {
 	
@@ -82,6 +89,10 @@ public class Jython_Interpreter implements PlugIn {
 	String selection = null;
 	String last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
 	RunOnEnter runner;
+
+	private void p(String msg) {
+		System.out.println(msg);
+	}
 
 	public void run(String arghhh) {
 		//redirect stdout and stderr to the screen for the interpreter
@@ -242,7 +253,7 @@ public class Jython_Interpreter implements PlugIn {
 		prompt.getActionMap().put("tab",
 				new AbstractAction("tab") {
 					public void actionPerformed(ActionEvent ae) {
-						doTab();
+						doTab(ae);
 					}
 				});
 		screen.addMouseListener(
@@ -339,10 +350,15 @@ public class Jython_Interpreter implements PlugIn {
 					synchronized (this) { wait(); }
 					if (!go) return;
 					ji.doEnter();
-				 } catch (InterruptedException e) {
+				 } catch (Exception e) {
 					 e.printStackTrace();
 				 } finally {
-					 prompt.setEnabled(true);
+					prompt.setEnabled(true);
+					window.setVisible(true);
+					prompt.requestFocus();
+					// set caret position at the end of the prompt tabs
+					String mb = prompt.getText();
+					prompt.setCaretPosition(null == mb ? 0 : mb.length());
 				 }
 			}
 		}
@@ -424,6 +440,8 @@ public class Jython_Interpreter implements PlugIn {
 		} finally {
 			//remove tabs from prompt
 			prompt.setText("");
+			// reset tab expansion
+			last_tab_expand = null;
 		}
 	}
 
@@ -434,7 +452,7 @@ public class Jython_Interpreter implements PlugIn {
 	}
 
 	/** Insert a tab in the prompt (in replacement for Component focus)*/
-	void doTab() {
+	synchronized void doTab(ActionEvent ae) {
 		String prompt_text = prompt.getText();
 		int len = prompt_text.length();
 		boolean add_tab = true;
@@ -447,6 +465,151 @@ public class Jython_Interpreter implements PlugIn {
 		}
 		if (add_tab) {
 			prompt.setText(prompt_text + "\t");
+		} else {
+			// attempt to expand the variable name, if possible
+			expandName(prompt_text, ae);
+		}
+	}
+
+	private String extractWordStub(final String prompt_text, final int caret_position) {
+		final char[] c = new char[]{' ', '.', '(', ',', '['};
+		final int[] cut = new int[c.length];
+		for (int i=0; i<cut.length; i++) {
+			cut[i] = prompt_text.lastIndexOf(c[i], caret_position);
+		}
+		Arrays.sort(cut);
+		int ifirst = cut[cut.length-1] + 1;
+		if (-1 == ifirst) return null;
+		//p(ifirst + "," + caret_position + ", " + prompt_text.length());
+		return prompt_text.substring(ifirst, caret_position);
+	}
+
+	private void expandName(String prompt_text, ActionEvent ae) {
+		if (null != last_tab_expand) {
+			last_tab_expand.cycle(ae);
+			return;
+		}
+		if (null == prompt_text) prompt_text = prompt.getText();
+		int ilast = prompt.getCaretPosition() -1;
+		// check preconditions
+		if (ilast <= 0) return;
+		char last = prompt_text.charAt(ilast);
+		if (' ' == last || '\t' == last) {
+			p("last char is space or tab");
+			return;
+		}
+		// parse last word stub
+		String stub = extractWordStub(prompt_text, ilast+1);
+		// check against all existing variables, which fortunately includes imported class names
+		/* // WORKS, but there is a better way
+		StringBuffer py = new StringBuffer("def __promptstubexpand(allvars):\n")
+		.append("\t__stubexpansionresult = []\n")
+		.append("\tfor k,v in allvars.iteritems():\n")
+		.append("\t\tif k.startswith('").append(stub).append("'):\n")
+		.append("\t\t\t__stubexpansionresult.append(k)\n")
+		.append("\t\t\tprint k\n")
+		.append("\treturn __stubexpansionresult\n")
+		;
+		pi.exec(py.toString());
+		PyObject py_ob = pi.eval("__promptstubexpand(vars())\n");
+		if (null == py_ob) return;
+		String[] list = (String[])py_ob.__tojava__(String[].class);
+		for (int i=0; i<list.length; i++) {
+			System.out.println(list[i]);
+		}
+		*/
+		/*  DOES NOT WORK, not a dictionary/hashtable, pyt a PySingleton (?)
+		PyObject py_ob = pi.eval("vars()");
+		if (null == py_ob) return;
+		Hashtable ht = (Hashtable)py_ob.__tojava__(Hashtable.class);
+		for (Iterator it = ht.keySet().iterator(); it.hasNext(); ) {
+			String key = (String)it.next();
+			if (key.startsWith(stub)) {
+				System.out.println(key);
+			}
+		}
+		*/
+		// Easiest and safest way:
+		PyObject py_vars = pi.eval("vars().keys()");
+		if (null == py_vars) {
+			p("No vars to search into");
+			return;
+		}
+		String[] vars = (String[])py_vars.__tojava__(String[].class);
+		ArrayList al = new ArrayList();
+		for (int i=0; i<vars.length; i++) {
+			if (vars[i].startsWith(stub)) {
+				//System.out.println(vars[i]);
+				al.add(vars[i]);
+			}
+		}
+		Collections.sort(al, String.CASE_INSENSITIVE_ORDER);
+		System.out.println("stub: '" + stub + "'");
+		if (al.size() > 0) {
+			last_tab_expand = new TabExpand(al, ilast - stub.length() + 1, stub);
+		} else {
+			last_tab_expand = null;
+		}
+	}
+
+	private TabExpand last_tab_expand = null;
+
+	private class TabExpand {
+		ArrayList al = new ArrayList();
+		int i = 0;
+		int istart; // stub starting index
+		int len_prev; // length of previously set word
+		String stub;
+		TabExpand(ArrayList al, int istart, String stub) {
+			this.al.addAll(al);
+			this.istart = istart;
+			this.stub = stub;
+			this.len_prev = stub.length();
+			cycle(null);
+		}
+		void cycle(ActionEvent ae) {
+			if (null == ae) {
+				// first time
+				set();
+				return;
+			}
+
+			/*
+			p("##\nlen_prev: " + len_prev);
+			p("i : " + i);
+			p("prompt.getText(): " + prompt.getText());
+			p("prompt.getText().length(): " + prompt.getText().length());
+			p("istart: " + istart + "\n##");
+			*/
+
+			int plen = prompt.getText().length();
+			String stub = extractWordStub(prompt.getText(), this.istart + len_prev > plen ? plen : this.istart + len_prev); // may be null
+			if (this.stub.equals(stub) || al.get(i).equals(stub)) {
+				// ok
+			} else {
+				// can't expand, remake
+				last_tab_expand = null;
+				expandName(prompt.getText(), ae);
+				return;
+			}
+
+			// check preconditions
+			if (0 == al.size()) {
+				p("No elems to expand to");
+				return;
+			}
+
+			// ok set prompt to next
+			i += ( 0 != (ae.getModifiers() & ActionEvent.SHIFT_MASK) ? -1 : 1);
+			if (al.size() == i) i = 0;
+			if (-1 == i) i = al.size() -1;
+			set();
+		}
+		private void set() {
+			String pt = prompt.getText();
+			if (i > 0) p("set to " + al.get(i));
+			prompt.setText(pt.substring(0, istart) + al.get(i).toString() + pt.substring(istart + len_prev));
+			len_prev = ((String)al.get(i)).length();
 		}
 	}
 
@@ -455,7 +618,7 @@ public class Jython_Interpreter implements PlugIn {
 		pi.exec("from ij import *\nfrom ij.gui import *\nfrom ij.io import *\nfrom ij.macro import *\nfrom ij.measure import *\nfrom ij.plugin import *\nfrom ij.plugin.filter import *\nfrom ij.plugin.frame import *\nfrom ij.process import *\nfrom ij.text import *\nfrom ij.util import *\n");
 		String msg = "All ImageJ";
 		try {
-			pi.exec("from ini.trakem2 import *\nfrom ini.trakem2.persistence import *\nfrom ini.trakem2.tree import *\nfrom ini.trakem2.display import *\nfrom ini.trakem2.imaging import *\nfrom ini.trakem2.io import *\nfrom ini.trakem2.utils import *\nfrom mpi.fruitfly.registration import *\n");
+			pi.exec("from ini.trakem2 import *\nfrom ini.trakem2.persistence import *\nfrom ini.trakem2.tree import *\nfrom ini.trakem2.display import *\nfrom ini.trakem2.imaging import *\nfrom ini.trakem2.io import *\nfrom ini.trakem2.utils import *\nfrom ini.trakem2.vector import *\nfrom mpi.fruitfly.analysis import *\nfrom mpi.fruitfly.fft import *\nfrom mpi.fruitfly.general import *\nfrom mpi.fruitfly.math import *\nfrom mpi.fruitfly.math.datastructures import *\nfrom mpi.fruitfly.registration import *\n");
 			msg += " and TrakEM2";
 		} catch (Exception e) { /*fail silently*/ }
 		return msg + " classes imported.\n";
