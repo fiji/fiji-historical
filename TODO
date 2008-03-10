@@ -3,11 +3,9 @@ A loose TODO list for Fiji
 
 - look into the ImageJUpdater (maybe we need to disable it)
 - use -port0
-- add portable app (make target have suffix -$(ARCH) and commit them, so that
-  the portable app can support all platforms)
+- support single-platform portable app
 - menu structure!
-- support MacOSX/Intel Java3D (J-Y said that JOGL might be the problem)
-- add BioFormats.
+- add current BioFormats.
 - add targets for all platforms which make wrappers, such as a .zip or
   a .dmg file
 - maybe make a live CD from detaolb or some such
@@ -15,7 +13,8 @@ A loose TODO list for Fiji
   still necessary?  For example, on instar, it seems that a sensible
   default is chosen by java already)
 - solve LD_LIBRARY_PATH problem for jfftw.  Maybe by linking with dlopen()?
-  Or is it enough to put jfftw.so into lib/i386/?
+  Or is it enough to put jfftw.so into lib/i386/?  In any case, we need to
+  compile FFTW natively for this.
 - maybe change the path of IJ_Prefs.txt also on other platforms than Win32?
 - make absolute path from argv0 in get_fiji_dir().
 - in ImageJA: enable plugin .config files to access any menu. A flag
