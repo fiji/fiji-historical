@@ -9,14 +9,7 @@ SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
 		-e "s|[^ ]*/\([^ /]*\.jar\)|plugins/\1|g")
 
 plugins/%.jar: staged-plugins/%.jar staged-plugins/%.config
-	CONFIG=$(patsubst plugins/%.jar,staged-plugins/%.config,$@) && \
-	cp $$CONFIG plugins.config && \
-	jar uvf $< plugins.config && \
-	rm plugins.config && \
-	MSG="$$(if [ -f $@ ]; then echo Updated; else echo Added; fi) $@" && \
-	mv $< $@ && \
-	git add $$CONFIG $@ && \
-	git commit -s -m "$$MSG" $$CONFIG $@
+	./scripts/copy-jar-if-newer.sh --delete --commit $< $@
 
 # Java wrapper
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
@@ -91,11 +84,10 @@ $(SUBMODULE_TARGETS_IN_FIJI):
 	ORIGINAL_TARGET=$(shell echo " $(SUBMODULE_TARGETS) " | \
 		sed "s/.* \([^ ]*$$(basename "$@")\) .*/\1/") && \
 	DIR=$$(dirname $$ORIGINAL_TARGET) && \
-	test ! -e $$DIR/Makefile || { \
+	test ! -e $$DIR/Makefile || ( \
 		$(MAKE) -C $$DIR $$(basename $$ORIGINAL_TARGET) && \
-		(test ! -f $$@ || test ! $$ORIGINAL_TARGET -nt $@ || \
-			cp $$ORIGINAL_TARGET $@) \
-	}
+		./scripts/copy-jar-if-newer.sh $$ORIGINAL_TARGET $@ \
+	)
 
 # JDK
 $(JDK):
