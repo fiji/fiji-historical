@@ -16,6 +16,9 @@
 [submodule "java/macosx"]
 	path = java/macosx
 	url = .
+[submodule "java/macosx-intel"]
+	path = java/macosx-intel
+	url = .
 [submodule "java/win32"]
 	path = java/win32
 	url = .

@@ -50,6 +50,12 @@ static char *get_fiji_dir(const char *argv0)
 {
 	const char *slash = strrchr(argv0, '/');
 	static char buffer[PATH_MAX];
+#ifdef WIN32
+	const char *backslash = strrchr(argv0, '\\');
+
+	if (backslash && slash < backslash)
+		slash = backslash;
+#endif
 
 	if (slash)
 		snprintf(buffer, slash - argv0 + 1, argv0);
@@ -148,7 +154,8 @@ static void *start_ij(void *dummy)
 		jstring jstr;
 		jobjectArray args;
 
-		if (main_argc > 1 && !(jstr = env->NewStringUTF(main_argv[1])))
+		if (!(jstr = env->NewStringUTF(main_argc > 1 ?
+						main_argv[1] : "")))
 			goto fail;
 		if (!(args = env->NewObjectArray(main_argc - 1,
 				env->FindClass("java/lang/String"), jstr)))
@@ -162,6 +169,8 @@ static void *start_ij(void *dummy)
 		if (vm->DetachCurrentThread())
 			std::cerr << "Could not detach current thread"
 				<< std::endl;
+		/* This does not return until ImageJ exits */
+		vm->DestroyJavaVM();
 		return NULL;
 	}
 
@@ -209,6 +218,6 @@ int main(int argc, char **argv, char **e)
 	main_argv = argv;
 	main_argc = argc;
 	start_ij(NULL);
-	sleep((unsigned long)-1l);
+	return 0;
 }
 

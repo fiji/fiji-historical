@@ -1,4 +1,4 @@
-TARGET=fiji
+TARGET=fiji-$(ARCH)
 
 NEW_JARS=$(wildcard staged-plugins/*.jar)
 JARS=$(patsubst staged-plugins/%,plugins/%,$(NEW_JARS))
@@ -9,46 +9,41 @@ SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
 		-e "s|[^ ]*/\([^ /]*\.jar\)|plugins/\1|g")
 
 plugins/%.jar: staged-plugins/%.jar staged-plugins/%.config
-	CONFIG=$(patsubst plugins/%.jar,staged-plugins/%.config,$@) && \
-	cp $$CONFIG plugins.config && \
-	jar uvf $< plugins.config && \
-	rm plugins.config && \
-	MSG="$$(if [ -f $@ ]; then echo Updated; else echo Added; fi) $@" && \
-	mv $< $@ && \
-	git add $$CONFIG $@ && \
-	git commit -s -m "$$MSG" $$CONFIG $@
+	./scripts/copy-jar-if-newer.sh --delete --commit $< $@
 
 # Java wrapper
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 
 LIBDL=-ldl
-INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH)
+INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH_INCLUDE)
+JDK=java/$(ARCH)
+ARCH_INCLUDE=$(ARCH)
 ifeq ($(uname_S),Linux)
 ifeq ($(uname_M),x86_64)
-	JDK=java/linux-amd64
+	ARCH=linux-amd64
+	ARCH_INCLUDE=linux
 	JAVA_HOME=$(JDK)/jdk1.6.0_04/jre
 	JAVA_LIB_PATH=lib/amd64/server/libjvm.so
 else
-	JDK=java/linux
+	ARCH=linux
 	JAVA_HOME=$(JDK)/jdk1.6.0/jre
 	JAVA_LIB_PATH=lib/i386/client/libjvm.so
 endif
-	ARCH=linux
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
-	JDK=java/win32
+	ARCH=win32
 	JAVA_HOME=$(JDK)/jdk1.6.0_03/jre
 	JAVA_LIB_PATH=bin/client/jvm.dll
-	ARCH=win32
 	EXTRADEFS+= -DMINGW32
 	LIBDL=
+	EXE=.exe
 endif
 ifeq ($(uname_S),Darwin)
 ifeq ($(uname_M),Power Macintosh)
-	JDK=java/macosx
+	ARCH=macosx
 else
-	JDK=java/macosx-intel
+	ARCH=macosx-intel
 endif
 	JAVA_HOME=$(JDK)/Home
 	JAVA_LIB_PATH=../Libraries/libjvm.dylib
@@ -62,12 +57,12 @@ CXXFLAGS=-g $(INCLUDES) $(EXTRADEFS) \
 LIBS=$(LIBDL) $(LIBMACOSX)
 
 .PHONY: $(JDK)
-all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) $(TARGET) run
+all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) plugins-src run
 
-$(TARGET): $(TARGET).o
+$(TARGET)$(EXE): fiji.o
 	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
 
-$(TARGET).o: $(TARGET).cxx Makefile
+fiji.o: fiji.cxx Makefile
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 ifeq ($(FIJI_ARGS),)
@@ -76,8 +71,8 @@ FIJI_ARGS=-eval 'run("$(FIJI_RUN_PLUGIN)");'
 endif
 endif
 
-run: $(JDK) $(TARGET)
-	./$(TARGET) $(FIJI_ARGS)
+run: $(JDK) $(TARGET)$(EXE)
+	./$(TARGET)$(EXE) $(FIJI_ARGS)
 
 # submodules
 
@@ -89,17 +84,16 @@ $(SUBMODULE_TARGETS_IN_FIJI):
 	ORIGINAL_TARGET=$(shell echo " $(SUBMODULE_TARGETS) " | \
 		sed "s/.* \([^ ]*$$(basename "$@")\) .*/\1/") && \
 	DIR=$$(dirname $$ORIGINAL_TARGET) && \
-	test ! -e $$DIR/Makefile || { \
+	test ! -e $$DIR/Makefile || ( \
 		$(MAKE) -C $$DIR $$(basename $$ORIGINAL_TARGET) && \
-		(test ! -f $$@ || test ! $$ORIGINAL_TARGET -nt $@ || \
-			cp $$ORIGINAL_TARGET $@) \
-	}
+		./scripts/copy-jar-if-newer.sh $$ORIGINAL_TARGET $@ \
+	)
 
 # JDK
 $(JDK):
 	@echo "Making $@"
 	@test -d "$(JDK)/.git" || \
-		(OBJECTSDIR="$$(pwd)/.git/objects" && \
+		(OBJECTSDIR="$$(pwd -W 2> /dev/null || pwd)/.git/objects" && \
 		 cd "$(JDK)" && \
 		 git init && \
 		 echo "$$OBJECTSDIR" > .git/objects/info/alternates && \
@@ -114,3 +108,64 @@ $(JDK):
 	@echo "Updating $@"
 	@(cd "$(JDK)" && git pull)
 
+.PHONY: plugins-src
+plugins-src:
+	@export JAVA_HOME="$$(pwd)/$(JAVA_HOME)/.." && \
+	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
+	$(MAKE) -C $@
+
+check: plugins-src $(TARGET)$(EXE)
+	./$(TARGET)$(EXE) -eval 'run("Get Class Versions"); run("Quit");' | \
+		sort
+
+portable-app: Fiji.app
+	for arch in linux linux-amd64 win32; do \
+		case $$arch in win32) exe=.exe;; *) exe=;; esac; \
+		cp fiji-$$arch$$exe $</; \
+		jdk=$$(git ls-tree --name-only origin/java/$$arch:); \
+		jre=$$jdk/jre; \
+		git archive --prefix=$</java/$$arch/$$jre/ \
+				origin/java/$$arch:$$jre | \
+			tar xvf -; \
+	done
+
+Fiji.app: MACOS=$@/Contents/MacOS
+Fiji.app: PLIST=$@/Contents/Info.plist
+
+# TODO: use universal Java instead of PPC only?
+#	Maybe need both, for older MacOSX...
+Fiji.app: fiji-macosx
+	mkdir -p $(MACOS)
+	echo '<?xml version="1.0" encoding="UTF-8"?>' > $(PLIST)
+	echo '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> $(PLIST)
+	echo '<plist version="1.0">' >> $(PLIST)
+	echo '<dict>' >> $(PLIST)
+	echo '	<key>CFBundleExecutable</key>' >> $(PLIST)
+	echo '		<string>fiji-macosx</string>' >> $(PLIST)
+	echo '	<key>CFBundleGetInfoString</key>' >> $(PLIST)
+	echo '		<string>Fiji for Mac OS X</string>' >> $(PLIST)
+	echo '	<key>CFBundleIconFile</key>' >> $(PLIST)
+	echo '		<string>fiji.icns</string>' >> $(PLIST)
+	echo '	<key>CFBundleIdentifier</key>' >> $(PLIST)
+	echo '		<string>org.fiji</string>' >> $(PLIST)
+	echo '	<key>CFBundleInfoDictionaryVersion</key>' >> $(PLIST)
+	echo '		<string>6.0</string>' >> $(PLIST)
+	echo '	<key>CFBundleName</key>' >> $(PLIST)
+	echo '		<string>Fiji</string>' >> $(PLIST)
+	echo '	<key>CFBundlePackageType</key>' >> $(PLIST)
+	echo '		<string>APPL</string>' >> $(PLIST)
+	echo '	<key>CFBundleVersion</key>' >> $(PLIST)
+	echo '		<string>1.0</string>' >> $(PLIST)
+	echo '	<key>NSPrincipalClass</key>' >> $(PLIST)
+	echo '		<string>NSApplication</string>' >> $(PLIST)
+	echo '</dict>' >> $(PLIST)
+	echo '</plist>"' >> $(PLIST)
+	cp $< $(MACOS)/
+	for d in java plugins macros ij.jar; do \
+		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
+	done
+	git archive --prefix=$@/java/macosx/ origin/java/macosx: | \
+		tar xvf -
+	cp ij.jar $@/
+	cp -R plugins $@/
+	cp -R macros $@/
