@@ -204,12 +204,12 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 
 		// Albert Cardona: read .mrc files (little endian). Documentation at: http://ami.scripps.edu/prtl_data/mrc_specification.htm . The parsing of the header is a bare minimum of what could be done.
 		if (name.endsWith(".mrc")) {
-			return tryPlugIn("Open_MRC_Leginon", path);
+			return tryPlugIn("MRC_Leginon", path);
 		}
 
 		// Albert Cardona: read .dat files from the EMMENU software
 		if (name.endsWith(".dat") && 1 == buf[1] && 0 == buf[2]) { // 'new format' only
-			return tryPlugIn("Open_DAT_EMMENU", path);
+			return tryPlugIn("DAT_EMMENU", path);
 		}
 
 		// Albert Cardona: read TrakEM2 .xml files
