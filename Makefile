@@ -38,6 +38,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	EXTRADEFS+= -DMINGW32
 	LIBDL=
 	EXE=.exe
+	STRIP_TARGET=1
 endif
 ifeq ($(uname_S),Darwin)
 ifeq ($(uname_M),Power Macintosh)
@@ -61,6 +62,9 @@ all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) plugins-src run
 
 $(TARGET)$(EXE): fiji.o
 	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
+ifeq ($(STRIP_TARGET),1)
+	strip $@
+endif
 
 fiji.o: fiji.cxx Makefile
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
