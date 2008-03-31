@@ -9,9 +9,6 @@ A loose TODO list for Fiji
 - add targets for all platforms which make wrappers, such as a .zip or
   a .dmg file
 - maybe make a live CD from detaolb or some such
-- find a way to determine the optimal heap size in the wrapper (is that
-  still necessary?  For example, on instar, it seems that a sensible
-  default is chosen by java already)
 - solve LD_LIBRARY_PATH problem for jfftw.  Maybe by linking with dlopen()?
   Or is it enough to put jfftw.so into lib/i386/?  In any case, we need to
   compile FFTW natively for this.
