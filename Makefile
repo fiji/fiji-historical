@@ -58,7 +58,7 @@ CXXFLAGS=-g $(INCLUDES) $(EXTRADEFS) \
 LIBS=$(LIBDL) $(LIBMACOSX)
 
 .PHONY: $(JDK)
-all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) plugins-src run
+all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
 
 $(TARGET)$(EXE): fiji.o
 	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
@@ -112,13 +112,13 @@ $(JDK):
 	@echo "Updating $@"
 	@(cd "$(JDK)" && git pull origin "refs/remotes/origin/$(JDK)")
 
-.PHONY: plugins-src
-plugins-src:
+.PHONY: src-plugins
+src-plugins:
 	@export JAVA_HOME="$$(pwd)/$(JAVA_HOME)/.." && \
 	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
 	$(MAKE) -C $@
 
-check: plugins-src $(TARGET)$(EXE)
+check: src-plugins $(TARGET)$(EXE)
 	./$(TARGET)$(EXE) -eval 'run("Get Class Versions"); run("Quit");' | \
 		sort
 
