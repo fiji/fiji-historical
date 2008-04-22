@@ -231,6 +231,11 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			}
 		}
 
+		// Stephan Saalfeld: read .df3 files. Documentation at: http://www.povray.org/documentation/view/3.6.1/374/
+		if (name.endsWith(".df3")) {
+			return tryPlugIn("Open_DF3", path);
+		}
+		
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type
 		// and then call appropriate plugin using the above as models
