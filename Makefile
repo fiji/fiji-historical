@@ -110,7 +110,7 @@ $(JDK):
 		 git config branch.master.merge "$$BRANCH" && \
 		 git fetch)
 	@echo "Updating $@"
-	@(cd "$(JDK)" && git pull)
+	@(cd "$(JDK)" && git pull origin "refs/remotes/origin/$(JDK)")
 
 .PHONY: plugins-src
 plugins-src:
