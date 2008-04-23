@@ -1,5 +1,5 @@
 JAVACOPTS=-target 1.3 -source 1.3 \
-	-classpath .:../ij.jar:../plugins/TrakEM2_.jar:../plugins/jpedalSTD.jar:../jars/jruby.jar
+	-classpath .:../ij.jar:../plugins/TrakEM2_.jar:../jars/jpedalSTD.jar:../jars/jruby.jar
 JAVAS=$(wildcard *.java */*.java)
 CLASSES=$(patsubst %.java,%.class,$(JAVAS))
 DESTCLASSES=$(patsubst %,../plugins/%,$(CLASSES))
