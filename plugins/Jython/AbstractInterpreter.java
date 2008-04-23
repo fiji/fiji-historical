@@ -47,7 +47,7 @@ import java.util.Collections;
 
 public abstract class AbstractInterpreter implements PlugIn {
 	
-	final protected JFrame window = new JFrame("Jython interpreter");
+	final protected JFrame window = new JFrame("Interpreter");
 	final protected JTextArea screen = new JTextArea();
 	final protected JTextArea prompt = new JTextArea(1, 60);//new JTextField(60);
 	protected int active_line = 0;
@@ -75,8 +75,12 @@ public abstract class AbstractInterpreter implements PlugIn {
 		reader = new Thread("out_reader") {
 			public void run() {
 				while(reader_run) {
+					try {
+						out.flush();
+					} catch (Exception e) {}
 					String output = byte_out.toString(); // this should go with proper encoding 8859-1 or whatever is called
 					if (output.length() > 0) {
+						output.trim();
 						screen.append(output + "\n");
 						screen.setCaretPosition(screen.getDocument().getLength());
 						byte_out.reset();
