@@ -1,3 +1,4 @@
+package Jython;
 /** 
 A Jython utility plugin for ImageJ(C).
 Copyright (C) 2005 Albert Cardona.

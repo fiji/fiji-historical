@@ -1,3 +1,5 @@
+package Jython;
+
 /*
 A dynamic Jython interpreter plugin for ImageJ(C).
 Copyright (C) 2005 Albert Cardona.
@@ -24,6 +26,8 @@ import org.python.core.PySystemState;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
 import java.util.Collections;
+
+import common.AbstractInterpreter;
 
 /** A dynamic Jython interpreter for ImageJ.
  *	It'd be nice to have TAB expand ImageJ class names and methods.
@@ -68,14 +72,6 @@ public class Jython_Interpreter extends AbstractInterpreter {
 
 	/** Evaluate python code. */
 	protected Object eval(String text) {
-		/*
-			PyObject py_ob = pi.eval(text);
-			if (null != py_ob) {
-				screen.append(py_ob.toString() + "\n");
-				screen.setCaretPosition(screen.getDocument().getLength());
-			}
-			return py_ob;
-		*/
 		pi.exec(fix(text));
 		return null;
 	}

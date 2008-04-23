@@ -12,5 +12,8 @@ all: $(DESTCLASSES)
 $(DESTCLASSES): ../plugins/%: %
 	for i in `find . -name '*.class'`; do mkdir -p `dirname ../plugins/$$i`; cp $$i ../plugins/$$i; done
 
-$(CLASSES): %.class: %.java
+%.class: %.java
 	javac $(JAVACOPTS) $<
+
+Jython_Interpreter.jar: common/*.class Jython/*.class Jython/plugins.config
+	jar cf $@ $^
