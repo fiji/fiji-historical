@@ -405,6 +405,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 
 	abstract protected Object eval(String text);
 
+    void windowClosing() { }
 
 	/** Enable tab chars in the prompt. */
 	protected String fix(String text) {
