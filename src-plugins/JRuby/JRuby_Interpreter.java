@@ -2,6 +2,7 @@
 
 package JRuby;
 
+import ij.IJ;
 import ij.plugin.PlugIn;
 import org.jruby.*;
 import java.io.PrintStream;
@@ -16,14 +17,29 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 	}
 
 	public void run( String ignored ) {
+		// Strangely, this seems to always return null even if
+		// there's an instance already running...
+		if( null != Ruby.getCurrentInstance() ) {
+			IJ.error("There is already an instance of "+
+				 "the JRuby interpreter");
+			return;
+		}
 		super.run(ignored);
 		setTitle("JRuby Interpreter");
+		print_out.println("Starting JRuby ...");
 		rubyRuntime = Ruby.newInstance(System.in,print_out,print_out);
-		// This will need much more careful thought to import a sensible
-		// set of classes:
+		print_out.println("Done.");
+		// This sets up method_missing to find the right class
+		// for anything beginning ij in the ij package.  (We could
+		// change this to add other package hierarchies too, e.g.
+		// those in VIB.)
 		String startupScript = "" +
 			"require 'java'\n" +
-			"include_class 'ij.IJ'\n";
+			"module Kernel\n" +
+			"  def ij\n" +
+			"    JavaUtilities.get_package_module_dot_format('ij')" +
+			"  end\n" +
+			"end\n";
 		rubyRuntime.evalScriptlet(startupScript);
 	}
 }
