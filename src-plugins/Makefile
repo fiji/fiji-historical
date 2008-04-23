@@ -9,7 +9,7 @@ all: $(DESTCLASSES)
 # javac will generate classes that aren't in DESTCLASSES (e.g. inner
 # classes) so copy over every class file we find under this directory:
 $(DESTCLASSES): ../plugins/%: %
-	for i in `find . -name '*.class'`; do mkdir -p `dirname $$i`; cp $$i ../plugins/$$i; done
+	for i in `find . -name '*.class'`; do mkdir -p `dirname ../plugins/$$i`; cp $$i ../plugins/$$i; done
 
 $(CLASSES): %.class: %.java
 	javac $(JAVACOPTS) $<
