@@ -1,5 +1,12 @@
 #include "jni.h"
+
 #include <iostream>
+using std::cerr;
+using std::endl;
+
+#include <string>
+using std::string;
+
 #ifdef MACOSX
 #include <pthread.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -8,7 +15,9 @@
 static const char *relative_java_home = JAVA_HOME;
 static const char *library_path = JAVA_LIB_PATH;
 
-
+// FIXME: these may need to change on Windows
+#include <sys/types.h>
+#include <dirent.h>
 
 /* Dynamic library loading stuff */
 
@@ -138,7 +147,7 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 
 	handle = dlopen(buffer, RTLD_LAZY);
 	if (!handle) {
-		std::cerr << "Could not load Java library!" << std::endl;
+		cerr << "Could not load Java library!" << endl;
 		return 1;
 	}
 	dlerror(); /* Clear any existing error */
@@ -147,11 +156,45 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 			JNI_CREATEVM);
 	err = dlerror();
 	if (err) {
-		std::cerr << "Error loading libjvm: " << err << std::endl;
+		cerr << "Error loading libjvm: " << err << endl;
 		return 1;
 	}
 
 	return JNI_CreateJavaVM(vm, env, args);
+}
+
+int build_classpath(char * buffer,unsigned int buffer_size) {
+	string result("-Djava.class.path=");
+	result += fiji_dir;
+	result += "/ij.jar";
+	string jar_directory(fiji_dir);
+	jar_directory += "/jars/";
+	DIR * directory = opendir(jar_directory.c_str());
+	if(!directory) {
+	cerr << "Failed to open: " << jar_directory << endl;
+		return 1;
+	}
+	string extension(".jar");
+	unsigned int extension_length = extension.size();
+	struct dirent * entry;
+	while (NULL != (entry = readdir(directory))) {
+		string filename(entry->d_name);
+		unsigned int n = filename.size();
+		if (n <= extension_length)
+			continue;
+		unsigned int extension_start = n - extension_length;
+		if (!filename.compare(extension_start,
+					extension_length,
+					extension))
+			result += ":" + jar_directory + filename;
+	}
+	if( result.size() > buffer_size - 1 ) {
+		cerr << "The classpath buffer size was too small (!)" << endl;
+		return 1;
+	}
+	strncpy(buffer,result.c_str(),buffer_size);
+	buffer[buffer_size-1] = 0;
+	return 0;
 }
 
 /* the maximal size of the heap on 32-bit systems, in megabyte */
@@ -191,8 +234,9 @@ static void *start_ij(void *dummy)
 	options[count++].optionString = ext_path;
 #endif
 
-	snprintf(class_path, sizeof(class_path),
-			"-Djava.class.path=%s/ij.jar", fiji_dir);
+	if (build_classpath(class_path,sizeof(class_path))) {
+		return NULL;
+	}
 	options[count++].optionString = class_path;
 
 	snprintf(plugin_path, sizeof(plugin_path),
@@ -217,12 +261,12 @@ static void *start_ij(void *dummy)
 	args.ignoreUnrecognized = JNI_TRUE;
 
 	if (create_java_vm(&vm, (void **)&env, &args))
-		std::cerr << "Could not create JavaVM" << std::endl;
+		cerr << "Could not create JavaVM" << endl;
 	else if (!(instance = env->FindClass("ij/ImageJ")))
-		std::cerr << "Could not find ij.ImageJ" << std::endl;
+		cerr << "Could not find ij.ImageJ" << endl;
 	else if (!(method = env->GetStaticMethodID(instance,
 					"main", "([Ljava/lang/String;)V")))
-		std::cerr << "Could not find main method" << std::endl;
+		cerr << "Could not find main method" << endl;
 	else {
 		int i;
 		jstring jstr;
@@ -241,15 +285,14 @@ static void *start_ij(void *dummy)
 		}
 		env->CallStaticVoidMethodA(instance, method, (jvalue *)&args);
 		if (vm->DetachCurrentThread())
-			std::cerr << "Could not detach current thread"
-				<< std::endl;
+			cerr << "Could not detach current thread" << endl;
 		/* This does not return until ImageJ exits */
 		vm->DestroyJavaVM();
 		return NULL;
 	}
 
 fail:
-	std::cerr << "Failed to start Java" << std::endl;
+	cerr << "Failed to start Java" << endl;
 	exit(1);
 }
 
