@@ -3,21 +3,24 @@ JAVACOPTS=-target 1.3 -source 1.3 \
 	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
 
 JARDIRS=common Jython Clojure
+FINDJARDIRS=$(patsubst %,-name % -o,$(JARDIRS))
 JARS=Jython_Interpreter.jar Clojure_Interpreter.jar
 
 JAVAS=$(filter-out $(wildcard $(patsubst %,%/*.java,$(JARDIRS))),$(wildcard *.java */*.java))
 CLASSES=$(patsubst %.java,%.class,$(JAVAS))
-DESTCLASSES=$(patsubst %,../plugins/%,$(CLASSES))
 DESTJARS=$(patsubst %,../plugins/%,$(JARS))
 
-all: $(DESTCLASSES) $(DESTJARS)
+.PHONY: copyclasses
+
+all: $(DESTJARS) copyclasses
 
 # javac will generate classes that aren't in DESTCLASSES (e.g. inner
-# classes) so copy over every class file we find under this directory:
-$(DESTCLASSES): ../plugins/%: %
-	for i in $(wildcard $(patsubst %.class,%*.class,$^)); do \
+# classes) so copy over every class file we find under this directory
+# that isn't in one of the JARDIR subdirectories:
+copyclasses:
+	for i in `find . \( $(FINDJARDIRS) -false \) -prune -o \( -type f -a -name '*.class' \) -print`; do \
 		mkdir -p `dirname ../plugins/$$i`; \
-		cp $$i ../plugins/$$i; \
+		cp -v $$i ../plugins/$$i; \
 	done
 
 %.class: %.java
