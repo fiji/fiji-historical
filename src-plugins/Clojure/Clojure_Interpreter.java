@@ -78,7 +78,9 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 
 	/** Evaluate clojure code. */
 	protected Object eval(final String text) throws Exception {
-		return thread.eval(text);
+		Object ret = thread.eval(text);
+		thread.throwException();
+		return ret;
 	}
 
 	/** Complicated Thread setup just to be able to initialize and cleanup within the context of the same Thread, as required by Clojure. */
@@ -96,6 +98,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		private boolean go = false;
 		private String text = null;
 		private String result = null;
+		private Exception error = null;
 		LispThread() {
 			setPriority(Thread.NORM_PRIORITY);
 			try { setDaemon(true); } catch (Exception e) { e.printStackTrace(); }
@@ -107,6 +110,14 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		boolean ready() {
 			synchronized (this) {
 				return null != rdr;
+			}
+		}
+		void throwException() throws Exception {
+			synchronized (this) {
+				if (null == error) return;
+				Exception e = error;
+				error = null;
+				throw e;
 			}
 		}
 		private void setup() {
@@ -164,8 +175,8 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		public void run() {
 			setup();
 			while (go) {
-				try {
-					synchronized (this) {
+				synchronized (this) {
+					try {
 						wait();
 						if (null == text) continue;
 						// EVAL
@@ -199,10 +210,11 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 							text = null;
 							lock.notify();
 						}
-						notify();
+					} catch (Exception e) {
+						error = e;
+						synchronized (lock) { text = null; lock.notify(); }
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
+					notify();
 				}
 			}
 			// cleanup
