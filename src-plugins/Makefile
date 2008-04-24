@@ -3,9 +3,9 @@ JAVACOPTS=-target 1.3 -source 1.3 \
 	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
 
 # common is just in this list to exclude classes within it from being copied
-JARDIRS=common Jython Clojure
+JARDIRS=common Jython Clojure JRuby
 FINDJARDIRS=$(patsubst %,-name % -o,$(JARDIRS))
-JARS=Jython_Interpreter.jar Clojure_Interpreter.jar
+JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar
 
 JAVAS=$(filter-out $(wildcard $(patsubst %,%/*.java,$(JARDIRS))),$(wildcard *.java */*.java))
 CLASSES=$(patsubst %.java,%.class,$(JAVAS))
