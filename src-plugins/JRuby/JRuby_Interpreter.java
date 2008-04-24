@@ -12,7 +12,7 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 
 	Ruby rubyRuntime;
 
-	protected Object eval(String text) {
+	protected Object eval(String text) throws Exception {
 		return rubyRuntime.evalScriptlet(text);
 	}
 

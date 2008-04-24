@@ -2,8 +2,8 @@ JARS3RDPARTY=$(shell find ../jars/ -name "*.jar" -printf ":%h/%f")
 JAVACOPTS=-target 1.3 -source 1.3 \
 	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
 
-JARDIRS=common Jython JRuby
-JARS=Jython_Interpreter.jar
+JARDIRS=common Jython JRuby Clojure
+JARS=Jython_Interpreter.jar Clojure_Interpreter.jar
 
 JAVAS=$(filter-out $(wildcard $(patsubst %,%/*.java,$(JARDIRS))),$(wildcard *.java */*.java))
 CLASSES=$(patsubst %.java,%.class,$(JAVAS))
@@ -24,11 +24,14 @@ $(DESTCLASSES): ../plugins/%: %
 	javac $(JAVACOPTS) $<
 
 $(DESTJARS): ../plugins/%: %
+	echo Testing whether to copy $<
 	../scripts/copy-jar-if-newer.sh $< $@
 
 ifeq ($(TARGET),)
 
 Jython_Interpreter.jar: SOURCES=common/*.java Jython/*.java Jython/plugins.config
+
+Clojure_Interpreter.jar: SOURCES=common/*.java Clojure/*.java Clojure/plugins.config
 
 .PHONY: $(JARS)
 
