@@ -45,7 +45,7 @@ import java.io.File;
  * 	To create a shortcut to a Python plugin a macro can be done to pass appropriate arguments to the Launch_Python_Script class, or tweak ImageJ, or a thousand not-so-straighforward ways.
  *
  */
-abstract public class Refresh_Scripts implements PlugIn, ActionListener {
+abstract public class RefreshScripts implements PlugIn, ActionListener {
 
 	protected String subMenu;
 	protected String scriptExtension;
