@@ -12,6 +12,7 @@ At the moment, the following platforms are supported:
 - Linux-x86
 - Linux-x86_64
 - MacOSX-PowerPC
+- MacOSX-x86
 
 Setup should be as easy as unpacking the (portable) application and starting
 the Java wrapper.  The wrapper is a program that starts the Java machine
@@ -20,6 +21,26 @@ plugins directory and heap size set up for you.
 
 In a way, you could say that the "F" in "Fiji" stands for "painless",
 "easy", "quick" and "convenient" :-)
+
+
+Usage
+-----
+
+Fiji is meant to be distributed without source, to make the download as
+small as possible.  In the basic version, Fiji is a portable application,
+i.e. it should run wherever you copy it.
+
+The starting point is the Fiji launcher, which will launch Java, set up
+the environment, and call ImageJ.
+
+To pass arguments to ImageJ, just specify them on the command line.
+
+To pass arguments to the Java Virtual Machine, specify them on the command
+line, separating them from the ImageJ arguments (if any) with a "--".
+In other words, if you want to override the memory setting, call Fiji
+like this:
+
+	$ ./fiji-linux -Xmx128m --
 
 Open Source
 -----------
