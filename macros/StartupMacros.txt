@@ -54,7 +54,10 @@ function UseHEFT {
 UseHEFT();
 
 // Generate the Jython menu listing of .py files as plugins
-macro "AutoRun" { run("Refresh Jython List"); }
+macro "AutoRun" {
+  run("Refresh Jython List");
+  run("Refresh JRuby Scripts");
+}
   
 
   var pmCmds = newMenu("Popup Menu",
