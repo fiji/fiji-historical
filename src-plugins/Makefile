@@ -2,7 +2,7 @@ JARS3RDPARTY=$(shell find ../jars/ -name "*.jar" -printf ":%h/%f")
 JAVACOPTS=-target 1.3 -source 1.3 \
 	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
 
-JARDIRS=common Jython JRuby Clojure
+JARDIRS=common Jython Clojure
 JARS=Jython_Interpreter.jar Clojure_Interpreter.jar
 
 JAVAS=$(filter-out $(wildcard $(patsubst %,%/*.java,$(JARDIRS))),$(wildcard *.java */*.java))
