@@ -134,22 +134,23 @@ portable-app: Fiji.app
 	done
 
 Fiji.app: MACOS=$@/Contents/MacOS
+Fiji.app: RESOURCES=$@/Contents/Resources
 Fiji.app: PLIST=$@/Contents/Info.plist
 
-# TODO: use universal Java instead of PPC only?
-#	Maybe need both, for older MacOSX...
-Fiji.app: fiji-macosx
+# TODO: Tried to make it work for powerpc AND mac-intel
+Fiji.app: fiji-macosx-intel
 	mkdir -p $(MACOS)
+	mkdir -p $(RESOURCES)
 	echo '<?xml version="1.0" encoding="UTF-8"?>' > $(PLIST)
 	echo '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> $(PLIST)
 	echo '<plist version="1.0">' >> $(PLIST)
 	echo '<dict>' >> $(PLIST)
 	echo '	<key>CFBundleExecutable</key>' >> $(PLIST)
-	echo '		<string>fiji-macosx</string>' >> $(PLIST)
+	echo '		<string>run_fiji.sh</string>' >> $(PLIST)
 	echo '	<key>CFBundleGetInfoString</key>' >> $(PLIST)
 	echo '		<string>Fiji for Mac OS X</string>' >> $(PLIST)
 	echo '	<key>CFBundleIconFile</key>' >> $(PLIST)
-	echo '		<string>fiji.icns</string>' >> $(PLIST)
+	echo '		<string>Fiji.icns</string>' >> $(PLIST)
 	echo '	<key>CFBundleIdentifier</key>' >> $(PLIST)
 	echo '		<string>org.fiji</string>' >> $(PLIST)
 	echo '	<key>CFBundleInfoDictionaryVersion</key>' >> $(PLIST)
@@ -164,12 +165,18 @@ Fiji.app: fiji-macosx
 	echo '		<string>NSApplication</string>' >> $(PLIST)
 	echo '</dict>' >> $(PLIST)
 	echo '</plist>"' >> $(PLIST)
-	cp $< $(MACOS)/
-	for d in java plugins macros ij.jar; do \
+	cp fiji-macosx $(MACOS)/
+	cp fiji-macosx-intel $(MACOS)/
+	for d in java plugins macros ij.jar jars; do \
 		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
 	done
 	git archive --prefix=$@/java/macosx/ origin/java/macosx: | \
 		tar xvf -
+	git archive --prefix=$@/java/macosx-intel/ origin/java/macosx-intel: | \
+		tar xvf -
 	cp ij.jar $@/
 	cp -R plugins $@/
 	cp -R macros $@/
+	cp -R jars $@/
+	cp scripts/run_fiji.sh $(MACOS)
+	cp images/Fiji.icns $(RESOURCES)
