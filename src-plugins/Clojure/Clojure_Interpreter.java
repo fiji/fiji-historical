@@ -57,11 +57,13 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		}
 
 		loaded = true;
+		super.screen.append("Starting Clojure...");
 		final LispThread thread = new LispThread();
 		if (!thread.ready()) {
 			p("Some error ocurred.");
 			return;
 		}
+		super.screen.append(" Ready -- have fun.\n>>>");
 		this.thread = thread;
 		// ok create window
 		super.run(arg);
@@ -77,9 +79,9 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	}
 
 	/** Evaluate clojure code. */
-	protected Object eval(final String text) throws Exception {
+	protected Object eval(final String text) throws Throwable {
 		Object ret = thread.eval(text);
-		thread.throwException();
+		thread.throwError();
 		return ret;
 	}
 
@@ -98,7 +100,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		private boolean go = false;
 		private String text = null;
 		private String result = null;
-		private Exception error = null;
+		private Throwable error = null;
 		LispThread() {
 			setPriority(Thread.NORM_PRIORITY);
 			try { setDaemon(true); } catch (Exception e) { e.printStackTrace(); }
@@ -112,12 +114,12 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 				return null != rdr;
 			}
 		}
-		void throwException() throws Exception {
+		void throwError() throws Throwable {
 			synchronized (this) {
 				if (null == error) return;
-				Exception e = error;
+				Throwable t = error;
 				error = null;
-				throw e;
+				throw t;
 			}
 		}
 		private void setup() {
@@ -153,12 +155,19 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		}
 		void quit() {
 			go = false;
-			synchronized (this) { try { notify(); wait(); } catch (Exception e) { e.printStackTrace(); } }
+			try {
+				reader.close();
+				rdr.close();
+				writer.close();
+				r2.close();
+				w2.close();
+			} catch (Exception e) { e.printStackTrace(); }
+			synchronized (this) { try { notify(); } catch (Exception e) { e.printStackTrace(); } }
 		}
 		String eval(String text) {
 			try {
 				synchronized (this) {
-					this.text = text;
+					this.text = text.trim();
 					notify();
 				}
 				synchronized (lock) {
@@ -210,8 +219,8 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 							text = null;
 							lock.notify();
 						}
-					} catch (Exception e) {
-						error = e;
+					} catch (Throwable t) {
+						error = t;
 						synchronized (lock) { text = null; lock.notify(); }
 					}
 					notify();

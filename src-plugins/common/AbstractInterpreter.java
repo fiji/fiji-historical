@@ -259,6 +259,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		window.addWindowListener(
 				new WindowAdapter() {
 					public void windowClosing(WindowEvent we) {
+						AbstractInterpreter.this.windowClosing();
 						runner.quit();
 						reader_run = false;
 					}
@@ -393,7 +394,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				screen.append(ob.toString() + "\n");
 				screen.setCaretPosition(screen.getDocument().getLength());
 			}
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			e.printStackTrace(print_out);
 		} finally {
 			//remove tabs from prompt
@@ -403,9 +404,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 	}
 
-	abstract protected Object eval(String text) throws Exception;
+	abstract protected Object eval(String text) throws Throwable;
 
-    void windowClosing() { }
+ 	void windowClosing() {}
 
 	/** Enable tab chars in the prompt. */
 	protected String fix(String text) {
