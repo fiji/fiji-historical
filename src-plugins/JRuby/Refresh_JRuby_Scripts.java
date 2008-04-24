@@ -2,12 +2,12 @@
 
 package JRuby;
 
-import common.Refresh_Scripts;
+import common.RefreshScripts;
 import org.jruby.*;
 
 import java.io.*;
 
-public class Refresh_JRuby_Scripts extends Refresh_Scripts {
+public class Refresh_JRuby_Scripts extends RefreshScripts {
 
 	public void run(String arg) {
 		setLanguageProperties("JRuby",".rb","Ruby");
