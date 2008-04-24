@@ -280,7 +280,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		private Object lock = new Object();
 		private boolean go = true;
 		private String text = null;
-		private boolean store = false;
+		private boolean store = false; // only true when invoked from a prompt
 		ExecuteCode() {
 			setPriority(Thread.NORM_PRIORITY);
 			try { setDaemon(true); } catch (Exception e) { e.printStackTrace(); }
@@ -383,7 +383,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				return;
 			}
 		} else {
-			screen.append(">>> " + text + "\n");
+			screen.append(">>> " + text + "\n"); // TODO: make the prompt settable - but it screws up automatic cutting out of prompt when copying or executing from popup
 			screen.setCaretPosition(screen.getDocument().getLength());
 		}
 		//try to eval, and if it fails, then it's code for exec
@@ -403,7 +403,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 	}
 
-	abstract protected Object eval(String text);
+	abstract protected Object eval(String text) throws Exception;
 
     void windowClosing() { }
 
