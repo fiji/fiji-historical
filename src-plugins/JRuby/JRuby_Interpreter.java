@@ -29,19 +29,21 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 		print_out.println("Starting JRuby ...");
 		rubyRuntime = Ruby.newInstance(System.in,print_out,print_out);
 		print_out.println("Done.");
-		// This sets up method_missing to find the right class
-		// for anything beginning ij in the ij package.  (We could
-		// change this to add other package hierarchies too, e.g.
-		// those in VIB.)
-		String startupScript = "" +
-			"require 'java'\n" +
-			"module Kernel\n" +
-			"  def ij\n" +
-			"    JavaUtilities.get_package_module_dot_format('ij')" +
-			"  end\n" +
-			"end\n";
+
 		rubyRuntime.evalScriptlet(startupScript);
 	}
+
+	// This sets up method_missing to find the right class
+	// for anything beginning ij in the ij package.  (We could
+	// change this to add other package hierarchies too, e.g.
+	// those in VIB.)
+	public final static String startupScript = "" +
+		"require 'java'\n" +
+		"module Kernel\n" +
+		"  def ij\n" +
+		"    JavaUtilities.get_package_module_dot_format('ij')" +
+		"  end\n" +
+		"end\n";
 
 	protected void windowClosing() {
 		// FIXME: I'm not sure yet how to interrupt what
