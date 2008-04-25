@@ -3,9 +3,9 @@ JAVACOPTS=-target 1.3 -source 1.3 \
 	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
 
 # common is just in this list to exclude classes within it from being copied
-JARDIRS=common Jython Clojure JRuby
+JARDIRS=common Jython Clojure JRuby BSH
 FINDJARDIRS=$(patsubst %,-name % -o,$(JARDIRS))
-JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar
+JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar
 
 JAVAS=$(filter-out $(wildcard $(patsubst %,%/*.java,$(JARDIRS))),$(wildcard *.java */*.java))
 CLASSES=$(patsubst %.java,%.class,$(JAVAS))
@@ -38,6 +38,8 @@ Jython_Interpreter.jar: SOURCES=common/*.java Jython/*.java Jython/plugins.confi
 Clojure_Interpreter.jar: SOURCES=common/*.java Clojure/*.java Clojure/plugins.config
 
 JRuby_Interpreter.jar: SOURCES=common/*.java JRuby/*.java JRuby/plugins.config
+
+BeanShell_Interpreter.jar: SOURCES=common/*.java BSH/*.java BSH/plugins.config
 
 .PHONY: $(JARS)
 
