@@ -12,8 +12,8 @@ import java.io.*;
 public class Refresh_JRuby_Scripts extends RefreshScripts {
 
 	public void run(String arg) {
-		setLanguageProperties("JRuby",".rb","Ruby");
-		setVerbose(true);
+		setLanguageProperties(".rb","Ruby");
+		setVerbose(false);
 		super.run(arg);
 	}
 

@@ -4,6 +4,9 @@
 A modified version of Albert Cardona's Refresh_Jython_List plugin,
 for subclassing to do the same for arbitrary languages and directories.
 
+This can now search the whole plugin tree to find scripts and insert
+them at the corresponding place in the "Plugins" menu hierarchy.
+
 ------------------------------------------------------------------------
 
 A Jython utility plugin for ImageJ(C).
@@ -27,9 +30,11 @@ You may contact Albert Cardona at albert at pensament dot net, at http://www.pen
 package common;
 
 import ij.IJ;
+import ij.ImageJ;
 import ij.Menus;
 import ij.plugin.PlugIn;
 import java.awt.Menu;
+import java.awt.PopupMenu;
 import java.awt.MenuItem;
 import java.awt.MenuBar;
 import java.awt.event.ActionEvent;
@@ -38,21 +43,36 @@ import java.util.ArrayList;
 import java.io.File;
 
 /**
- * 	1 - looks for python script files under the ImageJ/plugins/jython folder
- * 	2 - updates the Plugins / Jython submenu, a MenuItem for each script
- * 	3 - listens to that submenu MenuItem items and launches the python scripts when called
+ *  This class looks through the plugins directory for files with a
+ *  particular extension (e.g. ".rb" for JRuby, ".py" for Jython) and
+ *  for each one that it finds:
  *
- * 	To create a shortcut to a Python plugin a macro can be done to pass appropriate arguments to the Launch_Python_Script class, or tweak ImageJ, or a thousand not-so-straighforward ways.
+ *   - Makes sure that the submenu corresponding to the subdirectory
+ *     containing that file exists, creating submenus if necessary.
+ *
+ *   - Removes any existing script with that filename from the submenu.
+ *
+ *   - Adds the plugin as a handler for the action of clicking on that
+ *     menu item.  (The plugin will the run the script if runScript is
+ *     implemented correctly.)
+ *
+ *  Note that this does not currently notice that you have removed
+ *  scripts from the plugins directory; it will leave stale menu
+ *  entries for those scripts.
+ *
+ *  --------------------------------------------------------------------
+ *
+ * 	To create a shortcut to a Jython plugin a macro can be done to
+ * 	pass appropriate arguments to the Launch_Python_Script class,
+ * 	or tweak ImageJ, or a thousand not-so-straighforward ways.
  *
  */
 abstract public class RefreshScripts implements PlugIn, ActionListener {
 
-	protected String subMenu;
 	protected String scriptExtension;
 	protected String languageName;
 
-	public void setLanguageProperties( String subMenu, String scriptExtension, String languageName ) {
-		this.subMenu = subMenu;
+	public void setLanguageProperties( String scriptExtension, String languageName ) {
 		this.scriptExtension = scriptExtension;
 		this.languageName = languageName;
 	}
@@ -63,85 +83,199 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 
 	File script_dir;
 
-	public void run(String arg) {
-		script_dir = new File(Menus.getPlugInsPath() + subMenu);
+	Menu pluginsMenu;
 
-		if( subMenu == null || scriptExtension == null || languageName == null ) {
-			IJ.error("BUG: setLanguageProperties must have been called (with non-null arguments)");
+	/* This is called by addFromDirectory when it finds a file
+	   that we might want to add - check the extension, etc. and
+	   add it from this method. */
+	private void maybeAddFile( String topLevelDirectory,
+				   String subDirectory,
+				   String filename ) {
+		if (verbose) {
+			System.out.println("maybeAddFile:");
+			System.out.println("  t: "+topLevelDirectory);
+			System.out.println("  s: "+subDirectory);
+			System.out.println("  f: "+filename);
+		}
+
+		if( ! filename.endsWith(scriptExtension) )
+			return;
+		if( filename.indexOf("_") < 0 )
+			return;
+
+		Menu m;
+		if( subDirectory.length() == 0 )
+			m = pluginsMenu;
+		else
+			m = ensureSubMenu(subDirectory);
+
+		int n = m.getItemCount();
+		MenuItem[] items = new MenuItem[n];
+		for (int i=0; i<n; i++) {
+			items[i] = m.getItem(i);
+		}
+		String newLabel = strip(filename);
+		String newCommand = subDirectory + (0 == subDirectory.length() ? "" : File.separator) + filename;
+		for (int i=0; i<n; i++) {
+			String command = items[i].getActionCommand();
+			if( newCommand.equals(command) ) {
+				m.remove(items[i]);
+			}
+		}
+
+		// Now add the command:
+		MenuItem item = new MenuItem(newLabel);
+		item.addActionListener(this);
+		// storing the name of the script file as the action command. The label is stripped!
+		item.setActionCommand(newCommand);
+		m.add(item);
+	}
+
+	/** Split subDirectory by File.separator and make sure submenus
+	    corresponding to those exist, creating them if necessary.
+	    Then return the final submenu.
+
+	    FIXME: Johannes points out that there's probably an ImageJ / ImageJA function to do
+	    this more simply
+	*/
+	protected Menu ensureSubMenu( String subDirectory ) {
+
+		boolean topMenu = true;
+
+		boolean imageJA = false;
+		if( IJ.getInstance().getTitle().indexOf("ImageJA") >= 0 )
+			imageJA = true;
+
+		String separatorRegularExpression;
+		/* Have I missed something obvious, or is Java really
+		   missing a method to escape a string safely for
+		   inclusion in a regular expression? */
+		if( File.separator.equals("/") )
+			separatorRegularExpression = "/";
+		else if( File.separator.equals("\\") )
+			separatorRegularExpression = "\\\\";
+		else {
+			IJ.error("BUG: unknown File.separator \""+File.separator+"\"");
+			return null;
+		}
+
+		String [] parts = subDirectory.split(separatorRegularExpression);
+
+		Menu m = pluginsMenu;
+
+		for( int i = 0; i < parts.length; ++i ) {
+			String subMenuName = parts[i];
+			int idealPosition = 0;
+			boolean found = false;
+			boolean afterSeparator = false;
+			for( int j = 0; j < m.getItemCount(); ++j ) {
+				MenuItem item=m.getItem(j);
+				String n = item.getLabel();
+				if( (! topMenu || afterSeparator) && (subMenuName.compareTo(n) > 0) ) {
+					idealPosition = j + 1;
+				}
+				if( n.equals("-") && topMenu ) {
+					afterSeparator = true;
+					idealPosition = j + 1;
+				}
+				if( n.equals(subMenuName) ) {
+					if (item instanceof Menu)  {
+						m = (Menu)item;
+						found = true;
+						break;
+					}
+				}
+			}
+			if( ! found ) {
+				/* Create a new subMenu, and insert it
+				   at the "ideal position": */
+				Menu newSubMenu = null;
+				if (imageJA)
+					newSubMenu = new PopupMenu(subMenuName);
+				else
+					newSubMenu = new Menu(subMenuName);
+				m.insert(newSubMenu,idealPosition);
+				m = newSubMenu;
+			}
+			topMenu = false;
+		}
+
+		return m;
+	}
+
+	/**
+	   This will find all the files under topLevelDirectory and
+	   call maybeAddFile on each.  If you want to recurse to
+	   unlimited depth, set maxDepth to -1.  To only look in the
+	   specified topLevelDirectory and not recurse into any
+	   subdirectories, set maxDepth to 1.
+	 */
+	private void addFromDirectory( String topLevelDirectory, int maxDepth ) {
+		addFromDirectory( topLevelDirectory, "", 0, maxDepth );
+	}
+
+	// This is just for recursion; call the addFromDirectory(String,int)
+	// method instead
+	private void addFromDirectory( String topLevelDirectory, String subPath, int depth, int maxDepth ) {
+		File f = new File(topLevelDirectory + File.separator + subPath );
+		if (f.isDirectory() ) {
+			if (maxDepth >= 0 && depth >= maxDepth)
+				return;
+			String [] entries = f.list();
+			for( int i = 0; i < entries.length; ++i )
+				if( ! (entries[i].equals(".")||entries[i].equals("..")) ) {
+					String newSubPath = subPath;
+					if( newSubPath.length() > 0 )
+						newSubPath += File.separator;
+					newSubPath += entries[i];
+					addFromDirectory( topLevelDirectory,
+							  newSubPath,
+							  depth + 1,
+							  maxDepth );
+				}
+		} else {
+			String filename = f.getName();
+			int n = filename.length();
+			int toTrim = (subPath.length() > n) ? n + 1 : n ;
+			String subDirectory = subPath.substring(0,subPath.length()-toTrim);
+			maybeAddFile(topLevelDirectory,subDirectory,f.getName());
+		}
+	}
+
+	public void run(String arg) {
+
+		if( scriptExtension == null || languageName == null ) {
+			IJ.error("BUG: setLanguageProperties must have been called (with non-null scriptExtension and languageName");
 			return;
 		}
+
+		script_dir = new File(Menus.getPlugInsPath());
 
 		// Find files with the correct extension
 		if (!script_dir.exists()) {
+			IJ.error("The plugins directory '"+script_dir+"' did not exist (!)");
 			return;
 		}
 
-		String[] files = script_dir.list();
-		ArrayList all_script_files = new ArrayList();
-		for (int i=0; i<files.length; i++) {
-			if (files[i].endsWith(scriptExtension) &&
-			    files[i].indexOf("_") >= 0) {
-				all_script_files.add(files[i]);
-			}
-		}
-		String[] script_files = new String[0];//empty, so it doesn't fail ever below when there are no python scripts in the Jython folder //was: null;
-		if (0 != all_script_files.size()) {
-			script_files = new String[all_script_files.size()];
-			all_script_files.toArray(script_files);
-		}
-		// grab the right subMenu under the Plugins menu
 		MenuBar menu_bar = Menus.getMenuBar();
-		Menu plugins_menu = null;
 		int n = menu_bar.getMenuCount();
 		for (int i=0; i<n; i++) {
 			Menu menu = menu_bar.getMenu(i);
 			if (menu.getLabel().equals("Plugins")) {
-				plugins_menu = menu;
+				pluginsMenu = menu;
 				break;
 			}
 		}
-		n = plugins_menu.getItemCount();
-		Menu script_menu = null;
-		for (int i=0; i<n; i++) {
-			MenuItem item = plugins_menu.getItem(i);
-			if (item.getLabel().equals(subMenu) && item instanceof Menu) {
-				script_menu = (Menu)item;
-				break;
-			}
-		}
-		// Remove all python scripts from the Jython menu
-		n = script_menu.getItemCount();
-		MenuItem[] items = new MenuItem[n];
-		for (int i=0; i<n; i++) {
-			items[i] = script_menu.getItem(i);
-		}
-		for (int i=0; i<n; i++) {
-			String command = items[i].getActionCommand();
-			if (!command.endsWith(scriptExtension) && !command.equals("-")) { // separators are removed too, since they contain a single '-'
-				continue;
-			}
-			script_menu.remove(items[i]);
-		}
-		// Add a separator
-		script_menu.addSeparator();
-		// Add the scripts as MenuItem if they arent' there already
-		for (int i=0; i<script_files.length; i++) {
-			if( verbose )
-				System.out.println("Found a "+languageName+" script: "+script_files[i]);
-			MenuItem item = new MenuItem(strip(script_files[i]));
-			item.addActionListener(this);
-			item.setActionCommand(script_files[i]); // storing the name of the python script file as the action command. The label is stripped!
-			script_menu.add(item);
-		}
-		// Notify the user
-		IJ.showStatus(languageName + " script list refreshed (" + script_files.length  + " scripts)");
+
+		addFromDirectory( Menus.getPlugInsPath(), -1 );
 	}
 
 	/** Converts 'My_python_script.py' to 'My python script'*/
 	private String strip(String file_name) {
 		StringBuffer name = new StringBuffer(file_name);
 		int i_extension = file_name.indexOf(scriptExtension);
-		if (-1 != i_extension && ((file_name.length()-scriptExtension.length()) == i_extension)) { //don't cut the extension if the .py is some internal part of the name
+		//don't cut the extension if the .py is some internal part of the name
+		if (-1 != i_extension && ((file_name.length()-scriptExtension.length()) == i_extension)) {
 			//cut extension
 			name.setLength(i_extension);
 		}
