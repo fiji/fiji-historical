@@ -1,4 +1,4 @@
-JARS3RDPARTY=$(shell find ../jars/ -name "*.jar" -printf ":%h/%f")
+JARS3RDPARTY=$(shell find ../jars/ -name "*.jar" -exec printf ":%s" {} \;)
 JAVACOPTS=-target 1.3 -source 1.3 \
 	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
 
