@@ -79,7 +79,8 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 		String[] files = script_dir.list();
 		ArrayList all_script_files = new ArrayList();
 		for (int i=0; i<files.length; i++) {
-			if (files[i].endsWith(scriptExtension)) {
+			if (files[i].endsWith(scriptExtension) &&
+			    files[i].indexOf("_") >= 0) {
 				all_script_files.add(files[i]);
 			}
 		}
