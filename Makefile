@@ -19,19 +19,23 @@ LIBDL=-ldl
 INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH_INCLUDE)
 JDK=java/$(ARCH)
 ARCH_INCLUDE=$(ARCH)
+JAVA_LIB_DIR=$(JAVA_HOME)/lib/$(CPU)
 ifeq ($(uname_S),Linux)
 ifeq ($(uname_M),x86_64)
+	CPU=amd64
 	ARCH=linux-amd64
 	ARCH_INCLUDE=linux
 	JAVA_HOME=$(JDK)/jdk1.6.0_04/jre
 	JAVA_LIB_PATH=lib/amd64/server/libjvm.so
 else
+	CPU=i386
 	ARCH=linux
 	JAVA_HOME=$(JDK)/jdk1.6.0/jre
 	JAVA_LIB_PATH=lib/i386/client/libjvm.so
 endif
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
+	CPU=i386
 	ARCH=win32
 	JAVA_HOME=$(JDK)/jdk1.6.0_03/jre
 	JAVA_LIB_PATH=bin/client/jvm.dll
@@ -48,6 +52,7 @@ else
 endif
 	JAVA_HOME=$(JDK)/Home
 	JAVA_LIB_PATH=../Libraries/libjvm.dylib
+	JAVA_LIB_DIR=../Libraries
 	INCLUDES=-I$(JDK)/Headers
 	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
 	LIBMACOSX=-lpthread -framework CoreFoundation
@@ -92,6 +97,13 @@ $(SUBMODULE_TARGETS_IN_FIJI):
 		$(MAKE) -C $$DIR $$(basename $$ORIGINAL_TARGET) && \
 		./scripts/copy-jar-if-newer.sh $$ORIGINAL_TARGET $@ \
 	)
+
+# MicroManager
+mm:
+	export JAVA_LIB_DIR='$(JAVA_LIB_DIR)'; \
+	export JAVA_HOME='$$(pwd)/$(JAVA_HOME)/..'; \
+	export JAVAINC="-I$$JAVA_HOME/include -I$$JAVA_HOME/include/linux"; \
+	cd micromanager1.1 && sh build.sh
 
 # JDK
 $(JDK):
