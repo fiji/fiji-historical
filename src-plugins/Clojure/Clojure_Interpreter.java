@@ -208,7 +208,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 							sb.append('\n');
 						};
 						// remove last newline char
-						sb.setLength(sb.length()-1);
+						if (sb.length() > 0) sb.setLength(sb.length()-1);
 
 					} catch (Throwable t) {
 						error = t;
