@@ -33,6 +33,7 @@ import java.io.PipedWriter;
 import java.io.PipedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 
 import common.AbstractInterpreter;
 
@@ -62,7 +63,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			p("Some error ocurred.");
 			return;
 		}
-		super.screen.append(" Ready -- have fun.\n>>>");
+		super.screen.append(" Ready -- have fun.\n>>>\n");
 		this.thread = thread;
 		// ok create window
 		super.run(arg);
@@ -91,8 +92,6 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	/** Complicated Thread setup just to be able to initialize and cleanup within the context of the same Thread, as required by Clojure. */
 	private class LispThread extends Thread {
 
-		PipedReader r2;
-		PipedWriter w2;
 		final Object EOF = new Object();
 		final Object lock = new Object();
 
@@ -111,7 +110,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		}
 		boolean ready() {
 			synchronized (this) {
-				return null != r2;
+				return isAlive();
 			}
 		}
 		void throwError() throws Throwable {
@@ -139,22 +138,15 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 					in_ns.invoke(USER);
 					refer.invoke(CLOJURE);
 
-					// create piping system for readout
-					r2 = new PipedReader();
-					w2 = new PipedWriter(r2);
-
-				} catch (Exception e) {
+				} catch (Throwable e) {
 					e.printStackTrace();
 				}
+				// Outside try{}catch for it must always be true on start, so the thread can start, notify and die on error.
 				go = true;
 			}
 		}
 		void quit() {
 			go = false;
-			try {
-				r2.close();
-				w2.close();
-			} catch (Exception e) { e.printStackTrace(); }
 			synchronized (this) { try { notify(); } catch (Exception e) { e.printStackTrace(); } }
 		}
 		String eval(String text) {
@@ -180,7 +172,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			setup();
 			while (go) {
 				synchronized (this) {
-					final StringBuffer sb = new StringBuffer();
+					final StringWriter sw = new StringWriter();
 					try {
 						wait();
 						if (null == text) {
@@ -201,15 +193,11 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 							// evaluate the tokens returned by the LispReader
 							Object ret = Compiler.eval(r);
 							// print the result in a lispy way
-							RT.print(ret, w2);
-							w2.flush();
-							// read out the result for printing to the screen
-							while (r2.ready()) sb.append((char)r2.read());
-							sb.append('\n');
-						};
-						// remove last newline char
-						if (sb.length() > 0) sb.setLength(sb.length()-1);
-
+							if (null != ret) {
+								RT.print(ret, sw);
+								sw.write('\n');
+							}
+						}
 					} catch (Throwable t) {
 						error = t;
 					} finally {
@@ -219,6 +207,9 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 						//  - after a return call within the try { catch } block !!
 						working = false;
 						synchronized (lock) {
+							StringBuffer sb = sw.getBuffer();
+							// remove last newline char
+							if (sb.length() > 0) sb.setLength(sb.length()-1);
 							result = sb.toString();
 							text = null;
 							lock.notify();
