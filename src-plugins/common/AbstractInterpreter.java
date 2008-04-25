@@ -311,6 +311,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				 } catch (Exception e) {
 					 e.printStackTrace();
 				 } finally {
+					if (!go) return; // this statement is reached when returning from the middle of the try/catch!
 					window.setVisible(true);
 					if (store) {
 						prompt.setEnabled(true);
