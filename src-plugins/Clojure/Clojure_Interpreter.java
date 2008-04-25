@@ -100,6 +100,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		private String text = null;
 		private String result = null;
 		private Throwable error = null;
+		private boolean evaluating = false;
 		LispThread() {
 			setPriority(Thread.NORM_PRIORITY);
 			try { setDaemon(true); } catch (Exception e) { e.printStackTrace(); }
@@ -162,12 +163,14 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 					this.text = text.trim();
 					notify();
 				}
-				synchronized (lock) {
-					try { lock.wait(); } catch (InterruptedException ie) {}
-					String res = result;
-					result = null;
-					return res;
+				Thread.yield();
+				evaluating = true;
+				while (evaluating) { // should be done with wait, but can't get it right
+					try { Thread.currentThread().sleep(100); } catch (InterruptedException ie) {}
 				}
+				String res = result;
+				result = null;
+				return res;
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -190,7 +193,6 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 							// read one token from the pipe
 							Object r = LispReader.read(lnpr, false, EOF, false);
 							if (EOF == r) {
-								p("unexpected EOF");
 								break;
 							}
 							// evaluate the tokens returned by the LispReader
@@ -205,15 +207,21 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 						// remove last newline char
 						sb.setLength(sb.length()-1);
 
+						p("sb is : " + sb + "  len: " + sb.length());
+
 						synchronized (lock) {
 							result = sb.toString();
 							text = null;
 							lock.notify();
 						}
+
+						p("result=" + result);
+
 					} catch (Throwable t) {
 						error = t;
 						synchronized (lock) { text = null; lock.notify(); }
 					}
+					evaluating = false;
 					notify();
 				}
 			}
