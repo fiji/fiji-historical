@@ -210,8 +210,6 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 						// remove last newline char
 						sb.setLength(sb.length()-1);
 
-						p("result=" + result);
-
 					} catch (Throwable t) {
 						error = t;
 					} finally {
