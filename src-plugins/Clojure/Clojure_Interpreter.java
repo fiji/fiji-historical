@@ -31,9 +31,8 @@ import java.util.Collections;
 import java.util.ArrayList;
 import java.io.PipedWriter;
 import java.io.PipedReader;
-import java.io.InputStreamReader;
 import java.io.IOException;
-import java.io.PushbackReader;
+import java.io.StringReader;
 
 import common.AbstractInterpreter;
 
@@ -69,13 +68,17 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		super.run(arg);
 		super.window.setTitle("Clojure Interpreter");
 
-		super.window.addWindowListener(
-			new WindowAdapter() {
-				public void windowClosing(WindowEvent we) {
-					thread.quit();
-				}
-			}
-		);
+		// not happening!
+		/*
+		super.window.addWindowListener(new WindowAdapter() { public void windowClosing(WindowEvent we) {
+			Clojure_Interpreter.this.windowClosing();
+		}});
+		*/
+	}
+
+	/** Override super. */
+	protected void windowClosing() {
+		thread.quit();
 	}
 
 	/** Evaluate clojure code. */
@@ -88,19 +91,16 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	/** Complicated Thread setup just to be able to initialize and cleanup within the context of the same Thread, as required by Clojure. */
 	private class LispThread extends Thread {
 
-		PipedReader reader;
-		PipedWriter writer;
 		PipedReader r2;
 		PipedWriter w2;
-		LineNumberingPushbackReader rdr;
 		final Object EOF = new Object();
-		PushbackReader pr;
 		final Object lock = new Object();
 
 		private boolean go = false;
 		private String text = null;
 		private String result = null;
 		private Throwable error = null;
+		private boolean working = false;
 		LispThread() {
 			setPriority(Thread.NORM_PRIORITY);
 			try { setDaemon(true); } catch (Exception e) { e.printStackTrace(); }
@@ -111,7 +111,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		}
 		boolean ready() {
 			synchronized (this) {
-				return null != rdr;
+				return null != r2;
 			}
 		}
 		void throwError() throws Throwable {
@@ -139,16 +139,12 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 					in_ns.invoke(USER);
 					refer.invoke(CLOJURE);
 
-					// create piping system
-					reader = new PipedReader();
-					writer = new PipedWriter(reader);
-					rdr = new LineNumberingPushbackReader(reader);
+					// create piping system for readout
 					r2 = new PipedReader();
 					w2 = new PipedWriter(r2);
 
 				} catch (Exception e) {
 					e.printStackTrace();
-					rdr = null;
 				}
 				go = true;
 			}
@@ -156,9 +152,6 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		void quit() {
 			go = false;
 			try {
-				reader.close();
-				rdr.close();
-				writer.close();
 				r2.close();
 				w2.close();
 			} catch (Exception e) { e.printStackTrace(); }
@@ -170,8 +163,10 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 					this.text = text.trim();
 					notify();
 				}
-				synchronized (lock) {
-					try { lock.wait(); } catch (InterruptedException ie) {}
+				Thread.yield();
+				working = true;
+				while (working) {
+					try { Thread.currentThread().sleep(100); } catch (Exception e) {}
 					String res = result;
 					result = null;
 					return res;
@@ -185,25 +180,22 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			setup();
 			while (go) {
 				synchronized (this) {
+					final StringBuffer sb = new StringBuffer();
 					try {
 						wait();
-						if (null == text) continue;
-						// EVAL
-						// send the text to the pipe
-						writer.write(text);
-						writer.write('\n'); // despite evidence to the contrary, a '-1' does not signal end of pipe for the LineNumberingPushbackReader
-						writer.flush();
+						if (null == text) {
+							working = false;
+							continue;
+						}
 
+						// prepare input for parser
+						final LineNumberingPushbackReader lnpr = new LineNumberingPushbackReader(new StringReader(text));
 						// to store the parsed output
-						final StringBuffer sb = new StringBuffer();
-						Object r;
 
 						while (true) {
-							if (!reader.ready()) break;
-							// read the text from the pipe
-							r = LispReader.read(rdr, false, EOF, false);
+							// read one token from the pipe
+							Object r = LispReader.read(lnpr, false, EOF, false);
 							if (EOF == r) {
-								p("unexpected EOF");
 								break;
 							}
 							// evaluate the tokens returned by the LispReader
@@ -213,17 +205,26 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 							w2.flush();
 							// read out the result for printing to the screen
 							while (r2.ready()) sb.append((char)r2.read());
+							sb.append('\n');
 						};
+						// remove last newline char
+						if (sb.length() > 0) sb.setLength(sb.length()-1);
+
+					} catch (Throwable t) {
+						error = t;
+					} finally {
+						// This clause gets excuted:
+						//  - after a Throwable error
+						//  - after calling continue and break ... inside the try { } catch, if they affect stuff outside the block
+						//  - after a return call within the try { catch } block !!
+						working = false;
 						synchronized (lock) {
 							result = sb.toString();
 							text = null;
 							lock.notify();
 						}
-					} catch (Throwable t) {
-						error = t;
-						synchronized (lock) { text = null; lock.notify(); }
+						notify();
 					}
-					notify();
 				}
 			}
 			// cleanup
