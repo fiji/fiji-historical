@@ -49,33 +49,29 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 
 	static private boolean loaded = false;
 
-	private LispThread thread = null;
+	static private LispThread thread = null;
 
-	synchronized public void run(String arg) {
-		if (loaded) {
-			IJ.showMessage("You can only have one instance of the Clojure interpreter running.");
-			return;
+	public void run(String arg) {
+		// synchronized with the destroy() method
+		synchronized (EOF) {
+			if (loaded) {
+				IJ.showMessage("You can only have one instance of the Clojure interpreter running.");
+				return;
+			}
+
+			loaded = true;
+			super.screen.append("Starting Clojure...");
+			final LispThread thread = new LispThread();
+			if (!thread.ready()) {
+				p("Some error ocurred.");
+				return;
+			}
+			super.screen.append(" Ready -- have fun.\n>>>\n");
+			this.thread = thread;
+			// ok create window
+			super.run(arg);
+			super.window.setTitle("Clojure Interpreter");
 		}
-
-		loaded = true;
-		super.screen.append("Starting Clojure...");
-		final LispThread thread = new LispThread();
-		if (!thread.ready()) {
-			p("Some error ocurred.");
-			return;
-		}
-		super.screen.append(" Ready -- have fun.\n>>>\n");
-		this.thread = thread;
-		// ok create window
-		super.run(arg);
-		super.window.setTitle("Clojure Interpreter");
-
-		// not happening!
-		/*
-		super.window.addWindowListener(new WindowAdapter() { public void windowClosing(WindowEvent we) {
-			Clojure_Interpreter.this.windowClosing();
-		}});
-		*/
 	}
 
 	/** Override super. */
@@ -83,15 +79,20 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		thread.quit();
 	}
 
-	/** Evaluate clojure code. */
+	/** Evaluate clojure code. */ // overrides super method
 	protected Object eval(final String text) throws Throwable {
+		return evaluate(text);
+	}
+
+	static public Object evaluate(final String text) throws Throwable {
+		if (null == thread) thread = new LispThread();
 		Object ret = thread.eval(text);
 		thread.throwError();
 		return ret;
 	}
 
 	/** Complicated Thread setup just to be able to initialize and cleanup within the context of the same Thread, as required by Clojure. */
-	private class LispThread extends Thread {
+	static private class LispThread extends Thread {
 
 		final Object lock = new Object();
 
@@ -196,7 +197,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		}
 	}
 
-	static protected void init() throws Throwable {
+	static private void init() throws Throwable {
 		// Copying nearly literally from the clojure.lang.Repl class by Rich Hickey
 		RT.init();
 
@@ -212,12 +213,21 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		refer.invoke(CLOJURE);
 	}
 
-	static protected void cleanup() {
+	static private void cleanup() {
 		Var.popThreadBindings();
+		thread = null;
+	}
+
+	/** Will destroy the thread and cleanup if the interpreter is not loaded. */
+	static protected void destroy() {
+		// synchronized with the run(String arg) method
+		synchronized (EOF) {
+			if (!loaded && null != thread) thread.quit();
+		}
 	}
 
 	/** Evaluates the clojure code in @param text and appends a newline char to each returned token. */
-	static protected StringBuffer parse(final String text) throws Throwable {
+	static private StringBuffer parse(final String text) throws Throwable {
 		// prepare input for parser
 		final LineNumberingPushbackReader lnpr = new LineNumberingPushbackReader(new StringReader(text));
 		// storage for readout
