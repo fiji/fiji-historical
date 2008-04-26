@@ -24,7 +24,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-You may contact Albert Cardona at albert at pensament dot net, at http://www.pensament.net/java/
+You may contact Albert Cardona at acardona at ini phys ethz ch.
 */
 
 package common;
@@ -41,6 +41,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.io.File;
+import java.io.StringWriter;
+import java.io.PrintWriter;
 
 /**
  *  This class looks through the plugins directory for files with a
@@ -312,5 +314,13 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 				}.start();
 			}
 		}
+	}
+
+	static public void printError(Throwable t) {
+		final StringWriter w = new StringWriter();
+		final PrintWriter pw = new PrintWriter(w);
+		t.printStackTrace(pw);
+		pw.close();
+		IJ.log(w.toString());
 	}
 }

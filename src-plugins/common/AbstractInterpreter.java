@@ -333,6 +333,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		if (null == text) return;
 		int len = text.length();
 		if (len <= 0) {
+			print(">>>");
 			return;
 		}
 		// store text
@@ -366,8 +367,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				prompt.setText(new String(tabs));
 			}
 			// print to screen
-			screen.append("... " + fix(text) + "\n");
-			screen.setCaretPosition(screen.getDocument().getLength());
+			print("... " + fix(text));
 			// remove tabs from line:
 			text = text.replaceAll("\\t", "");
 			len = text.length(); // refresh length
@@ -385,15 +385,13 @@ public abstract class AbstractInterpreter implements PlugIn {
 				return;
 			}
 		} else {
-			screen.append(">>> " + text + "\n"); // TODO: make the prompt settable - but it screws up automatic cutting out of prompt when copying or executing from popup
-			screen.setCaretPosition(screen.getDocument().getLength());
+			print(">>> " + text);
 		}
 		//try to eval, and if it fails, then it's code for exec
 		try {
 			Object ob = eval(text);
 			if (null != ob) {
-				screen.append(ob.toString() + "\n");
-				screen.setCaretPosition(screen.getDocument().getLength());
+				print(ob.toString());
 			}
 		} catch (Throwable e) {
 			e.printStackTrace(print_out);
@@ -403,6 +401,12 @@ public abstract class AbstractInterpreter implements PlugIn {
 			// reset tab expansion
 			last_tab_expand = null;
 		}
+	}
+
+	/** Prints to screen: will append a newline char to the text, and also scroll down. */
+	protected void print(String text) {
+		screen.append(text + "\n");
+		screen.setCaretPosition(screen.getDocument().getLength());
 	}
 
 	abstract protected Object eval(String text) throws Throwable;
