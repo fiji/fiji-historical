@@ -2,7 +2,8 @@
 
 (import '(javax.swing JFrame JLabel JTextField JButton)
         '(java.awt.event ActionListener)
-	'(java.awt GridLayout))
+	'(java.awt GridLayout)
+	'(java.lang NumberFormatException))
 
 ; Define a function that does all, and which takes no arguments
 (defn celsius []
@@ -20,9 +21,23 @@
        (addActionListener
            (proxy [ActionListener] []
 	        (actionPerformed [evt]
-		    (let [c (. Double (parseDouble (. temp-text (getText))))]
-		      (. fahrenheit-label
-		         (setText (str (+ 32 (* 1.8 c)) " Fahrenheit"))))))))
+		    ; check that the entered string length is > 0
+		    (let [snum (. temp-text (getText))]
+		      (if (> (. snum (length)) 0)
+			; check if the string is a number at all
+			(try (let [num (. Double (parseDouble snum))]
+			       (. fahrenheit-label
+				  (setText (str (+ 32 (* 1.8 num)) " Fahrenheit"))))
+                          (catch java.lang.NumberFormatException e
+			       (. fahrenheit-label
+				  (setText "Not a number"))))
+			; else, hint what is needed
+			(. fahrenheit-label
+			   (setText "Enter a number"))))))))
+   ; The number format error prevention could have been written by adding
+   ; an extended PlainDocument to the JTextField which only accepts valid numbers.
+   ; BUT one cannot call super, so the call to super.insertString() cannot be made!
+
    ; On the frame, call all the following methods
    ; It could be done with many blocks like (. frame (add celsius-label)) etc.
    (doto frame
