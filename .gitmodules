@@ -22,6 +22,9 @@
 [submodule "java/win32"]
 	path = java/win32
 	url = .
+[submodule "java/win64"]
+	path = java/win64
+	url = .
 [submodule "micromanager1.1"]
 	path = micromanager1.1
 	url = git://pacific.mpi-cbg.de/micromanager1.1/.git
