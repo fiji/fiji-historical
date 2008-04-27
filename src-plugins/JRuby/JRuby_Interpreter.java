@@ -7,6 +7,8 @@ import ij.plugin.PlugIn;
 import org.jruby.*;
 import java.io.PrintStream;
 import common.AbstractInterpreter;
+import ij.Menus;
+import java.io.File;
 
 public class JRuby_Interpreter extends AbstractInterpreter {
 
@@ -30,27 +32,37 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 		rubyRuntime = Ruby.newInstance(System.in,print_out,print_out);
 		print_out.println("Done.");
 
-		rubyRuntime.evalScriptlet(startupScript);
+		rubyRuntime.evalScriptlet(getStartupScript());
 	}
 
-	// This sets up method_missing to find the right class
-	// for anything beginning ij in the ij package.  (We could
-	// change this to add other package hierarchies too, e.g.
-	// those in VIB.)
-	public final static String startupScript = "" +
-		"require 'java'\n" +
-		"module Kernel\n" +
-		"  def ij\n" +
-		"    JavaUtilities.get_package_module_dot_format('ij')" +
-		"  end\n" +
-		"end\n";
+	public static String getImageJRubyPath() {
+		String pluginsPath = Menus.getPlugInsPath();
+		return pluginsPath + "JRuby" + File.separator + "imagej.rb";
+	}
+
+	/* This sets up method_missing to find the right class for
+	   anything beginning ij in the ij package.  (We could change
+	   this to add other package hierarchies too, e.g.  those in
+	   VIB.)  It also loads a file of Ruby equivalents to ImageJ
+	   macro functions. */
+	public static String getStartupScript() {
+		String s =
+			"require 'java'\n" +
+			"module Kernel\n" +
+			"  def ij\n" +
+			"    JavaUtilities.get_package_module_dot_format('ij')\n" +
+			"  end\n" +
+			"end\n" +
+			"imagej_functions_path = '"+getImageJRubyPath()+"'\n" +
+			"require imagej_functions_path\n";
+		return s;
+	}
 
 	protected void windowClosing() {
-		// FIXME: I'm not sure yet how to interrupt what
-		// the JRuby instance is doing, but this should
-		// work if it's waiting for input:
+		/* FIXME: I'm not sure yet how to interrupt what
+		   the JRuby instance is doing, but this should
+		   work if it's waiting for input: */
 		if( rubyRuntime != null )
 			rubyRuntime.evalScriptlet("exit");
 	}
-
 }
