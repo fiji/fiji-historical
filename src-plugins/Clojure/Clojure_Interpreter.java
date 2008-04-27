@@ -33,6 +33,7 @@ import java.io.PipedWriter;
 import java.io.PipedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 
 import common.AbstractInterpreter;
 
@@ -44,36 +45,33 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	static final Var refer = RT.var("clojure", "refer");
 	static final Var ns = RT.var("clojure", "*ns*");
 	static final Var warn_on_reflection = RT.var("clojure", "*warn-on-reflection*");
+	static final Object EOF = new Object();
 
 	static private boolean loaded = false;
 
-	private LispThread thread = null;
+	static private LispThread thread = null;
 
-	synchronized public void run(String arg) {
-		if (loaded) {
-			IJ.showMessage("You can only have one instance of the Clojure interpreter running.");
-			return;
+	public void run(String arg) {
+		// synchronized with the destroy() method
+		synchronized (EOF) {
+			if (loaded) {
+				IJ.showMessage("You can only have one instance of the Clojure interpreter running.");
+				return;
+			}
+
+			loaded = true;
+			super.screen.append("Starting Clojure...");
+			final LispThread thread = new LispThread();
+			if (!thread.ready()) {
+				p("Some error ocurred.");
+				return;
+			}
+			super.screen.append(" Ready -- have fun.\n>>>\n");
+			this.thread = thread;
+			// ok create window
+			super.run(arg);
+			super.window.setTitle("Clojure Interpreter");
 		}
-
-		loaded = true;
-		super.screen.append("Starting Clojure...");
-		final LispThread thread = new LispThread();
-		if (!thread.ready()) {
-			p("Some error ocurred.");
-			return;
-		}
-		super.screen.append(" Ready -- have fun.\n>>>");
-		this.thread = thread;
-		// ok create window
-		super.run(arg);
-		super.window.setTitle("Clojure Interpreter");
-
-		// not happening!
-		/*
-		super.window.addWindowListener(new WindowAdapter() { public void windowClosing(WindowEvent we) {
-			Clojure_Interpreter.this.windowClosing();
-		}});
-		*/
 	}
 
 	/** Override super. */
@@ -81,19 +79,21 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		thread.quit();
 	}
 
-	/** Evaluate clojure code. */
+	/** Evaluate clojure code. */ // overrides super method
 	protected Object eval(final String text) throws Throwable {
+		return evaluate(text);
+	}
+
+	static public Object evaluate(final String text) throws Throwable {
+		if (null == thread) thread = new LispThread();
 		Object ret = thread.eval(text);
 		thread.throwError();
 		return ret;
 	}
 
 	/** Complicated Thread setup just to be able to initialize and cleanup within the context of the same Thread, as required by Clojure. */
-	private class LispThread extends Thread {
+	static private class LispThread extends Thread {
 
-		PipedReader r2;
-		PipedWriter w2;
-		final Object EOF = new Object();
 		final Object lock = new Object();
 
 		private boolean go = false;
@@ -111,7 +111,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		}
 		boolean ready() {
 			synchronized (this) {
-				return null != r2;
+				return isAlive();
 			}
 		}
 		void throwError() throws Throwable {
@@ -125,36 +125,16 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		private void setup() {
 			synchronized (this) {
 				try {
-					// Copying nearly literally from the clojure.lang.Repl class by Rich Hickey
-					RT.init();
-
-					//*ns* must be thread-bound for in-ns to work
-					//thread-bind *warn-on-reflection* so it can be set!
-					//must have corresponding popThreadBindings in finally clause
-					Var.pushThreadBindings(
-							RT.map(new Object[]{ns, ns.get(),
-							       warn_on_reflection, warn_on_reflection.get()}));
-
-					//create and move into the user namespace
-					in_ns.invoke(USER);
-					refer.invoke(CLOJURE);
-
-					// create piping system for readout
-					r2 = new PipedReader();
-					w2 = new PipedWriter(r2);
-
-				} catch (Exception e) {
+					init();
+				} catch (Throwable e) {
 					e.printStackTrace();
 				}
+				// Outside try{}catch for it must always be true on start, so the thread can start, notify and die on error.
 				go = true;
 			}
 		}
 		void quit() {
 			go = false;
-			try {
-				r2.close();
-				w2.close();
-			} catch (Exception e) { e.printStackTrace(); }
 			synchronized (this) { try { notify(); } catch (Exception e) { e.printStackTrace(); } }
 		}
 		String eval(String text) {
@@ -180,7 +160,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			setup();
 			while (go) {
 				synchronized (this) {
-					final StringBuffer sb = new StringBuffer();
+					StringBuffer sb = null;
 					try {
 						wait();
 						if (null == text) {
@@ -188,27 +168,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 							continue;
 						}
 
-						// prepare input for parser
-						final LineNumberingPushbackReader lnpr = new LineNumberingPushbackReader(new StringReader(text));
-						// to store the parsed output
-
-						while (true) {
-							// read one token from the pipe
-							Object r = LispReader.read(lnpr, false, EOF, false);
-							if (EOF == r) {
-								break;
-							}
-							// evaluate the tokens returned by the LispReader
-							Object ret = Compiler.eval(r);
-							// print the result in a lispy way
-							RT.print(ret, w2);
-							w2.flush();
-							// read out the result for printing to the screen
-							while (r2.ready()) sb.append((char)r2.read());
-							sb.append('\n');
-						};
-						// remove last newline char
-						if (sb.length() > 0) sb.setLength(sb.length()-1);
+						sb = parse(text);
 
 					} catch (Throwable t) {
 						error = t;
@@ -219,7 +179,12 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 						//  - after a return call within the try { catch } block !!
 						working = false;
 						synchronized (lock) {
-							result = sb.toString();
+							if (null == sb) result = null;
+							else {
+								// remove last newline char, since it will be added again
+								if (sb.length() > 0) sb.setLength(sb.length()-1);
+								result = sb.toString();
+							}
 							text = null;
 							lock.notify();
 						}
@@ -227,9 +192,61 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 					}
 				}
 			}
-			// cleanup
-			Var.popThreadBindings();
+			cleanup();
 			loaded = false;
 		}
+	}
+
+	static private void init() throws Throwable {
+		// Copying nearly literally from the clojure.lang.Repl class by Rich Hickey
+		RT.init();
+
+		//*ns* must be thread-bound for in-ns to work
+		//thread-bind *warn-on-reflection* so it can be set!
+		//must have corresponding popThreadBindings in finally clause
+		Var.pushThreadBindings(
+				RT.map(new Object[]{ns, ns.get(),
+				       warn_on_reflection, warn_on_reflection.get()}));
+
+		//create and move into the user namespace
+		in_ns.invoke(USER);
+		refer.invoke(CLOJURE);
+	}
+
+	static private void cleanup() {
+		Var.popThreadBindings();
+		thread = null;
+	}
+
+	/** Will destroy the thread and cleanup if the interpreter is not loaded. */
+	static protected void destroy() {
+		// synchronized with the run(String arg) method
+		synchronized (EOF) {
+			if (!loaded && null != thread) thread.quit();
+		}
+	}
+
+	/** Evaluates the clojure code in @param text and appends a newline char to each returned token. */
+	static private StringBuffer parse(final String text) throws Throwable {
+		// prepare input for parser
+		final LineNumberingPushbackReader lnpr = new LineNumberingPushbackReader(new StringReader(text));
+		// storage for readout
+		final StringWriter sw = new StringWriter();
+
+		while (true) {
+			// read one token from the pipe
+			Object r = LispReader.read(lnpr, false, EOF, false);
+			if (EOF == r) {
+				break;
+			}
+			// evaluate the tokens returned by the LispReader
+			Object ret = Compiler.eval(r);
+			// print the result in a lispy way
+			if (null != ret) {
+				RT.print(ret, sw);
+				sw.write('\n');
+			}
+		}
+		return sw.getBuffer();
 	}
 }

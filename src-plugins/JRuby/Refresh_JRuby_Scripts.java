@@ -34,11 +34,7 @@ public class Refresh_JRuby_Scripts extends RefreshScripts {
 		try {
 			rubyRuntime.runFromMain(fis,filename);
 		} catch( Throwable t ) {
-			final Writer w = new StringWriter();
-			final PrintWriter pw = new PrintWriter(w);
-			t.printStackTrace(pw);
-			pw.close();
-			IJ.log(w.toString());
+			printError(t);
 		}
 
 		// Undesirably this throws an exception, so just let the 
