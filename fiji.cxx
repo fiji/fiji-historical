@@ -12,6 +12,12 @@ using std::string;
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#ifdef MINGW32
+#define PATH_SEP ";"
+#else
+#define PATH_SEP ":"
+#endif
+
 static const char *relative_java_home = JAVA_HOME;
 static const char *library_path = JAVA_LIB_PATH;
 
@@ -24,12 +30,26 @@ static const char *library_path = JAVA_LIB_PATH;
 #ifdef MINGW32
 #include <windows.h>
 #define RTLD_LAZY 0
+static char *dlerror_value;
+
 static void *dlopen(const char *name, int flags)
 {
-	return (void *)LoadLibrary(name);
-}
+	void *result = LoadLibrary(name);
+	DWORD error_code = GetLastError();
+	LPSTR buffer;
 
-static char *dlerror_value;
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			error_code,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPSTR)&buffer,
+			0, NULL);
+	dlerror_value = buffer;
+
+	return result;
+}
 
 static char *dlerror(void)
 {
@@ -128,7 +148,7 @@ static char *get_fiji_dir(const char *argv0)
 	if (slash)
 		snprintf(buffer, slash - argv0 + 1, argv0);
 	else
-		sprintf(buffer, "./");
+		sprintf(buffer, ".");
 
 	return buffer;
 }
@@ -147,7 +167,8 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 
 	handle = dlopen(buffer, RTLD_LAZY);
 	if (!handle) {
-		cerr << "Could not load Java library!" << endl;
+		cerr << "Could not load Java library '" <<
+			buffer << "': " << dlerror() << endl;
 		return 1;
 	}
 	dlerror(); /* Clear any existing error */
@@ -163,7 +184,7 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 	return JNI_CreateJavaVM(vm, env, args);
 }
 
-int build_classpath(string &result, string jar_directory) {
+int build_classpath(string &result, string jar_directory, int no_error) {
 	if (result == "") {
 		result = "-Djava.class.path=";
 		result += fiji_dir;
@@ -171,6 +192,8 @@ int build_classpath(string &result, string jar_directory) {
 	}
 	DIR *directory = opendir(jar_directory.c_str());
 	if (!directory) {
+		if (no_error)
+			return 0;
 		cerr << "Failed to open: " << jar_directory << endl;
 		return 1;
 	}
@@ -179,13 +202,6 @@ int build_classpath(string &result, string jar_directory) {
 	struct dirent *entry;
 	while (NULL != (entry = readdir(directory))) {
 		string filename(entry->d_name);
-		if (entry->d_type == DT_DIR) {
-			if (filename != "." && filename != ".." &&
-					build_classpath(result, jar_directory
-						+ filename + "/"))
-				return 1;
-			continue;
-		}
 		unsigned int n = filename.size();
 		if (n <= extension_length)
 			continue;
@@ -193,7 +209,15 @@ int build_classpath(string &result, string jar_directory) {
 		if (!filename.compare(extension_start,
 					extension_length,
 					extension))
-			result += ":" + jar_directory + filename;
+			result += PATH_SEP + jar_directory + filename;
+		else {
+			if (filename != "." && filename != ".." &&
+					build_classpath(result, jar_directory
+						+ filename + "/", 1))
+				return 1;
+			continue;
+		}
+
 	}
 	return 0;
 }
@@ -253,7 +277,7 @@ static void *start_ij(void *dummy)
 	options[count++].optionString = ext_path;
 #endif
 
-	if (build_classpath(class_path, string(fiji_dir) + "/jars/"))
+	if (build_classpath(class_path, string(fiji_dir) + "/jars", 0))
 		return NULL;
 	options[count++].optionString = strdup(class_path.c_str());
 
@@ -294,11 +318,6 @@ static void *start_ij(void *dummy)
 
 	if (create_java_vm(&vm, (void **)&env, &args))
 		cerr << "Could not create JavaVM" << endl;
-	else if (!(instance = env->FindClass("ij/ImageJ")))
-		cerr << "Could not find ij.ImageJ" << endl;
-	else if (!(method = env->GetStaticMethodID(instance,
-					"main", "([Ljava/lang/String;)V")))
-		cerr << "Could not find main method" << endl;
 	else {
 		int i;
 		jstring jstr;
@@ -326,6 +345,11 @@ static void *start_ij(void *dummy)
 		if (debug)
 			cerr << endl;
 		else {
+			if (!(instance = env->FindClass("ij/ImageJ")))
+				cerr << "Could not find ij.ImageJ" << endl;
+			else if (!(method = env->GetStaticMethodID(instance,
+					"main", "([Ljava/lang/String;)V")))
+				cerr << "Could not find main method" << endl;
 			env->CallStaticVoidMethodA(instance,
 					method, (jvalue *)&args);
 			if (vm->DetachCurrentThread())

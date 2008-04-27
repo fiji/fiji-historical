@@ -9,6 +9,7 @@ other plugins that are useful, at least to neuroscientists.
 At the moment, the following platforms are supported:
 
 - Windows-x86
+- Windows-x86_64
 - Linux-x86
 - Linux-x86_64
 - MacOSX-PowerPC

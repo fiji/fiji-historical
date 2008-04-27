@@ -35,10 +35,10 @@ else
 endif
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
-	CPU=i386
 	ARCH=win32
 	JAVA_HOME=$(JDK)/jdk1.6.0_03/jre
 	JAVA_LIB_PATH=bin/client/jvm.dll
+	JAVA_LIB_DIR=bin
 	EXTRADEFS+= -DMINGW32
 	LIBDL=
 	EXE=.exe
@@ -56,6 +56,18 @@ endif
 	INCLUDES=-I$(JDK)/Headers
 	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
 	LIBMACOSX=-lpthread -framework CoreFoundation
+endif
+ifneq ($(CROSS_COMPILE_WIN64_ON_LINUX),)
+	CXX=PATH="$$(pwd)/root-x86_64-pc-linux/bin:$$PATH" x86_64-pc-mingw32-g++
+	ARCH=win64
+	ARCH_INCLUDE=win32
+	JAVA_HOME=$(JDK)/jdk1.6.0_04/jre
+	JAVA_LIB_PATH=bin/server/jvm.dll
+	JAVA_LIB_DIR=bin
+	EXTRADEFS+= -DMINGW32
+	LIBDL=
+	EXE=.exe
+	STRIP_TARGET=1
 endif
 
 CXXFLAGS=-g $(INCLUDES) $(EXTRADEFS) \
@@ -81,7 +93,9 @@ endif
 endif
 
 run: $(JDK) $(TARGET)$(EXE)
+ifeq ($(CROSS_COMPILE_WIN64_ON_LINUX),)
 	./$(TARGET)$(EXE) $(FIJI_ARGS)
+endif
 
 # submodules
 
