@@ -115,7 +115,7 @@ $(SUBMODULE_TARGETS_IN_FIJI):
 # MicroManager
 mm:
 	export JAVA_LIB_DIR='$(JAVA_LIB_DIR)'; \
-	export JAVA_HOME='$$(pwd)/$(JAVA_HOME)/..'; \
+	export JAVA_HOME="$$(pwd)/$(JAVA_HOME)/.."; \
 	export JAVAINC="-I$$JAVA_HOME/include -I$$JAVA_HOME/include/linux"; \
 	cd micromanager1.1 && sh build.sh
 
