@@ -49,6 +49,7 @@ ifeq ($(uname_M),Power Macintosh)
 	ARCH=macosx
 else
 	ARCH=macosx-intel
+	EXTRADEFS+= -arch i386 -arch ppc
 endif
 	JAVA_HOME=$(JDK)/Home
 	JAVA_LIB_PATH=../Libraries/libjvm.dylib
