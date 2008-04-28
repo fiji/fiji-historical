@@ -27,8 +27,7 @@ uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 
 LIBDL=-ldl
-INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH_INCLUDE)
-JDK=java/$(ARCH)
+INCLUDES=-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(ARCH)
 ARCH_INCLUDE=$(ARCH)
 JAVA_LIB_DIR=$(JAVA_HOME)/lib/$(CPU)
 ifeq ($(uname_S),Linux)
@@ -54,7 +53,6 @@ ifeq ($(uname_M),Power Macintosh)
 else
 	ARCH=macosx-intel
 endif
-	INCLUDES=-I$(JDK)/Headers
 	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
 	LIBMACOSX=-lpthread -framework CoreFoundation
 endif
@@ -74,8 +72,7 @@ CXXFLAGS=-g $(INCLUDES) $(EXTRADEFS) \
 	-DJAVA_HOME=\"$(JAVA_HOME)\" -DJAVA_LIB_PATH=\"$(JAVA_LIB_PATH)\"
 LIBS=$(LIBDL) $(LIBMACOSX)
 
-.PHONY: $(JDK)
-all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
+all: $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
 
 $(TARGET)$(EXE): fiji.o
 	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
@@ -239,6 +236,54 @@ clean:
 	done
 	rm -f $(EXTRACLEANFILES)
 	rm -f fiji-linux fiji-win32.exe fiji-linux-amd64  fiji-win64.exe  fiji-macosx ij.jar
+	rm -rf api
+	rm -f fiji.o
 
+.PHONY: debs
+
+debs:
+	dpkg-buildpackage -i.git -I.git -rfakeroot -us -uc
+
+.PHONY: build-imageja build-fiji-launcher build-fiji-plugins
+.PHONY: build-doc-imageja build-doc-fiji-launcher build-doc-fiji-plugins
+
+.PHONY: install-imageja install-fiji-launcher install-fiji-plugins
+.PHONY: install-doc-imageja install-doc-fiji-launcher install-doc-fiji-plugins
+
+# For the imageja package:
+
+build-imageja: ij.jar
+
+install-imageja:
+	echo Installing ImageJA to prefix $(DESTDIR)
+	install -d $(DESTDIR)/usr/bin/
+	install -m 755 simple-launcher $(DESTDIR)/usr/bin/imageja
+	install -d $(DESTDIR)/usr/share/imageja/
+	install -m 644 ij.jar $(DESTDIR)/usr/share/imageja/
+	install -d $(DESTDIR)/usr/share/imageja/plugins/
+	install -d $(DESTDIR)/usr/share/imageja/jars/
+
+build-doc-imageja:
+	( cd ImageJA && ant javadocs )
+
+install-doc-imageja:
+	install -d $(DESTDIR)/usr/share/doc/imageja/
+	cp -r api $(DESTDIR)/usr/share/doc/imageja/
+	chmod a=rX $(DESTDIR)/usr/share/doc/imageja/
+
+# For the fiji-launcher package:
+
+build-fiji-launcher: fiji-linux
+
+install-fiji-launcher: fiji-linux
+	install -m 755 fiji-linux $(DESTDIR)/usr/bin/fiji
+
+# For the fiji-plugins package:
+
+build-fiji-plugins: ij.jar $(JARS) src-plugins
+	echo JARS is $(JARS)
+
+install-fiji-plugins: $(JARS)
+	cp -r plugins/* $(DESTDIR)/usr/share/imageja/plugins/
 
 # ---------------------------------------------------------------------

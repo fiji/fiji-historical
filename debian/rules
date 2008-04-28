@@ -22,25 +22,27 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-
+	# No configuration needed for Fiji, unless we later autoconf
 	touch configure-stamp
 
 
-#Architecture 
+#Architecture
 build: build-arch build-indep
 
 build-arch: build-arch-stamp
-build-arch-stamp: configure-stamp 
+build-arch-stamp: configure-stamp
 
 	# Add here commands to compile the arch part of the package.
-	#$(MAKE) 
+	$(MAKE) build-fiji-launcher
 	touch $@
 
 build-indep: build-indep-stamp
-build-indep-stamp: configure-stamp 
+build-indep-stamp: configure-stamp
 
 	# Add here commands to compile the indep part of the package.
-	#$(MAKE) doc
+	$(MAKE) build-imageja
+	$(MAKE) build-fiji-plugins
+	$(MAKE) build-doc-imageja
 	touch $@
 
 clean:
@@ -51,70 +53,149 @@ clean:
 	# Add here commands to clean up after the build process.
 	$(MAKE) clean
 
-	dh_clean 
+	dh_clean -X.git
 
 install: install-indep install-arch
 install-indep:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -i 
+	dh_clean -X.git -k -i
 	dh_installdirs -i
 
 	# Add here commands to install the indep part of the package into
 	# debian/<package>-doc.
-	#INSTALLDOC#
-
+	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja install-imageja
+	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji-plugins install-fiji-plugins
+	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja-doc install-doc-imageja
 	dh_install -i
 
 install-arch:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -s 
+	dh_clean -X.git -k -s
 	dh_installdirs -s
 
-	# Add here commands to install the arch part of the package into 
+	# Add here commands to install the arch part of the package into
 	# debian/tmp.
-	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji install
+	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji-launcher install-fiji-launcher
 
 	dh_install -s
-# Must not depend on anything. This is to be called by
-# binary-arch/binary-indep
-# in another 'make' thread.
-binary-common:
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs changes-to-staged-plugins
-	dh_installdocs
-	dh_installexamples
-#	dh_installmenu
-#	dh_installdebconf	
-#	dh_installlogrotate	
-#	dh_installemacsen
-#	dh_installpam
-#	dh_installmime
-#	dh_python
-#	dh_installinit
-#	dh_installcron
-#	dh_installinfo
-	dh_installman
-	dh_link
-	dh_strip
-	dh_compress 
-	dh_fixperms
-#	dh_perl
-	dh_makeshlibs
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+
 # Build architecture independant packages using the common target.
 binary-indep: build-indep install-indep
-	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
+	dh_testdir -pimageja
+	dh_testroot -pimageja
+	dh_installchangelogs -pimageja
+	dh_installdocs -pimageja
+	dh_installexamples -pimageja
+#	dh_installmenu -pimageja
+#	dh_installdebconf	 -pimageja
+#	dh_installlogrotate	 -pimageja
+#	dh_installemacsen -pimageja
+#	dh_installpam -pimageja
+#	dh_installmime -pimageja
+#	dh_python -pimageja
+#	dh_installinit -pimageja
+#	dh_installcron -pimageja
+#	dh_installinfo -pimageja
+	dh_installman -pimageja
+	dh_link -pimageja
+	dh_strip -pimageja
+	dh_compress  -pimageja
+	dh_fixperms -pimageja
+#	dh_perl -pimageja
+	dh_makeshlibs -pimageja
+	dh_installdeb -pimageja
+	dh_shlibdeps -pimageja
+	dh_gencontrol -pimageja
+	dh_md5sums -pimageja
+	dh_builddeb -pimageja
+	#  Now the ImageJA API documentation
+	dh_testdir -pimageja-doc
+	dh_testroot -pimageja-doc
+	dh_installchangelogs -pimageja-doc
+	dh_installdocs -pimageja-doc
+	dh_installexamples -pimageja-doc
+#	dh_installmenu -pimageja-doc
+#	dh_installdebconf	 -pimageja-doc
+#	dh_installlogrotate	 -pimageja-doc
+#	dh_installemacsen -pimageja-doc
+#	dh_installpam -pimageja-doc
+#	dh_installmime -pimageja-doc
+#	dh_python -pimageja-doc
+#	dh_installinit -pimageja-doc
+#	dh_installcron -pimageja-doc
+#	dh_installinfo -pimageja-doc
+	dh_installman -pimageja-doc
+	dh_link -pimageja-doc
+	dh_strip -pimageja-doc
+	dh_compress  -pimageja-doc
+	dh_fixperms -pimageja-doc
+#	dh_perl -pimageja-doc
+	dh_makeshlibs -pimageja-doc
+	dh_installdeb -pimageja-doc
+	dh_shlibdeps -pimageja-doc
+	dh_gencontrol -pimageja-doc
+	dh_md5sums -pimageja-doc
+	dh_builddeb -pimageja-doc
+	# Now the plugins:
+	dh_testdir -pfiji-plugins
+	dh_testroot -pfiji-plugins
+	dh_installchangelogs -pfiji-plugins
+	dh_installdocs -pfiji-plugins
+	dh_installexamples -pfiji-plugins
+#	dh_installmenu -pfiji-plugins
+#	dh_installdebconf	 -pfiji-plugins
+#	dh_installlogrotate	 -pfiji-plugins
+#	dh_installemacsen -pfiji-plugins
+#	dh_installpam -pfiji-plugins
+#	dh_installmime -pfiji-plugins
+#	dh_python -pfiji-plugins
+#	dh_installinit -pfiji-plugins
+#	dh_installcron -pfiji-plugins
+#	dh_installinfo -pfiji-plugins
+	dh_installman -pfiji-plugins
+	dh_link -pfiji-plugins
+	dh_strip -pfiji-plugins
+	dh_compress  -pfiji-plugins
+	dh_fixperms -pfiji-plugins
+#	dh_perl -pfiji-plugins
+	dh_makeshlibs -pfiji-plugins
+	dh_installdeb -pfiji-plugins
+	dh_shlibdeps -pfiji-plugins
+	dh_gencontrol -pfiji-plugins
+	dh_md5sums -pfiji-plugins
+	dh_builddeb -pfiji-plugins
 
 # Build architecture dependant packages using the common target.
 binary-arch: build-arch install-arch
-	$(MAKE) -f debian/rules DH_OPTIONS=-s binary-common
+	dh_testdir -pfiji-launcher
+	dh_testroot -pfiji-launcher
+	dh_installchangelogs -pfiji-launcher
+	dh_installdocs -pfiji-launcher
+	dh_installexamples -pfiji-launcher
+#	dh_installmenu -pfiji-launcher
+#	dh_installdebconf	 -pfiji-launcher
+#	dh_installlogrotate	 -pfiji-launcher
+#	dh_installemacsen -pfiji-launcher
+#	dh_installpam -pfiji-launcher
+#	dh_installmime -pfiji-launcher
+#	dh_python -pfiji-launcher
+#	dh_installinit -pfiji-launcher
+#	dh_installcron -pfiji-launcher
+#	dh_installinfo -pfiji-launcher
+	dh_installman -pfiji-launcher
+	dh_link -pfiji-launcher
+	dh_strip -pfiji-launcher
+	dh_compress  -pfiji-launcher
+	dh_fixperms -pfiji-launcher
+#	dh_perl -pfiji-launcher
+	dh_makeshlibs -pfiji-launcher
+	dh_installdeb -pfiji-launcher
+	dh_shlibdeps -pfiji-launcher
+	dh_gencontrol -pfiji-launcher
+	dh_md5sums -pfiji-launcher
+	dh_builddeb -pfiji-launcher
 
 binary: binary-arch binary-indep
 .PHONY: build clean binary-indep binary-arch binary install install-indep install-arch configure

@@ -5,13 +5,37 @@ Maintainer: Mark Longair <mhl@pobox.com>
 Build-Depends: debhelper (>= 5)
 Standards-Version: 3.7.2
 
-Package: fiji
+Package: fiji-launcher
+Section: main
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: <insert up to 60 chars description>
- <insert long description, indented with spaces>
+Depends: ${shlibs:Depends}, ${misc:Depends} imageja
+Description: A launcher for the Fiji image processing suite
+ FIXME: write something sensible here
+ This package contains the launcher for Fiji.
 
-Package: fiji-doc
+Package: imageja
+Section: main
 Architecture: all
-Description: Documentation for fiji
- <insert long description, indented with spaces>
+Depends: sun-java5-bin | sun-java6-bin
+Description: A modified version of ImageJ
+ FIXME: write something sensible here
+ This package contains ImageJA, a Java-based image viewer and
+ image processing package based closely on Wayne Rasband's
+ ImageJ.
+
+Package: imageja-doc
+Section: main
+Architecture: all
+Description: Documentation for ImageJA, a modified version of ImageJ
+ FIXME: write something sensible here
+ This package contains the javadoc generated API documentation
+ for ImageJA.
+
+Package: fiji-plugins
+Section: main
+Architecture: all
+Depends: imageja, jython
+Build-Depends: junit4
+Description: A set of default plugins for Fiji
+ FIXME: write something sensible here
+ Blah blah...

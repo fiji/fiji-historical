@@ -1,11 +1,11 @@
-JARS3RDPARTY=$(shell find ../jars/ -name "*.jar" -exec printf ":%s" {} \;)
+JARS3RDPARTY=$(shell [ -d jars ] && find ../jars/ -name "*.jar" -exec printf ":%s" {} \;)
 JAVACOPTS=-target 1.3 -source 1.3 \
-	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
+	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY):/usr/share/java/jython.jar:/usr/share/java/jruby1.0.jar
 
 # common is just in this list to exclude classes within it from being copied
 JARDIRS=common Jython Clojure JRuby BSH
 FINDJARDIRS=$(patsubst %,-name % -o,$(JARDIRS))
-JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar
+JARS=Jython_Interpreter.jar # JRuby_Interpreter.jar Clojure_Interpreter.jar BeanShell_Interpreter.jar
 
 JAVAS=$(filter-out $(wildcard $(patsubst %,%/*.java,$(JARDIRS))),$(wildcard *.java */*.java))
 CLASSES=$(patsubst %.java,%.class,$(JAVAS))
