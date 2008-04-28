@@ -1,30 +1,6 @@
 [submodule "ImageJA"]
 	path = ImageJA
 	url = git://repo.or.cz/imageja.git
-[submodule "TrakEM2"]
-	path = TrakEM2
-	url = git://repo.or.cz/trakem2.git
 [submodule "VIB"]
 	path = VIB
 	url = dumbo:/home/vibcvs/cvs
-[submodule "java/linux"]
-	path = java/linux
-	url = .
-[submodule "java/linux-amd64"]
-	path = java/linux-amd64
-	url = .
-[submodule "java/macosx"]
-	path = java/macosx
-	url = .
-[submodule "java/macosx-intel"]
-	path = java/macosx-intel
-	url = .
-[submodule "java/win32"]
-	path = java/win32
-	url = .
-[submodule "java/win64"]
-	path = java/win64
-	url = .
-[submodule "micromanager1.1"]
-	path = micromanager1.1
-	url = git://pacific.mpi-cbg.de/micromanager1.1/.git
