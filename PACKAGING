@@ -1,0 +1,9 @@
+This branch has some very basic support for building Debian packages
+of ImageJA, the Fiji launcher and some of the Fiji plugins.
+
+If you want to try it, you could have a go with:
+
+  rm ../fiji_0.9.0.orig.tar.gz
+  make clean
+  make orig
+  make debs
