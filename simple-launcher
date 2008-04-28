@@ -1,0 +1,11 @@
+#!/bin/bash
+
+REAL_MEMORY=`free -m | egrep 'Mem:' | awk '{ print $2; }'`
+
+# Use up to two thirds of the available memory:		  
+let MEMORY_TO_USE="((($REAL_MEMORY*2)/3))"
+
+java -Xmx$MEMORY_TO_USE \
+     -Dplugins.dir=/usr/share/imageja/plugins/ \
+     -jar /usr/share/imageja/ij.jar \
+     "$@"
