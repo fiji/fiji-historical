@@ -1,0 +1,27 @@
+<project name="fiji-plugins" default="compile">
+    
+  <target name="clean">
+    <delete>
+      <fileset dir="plugins" includes="**/*.jar,**/*.class"/>
+    </delete>
+  </target>
+
+  <target name="compile">
+    <mkdir dir="plugins"/>
+    <javac srcdir="src-plugins" destdir="plugins" debug="on">
+      <exclude name="BSH/*"/>
+      <exclude name="JRuby/*"/>
+      <exclude name="Clojure/*"/>
+      <exclude name="JRuby/*"/>
+      <exclude name="Input-Output/PDF_Viewer*"/>
+      <exclude name="Filters/Preprocessor_Smooth.*"/>
+      <exclude name="Fast_FourierTransform.*"/>
+      <classpath>
+        <pathelement location="ImageJA/ij.jar"/>
+        <pathelement location="/usr/share/java/jzlib.jar"/>
+	<pathelement location="/usr/share/java/jython.jar"/>
+      </classpath>
+    </javac>
+  </target>
+        
+</project>
