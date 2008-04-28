@@ -9,7 +9,7 @@ SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
 		-e "s|[^ ]*/\([^ /]*\.jar\)|plugins/\1|g")
 
 plugins/%.jar: staged-plugins/%.jar staged-plugins/%.config
-	./scripts/copy-jar-if-newer.sh --delete --commit $< $@
+	./scripts/copy-jar-if-newer.sh --delete $< $@
 
 # Java wrapper
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
