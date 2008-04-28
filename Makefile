@@ -176,7 +176,7 @@ Fiji.app: fiji-macosx-intel
 	echo '<plist version="1.0">' >> $(PLIST)
 	echo '<dict>' >> $(PLIST)
 	echo '	<key>CFBundleExecutable</key>' >> $(PLIST)
-	echo '		<string>run_fiji.sh</string>' >> $(PLIST)
+	echo '		<string>fiji-macosx-intel</string>' >> $(PLIST)
 	echo '	<key>CFBundleGetInfoString</key>' >> $(PLIST)
 	echo '		<string>Fiji for Mac OS X</string>' >> $(PLIST)
 	echo '	<key>CFBundleIconFile</key>' >> $(PLIST)
@@ -208,5 +208,4 @@ Fiji.app: fiji-macosx-intel
 	cp -R plugins $@/
 	cp -R macros $@/
 	cp -R jars $@/
-	cp scripts/run_fiji.sh $(MACOS)
 	cp images/Fiji.icns $(RESOURCES)
