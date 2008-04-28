@@ -22,7 +22,7 @@ public class Refresh_JRuby_Scripts extends RefreshScripts {
 		System.out.println("Starting JRuby in runScript()...");
 		Ruby rubyRuntime = Ruby.newInstance(System.in,outPS,outPS);
 		System.out.println("Done.");
-		rubyRuntime.evalScriptlet(JRuby_Interpreter.startupScript);
+		rubyRuntime.evalScriptlet(JRuby_Interpreter.getStartupScript());
 
 		FileInputStream fis=null;
 		try {
