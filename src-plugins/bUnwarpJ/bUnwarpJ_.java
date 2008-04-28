@@ -1,5 +1,3 @@
-package bUnwarpJ;
-
 /**
  * @(#)bUnwarpJ_.java	First version 09/15/2005
  *
@@ -8,6 +6,19 @@ package bUnwarpJ;
  * This work is an extension by Ignacio Arganda-Carreras and Jan Kybic 
  * of the previous UnwarpJ project by Carlos Oscar Sanchez Sorzano.
  *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation (http://www.gnu.org/licenses/gpl.txt )
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * 
  */
 
 /**
@@ -34,14 +45,6 @@ package bUnwarpJ;
  * Old version information: 
  * http://bigwww.epfl.ch/thevenaz/UnwarpJ/
  */
-
-/*====================================================================
-| You'll be free to use this software for research purposes, but you
-| should not redistribute it without our consent. In addition, we expect
-| you to include a citation or acknowledgment whenever you present or
-| publish results that are based on it.
-\===================================================================*/
-
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -183,7 +186,8 @@ public class bUnwarpJ_ implements PlugIn
               else if (args[0].equals("-compare_raw"))          compareRawTransformationsMacro(args);
               else if (args[0].equals("-convert_to_raw"))       convertToRawTransformationMacro(args);
               else if (args[0].equals("-compose_elastic"))      composeElasticTransformationsMacro(args);
-              else if (args[0].equals("-compose_raw"))          composeRawTransformationsMacro(args);              
+              else if (args[0].equals("-compose_raw"))          composeRawTransformationsMacro(args);
+              else if (args[0].equals("-compose_raw_elastic"))  composeRawElasticTransformationsMacro(args);
           }
           return;
        }
@@ -214,6 +218,7 @@ public class bUnwarpJ_ implements PlugIn
           else if (args[0].equals("-convert_to_raw"))       convertToRawTransformationMacro(args);
           else if (args[0].equals("-compose_elastic"))      composeElasticTransformationsMacro(args);
           else if (args[0].equals("-compose_raw"))          composeRawTransformationsMacro(args);
+          else if (args[0].equals("-compose_raw_elastic"))  composeRawElasticTransformationsMacro(args);
        }
        System.exit(0);
     }
@@ -498,6 +503,13 @@ public class bUnwarpJ_ implements PlugIn
        IJ.write("          Raw Transformation File 2         : As saved by bUnwarpJ in raw format");
        IJ.write("          Output Raw Transformation File    : As saved by bUnwarpJ in raw format");
        IJ.write("");
+       IJ.write("  -compose_raw_elastic                      : COMPOSE A RAW DEFORMATION WITH AN ELASTIC DEFORMATION");
+       IJ.write("          target_image                      : In any image format");
+       IJ.write("          source_image                      : In any image format");
+       IJ.write("          Elastic Transformation File       : As saved by bUnwarpJ in raw format");
+       IJ.write("          Raw Transformation File           : As saved by bUnwarpJ in elastic format");
+       IJ.write("          Output Raw Transformation File    : As saved by bUnwarpJ in raw format");
+       IJ.write("");
        IJ.write("Examples:");
        IJ.write("Align two images without landmarks and without mask");
        IJ.write("   bUnwarpj_ -align target.jpg NULL source.jpg NULL 0 2 0.1 0.1 1 10 output_1.tif output_2.tif");
@@ -521,6 +533,8 @@ public class bUnwarpJ_ implements PlugIn
        IJ.write("   bUnwarpj_ -compose_elastic target.jpg source.jpg elastic_transformation_1.txt elastic_transformation_2.txt output_raw_transformation.txt");
        IJ.write("Compose two raw transformations ");
        IJ.write("   bUnwarpj_ -compose_raw target.jpg source.jpg raw_transformation_1.txt raw_transformation_2.txt output_raw_transformation.txt");
+       IJ.write("Compose a raw transformation with an elastic transformation ");
+       IJ.write("   bUnwarpj_ -compose_raw_elastic target.jpg source.jpg raw_transformation.txt elastic_transformation.txt output_raw_transformation.txt");
     } /* end dumpSyntax */
 
     /*------------------------------------------------------------------*/
@@ -908,12 +922,12 @@ public class bUnwarpJ_ implements PlugIn
        if(sourceImp == null)
            IJ.error("\nError: " + fn_source + " could not be opened\n");
        
-       // We load the transformation raw file.
+       // We load the first transformation raw file.
        double[][] transformation_x_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
        double[][] transformation_y_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
        bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw_1, transformation_x_1, transformation_y_1);
               
-       // We load the transformation raw file.
+       // We load the second transformation raw file.
        double[][] transformation_x_2 = new double[targetImp.getHeight()][targetImp.getWidth()];
        double[][] transformation_y_2 = new double[targetImp.getHeight()][targetImp.getWidth()];
        bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw_2, transformation_x_2, transformation_y_2);
@@ -992,9 +1006,70 @@ public class bUnwarpJ_ implements PlugIn
        bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw, targetImp.getWidth(), 
                targetImp.getHeight(), outputTransformation_x, outputTransformation_y);       
        
-    } /* end method composeElasticTransformationsMacro */    
+    } /* end method composeElasticTransformationsMacro */
     
-//} /* end class bUnwarpJ_ */
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to compose a raw deformation with an elastic deformation.
+     *
+     * @param args program arguments
+     */
+    private static void composeRawElasticTransformationsMacro(String args[]) 
+    {
+       // Read input parameters
+       String fn_target = args[1];
+       String fn_source = args[2];
+       String fn_tnf_raw_in = args[3];
+       String fn_tnf_elastic = args[4];
+       String fn_tnf_raw_out = args[5];
+       
+
+       // Show parameters
+       IJ.write("Target image                      : " + fn_target);
+       IJ.write("Source image                      : " + fn_source);
+       IJ.write("Input Raw Transformation file     : " + fn_tnf_raw_in);
+       IJ.write("Input Elastic Transformation file : " + fn_tnf_elastic);
+       IJ.write("Output Raw Transformation file    : " + fn_tnf_raw_out);
+
+       // Open target
+       Opener opener=new Opener();
+       ImagePlus targetImp;
+       targetImp=opener.openImage(fn_target);
+       if(targetImp == null)
+           IJ.error("\nError: " + fn_target + " could not be opened\n");
+
+       // Open source
+       ImagePlus sourceImp;
+       sourceImp = opener.openImage(fn_source);
+       if(sourceImp == null)
+           IJ.error("\nError: " + fn_source + " could not be opened\n");
+
+       // We load the transformation raw file.
+       double[][] transformation_x_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
+       double[][] transformation_y_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
+       bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw_in, transformation_x_1, transformation_y_1);              
+
+       int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf_elastic);
+
+       double [][]cx2 = new double[intervals+3][intervals+3];
+       double [][]cy2 = new double[intervals+3][intervals+3];
+
+       bUnwarpJMiscTools.loadTransformation(fn_tnf_elastic, cx2, cy2);
+       
+       double [][] outputTransformation_x = new double[targetImp.getHeight()][targetImp.getWidth()];
+       double [][] outputTransformation_y = new double[targetImp.getHeight()][targetImp.getWidth()];
+             
+       // Now we compose them and get as result a raw transformation mapping.
+       bUnwarpJMiscTools.composeRawElasticTransformations(targetImp, intervals, 
+               transformation_x_1, transformation_y_1, cx2, cy2, outputTransformation_x, outputTransformation_y);
+       
+       
+       bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw_out, targetImp.getWidth(), 
+               targetImp.getHeight(), outputTransformation_x, outputTransformation_y);       
+       
+    } /* end method composeRawElasticTransformationsMacro */
+    
+} /* end class bUnwarpJ_ */
 
 /*====================================================================
 |   bUnwarpJClearAll
@@ -1004,7 +1079,7 @@ public class bUnwarpJ_ implements PlugIn
 /**
  * Class to clear all the processes and actions in bUnwarpJ.
  */
-static class bUnwarpJClearAll extends Dialog implements ActionListener
+class bUnwarpJClearAll extends Dialog implements ActionListener
 { /* begin class bUnwarpJClearAll */
 
     /*....................................................................
@@ -1097,7 +1172,7 @@ static class bUnwarpJClearAll extends Dialog implements ActionListener
 /**
  * Class to show the bUnwarpJ credits
  */
-static class bUnwarpJCredits extends Dialog
+class bUnwarpJCredits extends Dialog
 { /* begin class bUnwarpJCredits */
 
     /*....................................................................
@@ -1175,7 +1250,7 @@ static class bUnwarpJCredits extends Dialog
 /**
  * Class to create a cumulative queue in bUnwarpJ.
  */
-static class bUnwarpJCumulativeQueue extends Vector 
+class bUnwarpJCumulativeQueue extends Vector 
 {
     /** front index of the queue */
     private int ridx;
@@ -1258,7 +1333,7 @@ static class bUnwarpJCumulativeQueue extends Vector
 /**
  * Class to create the dialog for bUnwarpJ.
  */
-static class bUnwarpJDialog extends Dialog implements ActionListener
+class bUnwarpJDialog extends Dialog implements ActionListener
 { /* begin class bUnwarpJDialog */
 
     /*....................................................................
@@ -1375,6 +1450,24 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
        Public methods
     ....................................................................*/
 
+    /*------------------------------------------------------------------*/
+    /**
+     * Get source Mask.
+     */
+    public bUnwarpJMask getSourceMask () 
+    {
+        return this.sourceMsk;        
+    } /* end getSourceMask */
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Get target Mask.
+     */
+    public bUnwarpJMask getTargetMask () 
+    {
+        return this.targetMsk;        
+    }   /* end getTargetMask */
+    
     /*------------------------------------------------------------------*/
     /**
      * Actions to be taken during the dialog.
@@ -2379,7 +2472,7 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
 /**
  * Class to create a dialog to deal with the files to keep the information of bUnwarpJ.
  */
-static class bUnwarpJFile extends Dialog implements ActionListener
+class bUnwarpJFile extends Dialog implements ActionListener
 { /* begin class bUnwarpJFile */
 
     /*....................................................................
@@ -2387,9 +2480,9 @@ static class bUnwarpJFile extends Dialog implements ActionListener
     ....................................................................*/
     /** Checkbox for the list of choices */
     private final CheckboxGroup choice = new CheckboxGroup();
-    /** Pointer to the source image represantation */
+    /** Pointer to the source image representation */
     private ImagePlus sourceImp;
-    /** Pointer to the target image represantation */
+    /** Pointer to the target image representation */
     private ImagePlus targetImp;
     /** Point handler for the source image */
     private bUnwarpJPointHandler sourcePh;
@@ -2441,6 +2534,12 @@ static class bUnwarpJFile extends Dialog implements ActionListener
        }
        else if (ae.getActionCommand().equals("Compose Raw Transformations")) {
            composeRawTransformations();
+       }
+       else if (ae.getActionCommand().equals("Compose Raw and Elastic Transformations")) {
+           composeRawElasticTransformations();
+       }
+       else if (ae.getActionCommand().equals("Evaluate Image Similarity")) {
+           evaluateSimilarity();
        }
        else if (ae.getActionCommand().equals("Cancel")) {
        }
@@ -2494,6 +2593,8 @@ static class bUnwarpJFile extends Dialog implements ActionListener
        final Button convertToRawButton = new Button("Convert Transformation To Raw");
        final Button composeElasticButton = new Button("Compose Elastic Transformations");
        final Button composeRawButton = new Button("Compose Raw Transformations");
+       final Button composeRawElasticButton = new Button("Compose Raw and Elastic Transformations");
+       final Button evaluateSimilarityButton = new Button("Evaluate Image Similarity");
        final Button cancelButton = new Button("Cancel");
        
        saveAsButton.addActionListener(this);
@@ -2508,6 +2609,8 @@ static class bUnwarpJFile extends Dialog implements ActionListener
        convertToRawButton.addActionListener(this);
        composeElasticButton.addActionListener(this);
        composeRawButton.addActionListener(this);
+       composeRawElasticButton.addActionListener(this);
+       evaluateSimilarityButton.addActionListener(this);
        
        final Label separation1 = new Label("");
        final Label separation2 = new Label("");
@@ -2522,7 +2625,9 @@ static class bUnwarpJFile extends Dialog implements ActionListener
        add(compareRawButton);
        add(convertToRawButton);
        add(composeElasticButton);
-       add(composeRawButton);      
+       add(composeRawButton);
+       add(composeRawElasticButton);
+       add(evaluateSimilarityButton);
        add(separation2);
        add(cancelButton);
        pack();
@@ -2781,6 +2886,69 @@ static class bUnwarpJFile extends Dialog implements ActionListener
 
     /*------------------------------------------------------------------*/
     /**
+     * Compose a raw transformation with an elastic transformation 
+     * represented by elastic b-splines into a raw mapping table (saved as usual).
+     */
+    private void composeRawElasticTransformations () 
+    {
+       // We ask the user for the first transformation file
+       Frame f = new Frame();
+       FileDialog fd = new FileDialog(f, "Composing - Load First (Raw) Transformation", FileDialog.LOAD);
+       fd.setVisible(true);
+       String path = fd.getDirectory();
+       String filename = fd.getFile();
+       if ((path == null) || (filename == null)) {
+          return;
+       }
+       String fn_tnf = path+filename;
+
+       double[][] transformation_x_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
+       double[][] transformation_y_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
+
+       bUnwarpJMiscTools.loadRawTransformation(fn_tnf, transformation_x_1, transformation_y_1);
+
+       
+       // We ask the user for the second transformation file
+       fd = new FileDialog(f, "Composing - Load Second (Elastic) Transformation", FileDialog.LOAD);
+       fd.setVisible(true);
+       path = fd.getDirectory();
+       filename = fd.getFile();
+       if ((path == null) || (filename == null)) {
+          return;
+       }
+       fn_tnf = path+filename;
+
+       int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+
+       double [][]cx2 = new double[intervals+3][intervals+3];
+       double [][]cy2 = new double[intervals+3][intervals+3];
+
+       bUnwarpJMiscTools.loadTransformation(fn_tnf, cx2, cy2);
+       
+       double [][] outputTransformation_x = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
+       double [][] outputTransformation_y = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
+             
+       // Now we compose them and get as result a raw transformation mapping.
+       bUnwarpJMiscTools.composeRawElasticTransformations(this.targetImp, intervals, 
+               transformation_x_1, transformation_y_1, cx2, cy2, outputTransformation_x, outputTransformation_y);
+       
+       // We ask the user for the raw deformation file where we will save the mapping table.
+       Frame f_raw = new Frame();
+       FileDialog fd_raw = new FileDialog(f_raw, "Composing - Save Raw Transformation", FileDialog.SAVE);
+       fd_raw.setVisible(true);
+       String path_raw = fd_raw.getDirectory();
+       String filename_raw = fd_raw.getFile();
+       if ((path_raw == null) || (filename_raw == null)) {
+          return;
+       }
+       String fn_tnf_raw = path_raw + filename_raw;
+       
+       bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw, this.targetImp.getWidth(), 
+               this.targetImp.getHeight(), outputTransformation_x, outputTransformation_y);       
+    }    
+    
+    /*------------------------------------------------------------------*/
+    /**
      * Compose two random (raw) deformations.
      */
     private void composeRawTransformations () 
@@ -2941,6 +3109,44 @@ static class bUnwarpJFile extends Dialog implements ActionListener
            IJ.write(" Warping index could not be evaluated because not a single pixel matched after the deformation!");
     }    
     
+    /*------------------------------------------------------------------*/
+    /**
+     * Calculate the similarity error between two images.
+     */
+    private void evaluateSimilarity () 
+    {
+        
+        double imageSimilarity = 0;
+        int n = 0;
+        
+        bUnwarpJMask targetMsk = this.dialog.getTargetMask();
+        
+        for (int v=0; v < this.targetImp.getHeight(); v++) 
+          {
+              for (int u=0; u<this.targetImp.getWidth(); u++) 
+              {
+                  if (targetMsk.getValue(u, v)) 
+                  {
+                      // Compute image term .....................................................
+                      double I2 = (double) (this.targetImp.getPixel(u, v)[0]);
+                      double I1 = (double) (this.sourceImp.getPixel(u, v)[0]);
+
+
+                      double error = I2 - I1;
+                      double error2 = error*error;
+
+                      imageSimilarity += error2;
+                      n++;
+                  }
+              }
+        }
+                   
+        if(n != 0)
+            IJ.write(" Image similarity = " + (imageSimilarity / n) + ", n = " + n);             
+        else
+            IJ.write(" Error: not a single pixel was evaluated ");
+               
+    }    
     
     /*------------------------------------------------------------------*/
     /**
@@ -3065,7 +3271,7 @@ static class bUnwarpJFile extends Dialog implements ActionListener
 /**
  * Class to launch the registration in bUnwarpJ.
  */
-static class bUnwarpJFinalAction implements Runnable
+class bUnwarpJFinalAction implements Runnable
 {
     /*....................................................................
        Private variables
@@ -3284,7 +3490,7 @@ static class bUnwarpJFinalAction implements Runnable
 /**
  * Class for representing the images by cubic b-splines
  */
-static class bUnwarpJImageModel implements Runnable
+class bUnwarpJImageModel implements Runnable
 { /* begin class bUnwarpJImageModel */
     
     // Some constants
@@ -5088,7 +5294,7 @@ static class bUnwarpJImageModel implements Runnable
  * place concurrently with user-interface events. It contains methods
  * to compute the mask pyramids.
  */
-static class bUnwarpJMask
+class bUnwarpJMask
 { /* begin class bUnwarpJMask */
 
     /*....................................................................
@@ -5331,7 +5537,7 @@ static class bUnwarpJMask
 /**
  * This class has the math methods to deal with b-splines.
  */
-static class bUnwarpJMathTools 
+class bUnwarpJMathTools 
 {
     /** float epsilon */
     private static final double FLT_EPSILON = (double)Float.intBitsToFloat((int)0x33FFFFFF);
@@ -5929,7 +6135,7 @@ static class bUnwarpJMathTools
 /**
  * Different tools for the bUnwarpJ interface.
  */
-static class bUnwarpJMiscTools 
+class bUnwarpJMiscTools 
 {
     /**
      * Apply a given splines transformation to the source image.
@@ -6984,8 +7190,204 @@ static class bUnwarpJMiscTools
         }
     }    
 
+    /*------------------------------------------------------------------*/
     /**
-     * Compose two elastic deformations into a raw deformation.
+    * Compose two elastic deformations into a raw deformation.
+     *
+     * @param targetImp target image representation
+     * @param intervals intervals in the deformation
+     * @param cx1 first transformation x- b-spline coefficients
+     * @param cy1 first transformation y- b-spline coefficients
+     * @param cx2 second transformation x- b-spline coefficients
+     * @param cy2 second transformation y- b-spline coefficients
+     * @param outputTransformation_x output transformation coordinates in x-axis
+     * @param outputTransformation_y output transformation coordinates in y-axis
+     */
+    public static void composeElasticTransformations(
+       ImagePlus targetImp,
+       int intervals,
+       double [][] cx1,
+       double [][] cy1,
+       double [][] cx2,
+       double [][] cy2,
+       double [][] outputTransformation_x,
+       double [][] outputTransformation_y) 
+    {
+       // Ask for memory for the transformation
+       int targetCurrentHeight = targetImp.getProcessor().getHeight();
+       int targetCurrentWidth  = targetImp.getProcessor().getWidth ();              
+       
+       double [][] transformation_x_1 = new double [targetCurrentHeight][targetCurrentWidth];
+       double [][] transformation_y_1 = new double [targetCurrentHeight][targetCurrentWidth];
+
+       int cYdim = intervals+3;
+       int cXdim = cYdim;
+       int Nk = cYdim * cXdim;
+       int twiceNk = 2 * Nk;    
+          
+       // We pass the coffiecients to a one-dimension array
+       // Direct coefficients.
+       double c1[] = new double[twiceNk];
+       for(int n = 0, i = 0; i < cYdim; i++)
+           for(int j = 0; j < cYdim; j++, n++)
+           {
+               c1[n     ] = cx1[i][j];
+               c1[n + Nk] = cy1[i][j];
+           }
+
+       // Compute the deformation
+       // Set these coefficients to an interpolator
+       bUnwarpJImageModel swx1 = new bUnwarpJImageModel(c1, cYdim, cXdim, 0); 
+       bUnwarpJImageModel swy1 = new bUnwarpJImageModel(c1, cYdim, cXdim, Nk);  
+
+       // Inverse coefficients.
+       double c2[] = new double[twiceNk];
+       for(int n = 0, i = 0; i < cYdim; i++)
+           for(int j = 0; j < cYdim; j++, n++)
+           {
+               c2[n     ] = cx2[i][j];
+               c2[n + Nk] = cy2[i][j];
+           }
+       
+       bUnwarpJImageModel swx2 = new bUnwarpJImageModel(c2, cYdim, cXdim, 0);  
+       bUnwarpJImageModel swy2 = new bUnwarpJImageModel(c2, cYdim, cXdim, Nk); 
+
+       
+       swx1.precomputed_prepareForInterpolation(
+          targetCurrentHeight, targetCurrentWidth, intervals);
+       swy1.precomputed_prepareForInterpolation(
+          targetCurrentHeight, targetCurrentWidth, intervals);
+
+       swx2.precomputed_prepareForInterpolation(
+          targetCurrentHeight, targetCurrentWidth, intervals);
+       swy2.precomputed_prepareForInterpolation(
+          targetCurrentHeight, targetCurrentWidth, intervals);
+
+       // Compute the transformation mapping
+       for (int v=0; v<targetCurrentHeight; v++) 
+       {
+          final double tv = (double)(v * intervals) / (double)(targetCurrentHeight - 1) + 1.0F;
+          for (int u = 0; u<targetCurrentWidth; u++) 
+          {
+             final double tu = (double)(u * intervals) / (double)(targetCurrentWidth - 1) + 1.0F;             
+             
+             swx1.prepareForInterpolation(tu, tv, false); 
+             final double x2 = transformation_x_1[v][u] = swx1.interpolateI();
+
+             swy1.prepareForInterpolation(tu, tv, false); 
+             final double y2 = transformation_y_1[v][u] = swy1.interpolateI();
+             
+//             if(x2 >= 0 && x2 < targetCurrentWidth && y2 >= 0 && y2 < targetCurrentHeight)
+//             {
+                 final double tv2 = (double)(y2 * intervals) / (double)(targetCurrentHeight - 1) + 1.0F;
+
+                 final double tu2 = (double)(x2 * intervals) / (double)(targetCurrentWidth - 1) + 1.0F;
+
+                 swx2.prepareForInterpolation(tu2, tv2, false); 
+                 outputTransformation_x[v][u] = swx2.interpolateI();
+
+                 swy2.prepareForInterpolation(tu2, tv2, false); 
+                 outputTransformation_y[v][u] = swy2.interpolateI();
+//             }
+//             else
+//             {
+//                 outputTransformation_x[v][u] = -100;
+//                 outputTransformation_y[v][u] = -100;
+//             }
+                       
+          }
+       }
+       
+    }  /* end method composeElasticTransformations */
+
+    /*------------------------------------------------------------------*/
+    /**
+    * Compose a raw deformatiion and an elastic deformation into a raw deformation.
+     *
+     * @param targetImp target image representation
+     * @param intervals intervals in the deformation
+     * @param cx1 first transformation coordinates in x-axis
+     * @param cy1 first transformation coordinates in y-axis
+     * @param cx2 second transformation x- b-spline coefficients
+     * @param cy2 second transformation y- b-spline coefficients
+     * @param outputTransformation_x output transformation coordinates in x-axis
+     * @param outputTransformation_y output transformation coordinates in y-axis
+     */
+    public static void composeRawElasticTransformations(
+       ImagePlus targetImp,
+       int intervals,
+       double [][] transformation_x_1,
+       double [][] transformation_y_1,
+       double [][] cx2,
+       double [][] cy2,
+       double [][] outputTransformation_x,
+       double [][] outputTransformation_y) 
+    {
+       // Ask for memory for the transformation
+       int targetCurrentHeight = targetImp.getProcessor().getHeight();
+       int targetCurrentWidth  = targetImp.getProcessor().getWidth ();              
+
+       double [][] transformation_x_2 = new double [targetCurrentHeight][targetCurrentWidth];
+       double [][] transformation_y_2 = new double [targetCurrentHeight][targetCurrentWidth];
+
+       int cYdim = intervals+3;
+       int cXdim = cYdim;
+       int Nk = cYdim * cXdim;
+       int twiceNk = 2 * Nk;    
+          
+
+       // Inverse coefficients.
+       double c2[] = new double[twiceNk];
+       for(int n = 0, i = 0; i < cYdim; i++)
+           for(int j = 0; j < cYdim; j++, n++)
+           {
+               c2[n     ] = cx2[i][j];
+               c2[n + Nk] = cy2[i][j];
+           }
+       
+       bUnwarpJImageModel swx2 = new bUnwarpJImageModel(c2, cYdim, cXdim, 0);  
+       bUnwarpJImageModel swy2 = new bUnwarpJImageModel(c2, cYdim, cXdim, Nk);       
+
+       swx2.precomputed_prepareForInterpolation(
+          targetCurrentHeight, targetCurrentWidth, intervals);
+       swy2.precomputed_prepareForInterpolation(
+          targetCurrentHeight, targetCurrentWidth, intervals);
+
+       // Compute the transformation mapping
+       for (int v=0; v<targetCurrentHeight; v++) 
+       {          
+          for (int u = 0; u<targetCurrentWidth; u++) 
+          {
+             final double x2 = transformation_x_1[v][u];
+
+             final double y2 = transformation_y_1[v][u];
+             
+//             if(x2 >= 0 && x2 < targetCurrentWidth && y2 >= 0 && y2 < targetCurrentHeight)
+//             {
+                 final double tv2 = (double)(y2 * intervals) / (double)(targetCurrentHeight - 1) + 1.0F;
+
+                 final double tu2 = (double)(x2 * intervals) / (double)(targetCurrentWidth - 1) + 1.0F;
+
+                 swx2.prepareForInterpolation(tu2, tv2, false); 
+                 outputTransformation_x[v][u] = swx2.interpolateI();
+
+                 swy2.prepareForInterpolation(tu2, tv2, false); 
+                 outputTransformation_y[v][u] = swy2.interpolateI();
+//             }
+//             else
+//             {
+//                 outputTransformation_x[v][u] = -100;                
+//                 outputTransformation_y[v][u] = -100;
+//             }
+                       
+          }
+       }
+       
+    }  /* end method composeRawElasticTransformations */    
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Compose two elastic deformations into a raw deformation at pixel level.
      *
      * @param targetImp target image representation
      * @param intervals intervals in the deformation
@@ -6996,7 +7398,7 @@ static class bUnwarpJMiscTools
      * @param outputTransformation_x output transformation coordinates in y-axis
      * @param outputTransformation_y output transformation coordinates in y-axis
      */
-    public static void composeElasticTransformations(
+    public static void composeElasticTransformationsAtPixelLevel(
        ImagePlus targetImp,
        int intervals,
        double [][] cx1,
@@ -7118,45 +7520,7 @@ static class bUnwarpJMiscTools
        double [][]  transformation_y_2,
        double [][]  outputTransformation_x,
        double [][]  outputTransformation_y) 
-    {
-
-/*
-        // Fuzzy set, probability = PROBABILITY
-        double PROBABILITY = 0.5;
-        boolean bChangeArea = true;
-        
-        for (int i= 0; i < height; i++) 
-            for (int j = 0; j < width; j++) 
-            {
-                // Second transformation.
-                int x2 = (int) Math.round(transformation_x_2[i][j]);
-                int y2 = (int) Math.round(transformation_y_2[i][j]);                
-                                
-                // First transformation.
-                int x1 = (int) Math.round(transformation_x_1[i][j]);
-                int y1 = (int) Math.round(transformation_y_1[i][j]);
-                
-                if(i % 50 == 0 && j % 50 == 0)
-                {
-                    bChangeArea = !bChangeArea;
-                    if(Math.random() < PROBABILITY)
-                        bChangeArea = !bChangeArea;
-                }
-                
-                if(bChangeArea == true)
-                {
-                    outputTransformation_x[i][j] = x2;
-                    outputTransformation_y[i][j] = y2;
-                }
-                else
-                {
-                    outputTransformation_x[i][j] = x1;
-                    outputTransformation_y[i][j] = y1;
-                }
-                
-            }
-        */
-        
+    {        
         
         for (int i= 0; i < height; i++) 
             for (int j = 0; j < width; j++) 
@@ -7392,7 +7756,7 @@ static class bUnwarpJMiscTools
 /**
  * Class for point actions in the bUnwarpJ interface.
  */
-static class bUnwarpJPointAction extends ImageCanvas implements KeyListener, MouseListener,
+class bUnwarpJPointAction extends ImageCanvas implements KeyListener, MouseListener,
       MouseMotionListener
 { /* begin class bUnwarpJPointAction */
 
@@ -7786,7 +8150,7 @@ static class bUnwarpJPointAction extends ImageCanvas implements KeyListener, Mou
 /**
  * Class to deal with point handler in bUnwarpJ.
  */
-static class bUnwarpJPointHandler extends Roi
+class bUnwarpJPointHandler extends Roi
 { /* begin class bUnwarpJPointHandler */
 
     /*....................................................................
@@ -8452,7 +8816,7 @@ static class bUnwarpJPointHandler extends Roi
 /**
  * Class to deal with the point toolbar option in the bUnwarpJ interface.
  */
-static class bUnwarpJPointToolbar extends Canvas implements MouseListener
+class bUnwarpJPointToolbar extends Canvas implements MouseListener
 { /* begin class bUnwarpJPointToolbar */
 
     /*....................................................................
@@ -9094,7 +9458,7 @@ static class bUnwarpJPointToolbar extends Canvas implements MouseListener
  * This class implements the interactions when dealing with ImageJ's
  * progress bar.
  */
-static class bUnwarpJProgressBar
+class bUnwarpJProgressBar
 { /* begin class bUnwarpJProgressBar */
 
     /*....................................................................
@@ -9187,7 +9551,7 @@ static class bUnwarpJProgressBar
 /**
  * Class to perform the transformation for bUnwarpJ.
  */
-static class bUnwarpJTransformation
+class bUnwarpJTransformation
 { /* begin class bUnwarpJTransformation */
 
     /*....................................................................
@@ -12818,5 +13182,3 @@ static class bUnwarpJTransformation
     } /* end yWeight */
 
 } /* end class bUnwarpJTransformation */
-
-} /* end class bUnwarpJ_ */
