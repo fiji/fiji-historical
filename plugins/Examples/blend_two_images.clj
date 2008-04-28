@@ -14,7 +14,7 @@
 	g (make-array (. Byte TYPE) len)
 	b (make-array (. Byte TYPE) len)
 	br (.. bridge (getProcessor) (getPixels))]
-    ; Fill channel arrays
+    ; Fill a copy of the channel arrays
     (.. baboon (getProcessor) (getRGB r g b))
     ; Blend the bridge pixels into each color channel of the baboon image
     (defn avg-byte [a b]
@@ -24,7 +24,9 @@
 	(aset r i (avg-byte (aget r i) pix))
 	(aset g i (avg-byte (aget g i) pix))
 	(aset b i (avg-byte (aget b i) pix))))
+    ; Set the color channels
     (.. baboon (getProcessor) (setRGB r g b))
+    ; Done!
     (. baboon (show))))
 
 ; The above script is ready for a lot of macro abstraction
