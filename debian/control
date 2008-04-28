@@ -1,0 +1,17 @@
+Source: fiji
+Section: unknown
+Priority: extra
+Maintainer: Mark Longair <mhl@pobox.com>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: fiji
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>
+
+Package: fiji-doc
+Architecture: all
+Description: Documentation for fiji
+ <insert long description, indented with spaces>
