@@ -25,20 +25,13 @@ ifeq ($(uname_M),x86_64)
 	CPU=amd64
 	ARCH=linux-amd64
 	ARCH_INCLUDE=linux
-	JAVA_HOME=$(JDK)/jdk1.6.0_04/jre
-	JAVA_LIB_PATH=lib/amd64/server/libjvm.so
 else
 	CPU=i386
 	ARCH=linux
-	JAVA_HOME=$(JDK)/jdk1.6.0/jre
-	JAVA_LIB_PATH=lib/i386/client/libjvm.so
 endif
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	ARCH=win32
-	JAVA_HOME=$(JDK)/jdk1.6.0_03/jre
-	JAVA_LIB_PATH=bin/client/jvm.dll
-	JAVA_LIB_DIR=bin
 	EXTRADEFS+= -DMINGW32
 	LIBDL=
 	EXE=.exe
@@ -50,9 +43,6 @@ ifeq ($(uname_M),Power Macintosh)
 else
 	ARCH=macosx-intel
 endif
-	JAVA_HOME=$(JDK)/Home
-	JAVA_LIB_PATH=../Libraries/libjvm.dylib
-	JAVA_LIB_DIR=../Libraries
 	INCLUDES=-I$(JDK)/Headers
 	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
 	LIBMACOSX=-lpthread -framework CoreFoundation
@@ -61,15 +51,14 @@ ifneq ($(CROSS_COMPILE_WIN64_ON_LINUX),)
 	CXX=PATH="$$(pwd)/root-x86_64-pc-linux/bin:$$PATH" x86_64-pc-mingw32-g++
 	ARCH=win64
 	ARCH_INCLUDE=win32
-	JAVA_HOME=$(JDK)/jdk1.6.0_04/jre
-	JAVA_LIB_PATH=bin/server/jvm.dll
-	JAVA_LIB_DIR=bin
 	EXTRADEFS+= -DMINGW32
 	LIBDL=
 	EXE=.exe
 	STRIP_TARGET=1
 endif
 
+# FIXME: check if we can do without the -DJAVA_HOME etc. when building
+# the debian packages.
 CXXFLAGS=-g $(INCLUDES) $(EXTRADEFS) \
 	-DJAVA_HOME=\"$(JAVA_HOME)\" -DJAVA_LIB_PATH=\"$(JAVA_LIB_PATH)\"
 LIBS=$(LIBDL) $(LIBMACOSX)
@@ -102,8 +91,6 @@ endif
 .PHONY: $(SUBMODULE_TARGETS_IN_FIJI)
 $(SUBMODULE_TARGETS_IN_FIJI):
 	@echo "Making $@"
-	@export JAVA_HOME="$$(pwd)/$(JAVA_HOME)/.." && \
-	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
 	ORIGINAL_TARGET=$(shell echo " $(SUBMODULE_TARGETS) " | \
 		sed "s/.* \([^ ]*$$(basename "$@")\) .*/\1/") && \
 	DIR=$$(dirname $$ORIGINAL_TARGET) && \
@@ -114,9 +101,6 @@ $(SUBMODULE_TARGETS_IN_FIJI):
 
 # MicroManager
 mm:
-	export JAVA_LIB_DIR='$(JAVA_LIB_DIR)'; \
-	export JAVA_HOME='$$(pwd)/$(JAVA_HOME)/..'; \
-	export JAVAINC="-I$$JAVA_HOME/include -I$$JAVA_HOME/include/linux"; \
 	cd micromanager1.1 && sh build.sh
 
 # JDK
@@ -140,8 +124,6 @@ $(JDK):
 
 .PHONY: src-plugins
 src-plugins:
-	@export JAVA_HOME="$$(pwd)/$(JAVA_HOME)/.." && \
-	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
 	$(MAKE) -C $@
 
 check: src-plugins $(TARGET)$(EXE)
@@ -206,3 +188,46 @@ Fiji.app: fiji-macosx-intel
 	cp -R jars $@/
 	cp scripts/run_fiji.sh $(MACOS)
 	cp images/Fiji.icns $(RESOURCES)
+
+
+# ---- Some rules only useful for Debian packaging .... ---------------
+
+FIJI_VERSION=0.9.0
+IDEAL_DIRECTORY=fiji-$(FIJI_VERSION)
+CURRENT_DIRECTORY=$(shell pwd | sed 's/^.*\///')
+ORIG=fiji_$(FIJI_VERSION).orig.tar.gz
+
+.PHONY: orig
+
+orig: ../$(ORIG)
+
+../fiji_$(FIJI_VERSION).orig.tar.gz :
+	if [ "$(CURRENT_DIRECTORY)" != "$(IDEAL_DIRECTORY)" ]; \
+	then \
+		echo The source directory must be called $(IDEAL_DIRECTORY); \
+	fi
+	( cd .. && tar czvf $(ORIG) -X $(IDEAL_DIRECTORY)/exclude-from-source-archive $(IDEAL_DIRECTORY) )
+
+.PHONY: clean
+
+EXTRACLEANFILES=ImageJA/plugins/MacAdapter.class \
+	VIB/Quick3dApplet-1.0.8.jar \
+	VIB/jzlib-1.0.7.jar \
+	VIB/junit-4.4.jar \
+	VIB/VIB_.jar \
+	ij.jar
+
+clean:
+	echo JAVA_HOME is $(JAVA_HOME)
+	$(MAKE) -C ImageJA clean
+	( cd ImageJA && ant clean )
+	$(MAKE) -C VIB clean
+	find . -name '*~' -exec rm {} \;
+	for d in plugins src-plugins libs; do \
+		( cd $$d && find . \( -name '*.class' -o -name '*.jar' \) -a -exec rm {} \; ) \
+	done
+	rm -f $(EXTRACLEANFILES)
+	rm -f fiji-linux fiji-win32.exe fiji-linux-amd64  fiji-win64.exe  fiji-macosx ij.jar
+
+
+# ---------------------------------------------------------------------
