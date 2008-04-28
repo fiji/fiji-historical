@@ -1,3 +1,5 @@
+package bUnwarpJ;
+
 /**
  * @(#)bUnwarpJ_.java	First version 09/15/2005
  *
@@ -1069,7 +1071,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method composeRawElasticTransformationsMacro */
     
-} /* end class bUnwarpJ_ */
+//} /* end class bUnwarpJ_ */
 
 /*====================================================================
 |   bUnwarpJClearAll
@@ -1079,7 +1081,7 @@ public class bUnwarpJ_ implements PlugIn
 /**
  * Class to clear all the processes and actions in bUnwarpJ.
  */
-class bUnwarpJClearAll extends Dialog implements ActionListener
+static class bUnwarpJClearAll extends Dialog implements ActionListener
 { /* begin class bUnwarpJClearAll */
 
     /*....................................................................
@@ -1172,7 +1174,7 @@ class bUnwarpJClearAll extends Dialog implements ActionListener
 /**
  * Class to show the bUnwarpJ credits
  */
-class bUnwarpJCredits extends Dialog
+static class bUnwarpJCredits extends Dialog
 { /* begin class bUnwarpJCredits */
 
     /*....................................................................
@@ -1250,7 +1252,7 @@ class bUnwarpJCredits extends Dialog
 /**
  * Class to create a cumulative queue in bUnwarpJ.
  */
-class bUnwarpJCumulativeQueue extends Vector 
+static class bUnwarpJCumulativeQueue extends Vector 
 {
     /** front index of the queue */
     private int ridx;
@@ -1333,7 +1335,7 @@ class bUnwarpJCumulativeQueue extends Vector
 /**
  * Class to create the dialog for bUnwarpJ.
  */
-class bUnwarpJDialog extends Dialog implements ActionListener
+static class bUnwarpJDialog extends Dialog implements ActionListener
 { /* begin class bUnwarpJDialog */
 
     /*....................................................................
@@ -2472,7 +2474,7 @@ class bUnwarpJDialog extends Dialog implements ActionListener
 /**
  * Class to create a dialog to deal with the files to keep the information of bUnwarpJ.
  */
-class bUnwarpJFile extends Dialog implements ActionListener
+static class bUnwarpJFile extends Dialog implements ActionListener
 { /* begin class bUnwarpJFile */
 
     /*....................................................................
@@ -3271,7 +3273,7 @@ class bUnwarpJFile extends Dialog implements ActionListener
 /**
  * Class to launch the registration in bUnwarpJ.
  */
-class bUnwarpJFinalAction implements Runnable
+static class bUnwarpJFinalAction implements Runnable
 {
     /*....................................................................
        Private variables
@@ -3490,7 +3492,7 @@ class bUnwarpJFinalAction implements Runnable
 /**
  * Class for representing the images by cubic b-splines
  */
-class bUnwarpJImageModel implements Runnable
+static class bUnwarpJImageModel implements Runnable
 { /* begin class bUnwarpJImageModel */
     
     // Some constants
@@ -5294,7 +5296,7 @@ class bUnwarpJImageModel implements Runnable
  * place concurrently with user-interface events. It contains methods
  * to compute the mask pyramids.
  */
-class bUnwarpJMask
+static class bUnwarpJMask
 { /* begin class bUnwarpJMask */
 
     /*....................................................................
@@ -5537,7 +5539,7 @@ class bUnwarpJMask
 /**
  * This class has the math methods to deal with b-splines.
  */
-class bUnwarpJMathTools 
+static class bUnwarpJMathTools 
 {
     /** float epsilon */
     private static final double FLT_EPSILON = (double)Float.intBitsToFloat((int)0x33FFFFFF);
@@ -6135,7 +6137,7 @@ class bUnwarpJMathTools
 /**
  * Different tools for the bUnwarpJ interface.
  */
-class bUnwarpJMiscTools 
+static class bUnwarpJMiscTools 
 {
     /**
      * Apply a given splines transformation to the source image.
@@ -7756,7 +7758,7 @@ class bUnwarpJMiscTools
 /**
  * Class for point actions in the bUnwarpJ interface.
  */
-class bUnwarpJPointAction extends ImageCanvas implements KeyListener, MouseListener,
+static class bUnwarpJPointAction extends ImageCanvas implements KeyListener, MouseListener,
       MouseMotionListener
 { /* begin class bUnwarpJPointAction */
 
@@ -8150,7 +8152,7 @@ class bUnwarpJPointAction extends ImageCanvas implements KeyListener, MouseListe
 /**
  * Class to deal with point handler in bUnwarpJ.
  */
-class bUnwarpJPointHandler extends Roi
+static class bUnwarpJPointHandler extends Roi
 { /* begin class bUnwarpJPointHandler */
 
     /*....................................................................
@@ -8816,7 +8818,7 @@ class bUnwarpJPointHandler extends Roi
 /**
  * Class to deal with the point toolbar option in the bUnwarpJ interface.
  */
-class bUnwarpJPointToolbar extends Canvas implements MouseListener
+static class bUnwarpJPointToolbar extends Canvas implements MouseListener
 { /* begin class bUnwarpJPointToolbar */
 
     /*....................................................................
@@ -9458,7 +9460,7 @@ class bUnwarpJPointToolbar extends Canvas implements MouseListener
  * This class implements the interactions when dealing with ImageJ's
  * progress bar.
  */
-class bUnwarpJProgressBar
+static class bUnwarpJProgressBar
 { /* begin class bUnwarpJProgressBar */
 
     /*....................................................................
@@ -9551,7 +9553,7 @@ class bUnwarpJProgressBar
 /**
  * Class to perform the transformation for bUnwarpJ.
  */
-class bUnwarpJTransformation
+static class bUnwarpJTransformation
 { /* begin class bUnwarpJTransformation */
 
     /*....................................................................
@@ -13182,3 +13184,5 @@ class bUnwarpJTransformation
     } /* end yWeight */
 
 } /* end class bUnwarpJTransformation */
+
+} /* end class bUnwarpJ_ */
