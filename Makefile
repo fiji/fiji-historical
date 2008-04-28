@@ -1,12 +1,23 @@
 TARGET=fiji-$(ARCH)
 
 NEW_JARS=$(wildcard staged-plugins/*.jar)
+
+# This maps the names of all the jars in staged-plugins/
+# to the corresponding name in plugins/
+
 JARS=$(patsubst staged-plugins/%,plugins/%,$(NEW_JARS))
+
+# The sed expressions here strip anything before ij.jar and replace
+# the leading directory elements of any other jar with plugins/
 
 SUBMODULE_TARGETS=ImageJA/ij.jar TrakEM2/TrakEM2_.jar VIB/VIB_.jar
 SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
 	sed -e "s|[^ ]*/ij.jar|ij.jar|" \
 		-e "s|[^ ]*/\([^ /]*\.jar\)|plugins/\1|g")
+
+# A rule for building the jars in plugins: copy-jar-if-newer.sh will
+# incorporate the .config file into the ja file, and put the result
+# in plugins/  (It will also commit the jar file in plugins.)
 
 plugins/%.jar: staged-plugins/%.jar staged-plugins/%.config
 	./scripts/copy-jar-if-newer.sh --delete --commit $< $@
