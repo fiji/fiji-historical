@@ -27,12 +27,14 @@
  */
 
 import ij.IJ;
+import ij.plugin.BrowserLauncher;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.MultiLineLabel;
 
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -40,16 +42,19 @@ import ij.process.ShortProcessor;
 import ij.process.FloatProcessor;
 import ij.process.StackConverter;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import mpi.fruitfly.math.datastructures.FloatArray3D;
 
 import edu.mines.jtk.dsp.FftComplex;
 import edu.mines.jtk.dsp.FftReal;
 
 public class Fast_FourierTransform implements PlugIn
 {
+	private String myURL = "http://fly.mpi-cbg.de/~preibisch/contact.html";
     private static String methodList[] = {"No Logarithm", "Base-e Logarithm", "Base-10 Logarithm", "Generalized Logarithm (gLog, c = 2)"};
     private static String[] colorList = {"Red", "Green", "Blue", "Red and Green", "Red and Blue", "Green and Blue", "Red, Green and Blue"};
 
@@ -127,6 +132,11 @@ public class Fast_FourierTransform implements PlugIn
         gd.addMessage("gLog(x) = Log10((x + Math.sqrt(x * x + c * c)) / 2.0)");*/
         //gd.addMessage("Durbin, Blythe; Rocke, David (2003) Estimation of transformation parameters for microarray data");
         //gd.addMessage("Bioinformatics 19:1360-1367");
+		gd.addMessage("");
+		gd.addMessage("This Plugin is developed by Stephan Preibisch\n"+myURL);
+		
+		MultiLineLabel text = (MultiLineLabel)gd.getMessage();
+		addHyperLinkListener(text);		        
         
         gd.showDialog();
 
@@ -177,12 +187,40 @@ public class Fast_FourierTransform implements PlugIn
         }      
         
         if (forward)
-        	computeForwardTransform(imp, windowing, behaviour, channel);
+        	computeForwardTransform(imp, windowing, behaviour, channel, multiThreaded);
         else
-        	computeBackwardTransform(power, phase, behaviour);
+        	computeBackwardTransform(power, phase, behaviour, multiThreaded);
     }
+
+	private final void addHyperLinkListener(final MultiLineLabel text)
+	{
+		text.addMouseListener(new MouseAdapter()
+		{
+			public void mouseClicked(MouseEvent e)
+			{
+				try
+				{
+					BrowserLauncher.openURL(myURL);
+				}
+				catch (Exception ex)
+				{
+					IJ.error("" + ex);
+				}
+			}
+			public void mouseEntered(MouseEvent e)
+			{
+				text.setForeground(Color.BLUE);
+				text.setCursor(new Cursor(Cursor.HAND_CURSOR));				
+			}
+			public void mouseExited(MouseEvent e)
+			{
+				text.setForeground(Color.BLACK);
+				text.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+			}			 
+		});
+	}
     
-    public void computeBackwardTransform(ImagePlus power, ImagePlus phase, String behaviour)
+    public void computeBackwardTransform(ImagePlus power, ImagePlus phase, String behaviour, boolean multiThreaded)
     {
     	if (power.getStackSize() != phase.getStackSize() || power.getWidth() != phase.getWidth() || power.getHeight() != phase.getHeight())
     	{
@@ -272,7 +310,7 @@ public class Fast_FourierTransform implements PlugIn
         	
         // compute Inverse FFT
         if (_3D)
-        	img = computeInvFFT((FloatArray3D)img, nfft);
+        	img = computeInvFFT((FloatArray3D)img, nfft, multiThreaded);
         else
         	img = computeInvFFT((FloatArray2D)img, nfft);
         
@@ -285,7 +323,7 @@ public class Fast_FourierTransform implements PlugIn
         img.data = null; img = null;
     }
     
-    public void computeForwardTransform(ImagePlus imp, boolean windowing, String behaviour, String rgbType)
+    public void computeForwardTransform(ImagePlus imp, boolean windowing, String behaviour, String rgbType, boolean multiThreaded)
     {
         String imageName = imp.toString();        
     	
@@ -353,7 +391,7 @@ public class Fast_FourierTransform implements PlugIn
         
         // compute the FFT
         if (_3D)
-            img = computeFFT((FloatArray3D)img);
+            img = computeFFT((FloatArray3D)img, multiThreaded);
         else
             img = computeFFT((FloatArray2D)img);
         	
@@ -507,61 +545,6 @@ public class Fast_FourierTransform implements PlugIn
 					values.set(buffer[ z - halfDimZRounded ], x, y, z);
 			}
 
-	}
-
-	// Actually, the 1D FFTs are not done in place, but only the 2D structure
-	// is not cloned for processing
-	private void pffft2DInPlace(FloatArray2D values, int nfftX, boolean scale)
-	{
-		int height = values.height;
-		int width = nfftX;
-		int complexWidth = (width/2+1)*2;
-
-		//do fft's in x direction
-		float[] tempIn = new float[width];
-		float[] tempOut;
-
-		FftReal fft = new FftReal(width);
-
-		for (int y = 0; y < height; y++)
-		{
-			tempOut = new float[complexWidth];
-
-			for (int x = 0; x < width; x++)
-				tempIn[x] = values.get(x,y);
-
-			fft.realToComplex( -1, tempIn, tempOut);
-
-			if (scale)
-				fft.scale(width, tempOut);
-
-			for (int x = 0; x < complexWidth; x++)
-				values.set(tempOut[x], x, y);
-		}
-
-		// do fft's in y-direction on the complex numbers
-		tempIn = new float[height*2];
-
-		FftComplex fftc = new FftComplex(height);
-
-		for (int x = 0; x < complexWidth/2; x++)
-		{
-			tempOut = new float[height*2];
-
-			for (int y = 0; y < height; y++)
-			{
-				tempIn[y*2] = values.get(x*2,y);
-				tempIn[y*2+1] = values.get(x*2+1,y);
-			}
-
-			fftc.complexToComplex(-1, tempIn, tempOut);
-
-			for (int y = 0; y < height; y++)
-			{
-				values.set(tempOut[y*2], x*2, y);
-				values.set(tempOut[y*2+1], x*2+1, y);
-			}
-		}
 	}
 
 	private static double gLog(double z, double c)
@@ -887,9 +870,15 @@ public class Fast_FourierTransform implements PlugIn
 		return img;
 	}
 
-	private FloatArray3D computeInvFFT(FloatArray3D values, int nfft)
+	private FloatArray3D computeInvFFT(FloatArray3D values, int nfft, boolean multiThreaded)
 	{
-		FloatArray3D img = pffftInv3D(values, nfft);
+		FloatArray3D img;
+		
+		if (multiThreaded)			
+			img = pffftInv3DMT(values, nfft);
+		else
+			img = pffftInv3D(values, nfft);
+		
 		values.data = null; values = null;
 		
 		return img;
@@ -1011,9 +1000,14 @@ public class Fast_FourierTransform implements PlugIn
 	}
 
 	
-	private FloatArray3D computeFFT(FloatArray3D img)
+	private FloatArray3D computeFFT(FloatArray3D img, boolean multiThreaded)
 	{
-		FloatArray3D fft = pffft3D(img, false);
+		FloatArray3D fft;
+		
+		if (multiThreaded)
+			fft = pffft3DMT(img, false);
+		else
+			fft = pffft3D(img, false);
 		img.data = null; img = null;
 
 		return fft;
