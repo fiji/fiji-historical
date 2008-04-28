@@ -114,6 +114,9 @@ $(SUBMODULE_TARGETS_IN_FIJI):
 
 # MicroManager
 mm:
+	test -f micromanager1.1/build.sh || \
+		(git submodule init micromanager1.1 && \
+		 git submodule update micromanager1.1)
 	export JAVA_LIB_DIR='$(JAVA_LIB_DIR)'; \
 	export JAVA_HOME="$$(pwd)/$(JAVA_HOME)/.."; \
 	export JAVAINC="-I$$JAVA_HOME/include -I$$JAVA_HOME/include/linux"; \
