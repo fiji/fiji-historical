@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 REAL_MEMORY=`free -m | egrep 'Mem:' | awk '{ print $2; }'`
 
 # Use up to two thirds of the available memory:		  
