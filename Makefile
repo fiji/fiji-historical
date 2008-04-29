@@ -224,15 +224,13 @@ Fiji.app: fiji-macosx-intel
 	echo '</dict>' >> $(PLIST)
 	echo '</plist>"' >> $(PLIST)
 	cp fiji-macosx-intel $(MACOS)/
-	for d in java plugins macros ij.jar jars; do \
+	for d in java plugins macros ij.jar jars misc; do \
 		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
 	done
 	git archive --prefix=$@/java/macosx-intel/ origin/java/macosx-intel: | \
 		tar xvf -
 	cp ij.jar $@/
-	cp -R plugins $@/
-	cp -R macros $@/
-	cp -R jars $@/
+	cp -R plugins macros jars misc $@/
 	cp images/Fiji.icns $(RESOURCES)
 
 Fiji.app-%:
@@ -240,7 +238,7 @@ Fiji.app-%:
 	case $$ARCH in win*) EXE=.exe;; *) EXE=;; esac; \
 	mkdir -p $@/$(JAVA_HOME) && \
 	mkdir -p $@/images && \
-	cp -R fiji-$$ARCH$$EXE ij.jar plugins macros jars $@ && \
+	cp -R fiji-$$ARCH$$EXE ij.jar plugins macros jars misc $@ && \
 	cp -R $(JAVA_HOME)/* $@/$(JAVA_HOME) && \
 	cp images/icon.png $@/images/
 
