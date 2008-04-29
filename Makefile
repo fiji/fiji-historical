@@ -235,6 +235,21 @@ Fiji.app: fiji-macosx-intel
 	cp -R jars $@/
 	cp images/Fiji.icns $(RESOURCES)
 
+Fiji.app-%:
+	ARCH=$$(echo $@ | sed "s/^Fiji.app-//"); \
+	case $$ARCH in win*) EXE=.exe;; *) EXE=;; esac; \
+	mkdir -p $@/$(JAVA_HOME) && \
+	mkdir -p $@/images && \
+	cp -R fiji-$$ARCH$$EXE ij.jar plugins macros jars $@ && \
+	cp -R $(JAVA_HOME)/* $@/$(JAVA_HOME) && \
+	cp images/icon.png $@/images/
+
+fiji-%.tar.bz2: Fiji.app-%
+	tar cf - $< | bzip2 -9 > $@
+
+fiji-%.zip: Fiji.app-%
+	zip -9r $@ $<
+
 # All targets...
 
 alltargets: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
