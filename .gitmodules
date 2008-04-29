@@ -4,3 +4,6 @@
 [submodule "VIB"]
 	path = VIB
 	url = dumbo:/home/vibcvs/cvs
+[submodule "TrakEM2"]
+	path = TrakEM2
+	url = TrakEM2
