@@ -43,6 +43,7 @@ build-indep-stamp: configure-stamp
 	$(MAKE) build-imageja
 	$(MAKE) build-fiji-plugins
 	$(MAKE) build-doc-imageja
+	$(MAKE) build-trakem2
 	touch $@
 
 clean:
@@ -67,6 +68,7 @@ install-indep:
 	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja install-imageja
 	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji-plugins install-fiji-plugins
 	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja-doc install-doc-imageja
+	$(MAKE) DESTDIR=$(CURDIR)/debian/trakem2 install-trakem2
 	dh_install -i
 
 install-arch:
@@ -81,121 +83,72 @@ install-arch:
 
 	dh_install -s
 
+.PHONY : imageja-packindep imageja-doc-packindep trakem2-packindep \
+		fiji-plugins-packindep fiji-launcher-packarch
+
+%-packindep : 
+	dh_testdir -p$*
+	dh_testroot -p$*
+	dh_installchangelogs -p$*
+	dh_installdocs -p$*
+	dh_installexamples -p$*
+#	dh_installmenu -p$*
+#	dh_installdebconf	 -p$*
+#	dh_installlogrotate	 -p$*
+#	dh_installemacsen -p$*
+#	dh_installpam -p$*
+#	dh_installmime -p$*
+#	dh_python -p$*
+#	dh_installinit -p$*
+#	dh_installcron -p$*
+#	dh_installinfo -p$*
+	dh_installman -p$*
+	dh_link -p$*
+	dh_strip -p$*
+	dh_compress  -p$*
+	dh_fixperms -p$*
+#	dh_perl -p$*
+	dh_makeshlibs -p$*
+	dh_installdeb -p$*
+	dh_shlibdeps -p$*
+	dh_gencontrol -p$*
+	dh_md5sums -p$*
+	dh_builddeb -p$*
+
 # Build architecture independant packages using the common target.
-binary-indep: build-indep install-indep
-	dh_testdir -pimageja
-	dh_testroot -pimageja
-	dh_installchangelogs -pimageja
-	dh_installdocs -pimageja
-	dh_installexamples -pimageja
-#	dh_installmenu -pimageja
-#	dh_installdebconf	 -pimageja
-#	dh_installlogrotate	 -pimageja
-#	dh_installemacsen -pimageja
-#	dh_installpam -pimageja
-#	dh_installmime -pimageja
-#	dh_python -pimageja
-#	dh_installinit -pimageja
-#	dh_installcron -pimageja
-#	dh_installinfo -pimageja
-	dh_installman -pimageja
-	dh_link -pimageja
-	dh_strip -pimageja
-	dh_compress  -pimageja
-	dh_fixperms -pimageja
-#	dh_perl -pimageja
-	dh_makeshlibs -pimageja
-	dh_installdeb -pimageja
-	dh_shlibdeps -pimageja
-	dh_gencontrol -pimageja
-	dh_md5sums -pimageja
-	dh_builddeb -pimageja
-	#  Now the ImageJA API documentation
-	dh_testdir -pimageja-doc
-	dh_testroot -pimageja-doc
-	dh_installchangelogs -pimageja-doc
-	dh_installdocs -pimageja-doc
-	dh_installexamples -pimageja-doc
-#	dh_installmenu -pimageja-doc
-#	dh_installdebconf	 -pimageja-doc
-#	dh_installlogrotate	 -pimageja-doc
-#	dh_installemacsen -pimageja-doc
-#	dh_installpam -pimageja-doc
-#	dh_installmime -pimageja-doc
-#	dh_python -pimageja-doc
-#	dh_installinit -pimageja-doc
-#	dh_installcron -pimageja-doc
-#	dh_installinfo -pimageja-doc
-	dh_installman -pimageja-doc
-	dh_link -pimageja-doc
-	dh_strip -pimageja-doc
-	dh_compress  -pimageja-doc
-	dh_fixperms -pimageja-doc
-#	dh_perl -pimageja-doc
-	dh_makeshlibs -pimageja-doc
-	dh_installdeb -pimageja-doc
-	dh_shlibdeps -pimageja-doc
-	dh_gencontrol -pimageja-doc
-	dh_md5sums -pimageja-doc
-	dh_builddeb -pimageja-doc
-	# Now the plugins:
-	dh_testdir -pfiji-plugins
-	dh_testroot -pfiji-plugins
-	dh_installchangelogs -pfiji-plugins
-	dh_installdocs -pfiji-plugins
-	dh_installexamples -pfiji-plugins
-#	dh_installmenu -pfiji-plugins
-#	dh_installdebconf	 -pfiji-plugins
-#	dh_installlogrotate	 -pfiji-plugins
-#	dh_installemacsen -pfiji-plugins
-#	dh_installpam -pfiji-plugins
-#	dh_installmime -pfiji-plugins
-#	dh_python -pfiji-plugins
-#	dh_installinit -pfiji-plugins
-#	dh_installcron -pfiji-plugins
-#	dh_installinfo -pfiji-plugins
-	dh_installman -pfiji-plugins
-	dh_link -pfiji-plugins
-	dh_strip -pfiji-plugins
-	dh_compress  -pfiji-plugins
-	dh_fixperms -pfiji-plugins
-#	dh_perl -pfiji-plugins
-	dh_makeshlibs -pfiji-plugins
-	dh_installdeb -pfiji-plugins
-	dh_shlibdeps -pfiji-plugins
-	dh_gencontrol -pfiji-plugins
-	dh_md5sums -pfiji-plugins
-	dh_builddeb -pfiji-plugins
+binary-indep: imageja-packindep imageja-doc-packindep trakem2-packindep fiji-plugins-packindep build-indep install-indep 
+
+%-packarch :
+	dh_testdir -p$*
+	dh_testroot -p$*
+	dh_installchangelogs -p$*
+	dh_installdocs -p$*
+	dh_installexamples -p$*
+#	dh_installmenu -p$*
+#	dh_installdebconf	 -p$*
+#	dh_installlogrotate	 -p$*
+#	dh_installemacsen -p$*
+#	dh_installpam -p$*
+#	dh_installmime -p$*
+#	dh_python -p$*
+#	dh_installinit -p$*
+#	dh_installcron -p$*
+#	dh_installinfo -p$*
+	dh_installman -p$*
+	dh_link -p$*
+	dh_strip -p$*
+	dh_compress  -p$*
+	dh_fixperms -p$*
+#	dh_perl -p$*
+	dh_makeshlibs -p$*
+	dh_installdeb -p$*
+	dh_shlibdeps -p$*
+	dh_gencontrol -p$*
+	dh_md5sums -p$*
+	dh_builddeb -p$*
 
 # Build architecture dependant packages using the common target.
-binary-arch: build-arch install-arch
-	dh_testdir -pfiji-launcher
-	dh_testroot -pfiji-launcher
-	dh_installchangelogs -pfiji-launcher
-	dh_installdocs -pfiji-launcher
-	dh_installexamples -pfiji-launcher
-#	dh_installmenu -pfiji-launcher
-#	dh_installdebconf	 -pfiji-launcher
-#	dh_installlogrotate	 -pfiji-launcher
-#	dh_installemacsen -pfiji-launcher
-#	dh_installpam -pfiji-launcher
-#	dh_installmime -pfiji-launcher
-#	dh_python -pfiji-launcher
-#	dh_installinit -pfiji-launcher
-#	dh_installcron -pfiji-launcher
-#	dh_installinfo -pfiji-launcher
-	dh_installman -pfiji-launcher
-	dh_link -pfiji-launcher
-	dh_strip -pfiji-launcher
-	dh_compress  -pfiji-launcher
-	dh_fixperms -pfiji-launcher
-#	dh_perl -pfiji-launcher
-	dh_makeshlibs -pfiji-launcher
-	dh_installdeb -pfiji-launcher
-	dh_shlibdeps -pfiji-launcher
-	dh_gencontrol -pfiji-launcher
-	dh_md5sums -pfiji-launcher
-	dh_builddeb -pfiji-launcher
+binary-arch: fiji-launcher-packarch build-arch install-arch
 
 binary: binary-arch binary-indep
 .PHONY: build clean binary-indep binary-arch binary install install-indep install-arch configure

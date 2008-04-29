@@ -1,0 +1,18 @@
+<project name="ant-snippets">
+
+  <macrodef name="add-config">
+    <attribute name="pluginsconfig"/>
+    <attribute name="inputjar"/>
+    <attribute name="outputjar"/>
+    <sequential>
+      <copy file="@{pluginsconfig}" tofile="plugins.config"/>
+      <copy file="@{inputjar}" tofile="@{outputjar}"/>
+      <jar update="true"
+	   basedir="."
+	   includes="plugins.config"
+	   destfile="@{outputjar}"/>
+      <delete file="plugins.config"/>
+    </sequential>
+  </macrodef>
+
+</project>

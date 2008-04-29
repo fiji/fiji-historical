@@ -1,5 +1,7 @@
 <project name="fiji-plugins" default="compile">
-    
+
+  <import file="ant.xml"/>
+
   <target name="clean">
     <delete>
       <fileset dir="plugins" includes="**/*.jar,**/*.class"/>
@@ -24,15 +26,13 @@
     </javac>
   </target>
         
-  <target name="add-configs">
-    <!-- Change this to loop over each .jar -->
-    <copy file="staged-plugins/VIB_.config" tofile="plugins.config"/>
-    <copy file="VIB/VIB_.jar" tofile="plugins/VIB_.jar"/>
-    <jar update="true"
-	 basedir="."
-	 includes="plugins.config"
-	 destfile="plugins/VIB_.jar"/>
-    <delete file="plugins.config"/>
+  <target name="add-all-configs">
+    <add-config pluginsconfig="staged-plugins/VIB_.config"
+		inputjar="VIB/VIB_.jar"
+		outputjar="plugins/VIB_.jar"/>
+    <add-config pluginsconfig="staged-plugins/TrakEM2_.config"
+		inputjar="TrakEM2/TrakEM2_.jar"
+		outputjar="plugins/TrakEM2_.jar"/>
   </target>
 
 </project>

@@ -103,6 +103,7 @@ clean:
 	echo JAVA_HOME is $(JAVA_HOME)
 	$(MAKE) -C ImageJA clean
 	( cd ImageJA && ant clean )
+	( cd TrakEM2 && ant clean )
 	$(MAKE) -C VIB clean
 	find . -name '*~' -exec rm {} \;
 	for d in plugins src-plugins libs; do \
@@ -110,15 +111,16 @@ clean:
 	done
 	rm -f $(EXTRACLEANFILES)
 	rm -f fiji-linux fiji-win32.exe fiji-linux-amd64  fiji-win64.exe  fiji-macosx ij.jar
-	# Takes ages to build: rm -rf api
+	# Takes ages to build again:
+	rm -rf api
 	rm -f fiji.o
 
 .PHONY: debs
 
 debs:
 	# FIXME: generate the regular expression automatically
-	dpkg-buildpackage -i'((^|/).git(/|$$)|(^|/)java($$|/)|(^|/)api($$|/)|(^|/)cachedir($$|/)|(^|/)micromanager1.1($$|/)|(^|/)TrakEM2($$|/))' \
-		 -I.git -Ijava -Icachedir -ITrakEM2 -Imicromanager1.1 -rfakeroot -us -uc
+	dpkg-buildpackage -i'((^|/).git(/|$$)|(^|/)java($$|/)|(^|/)api($$|/)|(^|/)cachedir($$|/)|(^|/)micromanager1.1($$|/))' \
+		 -I.git -Ijava -Icachedir -Imicromanager1.1 -rfakeroot -us -uc
 
 .PHONY: build-imageja build-fiji-launcher build-fiji-plugins
 .PHONY: build-doc-imageja build-doc-fiji-launcher build-doc-fiji-plugins
@@ -128,48 +130,66 @@ debs:
 
 # For the imageja package:
 
-build-imageja: ImageJA/ij.jar
+build-imageja : ImageJA/ij.jar
 
-ImageJA/ij.jar:
+ImageJA/ij.jar :
 	( cd ImageJA && ant build )
 
-install-imageja:
+install-imageja :
 	echo Installing ImageJA to prefix $(DESTDIR)
 	install -d $(DESTDIR)/usr/bin/
 	install -m 755 simple-launcher $(DESTDIR)/usr/bin/imageja
 	install -d $(DESTDIR)/usr/share/imageja/
 	install -m 644 ImageJA/ij.jar $(DESTDIR)/usr/share/imageja/
 	install -d $(DESTDIR)/usr/share/imageja/plugins/
-	install -d $(DESTDIR)/usr/share/imageja/jars/
+	install -m 644 debian/README.plugins $(DESTDIR)/usr/share/imageja/plugins/README
 
-build-doc-imageja:
-	# ( cd ImageJA && ant javadocs )
+build-doc-imageja :
+	( cd ImageJA && ant javadocs )
 
-install-doc-imageja:
+install-doc-imageja :
 	install -d $(DESTDIR)/usr/share/doc/imageja/
 	cp -r api $(DESTDIR)/usr/share/doc/imageja/
 	chmod a=rX $(DESTDIR)/usr/share/doc/imageja/
 
 # For the fiji-launcher package:
 
-build-fiji-launcher: fiji-linux
+build-fiji-launcher : fiji-linux
 
-install-fiji-launcher: fiji-linux
+install-fiji-launcher : fiji-linux
 	install -m 755 fiji-linux $(DESTDIR)/usr/bin/fiji
 
 # For the fiji-plugins package:
 
-build-fiji-plugins: ImageJA/ij.jar plugins/VIB_.jar
+build-fiji-plugins : ImageJA/ij.jar plugins/VIB_.jar
 
-plugins/VIB_.jar: VIB/VIB_.jar staged-plugins/VIB_.config
+plugins/VIB_.jar plugins/TrakEM2_.jar : VIB/VIB_.jar staged-plugins/VIB_.config TrakEM2/TrakEM2_.jar staged-plugins/TrakEM2_.config
+	ant compile
+	ant add-all-configs
+
+VIB/VIB_.jar :
+	( cd VIB && ant compile )
+
+install-fiji-plugins : build-fiji-plugins
+	install -d $(DESTDIR)/usr/share/imageja/plugins/
+	cp -r plugins/* $(DESTDIR)/usr/share/imageja/plugins/
+
+# For the trakem2 package:
+
+build-trakem2 : ImageJA/ij.jar VIB/VIB_.jar jtk/build/jar/edu_mines_jtk.jar
+	( cd TrakEM2 && ant
+
+jtk/build/jar/edu_mines_jtk.jar :
+	( cd jtk && ant compile )
+
+plugins/VIB_.jar : VIB/VIB_.jar staged-plugins/VIB_.config
 	ant compile
 	ant add-configs
 
-VIB/VIB_.jar:
+VIB/VIB_.jar :
 	( cd VIB && ant compile )
 
-install-fiji-plugins: build-fiji-plugins
-	
+install-trakem2 : build-trakem2
 	install -d $(DESTDIR)/usr/share/imageja/plugins/
 	cp -r plugins/* $(DESTDIR)/usr/share/imageja/plugins/
 

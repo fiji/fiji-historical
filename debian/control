@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 5), junit4, libjzlib-java
 Standards-Version: 3.7.2
 
 Package: fiji-launcher
-Section: main
+Section: graphics
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends} imageja
 Description: A launcher for the Fiji image processing suite
@@ -14,7 +14,7 @@ Description: A launcher for the Fiji image processing suite
  This package contains the launcher for Fiji.
 
 Package: imageja
-Section: main
+Section: graphics
 Architecture: all
 Depends: sun-java5-bin | sun-java6-bin
 Description: A modified version of ImageJ
@@ -24,7 +24,7 @@ Description: A modified version of ImageJ
  ImageJ.
 
 Package: imageja-doc
-Section: main
+Section: graphics
 Architecture: all
 Description: Documentation for ImageJA, a modified version of ImageJ
  FIXME: write something sensible here
@@ -32,9 +32,18 @@ Description: Documentation for ImageJA, a modified version of ImageJ
  for ImageJA.
 
 Package: fiji-plugins
-Section: main
+Section: graphics
 Architecture: all
 Depends: imageja, jython
 Description: A set of default plugins for Fiji
  FIXME: write something sensible here
  Blah blah...
+
+Package: trakem2
+Section: graphics
+Architecture: all
+Depends: imageja, libjama-java, libpg-java
+Description: ImageJ plugin to register/edit/analyze/3D-model terabyte images
+ TrakEM2 is an ImageJ plugin for morphological data mining, three-dimensional
+ modeling and image stitching, registration, editing and annotation.  In
+ short, browse/edit/analyze terabytes of images seamlessly.
