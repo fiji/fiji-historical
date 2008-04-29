@@ -301,11 +301,6 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 						try {
 							String scriptFilename = script_dir.getCanonicalPath() + File.separator + file_name;
 							runScript(scriptFilename);
-							/* Move this into the refactored Refresh_Python_Scripts:
-							   PythonInterpreter PI = new PythonInterpreter();
-							   Jython_Interpreter.importAll(PI);
-							   PI.execfile(script_dir.getCanonicalPath() + File.separator + file_name);
-							*/
 						} catch (Exception e) {
 							e.printStackTrace();
 							IJ.log(e.toString());

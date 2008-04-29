@@ -1,11 +1,11 @@
 JARS3RDPARTY=$(shell find ../jars/ -name "*.jar" -exec printf ":%s" {} \;)
-JAVACOPTS=-target 1.3 -source 1.3 \
+JAVACOPTS=-target 1.5 -source 1.5 \
 	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
 
 # common is just in this list to exclude classes within it from being copied
-JARDIRS=common Jython Clojure JRuby BSH
+JARDIRS=common Jython Clojure JRuby BSH bUnwarpJ register_virtual_stack
 FINDJARDIRS=$(patsubst %,-name % -o,$(JARDIRS))
-JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar
+JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar bUnwarpJ_.jar register_virtual_stack_slices.jar
 
 JAVAS=$(filter-out $(wildcard $(patsubst %,%/*.java,$(JARDIRS))),$(wildcard *.java */*.java))
 CLASSES=$(patsubst %.java,%.class,$(JAVAS))
@@ -40,6 +40,10 @@ Clojure_Interpreter.jar: SOURCES=common/*.java Clojure/*.java Clojure/plugins.co
 JRuby_Interpreter.jar: SOURCES=common/*.java JRuby/*.java JRuby/plugins.config
 
 BeanShell_Interpreter.jar: SOURCES=common/*.java BSH/*.java BSH/plugins.config
+
+bUnwarpJ_.jar: SOURCES=bUnwarpJ/*.java bUnwarpJ/plugins.config
+
+register_virtual_stack_slices.jar: SOURCES=register_virtual_stack/*.java register_virtual_stack/plugins.config
 
 .PHONY: $(JARS)
 

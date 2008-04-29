@@ -12,7 +12,7 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 		super.run(arg);
 	}
 
-	/** Runs the script at path */
+	/** Runs the script at path in the general namespace and interpreter on this JVM, which means the script may change the values of variables and functions in other scripts and in the Clojure interpreter. */
 	public void runScript(String path) {
 		try {
 			if (!path.endsWith(".clj") || !new File(path).exists()) {
