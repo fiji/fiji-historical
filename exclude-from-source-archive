@@ -6,3 +6,15 @@ jruby
 jars
 cachedir
 micromanager1.1
+libedu_mines_jtk_lapack.so
+libedu_mines_jtk_opengl.so
+libgluegen-rt.so
+libjogl.so
+libjogl_awt.so
+libjogl_cg.so
+edu_mines_jtk_lapack.dll
+edu_mines_jtk_opengl.dll
+mingwm10.dll
+gluegen-rt.jar
+jogl.jar
+junit.jar

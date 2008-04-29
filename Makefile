@@ -84,7 +84,7 @@ ORIG=fiji_$(FIJI_VERSION).orig.tar.gz
 
 orig: ../$(ORIG)
 
-../fiji_$(FIJI_VERSION).orig.tar.gz :
+../$(ORIG) :
 	if [ "$(CURRENT_DIRECTORY)" != "$(IDEAL_DIRECTORY)" ]; \
 	then \
 		echo The source directory must be called $(IDEAL_DIRECTORY); \
@@ -119,10 +119,21 @@ clean:
 
 .PHONY: debs
 
+DEBIAN_VERSION=$(shell perl -e 'use Dpkg::Changelog qw(parse_changelog); print parse_changelog->{version}')
+DEBIAN_PACKAGES=$(shell egrep 'Package: ' debian/control | sed -r 's/Package: //')
+
 debs:
 	# FIXME: generate the regular expression automatically
 	dpkg-buildpackage -i'((^|/).git(/|$$)|(^|/)java($$|/)|(^|/)api($$|/)|(^|/)cachedir($$|/)|(^|/)micromanager1.1($$|/))' \
-		 -I.git -Ijava -Icachedir -Imicromanager1.1 -rfakeroot -us -uc
+		 -I.git -Ijava -Icachedir -Imicromanager1.1 -rfakeroot -k88855837
+	echo DEBIAN_VERSION is $(DEBIAN_VERSION)
+	echo DEBIAN_PACKAGES are $(DEBIAN_PACKAGES)
+	mkdir -p packages
+	rm -f packages/*
+	cp $(patsubst %,../%_$(DEBIAN_VERSION)_*.deb,$(DEBIAN_PACKAGES)) packages/
+	cp ../$(ORIG) packages/
+	cp ../fiji_$(DEBIAN_VERSION).dsc packages/
+	cp ../fiji_$(DEBIAN_VERSION)_i386.changes packages/
 
 .PHONY: build-imageja build-fiji build-fiji-plugins
 .PHONY: build-doc-imageja build-doc-fiji build-doc-fiji-plugins
@@ -177,17 +188,18 @@ VIB/VIB_.jar :
 install-fiji-plugins : build-fiji-plugins
 	install -d $(DESTDIR)/usr/share/imageja/plugins/
 	cp -r plugins/* $(DESTDIR)/usr/share/imageja/plugins/
+	rm $(DESTDIR)/usr/share/imageja/plugins/TrakEM2_.jar
 
 # For the trakem2 package:
 
-build-trakem2 : ImageJA/ij.jar VIB/VIB_.jar jtk/build/jar/edu_mines_jtk.jar
+build-trakem2 TrakEM2/TrakEM2_.jar : ImageJA/ij.jar VIB/VIB_.jar jtk/build/jar/edu_mines_jtk.jar
 	( cd TrakEM2 && ant compile )
 
 jtk/build/jar/edu_mines_jtk.jar :
-	( cd jtk && ant compile )
+	( cd jtk && ant all )
 
 install-trakem2 : build-trakem2
+	install -d $(DESTDIR)/usr/share/java/
+	install jtk/build/jar/edu_mines_jtk.jar $(DESTDIR)/usr/share/java/
 	install -d $(DESTDIR)/usr/share/imageja/plugins/
-	cp -r plugins/* $(DESTDIR)/usr/share/imageja/plugins/
-
-# ---------------------------------------------------------------------
+	cp -r plugins/TrakEM2_.jar $(DESTDIR)/usr/share/imageja/plugins/
