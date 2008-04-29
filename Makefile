@@ -22,7 +22,37 @@ SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
 plugins/%.jar: staged-plugins/%.jar staged-plugins/%.config
 	./scripts/copy-jar-if-newer.sh --delete --commit $< $@
 
-# Java wrapper
+all: $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
+
+# submodules
+
+.PHONY: $(SUBMODULE_TARGETS_IN_FIJI)
+$(SUBMODULE_TARGETS_IN_FIJI):
+	@echo "Making $@"
+	ORIGINAL_TARGET=$(shell echo " $(SUBMODULE_TARGETS) " | \
+		sed "s/.* \([^ ]*$$(basename "$@")\) .*/\1/") && \
+	DIR=$$(dirname $$ORIGINAL_TARGET) && \
+	test ! -e $$DIR/Makefile || ( \
+		$(MAKE) -C $$DIR $$(basename $$ORIGINAL_TARGET) && \
+		./scripts/copy-jar-if-newer.sh $$ORIGINAL_TARGET $@ \
+	)
+
+.PHONY: src-plugins
+src-plugins:
+	$(MAKE) -C $@
+
+check: src-plugins $(TARGET)$(EXE)
+	./$(TARGET)$(EXE) -eval 'run("Get Class Versions"); run("Quit");' | \
+		sort
+
+# MicroManager
+mm:
+	cd micromanager1.1 && sh build.sh
+
+# ------------------------------------------------------------------------
+# Set up default for building the launcher on different
+# architectures:
+
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 
@@ -68,11 +98,10 @@ endif
 
 # FIXME: check if we can do without the -DJAVA_HOME etc. when building
 # the debian packages.
+
 CXXFLAGS=-g $(INCLUDES) $(EXTRADEFS) \
 	-DJAVA_HOME=\"$(JAVA_HOME)\" -DJAVA_LIB_PATH=\"$(JAVA_LIB_PATH)\"
 LIBS=$(LIBDL) $(LIBMACOSX)
-
-all: $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
 
 $(TARGET)$(EXE): fiji.o
 	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
@@ -83,120 +112,11 @@ endif
 fiji.o: fiji.cxx Makefile
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-ifeq ($(FIJI_ARGS),)
-ifneq ($(FIJI_RUN_PLUGIN),)
-FIJI_ARGS=-eval 'run("$(FIJI_RUN_PLUGIN)");'
-endif
-endif
+# ------------------------------------------------------------------------
+# Run the launcher:
 
-run: $(JDK) $(TARGET)$(EXE)
-ifeq ($(CROSS_COMPILE_WIN64_ON_LINUX),)
-	./$(TARGET)$(EXE) $(FIJI_ARGS)
-endif
-
-# submodules
-
-.PHONY: $(SUBMODULE_TARGETS_IN_FIJI)
-$(SUBMODULE_TARGETS_IN_FIJI):
-	@echo "Making $@"
-	ORIGINAL_TARGET=$(shell echo " $(SUBMODULE_TARGETS) " | \
-		sed "s/.* \([^ ]*$$(basename "$@")\) .*/\1/") && \
-	DIR=$$(dirname $$ORIGINAL_TARGET) && \
-	test ! -e $$DIR/Makefile || ( \
-		$(MAKE) -C $$DIR $$(basename $$ORIGINAL_TARGET) && \
-		./scripts/copy-jar-if-newer.sh $$ORIGINAL_TARGET $@ \
-	)
-
-# MicroManager
-mm:
-	cd micromanager1.1 && sh build.sh
-
-# JDK
-$(JDK):
-	@echo "Making $@"
-	@test -d "$(JDK)/.git" || \
-		(OBJECTSDIR="$$(pwd -W 2> /dev/null || pwd)/.git/objects" && \
-		 cd "$(JDK)" && \
-		 git init && \
-		 echo "$$OBJECTSDIR" > .git/objects/info/alternates && \
-		 BRANCH="refs/remotes/origin/$(JDK)" && \
-		 SHA1=$$(cd ../.. && git rev-parse --verify $$BRANCH) && \
-		 git update-ref "$$BRANCH" $$SHA1 && \
-		 git config remote.origin.url ../.. && \
-		 git config remote.origin.fetch +"$$BRANCH:$$BRANCH" && \
-		 git config branch.master.remote origin && \
-		 git config branch.master.merge "$$BRANCH" && \
-		 git fetch)
-	@echo "Updating $@"
-	@(cd "$(JDK)" && git pull origin "refs/remotes/origin/$(JDK)")
-
-.PHONY: src-plugins
-src-plugins:
-	$(MAKE) -C $@
-
-check: src-plugins $(TARGET)$(EXE)
-	./$(TARGET)$(EXE) -eval 'run("Get Class Versions"); run("Quit");' | \
-		sort
-
-portable-app: Fiji.app
-	for arch in linux linux-amd64 win32; do \
-		case $$arch in win32) exe=.exe;; *) exe=;; esac; \
-		cp fiji-$$arch$$exe $</; \
-		jdk=$$(git ls-tree --name-only origin/java/$$arch:); \
-		jre=$$jdk/jre; \
-		git archive --prefix=$</java/$$arch/$$jre/ \
-				origin/java/$$arch:$$jre | \
-			tar xvf -; \
-	done
-
-Fiji.app: MACOS=$@/Contents/MacOS
-Fiji.app: RESOURCES=$@/Contents/Resources
-Fiji.app: PLIST=$@/Contents/Info.plist
-
-# TODO: Tried to make it work for powerpc AND mac-intel
-Fiji.app: fiji-macosx-intel
-	mkdir -p $(MACOS)
-	mkdir -p $(RESOURCES)
-	echo '<?xml version="1.0" encoding="UTF-8"?>' > $(PLIST)
-	echo '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> $(PLIST)
-	echo '<plist version="1.0">' >> $(PLIST)
-	echo '<dict>' >> $(PLIST)
-	echo '	<key>CFBundleExecutable</key>' >> $(PLIST)
-	echo '		<string>run_fiji.sh</string>' >> $(PLIST)
-	echo '	<key>CFBundleGetInfoString</key>' >> $(PLIST)
-	echo '		<string>Fiji for Mac OS X</string>' >> $(PLIST)
-	echo '	<key>CFBundleIconFile</key>' >> $(PLIST)
-	echo '		<string>Fiji.icns</string>' >> $(PLIST)
-	echo '	<key>CFBundleIdentifier</key>' >> $(PLIST)
-	echo '		<string>org.fiji</string>' >> $(PLIST)
-	echo '	<key>CFBundleInfoDictionaryVersion</key>' >> $(PLIST)
-	echo '		<string>6.0</string>' >> $(PLIST)
-	echo '	<key>CFBundleName</key>' >> $(PLIST)
-	echo '		<string>Fiji</string>' >> $(PLIST)
-	echo '	<key>CFBundlePackageType</key>' >> $(PLIST)
-	echo '		<string>APPL</string>' >> $(PLIST)
-	echo '	<key>CFBundleVersion</key>' >> $(PLIST)
-	echo '		<string>1.0</string>' >> $(PLIST)
-	echo '	<key>NSPrincipalClass</key>' >> $(PLIST)
-	echo '		<string>NSApplication</string>' >> $(PLIST)
-	echo '</dict>' >> $(PLIST)
-	echo '</plist>"' >> $(PLIST)
-	cp fiji-macosx $(MACOS)/
-	cp fiji-macosx-intel $(MACOS)/
-	for d in java plugins macros ij.jar jars; do \
-		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
-	done
-	git archive --prefix=$@/java/macosx/ origin/java/macosx: | \
-		tar xvf -
-	git archive --prefix=$@/java/macosx-intel/ origin/java/macosx-intel: | \
-		tar xvf -
-	cp ij.jar $@/
-	cp -R plugins $@/
-	cp -R macros $@/
-	cp -R jars $@/
-	cp scripts/run_fiji.sh $(MACOS)
-	cp images/Fiji.icns $(RESOURCES)
-
+run: $(TARGET)$(EXE)
+	./$(TARGET)$(EXE)
 
 # ---- Some rules only useful for Debian packaging .... ---------------
 
