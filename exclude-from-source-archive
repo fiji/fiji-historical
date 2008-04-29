@@ -1,5 +1,8 @@
 .git
+api
 TrakEM2
 java
 jruby
 jars
+cachedir
+micromanager1.1

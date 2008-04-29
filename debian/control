@@ -2,7 +2,7 @@ Source: fiji
 Section: unknown
 Priority: extra
 Maintainer: Mark Longair <mhl@pobox.com>
-Build-Depends: debhelper (>= 5)
+Build-Depends: debhelper (>= 5), junit4, libjzlib-java
 Standards-Version: 3.7.2
 
 Package: fiji-launcher
@@ -35,7 +35,6 @@ Package: fiji-plugins
 Section: main
 Architecture: all
 Depends: imageja, jython
-Build-Depends: junit4
 Description: A set of default plugins for Fiji
  FIXME: write something sensible here
  Blah blah...

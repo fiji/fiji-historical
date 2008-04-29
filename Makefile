@@ -1,50 +1,5 @@
 TARGET=fiji-$(ARCH)
 
-NEW_JARS=$(wildcard staged-plugins/*.jar)
-
-# This maps the names of all the jars in staged-plugins/
-# to the corresponding name in plugins/
-
-JARS=$(patsubst staged-plugins/%,plugins/%,$(NEW_JARS))
-
-# The sed expressions here strip anything before ij.jar and replace
-# the leading directory elements of any other jar with plugins/
-
-SUBMODULE_TARGETS=ImageJA/ij.jar TrakEM2/TrakEM2_.jar VIB/VIB_.jar
-SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
-	sed -e "s|[^ ]*/ij.jar|ij.jar|" \
-		-e "s|[^ ]*/\([^ /]*\.jar\)|plugins/\1|g")
-
-# A rule for building the jars in plugins: copy-jar-if-newer.sh will
-# incorporate the .config file into the ja file, and put the result
-# in plugins/  (It will also commit the jar file in plugins.)
-
-plugins/%.jar: staged-plugins/%.jar staged-plugins/%.config
-	./scripts/copy-jar-if-newer.sh --delete --commit $< $@
-
-all: $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
-
-# submodules
-
-.PHONY: $(SUBMODULE_TARGETS_IN_FIJI)
-$(SUBMODULE_TARGETS_IN_FIJI):
-	@echo "Making $@"
-	ORIGINAL_TARGET=$(shell echo " $(SUBMODULE_TARGETS) " | \
-		sed "s/.* \([^ ]*$$(basename "$@")\) .*/\1/") && \
-	DIR=$$(dirname $$ORIGINAL_TARGET) && \
-	test ! -e $$DIR/Makefile || ( \
-		$(MAKE) -C $$DIR $$(basename $$ORIGINAL_TARGET) && \
-		./scripts/copy-jar-if-newer.sh $$ORIGINAL_TARGET $@ \
-	)
-
-.PHONY: src-plugins
-src-plugins:
-	$(MAKE) -C $@
-
-check: src-plugins $(TARGET)$(EXE)
-	./$(TARGET)$(EXE) -eval 'run("Get Class Versions"); run("Quit");' | \
-		sort
-
 # MicroManager
 mm:
 	cd micromanager1.1 && sh build.sh
@@ -138,8 +93,7 @@ orig: ../$(ORIG)
 
 .PHONY: clean
 
-EXTRACLEANFILES=ImageJA/plugins/MacAdapter.class \
-	VIB/Quick3dApplet-1.0.8.jar \
+EXTRACLEANFILES=VIB/Quick3dApplet-1.0.8.jar \
 	VIB/jzlib-1.0.7.jar \
 	VIB/junit-4.4.jar \
 	VIB/VIB_.jar \
@@ -156,13 +110,15 @@ clean:
 	done
 	rm -f $(EXTRACLEANFILES)
 	rm -f fiji-linux fiji-win32.exe fiji-linux-amd64  fiji-win64.exe  fiji-macosx ij.jar
-	rm -rf api
+	# Takes ages to build: rm -rf api
 	rm -f fiji.o
 
 .PHONY: debs
 
 debs:
-	dpkg-buildpackage -i.git -I.git -rfakeroot -us -uc
+	# FIXME: generate the regular expression automatically
+	dpkg-buildpackage -i'((^|/).git(/|$$)|(^|/)java($$|/)|(^|/)api($$|/)|(^|/)cachedir($$|/)|(^|/)micromanager1.1($$|/)|(^|/)TrakEM2($$|/))' \
+		 -I.git -Ijava -Icachedir -ITrakEM2 -Imicromanager1.1 -rfakeroot -us -uc
 
 .PHONY: build-imageja build-fiji-launcher build-fiji-plugins
 .PHONY: build-doc-imageja build-doc-fiji-launcher build-doc-fiji-plugins
@@ -172,19 +128,22 @@ debs:
 
 # For the imageja package:
 
-build-imageja: ij.jar
+build-imageja: ImageJA/ij.jar
+
+ImageJA/ij.jar:
+	( cd ImageJA && ant build )
 
 install-imageja:
 	echo Installing ImageJA to prefix $(DESTDIR)
 	install -d $(DESTDIR)/usr/bin/
 	install -m 755 simple-launcher $(DESTDIR)/usr/bin/imageja
 	install -d $(DESTDIR)/usr/share/imageja/
-	install -m 644 ij.jar $(DESTDIR)/usr/share/imageja/
+	install -m 644 ImageJA/ij.jar $(DESTDIR)/usr/share/imageja/
 	install -d $(DESTDIR)/usr/share/imageja/plugins/
 	install -d $(DESTDIR)/usr/share/imageja/jars/
 
 build-doc-imageja:
-	( cd ImageJA && ant javadocs )
+	# ( cd ImageJA && ant javadocs )
 
 install-doc-imageja:
 	install -d $(DESTDIR)/usr/share/doc/imageja/
@@ -200,10 +159,18 @@ install-fiji-launcher: fiji-linux
 
 # For the fiji-plugins package:
 
-build-fiji-plugins: ij.jar $(JARS) src-plugins
-	echo JARS is $(JARS)
+build-fiji-plugins: ImageJA/ij.jar plugins/VIB_.jar
 
-install-fiji-plugins: $(JARS)
+plugins/VIB_.jar: VIB/VIB_.jar staged-plugins/VIB_.config
+	ant compile
+	ant add-configs
+
+VIB/VIB_.jar:
+	( cd VIB && ant compile )
+
+install-fiji-plugins: build-fiji-plugins
+	
+	install -d $(DESTDIR)/usr/share/imageja/plugins/
 	cp -r plugins/* $(DESTDIR)/usr/share/imageja/plugins/
 
 # ---------------------------------------------------------------------

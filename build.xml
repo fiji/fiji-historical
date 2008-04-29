@@ -24,4 +24,15 @@
     </javac>
   </target>
         
+  <target name="add-configs">
+    <!-- Change this to loop over each .jar -->
+    <copy file="staged-plugins/VIB_.config" tofile="plugins.config"/>
+    <copy file="VIB/VIB_.jar" tofile="plugins/VIB_.jar"/>
+    <jar update="true"
+	 basedir="."
+	 includes="plugins.config"
+	 destfile="plugins/VIB_.jar"/>
+    <delete file="plugins.config"/>
+  </target>
+
 </project>
