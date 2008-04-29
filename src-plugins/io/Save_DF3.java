@@ -1,3 +1,5 @@
+package io;
+
 /**
  * Save an image stack as in the df3 format.  The very simple df3 format is
  * described at

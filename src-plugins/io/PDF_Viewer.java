@@ -1,3 +1,5 @@
+package io;
+
 /*
 A PDF viewer plugin for ImageJ(C), using the jpedal and JAI libraries.
 Copyright (C) 2005 Albert Cardona.

@@ -1,3 +1,5 @@
+package io;
+
 /**
  * Open .dat files from EMMENU software for FEI electron microscopes.
  * Copyright Albert Cardona. This work is in the public domain.

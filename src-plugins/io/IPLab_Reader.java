@@ -1,3 +1,5 @@
+package io;
+
 import ij.plugin.*;
 import ij.*;
 import ij.io.*;

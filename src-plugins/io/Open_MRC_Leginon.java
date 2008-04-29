@@ -1,3 +1,5 @@
+package io;
+
 /**
  * Open .mrc files from numerous sources, including Leginon (software for automated imaging in FEI electron microscopes, see http://ami.scripps.edu )
  * Copyright Albert Cardona. This work is in the public domain.

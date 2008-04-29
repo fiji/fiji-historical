@@ -1,3 +1,5 @@
+package io;
+
 /**
  * Open df3 files as image stacks.  The very simple df3 format is described at
  * 
