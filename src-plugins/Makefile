@@ -3,9 +3,9 @@ JAVACOPTS=-target 1.5 -source 1.5 \
 	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
 
 # common is just in this list to exclude classes within it from being copied
-JARDIRS=common Jython Clojure JRuby BSH bUnwarpJ register_virtual_stack
+JARDIRS=common Jython Clojure JRuby BSH bUnwarpJ register_virtual_stack registration3d
 FINDJARDIRS=$(patsubst %,-name % -o,$(JARDIRS))
-JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar bUnwarpJ_.jar register_virtual_stack_slices.jar
+JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar bUnwarpJ_.jar register_virtual_stack_slices.jar registration_3d.jar
 
 JAVAS=$(filter-out $(wildcard $(patsubst %,%/*.java,$(JARDIRS))),$(wildcard *.java */*.java))
 CLASSES=$(patsubst %.java,%.class,$(JAVAS))
@@ -44,6 +44,8 @@ BeanShell_Interpreter.jar: SOURCES=common/*.java BSH/*.java BSH/plugins.config
 bUnwarpJ_.jar: SOURCES=bUnwarpJ/*.java bUnwarpJ/plugins.config
 
 register_virtual_stack_slices.jar: SOURCES=register_virtual_stack/*.java register_virtual_stack/plugins.config
+
+registration_3d.jar: SOURCES=registration3d/*.java registration3d/plugins.config
 
 .PHONY: $(JARS)
 

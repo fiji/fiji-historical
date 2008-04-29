@@ -1,3 +1,4 @@
+package registration3d;
 /**
  * <p>Title: Stitching_3D</p>
  *

@@ -1,3 +1,4 @@
+package registration3d;
 /**
  * <p>Title: Fast Fourier Transform (2D/3D) Plugin for ImageJ</p>
  *
@@ -77,9 +78,14 @@ public class Fast_FourierTransform implements PlugIn
         String behaviour, channel;
         String powerName, phaseName;
         ImagePlus power = null, phase = null;
-        
+
     	ImagePlus imp = WindowManager.getCurrentImage();
-    	
+
+	if (null == imp) {
+		IJ.noImage();
+		return;
+	}
+  
     	if (imp.getType() == ImagePlus.COLOR_RGB || imp.getType() == ImagePlus.COLOR_256)
     	{
     		isRGB = true;
