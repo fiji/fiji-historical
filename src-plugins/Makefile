@@ -18,7 +18,7 @@ all: $(DESTJARS) copyclasses
 # javac will generate classes that aren't in DESTCLASSES (e.g. inner
 # classes) so copy over every class file we find under this directory
 # that isn't in one of the JARDIR subdirectories:
-copyclasses:
+copyclasses: $(CLASSES)
 	for i in `find . \( $(FINDJARDIRS) -false \) -prune -o \( -type f -a -name '*.class' \) -print`; do \
 		mkdir -p `dirname ../plugins/$$i`; \
 		cp -v $$i ../plugins/$$i; \
