@@ -2,7 +2,6 @@ A loose TODO list for Fiji
 ==========================
 
 - look into the ImageJUpdater (maybe we need to disable it)
-- use -port0
 - support single-platform portable app
 - menu structure!
 - add current BioFormats.
