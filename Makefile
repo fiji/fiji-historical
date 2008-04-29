@@ -223,13 +223,10 @@ Fiji.app: fiji-macosx-intel
 	echo '		<string>NSApplication</string>' >> $(PLIST)
 	echo '</dict>' >> $(PLIST)
 	echo '</plist>"' >> $(PLIST)
-	cp fiji-macosx $(MACOS)/
 	cp fiji-macosx-intel $(MACOS)/
 	for d in java plugins macros ij.jar jars; do \
 		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
 	done
-	git archive --prefix=$@/java/macosx/ origin/java/macosx: | \
-		tar xvf -
 	git archive --prefix=$@/java/macosx-intel/ origin/java/macosx-intel: | \
 		tar xvf -
 	cp ij.jar $@/
