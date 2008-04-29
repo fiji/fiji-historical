@@ -16,77 +16,65 @@
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
+INDEP_STAMPS=imageja-packindep-stamp imageja-doc-packindep-stamp trakem2-packindep-stamp fiji-plugins-packindep-stamp fiji-packindep-stamp
 
+ARCH_STAMPS=
 
-configure: configure-stamp
-configure-stamp:
+configure : configure-stamp
+
+configure-stamp :
 	dh_testdir
-	# Add here commands to configure the package.
-	# No configuration needed for Fiji, unless we later autoconf
 	touch configure-stamp
 
+build : build-arch build-indep
 
-#Architecture
-build: build-arch build-indep
+build-arch : build-arch-stamp
 
-build-arch: build-arch-stamp
-build-arch-stamp: configure-stamp
-
-	# Add here commands to compile the arch part of the package.
-	$(MAKE) build-fiji-launcher
+build-arch-stamp : configure-stamp
 	touch $@
 
-build-indep: build-indep-stamp
-build-indep-stamp: configure-stamp
+build-indep : build-indep-stamp
 
-	# Add here commands to compile the indep part of the package.
+build-indep-stamp : configure-stamp
+	$(MAKE) build-fiji
 	$(MAKE) build-imageja
 	$(MAKE) build-fiji-plugins
 	$(MAKE) build-doc-imageja
 	$(MAKE) build-trakem2
 	touch $@
 
-clean:
+clean :
 	dh_testdir
 	dh_testroot
-	rm -f build-arch-stamp build-indep-stamp configure-stamp
-
-	# Add here commands to clean up after the build process.
+	rm -f build-arch-stamp build-indep-stamp configure-stamp install-arch-stamp install-indep-stamp
+	rm -f $(INDEP_STAMPS) $(ARCH_STAMPS)
 	$(MAKE) clean
+	dh_clean
 
-	dh_clean -X.git
+install : install-indep-stamp install-arch-stamp
 
-install: install-indep install-arch
-install-indep:
+install-indep-stamp : build-indep-stamp
 	dh_testdir
 	dh_testroot
-	dh_clean -X.git -k -i
+	dh_clean -k -i
 	dh_installdirs -i
-
-	# Add here commands to install the indep part of the package into
-	# debian/<package>-doc.
 	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja install-imageja
 	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji-plugins install-fiji-plugins
 	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja-doc install-doc-imageja
 	$(MAKE) DESTDIR=$(CURDIR)/debian/trakem2 install-trakem2
+	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji install-fiji
 	dh_install -i
+	touch install-indep-stamp
 
-install-arch:
+install-arch-stamp : build-arch-stamp
 	dh_testdir
 	dh_testroot
-	dh_clean -X.git -k -s
+	dh_clean -k -s
 	dh_installdirs -s
-
-	# Add here commands to install the arch part of the package into
-	# debian/tmp.
-	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji-launcher install-fiji-launcher
-
 	dh_install -s
+	touch install-arch-stamp
 
-.PHONY : imageja-packindep imageja-doc-packindep trakem2-packindep \
-		fiji-plugins-packindep fiji-launcher-packarch
-
-%-packindep : 
+%-packindep-stamp : build-indep-stamp install-indep-stamp
 	dh_testdir -p$*
 	dh_testroot -p$*
 	dh_installchangelogs -p$*
@@ -114,11 +102,12 @@ install-arch:
 	dh_gencontrol -p$*
 	dh_md5sums -p$*
 	dh_builddeb -p$*
+	touch $*
 
 # Build architecture independant packages using the common target.
-binary-indep: imageja-packindep imageja-doc-packindep trakem2-packindep fiji-plugins-packindep build-indep install-indep 
+binary-indep : $(INDEP_STAMPS)
 
-%-packarch :
+%-packarch-stamp : build-arch-stamp install-arch-stamp
 	dh_testdir -p$*
 	dh_testroot -p$*
 	dh_installchangelogs -p$*
@@ -146,9 +135,11 @@ binary-indep: imageja-packindep imageja-doc-packindep trakem2-packindep fiji-plu
 	dh_gencontrol -p$*
 	dh_md5sums -p$*
 	dh_builddeb -p$*
+	touch $*
 
 # Build architecture dependant packages using the common target.
-binary-arch: fiji-launcher-packarch build-arch install-arch
+binary-arch : $(ARCH_STAMPS)
 
-binary: binary-arch binary-indep
-.PHONY: build clean binary-indep binary-arch binary install install-indep install-arch configure
+binary : binary-arch binary-indep
+
+.PHONY : build clean binary-indep binary-arch binary install install-indep install-arch configure

@@ -2,13 +2,13 @@ Source: fiji
 Section: unknown
 Priority: extra
 Maintainer: Mark Longair <mhl@pobox.com>
-Build-Depends: debhelper (>= 5), junit4, libjzlib-java
+Build-Depends: debhelper (>= 5), junit4, libjzlib-java, sun-java5-jdk | sun-java6-jdk, libjama-java, libpg-java
 Standards-Version: 3.7.2
 
-Package: fiji-launcher
+Package: fiji
 Section: graphics
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends} imageja
+Architecture: all
+Depends: imageja, fiji-plugins, trakem2, ${shlibs:Depends}, ${misc:Depends} 
 Description: A launcher for the Fiji image processing suite
  FIXME: write something sensible here
  This package contains the launcher for Fiji.

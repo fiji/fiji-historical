@@ -10,3 +10,5 @@
 /root-x86_64-pc-linux
 plugins-src
 cachedir
+tmp
+-stamp
