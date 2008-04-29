@@ -1,6 +1,6 @@
 # The default target:
 
-all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
+all: alltargets run
 
 # Rules for building Java plugins, etc.
 
@@ -237,3 +237,9 @@ Fiji.app: fiji-macosx-intel
 	cp -R macros $@/
 	cp -R jars $@/
 	cp images/Fiji.icns $(RESOURCES)
+
+# All targets...
+
+alltargets: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
+	echo $^
+
