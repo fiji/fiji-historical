@@ -1,6 +1,5 @@
 # The default target:
 
-.PHONY: $(JDK)
 all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
 
 # Rules for building Java plugins, etc.
@@ -141,7 +140,7 @@ ifeq ($(STRIP_TARGET),1)
 	strip $@
 endif
 
-fiji.o: fiji.cxx Makefile
+fiji.o: fiji.cxx Makefile $(JDK)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 ifeq ($(FIJI_ARGS),)
@@ -160,6 +159,7 @@ endif
 
 # ------------------------------------------------------------------------
 # JDK
+.PHONY: $(JDK)
 $(JDK):
 	@echo "Making $@"
 	@test -d "$(JDK)/.git" || \
