@@ -51,7 +51,7 @@ check: check-class-versions check-architectures check-submodules
 
 check-class-versions: src-plugins $(TARGET)$(EXE)
 	echo 'run("Get Class Versions"); run("Quit");' > tmp.ijm && \
-	./$(TARGET)$(EXE) --headless -- -batch tmp.ijm | sort &&
+	./$(TARGET)$(EXE) --headless -- -batch tmp.ijm | sort && \
 	rm tmp.ijm
 
 check-architectures:
