@@ -105,6 +105,13 @@ orig: ../$(ORIG)
 	( cd .. && tar czvf $(ORIG) -X $(IDEAL_DIRECTORY)/exclude-from-source-archive $(IDEAL_DIRECTORY) )
 
 # ------------------------------------------------------------------------
+
+.PHONY: release
+release:
+	scp packages/* longair@pacific.mpi-cbg.de:/var/www/downloads/apt/
+	ssh longair@pacific.mpi-cbg.de /home/longair/bin/update-apt-repository
+
+# ------------------------------------------------------------------------
 # Rules for building the various class files and jars we want to include:
 
 ImageJA/ij.jar :
