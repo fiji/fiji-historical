@@ -58,7 +58,7 @@ mm:
 		 git submodule update micromanager1.1)
 	export JAVA_LIB_DIR='$(JAVA_LIB_DIR)'; \
 	export JAVA_HOME="$$(pwd)/$(JAVA_HOME)/.."; \
-	export JAVAINC="-I$$JAVA_HOME/include -I$$JAVA_HOME/include/linux"; \
+	export JAVAINC="$(subst -I,-I$$(pwd)/,$(INCLUDES))"; \
 	cd micromanager1.1 && sh build.sh
 
 # ------------------------------------------------------------------------
@@ -135,7 +135,7 @@ LIBS=$(LIBDL) $(LIBMACOSX)
 TARGET=fiji-$(ARCH)
 
 $(TARGET)$(EXE): fiji.o
-	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
+	$(CXX) $(LDFLAGS) $(EXTRADEFS) -o $@ $< $(LIBS)
 ifeq ($(STRIP_TARGET),1)
 	strip $@
 endif
