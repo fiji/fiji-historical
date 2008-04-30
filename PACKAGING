@@ -40,10 +40,15 @@ Alternatively, to fetch and build the source archive:
 Known Bugs
 ~~~~~~~~~~
 
- - The author and copyright information is not correct yet, but should
-   be easy to do now after Albert's work to create the LICENSES file.
+ - The copyright file (and author information generally) needs more work.
 
- - Package descriptions need to be written properly.
+      http://www.debian.org/doc/debian-policy/ch-docs.html#s-copyrightfile
+
+   Should have per-package copyright information, rather than just
+   including LICENSES in each one
+
+ - Package descriptions need to be written properly (and the ImageJA
+   man page added to.)
 
  - Build dependencies seem to want sun-java5-jdk even though I have
    sun-java6-jdk installed?
@@ -88,12 +93,12 @@ the binary launcher, e.g. adding the headless option at the moment.)
 
 ------------------------------------------------------------------------
 
-If you want to try building the packages, make sure you have the build
-dependencies installed and do:
+If you want to try building the packages from the git tree, rather
+than with apt-get source --compile, you can try the following:
 
   rm ../fiji_0.9.0.orig.tar.gz
   make clean
   make orig
   make debs
 
-... which will output all you need to create a repository to.
+... and look in packages/
