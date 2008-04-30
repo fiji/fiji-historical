@@ -1,6 +1,12 @@
 A loose TODO list for Fiji
 ==========================
 
+- extend GenericDialog to provide Help, Advanced button
+- GenericDialog.addTooltext()
+- add script recorder for the new scripting languages
+- add task-oriented tutorials (wiki)
+- add tests (test that all plugins are found, test which image types
+  they support, add regression tests, if file importers return ImagePlus)
 - extend Fiji launcher so that it can fall back to non-bundled Java
 - look into the ImageJUpdater (maybe we need to disable it)
 - support single-platform portable app
@@ -22,6 +28,7 @@ A loose TODO list for Fiji
 - in ImageJA: what about a file extension based construct similar to
   HandleExtraFileTypes for save?  This would allow to work on top of custom
   file formats seamlessly.
+- reimplement TransformJ (Stephan Preibisch)
 
 
 Notes for the 1st Fiji Hackathon round table
@@ -33,25 +40,11 @@ some keywords to trigger discussions...
 - TaskManager (start from Thread Killer)
 - Bugzilla
 - long term: cross compiler
-- TransformJ?
 - Tutorial on Git submodules
-- Debian
 - HOWTOs (Tutorials), lots of them!
-- Email support?
-- 3D stuff
-- MicroManager
 - Version name "Dresden"?
 - ITK
 - Matlab (socket)
-- Homework (TODOs)!
-- headless
 - Erwin's changes
-- ImageJ conference
-- Menu structure
-- fiji-users?
 - Funding?  (Zürich)
-- is it possible to configure X11 backend for Java/MacOSX?
-- report accomplishments
-- wiki permissions?
-- licenses
-- photos?
+- backup
