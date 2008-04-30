@@ -1,9 +1,99 @@
-This branch has some very basic support for building Debian packages
-of ImageJA, the Fiji launcher and some of the Fiji plugins.
+Debian Packages for Fiji
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you want to try it, you could have a go with:
+This branch has some very basic support for building Debian packages
+of ImageJA, the Fiji launcher and some of the Fiji plugins, which
+should be installable on Ubuntu and Debian.
+
+To get the test versions, add the following lines to your
+/etc/apt/sources.list:
+
+  deb http://pacific.mpi-cbg.de/downloads/apt/ ./
+  deb-src http://pacific.mpi-cbg.de/downloads/apt/ ./
+
+... and do:
+
+  apt-get install fiji
+
+(The fiji package just has dependencies on:
+
+   imageja
+   fiji-plugins (contains VIB as well)
+   trakem2
+
+... and a symlink so you get ImageJA when running fiji.  There's also
+an imageja-doc apackage with the ImageJA API javadoc.)
+
+You can run the package with:
+
+  $ fiji
+
+Alternatively, to fetch and build the source archive:
+
+  apt-get build-dep fiji 
+    (This might encourage you to install a sun java JDK when you
+    already have one - a known bug - just manually install the other
+    dependencies that you really need from the list it suggests.)
+
+  apt-get source --compile
+
+Known Bugs
+~~~~~~~~~~
+
+ - The author and copyright information is not correct yet, but should
+   be easy to do now after Albert's work to create the LICENSES file.
+
+ - Package descriptions need to be written properly.
+
+ - Build dependencies seem to want sun-java5-jdk even though I have
+   sun-java6-jdk installed?
+
+ - Lots of stuff from the master branch isn't in these source
+   packages.  This is mostly because I very quickly had to pick only
+   the things we could currently compile completely from source (using
+   build-dependencies in Debian where possible) - for example, this
+   means that there's no JRuby, since only 1.0 is in Debian so far:
+
+     http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=449607
+
+   ... and no Clojure:
+
+     http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=454566
+
+ - jtk submodule not committed yet (oops)
+
+ - Remove JRuby 1.0 from classpath
+
+ - Java3D still has to be installed separately
+
+Changes in these versions
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some of the aims of Fiji can't currently be realised in these packages
+since they depend on distributing non-free components (e.g. Java3D -
+unless it's going to be in openjdk?)
+
+ImageJA is essentially dependent on Sun's Java (it doesn't work well
+enough on free versions of Java to be included in main) so these
+packages couldn't go into main for the moment anyway.  Hopefully
+openjdk will get in there soon, however, so this can too.
+
+The source tree can generally be made much simpler since this branch
+will only target Linux systems.  For example, this means that we can
+use a simple shell script to launch ImageJA instead of using the
+launcher.  (The launcher wouldn't quite work as intended anyway, since
+the packaged jars aren't in a self-contained folder - however, it'll
+take a little effort to keep this script identical in behaviour with
+the binary launcher, e.g. adding the headless option at the moment.)
+
+------------------------------------------------------------------------
+
+If you want to try building the packages, make sure you have the build
+dependencies installed and do:
 
   rm ../fiji_0.9.0.orig.tar.gz
   make clean
   make orig
   make debs
+
+... which will output all you need to create a repository to.
