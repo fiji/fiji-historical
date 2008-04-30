@@ -1,6 +1,6 @@
 # The default target:
 
-all: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
+all: alltargets run
 
 # Rules for building Java plugins, etc.
 
@@ -223,17 +223,33 @@ Fiji.app: fiji-macosx-intel
 	echo '		<string>NSApplication</string>' >> $(PLIST)
 	echo '</dict>' >> $(PLIST)
 	echo '</plist>"' >> $(PLIST)
-	cp fiji-macosx $(MACOS)/
 	cp fiji-macosx-intel $(MACOS)/
-	for d in java plugins macros ij.jar jars; do \
+	for d in java plugins macros ij.jar jars misc; do \
 		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
 	done
-	git archive --prefix=$@/java/macosx/ origin/java/macosx: | \
-		tar xvf -
 	git archive --prefix=$@/java/macosx-intel/ origin/java/macosx-intel: | \
 		tar xvf -
 	cp ij.jar $@/
-	cp -R plugins $@/
-	cp -R macros $@/
-	cp -R jars $@/
+	cp -R plugins macros jars misc $@/
 	cp images/Fiji.icns $(RESOURCES)
+
+Fiji.app-%:
+	ARCH=$$(echo $@ | sed "s/^Fiji.app-//"); \
+	case $$ARCH in win*) EXE=.exe;; *) EXE=;; esac; \
+	mkdir -p $@/$(JAVA_HOME) && \
+	mkdir -p $@/images && \
+	cp -R fiji-$$ARCH$$EXE ij.jar plugins macros jars misc $@ && \
+	cp -R $(JAVA_HOME)/* $@/$(JAVA_HOME) && \
+	cp images/icon.png $@/images/
+
+fiji-%.tar.bz2: Fiji.app-%
+	tar cf - $< | bzip2 -9 > $@
+
+fiji-%.zip: Fiji.app-%
+	zip -9r $@ $<
+
+# All targets...
+
+alltargets: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
+	echo $^
+
