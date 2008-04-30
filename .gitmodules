@@ -7,3 +7,6 @@
 [submodule "TrakEM2"]
 	path = TrakEM2
 	url = TrakEM2
+[submodule "jtk"]
+	path = jtk
+	url = jtk
