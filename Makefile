@@ -47,9 +47,28 @@ src-plugins:
 	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
 	$(MAKE) -C $@
 
-check: src-plugins $(TARGET)$(EXE)
-	./$(TARGET)$(EXE) -eval 'run("Get Class Versions"); run("Quit");' | \
-		sort
+check: check-class-versions check-architectures check-submodules
+
+check-class-versions: src-plugins $(TARGET)$(EXE)
+	echo 'run("Get Class Versions"); run("Quit");' > tmp.ijm && \
+	./$(TARGET)$(EXE) --headless -- -batch tmp.ijm | sort && \
+	rm tmp.ijm
+
+check-architectures:
+	./scripts/check-generated-content.sh fiji.cxx \
+		$(patsubst %,fiji-%,$(patsubst win%,win%.exe,$(ARCHS)))
+
+check-submodules:
+	count=0; \
+	for s in $(SUBMODULE_TARGETS_IN_FIJI); do \
+		BASENAME="$$(basename "$$s")"; \
+		ORIGINAL_TARGET="$$(echo " $(SUBMODULE_TARGETS) " | \
+			sed "s/.* \([^ ]*\)\/$$BASENAME .*/\1/")"; \
+		./scripts/check-generated-content.sh \
+			$$(basename $$ORIGINAL_TARGET) $$s || \
+			count=$$(($$count+1)); \
+	done && \
+	test $$count = 0
 
 # MicroManager
 mm:
@@ -67,6 +86,8 @@ mm:
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
+
+ARCHS=linux linux-amd64 macosx macosx-intel win32 win64
 
 LIBDL=-ldl
 INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH_INCLUDE)
