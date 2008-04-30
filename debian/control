@@ -8,7 +8,7 @@ Standards-Version: 3.7.2
 Package: fiji
 Section: graphics
 Architecture: all
-Depends: imageja, fiji-plugins, trakem2, ${shlibs:Depends}, ${misc:Depends} 
+Depends: imageja, fiji-plugins, trakem2
 Description: A launcher for the Fiji image processing suite
  FIXME: write something sensible here
  This package contains the launcher for Fiji.
@@ -18,13 +18,14 @@ Section: graphics
 Architecture: all
 Depends: sun-java5-bin | sun-java6-bin
 Description: A modified version of ImageJ
+Suggests: imageja-doc
  FIXME: write something sensible here
  This package contains ImageJA, a Java-based image viewer and
  image processing package based closely on Wayne Rasband's
  ImageJ.
 
 Package: imageja-doc
-Section: graphics
+Section: doc
 Architecture: all
 Description: Documentation for ImageJA, a modified version of ImageJ
  FIXME: write something sensible here
