@@ -36,29 +36,29 @@ install-imageja-doc :
 	install -d $(DESTDIR)/usr/share/doc/imageja/
 	cp -r api $(DESTDIR)/usr/share/doc/imageja/
 	chmod a=rX $(DESTDIR)/usr/share/doc/imageja/
-	install -d $(DESTDIR)/usr/share/doc/imageja/
-	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/imageja/
+	install -d $(DESTDIR)/usr/share/doc/imageja-doc/
+	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/imageja-doc/
 
 install-trakem2 : build-trakem2
 	install -d $(DESTDIR)/usr/share/java/
 	install jtk/build/jar/edu_mines_jtk.jar $(DESTDIR)/usr/share/java/
 	install -d $(DESTDIR)/usr/share/imageja/plugins/
 	cp -r plugins/TrakEM2_.jar $(DESTDIR)/usr/share/imageja/plugins/
-	install -d $(DESTDIR)/usr/share/doc/imageja/
-	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/imageja/
+	install -d $(DESTDIR)/usr/share/doc/trakem2/
+	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/trakem2/
 
 install-fiji-plugins : build-fiji-plugins
 	install -d $(DESTDIR)/usr/share/imageja/plugins/
 	cp -r plugins/* $(DESTDIR)/usr/share/imageja/plugins/
 	rm $(DESTDIR)/usr/share/imageja/plugins/TrakEM2_.jar
-	install -d $(DESTDIR)/usr/share/doc/imageja/
-	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/imageja/
+	install -d $(DESTDIR)/usr/share/doc/fiji-plugins/
+	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/fiji-plugins/
 
 install-fiji :
 	install -d $(DESTDIR)/usr/bin/	
 	( cd $(DESTDIR)/usr/bin && ln -s imageja fiji )
-	install -d $(DESTDIR)/usr/share/doc/imageja/
-	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/imageja/
+	install -d $(DESTDIR)/usr/share/doc/fiji/
+	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/fiji/
 
 # ------------------------------------------------------------------------
 
