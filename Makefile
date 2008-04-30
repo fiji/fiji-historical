@@ -83,6 +83,7 @@ debs:
 	cp $(patsubst %,../%_$(DEBIAN_VERSION)_*.deb,$(DEBIAN_PACKAGES)) packages/
 	cp ../$(ORIG) packages/
 	cp ../fiji_$(DEBIAN_VERSION).dsc packages/
+	cp ../fiji_$(DEBIAN_VERSION).diff.gz packages/
 	cp ../fiji_$(DEBIAN_VERSION)_i386.changes packages/
 
 # Build the "upstream" source archive.  It's a bit silly doing things
