@@ -5,13 +5,14 @@ REAL_MEMORY=`free -m | egrep 'Mem:' | awk '{ print $2; }'`
 # Use up to two thirds of the available memory:		  
 let MEMORY_TO_USE="((($REAL_MEMORY*2)/3))"
 
-SPECIAL_JARS=/usr/share/java/postgresql-jdbc3-8.2.jar:\
+JARS=/usr/share/java/postgresql-jdbc3-8.2.jar:\
 /usr/share/java/jama.jar:\
 /usr/share/java/jzlib.jar:\
 /usr/share/java/jruby1.0.jar:\
-/usr/share/java/jython.jar
+/usr/share/java/jython.jar:\
+/usr/share/imageja/ij.jar
 
-java -classpath $SPECIAL_JARS -Xmx${MEMORY_TO_USE}m \
+java -classpath $JARS -Xmx${MEMORY_TO_USE}m \
      -Dplugins.dir=/usr/share/imageja/plugins/ \
-     -jar /usr/share/imageja/ij.jar \
-     "$@"
+     -Dpython.cachedir=/tmp \
+     ij.ImageJ "$@"
