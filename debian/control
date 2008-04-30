@@ -17,8 +17,8 @@ Package: imageja
 Section: graphics
 Architecture: all
 Depends: sun-java5-bin | sun-java6-bin
-Description: A modified version of ImageJ
 Suggests: imageja-doc
+Description: A modified version of ImageJ
  FIXME: write something sensible here
  This package contains ImageJA, a Java-based image viewer and
  image processing package based closely on Wayne Rasband's
