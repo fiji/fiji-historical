@@ -1,6 +1,7 @@
 A loose TODO list for Fiji
 ==========================
 
+- extend Fiji launcher so that it can fall back to non-bundled Java
 - look into the ImageJUpdater (maybe we need to disable it)
 - support single-platform portable app
 - menu structure!
@@ -53,3 +54,4 @@ some keywords to trigger discussions...
 - report accomplishments
 - wiki permissions?
 - licenses
+- photos?
