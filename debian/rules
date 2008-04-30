@@ -39,7 +39,7 @@ build-indep-stamp : configure-stamp
 	$(MAKE) build-fiji
 	$(MAKE) build-imageja
 	$(MAKE) build-fiji-plugins
-	$(MAKE) build-doc-imageja
+	$(MAKE) build-imageja-doc
 	$(MAKE) build-trakem2
 	touch $@
 
@@ -60,7 +60,7 @@ install-indep-stamp : build-indep-stamp
 	dh_installdirs -i
 	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja install-imageja
 	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji-plugins install-fiji-plugins
-	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja-doc install-doc-imageja
+	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja-doc install-imageja-doc
 	$(MAKE) DESTDIR=$(CURDIR)/debian/trakem2 install-trakem2
 	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji install-fiji
 	dh_install -i
@@ -83,7 +83,7 @@ install-arch-stamp : build-arch-stamp
 #	dh_installmenu -p$*
 #	dh_installdebconf	 -p$*
 #	dh_installlogrotate	 -p$*
-#	dh_installemacsen -p$*
+#	dh_installemacsen -p$*f
 #	dh_installpam -p$*
 #	dh_installmime -p$*
 #	dh_python -p$*
@@ -102,7 +102,7 @@ install-arch-stamp : build-arch-stamp
 	dh_gencontrol -p$*
 	dh_md5sums -p$*
 	dh_builddeb -p$*
-	touch $*
+	touch $@
 
 # Build architecture independant packages using the common target.
 binary-indep : $(INDEP_STAMPS)
@@ -135,7 +135,7 @@ binary-indep : $(INDEP_STAMPS)
 	dh_gencontrol -p$*
 	dh_md5sums -p$*
 	dh_builddeb -p$*
-	touch $*
+	touch $@
 
 # Build architecture dependant packages using the common target.
 binary-arch : $(ARCH_STAMPS)
