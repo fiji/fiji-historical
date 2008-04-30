@@ -42,7 +42,7 @@ Description: A set of default plugins for Fiji
 
 Package: trakem2
 Section: graphics
-Architecture: any
+Architecture: all
 Depends: imageja, libjama-java, libpg-java, libjogl-jni, libjogl-java
 Description: ImageJ plugin to register/edit/analyze/3D-model terabyte images
  TrakEM2 is an ImageJ plugin for morphological data mining, three-dimensional

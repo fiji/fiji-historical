@@ -16,9 +16,9 @@
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
-INDEP_STAMPS=imageja-packindep-stamp imageja-doc-packindep-stamp fiji-plugins-packindep-stamp fiji-packindep-stamp
+INDEP_STAMPS=imageja-packindep-stamp imageja-doc-packindep-stamp fiji-plugins-packindep-stamp fiji-packindep-stamp trakem2-packindep-stamp
 
-ARCH_STAMPS=trakem2-packindep-stamp
+ARCH_STAMPS=
 
 configure : configure-stamp
 
