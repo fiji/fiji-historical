@@ -87,7 +87,7 @@ mm:
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 
-ARCHS=linux linux-amd64 macosx macosx-intel win32 win64
+ARCHS=linux linux-amd64 macosx-intel win32 win64
 
 LIBDL=-ldl
 INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH_INCLUDE)
