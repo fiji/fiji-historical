@@ -21,3 +21,35 @@ A loose TODO list for Fiji
 - in ImageJA: what about a file extension based construct similar to
   HandleExtraFileTypes for save?  This would allow to work on top of custom
   file formats seamlessly.
+
+
+Notes for the 1st Fiji Hackathon round table
+============================================
+
+some keywords to trigger discussions...
+
+- add tools.jar to the downloadable packages
+- TaskManager (start from Thread Killer)
+- Bugzilla
+- long term: cross compiler
+- TransformJ?
+- Tutorial on Git submodules
+- Debian
+- HOWTOs (Tutorials), lots of them!
+- Email support?
+- 3D stuff
+- MicroManager
+- Version name "Dresden"?
+- ITK
+- Matlab (socket)
+- Homework (TODOs)!
+- headless
+- Erwin's changes
+- ImageJ conference
+- Menu structure
+- fiji-users?
+- Funding?  (Zürich)
+- is it possible to configure X11 backend for Java/MacOSX?
+- report accomplishments
+- wiki permissions?
+- licenses
