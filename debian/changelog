@@ -1,3 +1,9 @@
+fiji (0.9.0-3) unstable; urgency=low
+
+  * Fixed various problems from the first apt-gettable version
+
+ -- Mark Longair <mhl@pobox.com>  Mon, 30 Apr 2008 09:14:00 +0200
+
 fiji (0.9.0-2) unstable; urgency=low
 
   * Added TrakEM2 submodule and build a package
