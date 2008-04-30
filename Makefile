@@ -74,7 +74,7 @@ DEBIAN_PACKAGES=$(shell egrep 'Package: ' debian/control | sed -r 's/Package: //
 # particular, the regular expression should be generated...)
 .PHONY: debs
 debs:
-	dpkg-buildpackage -i'((^|/).git(/|$$)|(^|/)java($$|/)|(^|/)api($$|/)|(^|/)cachedir($$|/)|(^|/)micromanager1.1($$|/))' \
+	dpkg-buildpackage -i'((^|/).git(/|$$)|(^|/)java($$|/)|(^|/)jtk/lib($$|/)|(^|/)jtk/jar($$|/)|(^|/)api($$|/)|(^|/)cachedir($$|/)|(^|/)micromanager1.1($$|/))' \
 		 -I.git -Ijava -Icachedir -Imicromanager1.1 -rfakeroot -k88855837
 	echo DEBIAN_VERSION is $(DEBIAN_VERSION)
 	echo DEBIAN_PACKAGES are $(DEBIAN_PACKAGES)
@@ -150,3 +150,4 @@ clean:
 	rm -rf api
 	rm -f fiji.o
 	rm -f *-stamp
+	rm -rf packages/
