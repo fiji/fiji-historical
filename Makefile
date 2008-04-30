@@ -135,7 +135,7 @@ LIBS=$(LIBDL) $(LIBMACOSX)
 TARGET=fiji-$(ARCH)
 
 $(TARGET)$(EXE): fiji.o
-	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS)
+	$(CXX) $(LDFLAGS) $(EXTRADEFS) -o $@ $< $(LIBS)
 ifeq ($(STRIP_TARGET),1)
 	strip $@
 endif
