@@ -1,24 +1,25 @@
 This package was debianized by Mark Longair <mhl@pobox.com> on
 Mon, 28 Apr 2008 14:26:19 +0200.
 
-It was downloaded from <url://example.com>
+It was downloaded from http://pacific.mpi-cbg.de/wiki/
+
+This source package builds components with many different licenses and
+authors.  Please see LICENSES in this directory for further details.
 
 Upstream Author(s): 
 
-    <put author's name and email here>
-    <likewise for another author>
+   The author of ImageJ is Wayne Rasband <wsr@nih.gov>
 
 Copyright: 
 
+    FIXME: complete this
     <Copyright (C) YYYY Name OfAuthor>
     <likewise for another author>
 
 License:
 
-    <Put the license of the package here indented by 4 spaces>
+    ImageJA is released into the public domain.  Other plugins
+    have licensing as described in LICENSES.
 
 The Debian packaging is (C) 2008, Mark Longair <mhl@pobox.com> and
 is licensed under the GPL, see `/usr/share/common-licenses/GPL'.
-
-# Please also look if there are files or directories which have a
-# different copyright/license attached and list them here.
