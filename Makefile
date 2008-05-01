@@ -94,22 +94,39 @@ INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH_INCLUDE)
 JDK=java/$(ARCH)
 ARCH_INCLUDE=$(ARCH)
 JAVA_LIB_DIR=$(JAVA_HOME)/lib/$(CPU)
+
+ifeq ($(ARCH),)
 ifeq ($(uname_S),Linux)
 ifeq ($(uname_M),x86_64)
-	CPU=amd64
 	ARCH=linux-amd64
-	ARCH_INCLUDE=linux
-	JAVA_HOME=$(JDK)/jdk1.6.0_04/jre
-	JAVA_LIB_PATH=lib/amd64/server/libjvm.so
 else
-	CPU=i386
 	ARCH=linux
-	JAVA_HOME=$(JDK)/jdk1.6.0/jre
-	JAVA_LIB_PATH=lib/i386/client/libjvm.so
 endif
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	ARCH=win32
+endif
+ifeq ($(uname_S),Darwin)
+ifeq ($(uname_M),Power Macintosh)
+	ARCH=macosx
+else
+	ARCH=macosx-intel
+endif
+endif
+endif
+
+ifeq ($(ARCH),linux-amd64)
+	CPU=amd64
+	ARCH_INCLUDE=linux
+	JAVA_HOME=$(JDK)/jdk1.6.0_04/jre
+	JAVA_LIB_PATH=lib/amd64/server/libjvm.so
+endif
+ifeq ($(ARCH),linux)
+	CPU=i386
+	JAVA_HOME=$(JDK)/jdk1.6.0/jre
+	JAVA_LIB_PATH=lib/i386/client/libjvm.so
+endif
+ifeq ($(ARCH),win32)
 	JAVA_HOME=$(JDK)/jdk1.6.0_03/jre
 	JAVA_LIB_PATH=bin/client/jvm.dll
 	JAVA_LIB_DIR=bin
@@ -118,14 +135,10 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	EXE=.exe
 	STRIP_TARGET=1
 endif
-ifeq ($(uname_S),Darwin)
-ifeq ($(uname_M),Power Macintosh)
-	ARCH=macosx
-else
-	ARCH=macosx-intel
+ifeq ($(ARCH),macosx-intel)
 	EXTRADEFS+= -arch i386 -arch ppc
 endif
-
+ifneq (,$(findstring macosx,$(ARCH)))
 	JAVA_HOME=$(JDK)/Home
 	JAVA_LIB_PATH=../Libraries/libjvm.dylib
 	JAVA_LIB_DIR=../Libraries
@@ -133,9 +146,8 @@ endif
 	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
 	LIBMACOSX=-lpthread -framework CoreFoundation
 endif
-ifneq ($(CROSS_COMPILE_WIN64_ON_LINUX),)
+ifeq ($(ARCH),win64)
 	CXX=PATH="$$(pwd)/root-x86_64-pc-linux/bin:$$PATH" x86_64-pc-mingw32-g++
-	ARCH=win64
 	ARCH_INCLUDE=win32
 	JAVA_HOME=$(JDK)/jdk1.6.0_04/jre
 	JAVA_LIB_PATH=bin/server/jvm.dll
@@ -256,12 +268,22 @@ Fiji.app: fiji-macosx-intel
 
 Fiji.app-%:
 	ARCH=$$(echo $@ | sed "s/^Fiji.app-//"); \
-	case $$ARCH in win*) EXE=.exe;; *) EXE=;; esac; \
-	mkdir -p $@/$(JAVA_HOME) && \
-	mkdir -p $@/images && \
-	cp -R fiji-$$ARCH$$EXE ij.jar plugins macros jars misc $@ && \
-	cp -R $(JAVA_HOME)/* $@/$(JAVA_HOME) && \
-	cp images/icon.png $@/images/
+	case $$ARCH in \
+	$(ARCH)) \
+		case $$ARCH in win*) EXE=.exe;; *) EXE=;; esac; \
+		mkdir -p $@/$(JAVA_HOME) && \
+		mkdir -p $@/images && \
+		cp -R fiji-$$ARCH$$EXE ij.jar plugins macros jars misc $@ && \
+		REL_PATH=$$(echo $(JAVA_HOME) | sed "s|java/$(ARCH)/||") && \
+		git archive --prefix=java/$(ARCH)/$$REL_PATH/ \
+				origin/java/$(ARCH):$$REL_PATH | \
+			(cd $@ && tar xf -) && \
+		cp images/icon.png $@/images/ \
+	;; \
+	*) \
+		$(MAKE) ARCH=$$ARCH $@ \
+	;; \
+	esac
 
 fiji-%.tar.bz2: Fiji.app-%
 	tar cf - $< | bzip2 -9 > $@
