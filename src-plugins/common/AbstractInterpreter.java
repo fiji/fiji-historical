@@ -62,7 +62,6 @@ public abstract class AbstractInterpreter implements PlugIn {
 	boolean reader_run = true;
 	protected JPopupMenu popup_menu;
 	/** Store class and def definitions to be executed as a block*/
-	String multiline = "";
 	String selection = null;
 	String last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
 	protected ExecuteCode runner;
@@ -163,20 +162,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 		prompt.getActionMap().put("down",
 				new AbstractAction("down") {
 					public void actionPerformed(ActionEvent ae) {
-						
-						//enable to scroll within lines when the prompt consists of multiple lines.
-						/* //doesn't work, can't make it work
-						if (0 != (ae.getModifiers() & ActionEvent.SHIFT_MASK)) {
-							String text = prompt.getText();
-							if (-1 != text.indexOf('\n')) {
-								//do normal arrow work:
-								KeyListener[] kl = prompt.getKeyListeners();
-								kl[0].keyPressed(new KeyEvent(prompt, ae.getID(), ae.getWhen(), ae.getModifiers(), KeyEvent.VK_DOWN));
-							}
-						}
-						*/
 						//move forward only if it is possible
 						int size = al_lines.size();
+						if (0 == size) return;
 						if (active_line < size -1) {
 							active_line++;
 						} else if (active_line == size -1) {
@@ -191,6 +179,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				new AbstractAction("up") {
 					public void actionPerformed(ActionEvent ae) {
 						int size = al_lines.size();
+						if (0 == size) return;
 						if (active_line > 0) {
 							if (prompt.getText().equals("") && size -1 == active_line) {
 								active_line = size - 1;
@@ -201,11 +190,62 @@ public abstract class AbstractInterpreter implements PlugIn {
 						prompt.setText((String)al_lines.get(active_line));
 					}
 				});
+		prompt.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, ActionEvent.SHIFT_MASK), "shift+down");
+		prompt.getActionMap().put("shift+down",
+				new AbstractAction("shift+down") {
+					public void actionPerformed(ActionEvent ae) {
+						//enable to scroll within lines when the prompt consists of multiple lines.
+						String text = prompt.getText();
+						if (-1 != text.indexOf('\n')) {
+							//do normal arrow work:
+							int cp = prompt.getCaretPosition();
+							int next_newline = text.indexOf('\n', cp);
+							if (-1 == next_newline) return;
+							int prev_newline = text.lastIndexOf('\n', cp);
+							if (-1 == prev_newline) prev_newline = 0;
+							int diff = cp - prev_newline + (cp == next_newline ? 0 : 1);
+							cp = next_newline + diff;
+							int next_newline2 = text.indexOf('\n', next_newline +1);
+							if (-1 != next_newline2 && cp > next_newline2) cp = next_newline2;
+							if (cp > text.length()) cp = text.length();
+							prompt.setCaretPosition(cp);
+						}
+					}
+				});
+		prompt.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, ActionEvent.SHIFT_MASK), "shift+up");
+		prompt.getActionMap().put("shift+up",
+				new AbstractAction("shift+up") {
+					public void actionPerformed(ActionEvent ae) {
+						//enable to scroll within lines when the prompt consists of multiple lines.
+						String text = prompt.getText();
+						if (-1 != text.indexOf('\n')) {
+							//do normal arrow work:
+							int cp = prompt.getCaretPosition();
+							int prev_newline = text.lastIndexOf('\n', cp);
+							if (-1 == prev_newline) return;
+							int diff = cp - prev_newline -1;
+							int prev_newline2 = text.lastIndexOf('\n', prev_newline -1);
+							if (prev_newline2 < 0) prev_newline2 = 0;
+							cp = prev_newline2 + diff;
+							if (prev_newline2 + diff > prev_newline) cp = prev_newline; // lines of unequal length
+							prompt.setCaretPosition(cp);
+						}
+					}
+				});
 		prompt.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), "enter");
 		prompt.getActionMap().put("enter",
 				new AbstractAction("enter") {
 					public void actionPerformed(ActionEvent ae) {
 						runner.executePrompt();
+					}
+				});
+		prompt.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.SHIFT_MASK), "shift+enter");
+		prompt.getActionMap().put("shift+enter",
+				new AbstractAction("shift+enter") {
+					public void actionPerformed(ActionEvent ae) {
+						// allow multiline input on shift+enter
+						int cp = prompt.getCaretPosition();
+						prompt.insert("\n", cp);
 					}
 				});
 		DefaultFocusManager manager = new DefaultFocusManager() {
@@ -342,6 +382,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 			active_line = al_lines.size() -1;
 		}
 		// store in multiline if appropriate for later execution
+		/*
 		int i_colon = text.lastIndexOf(':');
 		if ((len > 0 && i_colon == len -1) || 0 != multiline.length()) {
 			multiline +=  text + "\n";
@@ -385,9 +426,11 @@ public abstract class AbstractInterpreter implements PlugIn {
 				return;
 			}
 		} else {
+		*/
 			print(">>> " + text);
+		/*
 		}
-		//try to eval, and if it fails, then it's code for exec
+		*/
 		try {
 			Object ob = eval(text);
 			if (null != ob) {
@@ -423,6 +466,14 @@ public abstract class AbstractInterpreter implements PlugIn {
 	/** Insert a tab in the prompt (in replacement for Component focus)*/
 	synchronized protected void doTab(ActionEvent ae) {
 		String prompt_text = prompt.getText();
+		int cp = prompt.getCaretPosition();
+		if (cp > 0) {
+			char cc = prompt_text.charAt(cp-1);
+			if ('t' == cc || '\n' == cc) {
+				prompt.setText(prompt_text.substring(0, cp) + "\t" + prompt_text.substring(cp));
+				return;
+			}
+		}
 		int len = prompt_text.length();
 		boolean add_tab = true;
 		for (int i=0; i<len; i++) {
@@ -433,7 +484,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 			}
 		}
 		if (add_tab) {
-			prompt.setText(prompt_text + "\t");
+			prompt.append("\t");
 		} else {
 			// attempt to expand the variable name, if possible
 			expandName(prompt_text, ae);

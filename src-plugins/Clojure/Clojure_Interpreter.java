@@ -140,7 +140,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		String eval(String text) {
 			try {
 				synchronized (this) {
-					this.text = text.trim();
+					this.text = "(with-out-str\n " + text.trim() + ")";
 					notify();
 				}
 				Thread.yield();
