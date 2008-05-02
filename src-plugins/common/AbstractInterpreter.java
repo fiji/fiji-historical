@@ -198,16 +198,25 @@ public abstract class AbstractInterpreter implements PlugIn {
 						String text = prompt.getText();
 						if (-1 != text.indexOf('\n')) {
 							//do normal arrow work:
+							// Caret can be from 0 to text.length() inclusive (i.e. after the last char)
 							int cp = prompt.getCaretPosition();
-							int next_newline = text.indexOf('\n', cp);
-							if (-1 == next_newline) return;
-							int prev_newline = text.lastIndexOf('\n', cp);
-							if (-1 == prev_newline) prev_newline = 0;
-							int diff = cp - prev_newline + (cp == next_newline ? 0 : 1);
-							cp = next_newline + diff;
-							int next_newline2 = text.indexOf('\n', next_newline +1);
-							if (-1 != next_newline2 && cp > next_newline2) cp = next_newline2;
+							// next newline
+							int next_nl = text.indexOf('\n', cp);
+							if (-1 == next_nl) return; // can't scroll down
+							// previous newline
+							int prev_nl = text.lastIndexOf('\n', cp-1);
+							if (-1 == prev_nl) prev_nl = -1; // caret at first char of first line
+							// distance from prev_nl to caret
+							int column = cp - prev_nl;
+							// second next newline
+							int next_nl_2 = text.indexOf('\n', next_nl+1);
+							if (-1 == next_nl_2) next_nl_2 = text.length();
+							// new caret position
+							if (column > next_nl_2 - next_nl) cp = next_nl_2;
+							else cp = next_nl + column;
+							// check boundaries
 							if (cp > text.length()) cp = text.length();
+							//
 							prompt.setCaretPosition(cp);
 						}
 					}
@@ -221,13 +230,20 @@ public abstract class AbstractInterpreter implements PlugIn {
 						if (-1 != text.indexOf('\n')) {
 							//do normal arrow work:
 							int cp = prompt.getCaretPosition();
-							int prev_newline = text.lastIndexOf('\n', cp);
-							if (-1 == prev_newline) return;
-							int diff = cp - prev_newline -1;
-							int prev_newline2 = text.lastIndexOf('\n', prev_newline -1);
-							if (prev_newline2 < 0) prev_newline2 = 0;
-							cp = prev_newline2 + diff;
-							if (prev_newline2 + diff > prev_newline) cp = prev_newline; // lines of unequal length
+							// next newline
+							int next_nl = text.indexOf('\n', cp);
+							if (-1 == next_nl) next_nl = text.length(); // imaginary
+							// previous newline
+							int prev_nl = text.lastIndexOf('\n', cp -1);
+							if (-1 == prev_nl) return; // already at first row
+							// distance from prev_nl to caret
+							int column = cp - prev_nl;
+							// second previous newline
+							int prev_nl_2 = text.lastIndexOf('\n', prev_nl -1);
+							// if -1 == prev_nl_2 it's ok: means we are at second row
+							if (column > prev_nl - prev_nl_2) cp = prev_nl;
+							else cp = prev_nl_2 + column;
+							//
 							prompt.setCaretPosition(cp);
 						}
 					}
