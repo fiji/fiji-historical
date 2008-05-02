@@ -34,6 +34,7 @@ import java.io.PipedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.BufferedOutputStream;
 
 import common.AbstractInterpreter;
 
@@ -141,6 +142,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			try {
 				synchronized (this) {
 					this.text = "(with-out-str\n " + text.trim() + ")";
+					//this.text = text.trim();
 					notify();
 				}
 				Thread.yield();
@@ -149,6 +151,11 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 					try { Thread.currentThread().sleep(100); } catch (Exception e) {}
 					String res = result;
 					result = null;
+					if (null != res) {
+						res = res.substring(1, res.length() -1)
+							 .replace("\\n", "\n")
+							 .replace("\\", "");
+					}
 					return res;
 				}
 			} catch (Exception e) {
