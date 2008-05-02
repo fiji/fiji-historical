@@ -19,7 +19,11 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 				IJ.log("Not a clojure script or not found: " + path);
 				return;
 			}
-			Clojure_Interpreter.evaluate("(load-file \"" + path + "\")");
+			Object res = Clojure_Interpreter.evaluate("(load-file \"" + path + "\")");
+			if (null != res) {
+				String s = res.toString();
+				if (s.length() > 0) IJ.log(res.toString());
+			}
 			Clojure_Interpreter.destroy();
 		} catch (Throwable error) {
 			printError(error);

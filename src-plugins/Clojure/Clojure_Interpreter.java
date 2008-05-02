@@ -155,8 +155,8 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 						res = res.substring(1, res.length() -1)
 							 .replace("\\n", "\n")
 							 .replace("\\", "");
+						return res;
 					}
-					return res;
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -185,16 +185,13 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 						//  - after calling continue and break ... inside the try { } catch, if they affect stuff outside the block
 						//  - after a return call within the try { catch } block !!
 						working = false;
-						synchronized (lock) {
-							if (null == sb) result = null;
-							else {
-								// remove last newline char, since it will be added again
-								if (sb.length() > 0) sb.setLength(sb.length()-1);
-								result = sb.toString();
-							}
-							text = null;
-							lock.notify();
+						if (null == sb) result = null;
+						else {
+							// remove last newline char, since it will be added again
+							if (sb.length() > 0) sb.setLength(sb.length()-1);
+							result = sb.toString();
 						}
+						text = null;
 						notify();
 					}
 				}
