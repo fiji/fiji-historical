@@ -1,22 +1,40 @@
-# ---- Some rules only useful for Debian packaging .... ---------------
+.PHONY: all
+all : build-imageja build-fiji-plugins build-trakem2 build-fiji add-all-configs
+
+# ---- Some rules mostly useful for Debian packaging... ----------------
 
 .PHONY:   build-imageja   build-fiji   build-fiji-plugins   build-imageja-doc
 .PHONY: install-imageja install-fiji install-fiji-plugins install-imageja-doc
 
+.PHONY: add-all-configs
+
 # The build- rules called from debian/rules:
 
-build-imageja : ImageJA/ij.jar
+build-imageja :
+	@echo ======= build-imageja
+	( cd ImageJA && ant build )
 
 build-imageja-doc :
-	cd ImageJA && ant javadocs
+	@echo ======= build-imageja-doc
+	( cd ImageJA && ant javadocs )
 
 # Nothing to be done any more:
-build-fiji : 
+build-fiji :
+	@echo ======= build-fiji
 
-build-fiji-plugins : ImageJA/ij.jar plugins/VIB_.jar
+build-fiji-plugins :
+	@echo ======= build-fiji-plugins
+	( cd VIB && ant compile )
+	ant compile
 
-build-trakem2 TrakEM2/TrakEM2_.jar : ImageJA/ij.jar VIB/VIB_.jar jtk/build/jar/edu_mines_jtk.jar
+build-trakem2 :
+	@echo ======= build-trakem2
+	( cd jtk && ant all )
 	( cd TrakEM2 && ant compile )
+
+add-all-configs :
+	@echo ======= add-all-configs
+	ant add-all-configs
 
 # The install- rules called from debian/rules.  Each has to make sure
 # it installs into DESTDIR:
@@ -55,7 +73,7 @@ install-fiji-plugins : build-fiji-plugins
 	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/fiji-plugins/
 
 install-fiji :
-	install -d $(DESTDIR)/usr/bin/	
+	install -d $(DESTDIR)/usr/bin/
 	( cd $(DESTDIR)/usr/bin && ln -s imageja fiji )
 	install -d $(DESTDIR)/usr/share/doc/fiji/
 	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/fiji/
@@ -121,13 +139,15 @@ plugins/VIB_.jar plugins/TrakEM2_.jar : VIB/VIB_.jar staged-plugins/VIB_.config 
 	ant compile
 	ant add-all-configs
 
-VIB/VIB_.jar :
+VIB/VIB_.jar : ImageJA/ij.jar
 	( cd VIB && ant compile )
+
+TrakEM2/TrakEM2_.jar : jtk/build/jar/edu_mines_jtk.jar VIB/VIB_.jar
+	( cd TrakEM2 && ant compile )
 
 # This is needed by TrakEM2:
 
 jtk/build/jar/edu_mines_jtk.jar :
-
 	( cd jtk && ant all )
 
 # ------------------------------------------------------------------------

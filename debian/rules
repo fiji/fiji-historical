@@ -41,6 +41,7 @@ build-indep-stamp : configure-stamp
 	$(MAKE) build-fiji-plugins
 	$(MAKE) build-imageja-doc
 	$(MAKE) build-trakem2
+	$(MAKE) add-all-configs
 	touch $@
 
 clean :
