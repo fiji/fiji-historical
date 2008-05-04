@@ -37,7 +37,7 @@ import java.awt.FileDialog;
 import javax.swing.JPopupMenu;
 import javax.swing.JMenuItem;
 import java.io.BufferedOutputStream;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
@@ -57,7 +57,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 	final protected ArrayList al_lines = new ArrayList();
 	final protected ByteArrayOutputStream byte_out = new ByteArrayOutputStream();
 	final protected BufferedOutputStream out = new BufferedOutputStream(byte_out);
-    final protected PrintStream print_out = new PrintStream(out);
+    final protected PrintWriter print_out = new PrintWriter(out);
 	Thread reader;
 	boolean reader_run = true;
 	protected JPopupMenu popup_menu;
