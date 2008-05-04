@@ -29,9 +29,10 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 	public void run(String path) {
 		if (path.equals("")) return;
 		File theFile = new File(path);
-		String directory = theFile.getParent();
+		String directory = theFile.getParent().replace('\\', '/');
 		String fileName = theFile.getName();
 		if (directory == null) directory = "";
+		else if (!directory.endsWith("/")) directory += "/";
 
 		// Try and recognise file type and load the file if recognised
 		ImagePlus imp = openImage(directory, fileName, path);
