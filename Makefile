@@ -50,8 +50,9 @@ src-plugins:
 check: check-class-versions check-architectures check-submodules
 
 check-class-versions: src-plugins $(TARGET)$(EXE)
-	echo 'run("Get Class Versions"); run("Quit");' > tmp.ijm && \
-	./$(TARGET)$(EXE) --headless -- -batch tmp.ijm | sort && \
+	echo 'call("fiji.CheckClassVersions.run", ""); run("Quit");' \
+		> tmp.ijm && \
+	./$(TARGET)$(EXE) --headless -- -batch tmp.ijm && \
 	rm tmp.ijm
 
 check-architectures:

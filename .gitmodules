@@ -6,7 +6,7 @@
 	url = git://repo.or.cz/trakem2.git
 [submodule "VIB"]
 	path = VIB
-	url = dumbo:/home/vibcvs/cvs
+	url = git://pacific.mpi-cbg.de/VIB.git/
 [submodule "java/linux"]
 	path = java/linux
 	url = .
