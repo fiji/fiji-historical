@@ -1,16 +1,16 @@
 A loose TODO list for Fiji
 ==========================
 
+- add tools.jar to the releases
+- cross compile
+- check which Reader Plugins do not extend ImagePlus
 - extend GenericDialog to provide Help, Advanced button
 - GenericDialog.addTooltext()
 - add script recorder for the new scripting languages
 - add task-oriented tutorials (wiki)
 - add tests (test that all plugins are found, test which image types
   they support, add regression tests, if file importers return ImagePlus)
-- extend Fiji launcher so that it can fall back to non-bundled Java
 - look into the ImageJUpdater (maybe we need to disable it)
-- support single-platform portable app
-- menu structure!
 - add current BioFormats.
 - add targets for all platforms which make wrappers, such as a .zip or
   a .dmg file
@@ -36,15 +36,10 @@ Notes for the 1st Fiji Hackathon round table
 
 some keywords to trigger discussions...
 
-- add tools.jar to the downloadable packages
 - TaskManager (start from Thread Killer)
-- Bugzilla
-- long term: cross compiler
 - Tutorial on Git submodules
 - HOWTOs (Tutorials), lots of them!
-- Version name "Dresden"?
 - ITK
 - Matlab (socket)
-- Erwin's changes
 - Funding?  (Zürich)
 - backup
