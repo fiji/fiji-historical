@@ -30,6 +30,7 @@ SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
 $(SUBMODULE_TARGETS_IN_FIJI):
 	@echo "Making $@"
 	@export JAVA_HOME="$$(pwd)/$(JAVA_HOME)/.." && \
+	echo JAVA_HOME is $$JAVA_HOME && \
 	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
 	ORIGINAL_TARGET=$(shell echo " $(SUBMODULE_TARGETS) " | \
 		sed "s/.* \([^ ]*$$(basename "$@")\) .*/\1/") && \
