@@ -52,8 +52,7 @@ check: check-class-versions check-architectures check-submodules
 check-class-versions: src-plugins $(TARGET)$(EXE)
 	echo 'call("fiji.CheckClassVersions.run", ""); run("Quit");' \
 		> tmp.ijm && \
-	./$(TARGET)$(EXE) --headless -- -batch tmp.ijm && \
-	rm tmp.ijm
+	./$(TARGET)$(EXE) --headless -- -batch tmp.ijm
 
 check-architectures:
 	./scripts/check-generated-content.sh fiji.cxx \
