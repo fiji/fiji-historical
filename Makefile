@@ -137,7 +137,7 @@ ifeq ($(ARCH),win32)
 	STRIP_TARGET=1
 endif
 ifeq ($(ARCH),macosx-intel)
-	EXTRADEFS+= -arch i386 -arch ppc
+	EXTRADEFS+= -arch i386 -arch ppc -arch x86_64 -arch ppc64
 endif
 ifneq (,$(findstring macosx,$(ARCH)))
 	JAVA_HOME=$(JDK)/Home
