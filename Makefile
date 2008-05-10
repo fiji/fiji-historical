@@ -291,6 +291,9 @@ fiji-%.tar.bz2: Fiji.app-%
 fiji-%.zip: Fiji.app-%
 	zip -9r $@ $<
 
+fiji-%.dmg: Fiji.app
+	sh scripts/mkdmg.sh $@ $<
+
 # All targets...
 
 alltargets: $(JDK) $(SUBMODULE_TARGETS_IN_FIJI) $(JARS) src-plugins run
