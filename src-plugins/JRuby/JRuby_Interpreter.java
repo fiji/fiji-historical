@@ -29,7 +29,8 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 		super.run(ignored);
 		setTitle("JRuby Interpreter");
 		print_out.println("Starting JRuby ...");
-		rubyRuntime = Ruby.newInstance(System.in,print_out,print_out);
+		PrintStream stream = new PrintStream(out);
+		rubyRuntime = Ruby.newInstance(System.in,stream,stream);
 		print_out.println("Done.");
 
 		rubyRuntime.evalScriptlet(getStartupScript());
