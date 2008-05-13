@@ -18,6 +18,7 @@ for it in ij.Menus.getCommands().entrySet().iterator():
     k = cl.find('(')
     if -1 != k:
       cl = cl[:k]
+    #print "testing: ", cl
     cl = Class.forName(cl)
   except ClassNotFoundException:
     print 'ERROR: Class not found for menu command: ', it.key, it.value
