@@ -1,6 +1,8 @@
 A loose TODO list for Fiji
 ==========================
 
+- add a plugin finder (a la Google suggest) to the Control Panel, and make
+  it wider by default
 - add tools.jar to the releases
 - cross compile
 - check which Reader Plugins do not extend ImagePlus

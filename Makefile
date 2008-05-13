@@ -52,8 +52,7 @@ check: check-class-versions check-architectures check-submodules
 check-class-versions: src-plugins $(TARGET)$(EXE)
 	echo 'call("fiji.CheckClassVersions.run", ""); run("Quit");' \
 		> tmp.ijm && \
-	./$(TARGET)$(EXE) --headless -- -batch tmp.ijm && \
-	rm tmp.ijm
+	./$(TARGET)$(EXE) --headless -- -batch tmp.ijm
 
 check-architectures:
 	./scripts/check-generated-content.sh fiji.cxx \
@@ -137,7 +136,7 @@ ifeq ($(ARCH),win32)
 	STRIP_TARGET=1
 endif
 ifeq ($(ARCH),macosx-intel)
-	EXTRADEFS+= -arch i386 -arch ppc
+	EXTRADEFS+= -arch i386 -arch ppc -arch x86_64 -arch ppc64
 endif
 ifneq (,$(findstring macosx,$(ARCH)))
 	JAVA_HOME=$(JDK)/Home
@@ -291,6 +290,9 @@ fiji-%.tar.bz2: Fiji.app-%
 
 fiji-%.zip: Fiji.app-%
 	zip -9r $@ $<
+
+fiji-%.dmg: Fiji.app
+	sh scripts/mkdmg.sh $@ $<
 
 # All targets...
 
