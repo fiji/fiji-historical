@@ -359,6 +359,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 			synchronized (this) { notify(); }
 		}
 		public void run() {
+			AbstractInterpreter.this.threadStarting();
 			while (go) {
 				try {
 					synchronized (this) { wait(); }
@@ -380,6 +381,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 					store = false;
 				 }
 			}
+			AbstractInterpreter.this.threadQuitting();
 		}
 	}
 
@@ -470,7 +472,14 @@ public abstract class AbstractInterpreter implements PlugIn {
 
 	abstract protected Object eval(String text) throws Throwable;
 
+	/** Executed when the interpreter window is being closed. */
  	protected void windowClosing() {}
+
+	/** Executed inside the executer thread before anything else. */
+	protected void threadStarting() {}
+
+	/** Executed inside the executer thread right before the thread will die. */
+	protected void threadQuitting() {}
 
 	/** Enable tab chars in the prompt. */
 	protected String fix(String text) {

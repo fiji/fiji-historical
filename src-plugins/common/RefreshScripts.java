@@ -43,6 +43,8 @@ import java.util.ArrayList;
 import java.io.File;
 import java.io.StringWriter;
 import java.io.PrintWriter;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 /**
  *  This class looks through the plugins directory for files with a
@@ -285,6 +287,7 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 		return result.replace('_',' ');
 	}
 
+	/** Run the script in a new thread. */
 	abstract protected void runScript(String filename);
 
 	/** Listens to the MenuItem objects holding the name of the python script.*/
@@ -318,4 +321,24 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 		pw.close();
 		IJ.log(w.toString());
 	}
+
+        static public final String openTextFile(final String path) {
+                if (null == path || !new File(path).exists()) return null;
+                final StringBuffer sb = new StringBuffer();
+		BufferedReader r = null;
+                try {
+                        r = new BufferedReader(new FileReader(path));
+                        while (true) {
+                                String s = r.readLine();
+                                if (null == s) break;
+                                sb.append(s).append('\n'); // I am sure the reading can be done better
+                        }
+                } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                } finally {
+                        if (null != r) try { r.close(); } catch (java.io.IOException ioe) { ioe.printStackTrace(); }
+		}
+                return sb.toString();
+        }
 }
