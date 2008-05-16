@@ -13,6 +13,7 @@ using std::string;
 #endif
 
 #ifdef MINGW32
+#include <process.h>
 #define PATH_SEP ";"
 #else
 #define PATH_SEP ":"
@@ -133,6 +134,7 @@ size_t get_memory_size(int available_only)
 const char *fiji_dir;
 char **main_argv;
 int main_argc;
+const char *main_class = "ij.ImageJ";
 
 static char *get_fiji_dir(const char *argv0)
 {
@@ -167,8 +169,11 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 
 	handle = dlopen(buffer, RTLD_LAZY);
 	if (!handle) {
+		const char *error = dlerror();
+		if (!error)
+			error = "(unknown error)";
 		cerr << "Could not load Java library '" <<
-			buffer << "': " << dlerror() << endl;
+			buffer << "': " << error << endl;
 		return 1;
 	}
 	dlerror(); /* Clear any existing error */
@@ -253,6 +258,11 @@ static void prepend_string(struct string_array& array, char *str)
 	array.nr++;
 }
 
+static void prepend_string(struct string_array& array, const char *str)
+{
+	prepend_string(array, strdup(str));
+}
+
 static void append_string_array(struct string_array& target,
 		struct string_array &source)
 {
@@ -307,14 +317,19 @@ struct options {
 
 static void add_option(struct options& options, char *option, int for_ij)
 {
-	if (!strcmp(option, "--dry-run"))
-		options.debug++;
-	else if (!strcmp(option, "--system"))
-		options.use_system_jvm++;
-	else if (strcmp(option, "--headless"))
-		append_string(for_ij ?
-				options.ij_options : options.java_options,
-				option);
+	append_string(for_ij ?
+			options.ij_options : options.java_options,
+			option);
+}
+
+static void add_option(struct options& options, const char *option, int for_ij)
+{
+	add_option(options, strdup(option), for_ij);
+}
+
+static void add_option(struct options& options, string &option, int for_ij)
+{
+	add_option(options, option.c_str(), for_ij);
 }
 
 static void show_commandline(struct options& options)
@@ -322,6 +337,7 @@ static void show_commandline(struct options& options)
 	cerr << "java";
 	for (int j = 0; j < options.java_options.nr; j++)
 		cerr << " " << options.java_options.list[j];
+	cerr << " " << main_class;
 	for (int j = 0; j < options.ij_options.nr; j++)
 		cerr << " " << options.ij_options.list[j];
 	cerr << endl;
@@ -341,21 +357,42 @@ static void *start_ij(void *dummy)
 	JavaVMInitArgs args;
 	JNIEnv *env;
 	static string class_path;
-	static char plugin_path[PATH_MAX];
+	static char plugin_path[PATH_MAX] = "";
 	static char ext_path[65536];
 	static char java_home_path[65536];
 	int dashdash = 0;
 
+	memset(&options, 0, sizeof(options));
+
+	int count = 1;
 	for (int i = 1; i < main_argc; i++)
 		if (!strcmp(main_argv[i], "--"))
-			dashdash = i;
-		else if (!strcmp(main_argv[i], "--headless"))
+			dashdash = count;
+		else if (!strcmp(main_argv[i], "--dry-run"))
+			options.debug++;
+		else if (!strcmp(main_argv[i], "--system"))
+			options.use_system_jvm++;
+		else if (!strncmp(main_argv[i], "--plugins=", 10))
+			snprintf(plugin_path, sizeof(plugin_path),
+					"-Dplugins.dir=%s", main_argv[i] + 10);
+		else if (!strcmp(main_argv[i], "--headless")) {
 			headless = 1;
+			/* handle "--headless script.ijm" gracefully */
+			if (i + 2 == main_argc && main_argv[i + 1][0] != '-')
+				dashdash = count;
+		}
+		else if (!strcmp(main_argv[i], "--jython"))
+			main_class = "org.python.util.jython";
+		else if (!strcmp(main_argv[i], "--jruby"))
+			main_class = "org.jruby.Main";
+		else if (!strncmp(main_argv[i], "--main-class=", 13))
+			main_class = main_argv[i] + 13;
+		else
+			main_argv[count++] = main_argv[i];
+	main_argc = count;
 
 	size_t memory_size = get_memory_size(0);
 	static char heap_size[1024];
-
-	memset(&options, 0, sizeof(options));
 
 #ifdef MACOSX
 	snprintf(ext_path, sizeof(ext_path),
@@ -368,10 +405,11 @@ static void *start_ij(void *dummy)
 		return NULL;
 	if (build_classpath(class_path, string(fiji_dir) + "/jars", 0))
 		return NULL;
-	add_option(options, strdup(class_path.c_str()), 0);
+	add_option(options, class_path, 0);
 
-	snprintf(plugin_path, sizeof(plugin_path),
-			"-Dplugins.dir=%s", fiji_dir);
+	if (!plugin_path[0])
+		snprintf(plugin_path, sizeof(plugin_path),
+				"-Dplugins.dir=%s", fiji_dir);
 	add_option(options, plugin_path, 0);
 
 	if (memory_size > 0) {
@@ -383,19 +421,47 @@ static void *start_ij(void *dummy)
 		add_option(options, heap_size, 0);
 	}
 
+	if (headless)
+		add_option(options, "-Djava.awt.headless=true", 0);
+
 	if (dashdash) {
+		if (headless)
+			dashdash--;
 		for (int i = 1; i < dashdash; i++)
-			if (!headless || strcmp(main_argv[i], "--headless"))
-				add_option(options, main_argv[i], 0);
+			add_option(options, main_argv[i], 0);
 		main_argv += dashdash;
 		main_argc -= dashdash;
 	}
 
-	add_option(options, strdup("ij.ImageJ"), 0);
+	if (!strcmp(main_class, "ij.ImageJ"))
+		add_option(options, "-port0", 1);
 
-	add_option(options, "-port0", 1);
+	/* handle "--headless script.ijm" gracefully */
+	if (headless && !strcmp(main_class, "ij.ImageJ")) {
+		if (main_argc < 2) {
+			cerr << "--headless without a parameter?" << endl;
+			exit(1);
+		}
+		if (*main_argv[1] != '-')
+			add_option(options, "-batch", 1);
+	}
+
 	for (int i = 1; i < main_argc; i++)
 		add_option(options, main_argv[i], 1);
+
+	if (!headless &&
+#ifdef MACOSX
+			!getenv("SECURITYSESSIONID")
+#elif defined(__linux__)
+			!getenv("DISPLAY")
+#else
+			false
+#endif
+			) {
+		cerr << "No GUI detected.  You might want to use the"
+			<< " --headless option." << endl;
+		exit(1);
+	}
 
 	if (options.debug) {
 		show_commandline(options);
@@ -406,7 +472,7 @@ static void *start_ij(void *dummy)
 	args.version  = JNI_VERSION_1_2;
 	args.options = prepare_java_options(options.java_options);
 	args.nOptions = options.java_options.nr;
-	args.ignoreUnrecognized = JNI_TRUE;
+	args.ignoreUnrecognized = JNI_FALSE;
 
 	if (options.use_system_jvm)
 		env = NULL;
@@ -425,11 +491,16 @@ static void *start_ij(void *dummy)
 		jmethodID method;
 		jobjectArray args;
 
-		if (!(instance = env->FindClass("ij/ImageJ")))
-			cerr << "Could not find ij.ImageJ" << endl;
-		else if (!(method = env->GetStaticMethodID(instance,
-				"main", "([Ljava/lang/String;)V")))
+		string slashed(main_class);
+		replace(slashed.begin(), slashed.end(), '.', '/');
+		if (!(instance = env->FindClass(slashed.c_str()))) {
+			cerr << "Could not find " << main_class << endl;
+			exit(1);
+		} else if (!(method = env->GetStaticMethodID(instance,
+				"main", "([Ljava/lang/String;)V"))) {
 			cerr << "Could not find main method" << endl;
+			exit(1);
+		}
 
 		args = prepare_ij_options(env, options.ij_options);
 		env->CallStaticVoidMethodA(instance,
@@ -440,12 +511,31 @@ static void *start_ij(void *dummy)
 		/* This does not return until ImageJ exits */
 		vm->DestroyJavaVM();
 	} else {
+#ifdef MACOSX
+		add_option(options, "-Xdock:name=Fiji", 0);
+		string icon_option = "-Xdock:icon=";
+		icon_option += fiji_dir;
+		icon_option += "/images/Fiji.icns";
+		add_option(options, icon_option, 0);
+#endif
+
 		/* fall back to system-wide Java */
+		add_option(options, "ij.ImageJ", 0);
 		append_string_array(options.java_options, options.ij_options);
 		append_string(options.java_options, NULL);
 		prepend_string(options.java_options, "java");
+#ifdef MACOSX
+		/*
+		 * On MacOSX, one must (stupidly) fork() before exec() to
+		 * clean up some pthread state somehow, otherwise the exec()
+		 * will fail with "Operation not supported".
+		 */
+		if (fork())
+			exit(0);
+#endif
 		if (execvp("java", options.java_options.list))
 			cerr << "Could not launch system-wide Java" << endl;
+		exit(1);
 	}
 	return NULL;
 }
@@ -460,7 +550,14 @@ static void start_ij_macosx(void *dummy)
 	/* set the Application's name */
 	char name[32];
 	sprintf(name, "APP_NAME_%ld", (long)getpid());
-	setenv(name, "ImageJ", 1);
+	setenv(name, "Fiji", 1);
+
+	/* set the Dock icon */
+	string icon = "APP_ICON_";
+	icon += (name + 9);
+	string icon_path = fiji_dir;
+	icon_path += "/images/Fiji.icns";
+	setenv(strdup(icon.c_str()), strdup(icon_path.c_str()), 1);
 
 	pthread_t thread;
 	pthread_attr_t attr;

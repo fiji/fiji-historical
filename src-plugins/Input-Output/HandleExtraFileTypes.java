@@ -139,7 +139,8 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			if (Menus.getCommands().get("Show LSMToolbox")!=null)
 				return tryPlugIn("LSM_Toolbox", "file="+path);
 			else
-				return tryPlugIn("LSM_Reader", path);
+				// Use the version in VIB (FIXME: just temporarily, so loading works again)
+				return tryPlugIn("zeiss.LSM_Reader", path);
 		}
 
 		// BM: added Bruker file handler 29.07.04

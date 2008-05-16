@@ -1,27 +1,23 @@
 A loose TODO list for Fiji
 ==========================
 
+- merge VIB's and Fiji's HandleExtraFileTypes.java
+- add a plugin finder (a la Google suggest) to the Control Panel, and make
+  it wider by default
+- add tools.jar to the releases
+- cross compile
+- check which Reader Plugins do not extend ImagePlus
 - extend GenericDialog to provide Help, Advanced button
 - GenericDialog.addTooltext()
 - add script recorder for the new scripting languages
 - add task-oriented tutorials (wiki)
 - add tests (test that all plugins are found, test which image types
   they support, add regression tests, if file importers return ImagePlus)
-- extend Fiji launcher so that it can fall back to non-bundled Java
 - look into the ImageJUpdater (maybe we need to disable it)
-- support single-platform portable app
-- menu structure!
 - add current BioFormats.
-- add targets for all platforms which make wrappers, such as a .zip or
-  a .dmg file
 - maybe make a live CD from detaolb or some such
-- solve LD_LIBRARY_PATH problem for jfftw.  Maybe by linking with dlopen()?
-  Or is it enough to put jfftw.so into lib/i386/?  In any case, we need to
-  compile FFTW natively for this.
 - maybe change the path of IJ_Prefs.txt also on other platforms than Win32?
 - make absolute path from argv0 in get_fiji_dir().
-- in ImageJA: enable plugin .config files to access any menu. A flag
-  to 'add after <existing_default_menu_entry>' would be awesome.
 - in ImageJA: add Experts- and Simplified views to the GenericDialog.
 - in ImageJA: is there a way to have a FileField in GenericDialog?
 - in ImageJA: add isCanceled() method to SaveDialog.
@@ -36,15 +32,10 @@ Notes for the 1st Fiji Hackathon round table
 
 some keywords to trigger discussions...
 
-- add tools.jar to the downloadable packages
 - TaskManager (start from Thread Killer)
-- Bugzilla
-- long term: cross compiler
 - Tutorial on Git submodules
 - HOWTOs (Tutorials), lots of them!
-- Version name "Dresden"?
 - ITK
 - Matlab (socket)
-- Erwin's changes
 - Funding?  (Zürich)
 - backup
