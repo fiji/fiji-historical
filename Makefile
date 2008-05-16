@@ -136,7 +136,9 @@ ifeq ($(ARCH),win32)
 	STRIP_TARGET=1
 endif
 ifeq ($(ARCH),macosx-intel)
-	EXTRADEFS+= -arch i386 -arch ppc -arch x86_64 -arch ppc64
+	EXTRADEFS+= $(shell file \
+	 /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation \
+	 | sed -n "s/^.*for architecture \\([a-z0-9_]*\\).*$$/-arch \\1/p")
 endif
 ifneq (,$(findstring macosx,$(ARCH)))
 	JAVA_HOME=$(JDK)/Home
