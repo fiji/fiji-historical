@@ -59,6 +59,7 @@ macro "AutoRun" {
   run("Refresh JRuby Scripts");
   run("Refresh Clojure Scripts");
   run("Refresh BSH Scripts");
+  run("Refresh Javascript Scripts");
 }
   
 
