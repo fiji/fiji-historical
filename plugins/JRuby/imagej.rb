@@ -1,3 +1,26 @@
+# The functions in this file are reimplementations of the functions
+# built into the classic ImageJ macro language.  These are provided
+# to help in porting exisiting ImageJ macros to JRuby scripts.
+# Please help to fill in the unimplemented functions!  There is a
+# large list of these (commented out) at the end of this file.
+
+# ------------------------------------------------------------------------
+
+# There are advantages to both being able to write idiomatic Ruby
+# ("example_method_name") and the "lowerCamelCase" form used in the macro
+# language's definitions ("exampleMethodName"), so use this helper method
+# to alias each of the replacement macro definition functions to one
+# with the macro language's name for it, so the programmer has the option
+# to use either.
+
+def alias_to_lower_camel_case(method_name)
+  new_method_name = method_name.gsub( /(_(.))/ ) do |m|
+    $2.upcase
+  end
+  eval "alias #{new_method_name} #{method_name}"
+end
+
+# ------------------------------------------------------------------------
 # FIXME: The error handling here is a bit inconsistent.
 #   ImageJ macros seem to do one of the following:
 #     - throw a RuntimeException(Macro.MACRO_CANCELED)
@@ -5,6 +28,9 @@
 #   At the moment the Ruby equivalents do raise "Error message"
 # This needs a bit more work, obviously...
 # ........................................................................
+
+# The macro language uses a number of implicit global variables to
+# track the current image, etc.:
 
 $macro_auto_update = true
 
@@ -16,9 +42,15 @@ def reset_image
   $macro_font_set = false
 end
 
-def resetImage
-  reset_image
+alias_to_lower_camel_case "reset_image"
+
+# ........................................................................
+
+def select_window(title)
+  ij.IJ.selectWindow title
 end
+
+alias_to_lower_camel_case "select_window"
 
 # ........................................................................
 
@@ -35,9 +67,7 @@ def get_image
   return $macro_default_image  
 end
 
-def getImage
-  get_image
-end
+alias_to_lower_camel_case "get_image"
 
 # ........................................................................
 
@@ -50,9 +80,7 @@ def get_processor
   end
 end
 
-def getProcessor
-  get_processor
-end
+alias_to_lower_camel_case "get_processor"
 
 # ........................................................................
 
@@ -89,9 +117,7 @@ def set_threshold( minimum, maximum )
   ij.IJ.setThreshold minimum, maximum
 end
 
-def setThreshold( minimum, maximum )
-  set_threshold( minimum, maximum )
-end
+alias_to_lower_camel_case "set_threshold"
 
 # ........................................................................
 
@@ -99,17 +125,13 @@ def get_results_count
   ij.plugin.filter.Analyzer.getResultsTable.getCounter
 end
 
-def getResultsCount
-  get_results_count
-end
+alias_to_lower_camel_case "get_results_count"
 
 def n_results
   get_results_count
 end
 
-def nResults
-  get_results_count
-end
+alias_to_lower_camel_case "n_results"
 
 # ........................................................................
 
@@ -134,9 +156,7 @@ def get_result( label, row = -1 )
   end
 end
 
-def getResult( label, i = -1 )
-  get_result label, i
-end
+alias_to_lower_camel_case "get_result"
 
 # ........................................................................
 
@@ -145,9 +165,7 @@ def do_wand( x, y )
   reset_image
 end
 
-def doWand( x, y )
-  do_wand x, y
-end
+alias_to_lower_camel_case "do_wand"
 
 # ........................................................................
 
@@ -167,9 +185,7 @@ def show_progress( a, b = nil )
   end
 end
 
-def showProgress( a, b = nil )
-  show_progress a, b
-end
+alias_to_lower_camel_case "show_progress"
 
 # ........................................................................
 
@@ -186,15 +202,9 @@ def get_selection_coordinates
   return x_coordinates, y_coordinates
 end
 
-def getSelectionCoordinates
-  get_selection_coordinates
-end
+alias_to_lower_camel_case "get_selection_coordinates"
 
 # ........................................................................
-
-def setForegroundColorProcessor(p)
-  set_foreground_color_processor p
-end
 
 def set_foreground_color_processor(p)
   if $macro_default_color
@@ -207,6 +217,8 @@ def set_foreground_color_processor(p)
   end
 end
 
+alias_to_lower_camel_case "set_foreground_color_processor"
+
 def set_foreground_color(r,g,b)
   ij.IJ.setForegroundColor Integer(r), Integer(g), Integer(b)
   reset_image
@@ -215,18 +227,14 @@ def set_foreground_color(r,g,b)
   $macro_default_value = nil
 end
 
+alias_to_lower_camel_case "set_foreground_color"
+
 def set_background_color(r,g,b)
   ij.IJ.setBackgroundColor Integer(r), Integer(g), Integer(b)
   reset_image
 end
 
-def setBackgroundColor(r,g,b)
-  set_background_color r, g, b
-end
-
-def setForegroundColor(r,g,b)
-  set_foreground_color r, g, b
-end
+alias_to_lower_camel_case "set_background_color"
 
 # ........................................................................
 
@@ -241,9 +249,7 @@ def get_width
   get_image.get_width  
 end
 
-def getWidth
-  get_image.get_width
-end
+alias_to_lower_camel_case "get_width"
 
 # ........................................................................
 
@@ -251,9 +257,7 @@ def get_height
   get_image.get_height  
 end
 
-def getHeight
-  get_image.get_height
-end
+alias_to_lower_camel_case "get_height"
 
 # ........................................................................
 
@@ -261,9 +265,7 @@ def auto_update(b)
   $macro_auto_update = b
 end
 
-def autoUpdate(b)
-  auto_update b
-end
+alias_to_lower_camel_case "auto_update"
 
 # ........................................................................
 
@@ -275,9 +277,7 @@ def update_display
   end
 end
 
-def updateDisplay
-  update_display
-end
+alias_to_lower_camel_case "update_display"
 
 # ........................................................................
 
@@ -301,9 +301,7 @@ def move_to(x,y)
   get_processor.moveTo Integer( x + 0.5 ), Integer( y + 0.5 )
 end
 
-def moveTo(x,y)
-  move_to x, y
-end
+alias_to_lower_camel_case "move_to"
 
 # ........................................................................
 
@@ -320,9 +318,7 @@ def line_to(x,y)
   update_and_draw $macro_default_image
 end
 
-def lineTo(x,y)
-  line_to x, y
-end
+alias_to_lower_camel_case "line_to"
 
 # ........................................................................
 
@@ -341,9 +337,7 @@ def draw_line(x1,y1,x2,y2)
   update_and_draw $macro_default_image
 end
 
-def drawLine(x1,y1,x2,y2)
-  draw_line x1, y1, x2, y2
-end
+alias_to_lower_camel_case "draw_line"
 
 # ........................................................................
 
@@ -355,9 +349,40 @@ def update_and_draw(image)
   end
 end
 
-def updateAndDraw(image)
-  update_and_draw image
-end	
+alias_to_lower_camel_case "update_and_draw"
+
+# ........................................................................
+
+def beep
+  ij.IJ.beep
+end
+
+# ........................................................................
+
+def reset_min_and_max
+  ij.IJ.resetMinAndMax
+  reset_image
+end
+
+alias_to_lower_camel_case "reset_min_and_max"
+
+# ........................................................................
+
+def reset_threshold
+  ij.IJ.resetThreshold
+  reset_image
+end
+
+alias_to_lower_camel_case "reset_threshold"
+
+# ........................................................................
+
+def set_min_max(min,max)
+  ij.IJ.setMinAndMax min, max
+  reset_image
+end
+
+alias_to_lower_camel_case "set_min_max"
 
 # ........................................................................
 # I think these are all the ImageJ macro functions we would have to
@@ -372,15 +397,15 @@ end
 # -----------------------------------------------------------------------
 # +RUN=300:"run":RUN
 #  INVERT=301:"invert":INVERT
-#  SELECT=302:"selectWindow":SELECT
+# +SELECT=302:"selectWindow":SELECT
 # +WAIT=303:"wait":WAIT
-#  BEEP=304:"beep":BEEP
-#  RESET_MIN_MAX=305:"resetMinAndMax":RESET_MIN_MAX
-#  RESET_THRESHOLD=306:"resetThreshold":RESET_THRESHOLD
+# +BEEP=304:"beep":BEEP
+# +RESET_MIN_MAX=305:"resetMinAndMax":RESET_MIN_MAX
+# +RESET_THRESHOLD=306:"resetThreshold":RESET_THRESHOLD
 #  PRINT=307:"print":PRINT
 #  WRITE=308:"write":WRITE
 # +DO_WAND=309:"doWand":DO_WAND
-#  SET_MIN_MAX=310:"setMinAndMax":SET_MIN_MAX
+# +SET_MIN_MAX=310:"setMinAndMax":SET_MIN_MAX
 # +SET_THRESHOLD=311:"setThreshold":SET_THRESHOLD
 #  SET_TOOL=312:"setTool":SET_TOOL
 # +SET_FOREGROUND=313:"setForegroundColor":SET_FOREGROUND
