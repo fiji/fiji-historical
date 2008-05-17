@@ -1,6 +1,7 @@
 A loose TODO list for Fiji
 ==========================
 
+- merge VIB's and Fiji's HandleExtraFileTypes.java
 - add a plugin finder (a la Google suggest) to the Control Panel, and make
   it wider by default
 - add tools.jar to the releases
@@ -14,16 +15,9 @@ A loose TODO list for Fiji
   they support, add regression tests, if file importers return ImagePlus)
 - look into the ImageJUpdater (maybe we need to disable it)
 - add current BioFormats.
-- add targets for all platforms which make wrappers, such as a .zip or
-  a .dmg file
 - maybe make a live CD from detaolb or some such
-- solve LD_LIBRARY_PATH problem for jfftw.  Maybe by linking with dlopen()?
-  Or is it enough to put jfftw.so into lib/i386/?  In any case, we need to
-  compile FFTW natively for this.
 - maybe change the path of IJ_Prefs.txt also on other platforms than Win32?
 - make absolute path from argv0 in get_fiji_dir().
-- in ImageJA: enable plugin .config files to access any menu. A flag
-  to 'add after <existing_default_menu_entry>' would be awesome.
 - in ImageJA: add Experts- and Simplified views to the GenericDialog.
 - in ImageJA: is there a way to have a FileField in GenericDialog?
 - in ImageJA: add isCanceled() method to SaveDialog.

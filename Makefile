@@ -30,6 +30,7 @@ SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
 $(SUBMODULE_TARGETS_IN_FIJI):
 	@echo "Making $@"
 	@export JAVA_HOME="$$(pwd)/$(JAVA_HOME)/.." && \
+	echo JAVA_HOME is $$JAVA_HOME && \
 	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
 	ORIGINAL_TARGET=$(shell echo " $(SUBMODULE_TARGETS) " | \
 		sed "s/.* \([^ ]*$$(basename "$@")\) .*/\1/") && \
@@ -50,9 +51,8 @@ src-plugins:
 check: check-class-versions check-architectures check-submodules
 
 check-class-versions: src-plugins $(TARGET)$(EXE)
-	echo 'call("fiji.CheckClassVersions.run", ""); run("Quit");' \
-		> tmp.ijm && \
-	./$(TARGET)$(EXE) --headless -- -batch tmp.ijm
+	./$(TARGET)$(EXE) --headless \
+		--main-class=fiji.CheckClassVersions plugins/
 
 check-architectures:
 	./scripts/check-generated-content.sh fiji.cxx \
@@ -136,7 +136,9 @@ ifeq ($(ARCH),win32)
 	STRIP_TARGET=1
 endif
 ifeq ($(ARCH),macosx-intel)
-	EXTRADEFS+= -arch i386 -arch ppc -arch x86_64 -arch ppc64
+	EXTRADEFS+= $(shell file -L \
+	 /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation \
+	 | sed -n "s/^.*for architecture \\([a-z0-9_]*\\).*$$/-arch \\1/p")
 endif
 ifneq (,$(findstring macosx,$(ARCH)))
 	JAVA_HOME=$(JDK)/Home
@@ -189,6 +191,11 @@ run: $(JDK) $(TARGET)$(EXE)
 ifeq ($(CROSS_COMPILE_WIN64_ON_LINUX),)
 	./$(TARGET)$(EXE) $(FIJI_ARGS)
 endif
+
+dev: $(JDK) $(TARGET)$(EXE)
+	AWT_TOOLKIT=MToolkit ./$(TARGET)$(EXE) \
+	-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n -- \
+	$(FIJI_ARGS)
 
 # ------------------------------------------------------------------------
 # JDK
