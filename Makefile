@@ -190,6 +190,11 @@ ifeq ($(CROSS_COMPILE_WIN64_ON_LINUX),)
 	./$(TARGET)$(EXE) $(FIJI_ARGS)
 endif
 
+dev: $(JDK) $(TARGET)$(EXE)
+	AWT_TOOLKIT=MToolkit ./$(TARGET)$(EXE) \
+	-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n -- \
+	$(FIJI_ARGS)
+
 # ------------------------------------------------------------------------
 # JDK
 .PHONY: $(JDK)

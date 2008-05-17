@@ -3,9 +3,9 @@ JAVACOPTS=-target 1.5 -source 1.5 \
 	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
 
 # common is just in this list to exclude classes within it from being copied
-JARDIRS=common Jython Clojure JRuby BSH bUnwarpJ register_virtual_stack registration3d io fiji CLI
+JARDIRS=common Jython Clojure JRuby BSH bUnwarpJ register_virtual_stack registration3d io fiji CLI Javascript
 FINDJARDIRS=$(patsubst %,-name % -o,$(JARDIRS))
-JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar bUnwarpJ_.jar register_virtual_stack_slices.jar registration_3d.jar IO_.jar Fiji.jar CLI_.jar
+JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar bUnwarpJ_.jar register_virtual_stack_slices.jar registration_3d.jar IO_.jar Fiji.jar CLI_.jar Javascript_.jar
 
 JAVAS=$(filter-out $(wildcard $(patsubst %,%/*.java,$(JARDIRS))),$(wildcard *.java */*.java))
 CLASSES=$(patsubst %.java,%.class,$(JAVAS))
@@ -48,6 +48,8 @@ register_virtual_stack_slices.jar: SOURCES=register_virtual_stack/*.java registe
 registration_3d.jar: SOURCES=registration3d/*.java registration3d/plugins.config
 
 CLI_.jar: SOURCES=CLI/*.java CLI/plugins.config
+
+Javascript_.jar: SOURCES=Javascript/*.java Javascript/plugins.config
 
 # Special rule for non-packaged IO plugins present within the src-plugins/Input-Output folder
 IO_.jar: SOURCES=io/*.java io/plugins.config
