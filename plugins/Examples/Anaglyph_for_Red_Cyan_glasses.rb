@@ -1,4 +1,5 @@
-# (The excessive commends
+# The excessive comments are because this is supposed to be a helpful
+# example :)
 
 # This is the total angle between the two views that the 3D image is
 # constructed from.  You probably want to tweak this to get the angle
@@ -10,6 +11,18 @@ degree_separation = 4
 # Find the current image:
 
 i = getImage
+
+# Some preliminary checks:
+
+if i.getStackSize == 1
+  ij.IJ.error "This script only works on image stacks"
+  return
+end
+
+unless i.getBitDepth == 8
+  ij.IJ.error "This script only works on 8 bit image stacks"
+  return
+end
 
 # Use the "3D Project..." (ij.plugin.filter.Projector) plugin to
 # generate an image stack with two slices, each containing a view of
