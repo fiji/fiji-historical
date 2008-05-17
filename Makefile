@@ -136,7 +136,7 @@ ifeq ($(ARCH),win32)
 	STRIP_TARGET=1
 endif
 ifeq ($(ARCH),macosx-intel)
-	EXTRADEFS+= $(shell file \
+	EXTRADEFS+= $(shell file -L \
 	 /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation \
 	 | sed -n "s/^.*for architecture \\([a-z0-9_]*\\).*$$/-arch \\1/p")
 endif
