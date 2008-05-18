@@ -52,7 +52,7 @@ check: check-class-versions check-architectures check-submodules
 
 check-class-versions: src-plugins $(TARGET)$(EXE)
 	./$(TARGET)$(EXE) --headless \
-		--main-class=fiji.CheckClassVersions plugins/
+		--main-class=fiji.CheckClassVersions plugins/ jars/
 
 check-architectures:
 	./scripts/check-generated-content.sh fiji.cxx \

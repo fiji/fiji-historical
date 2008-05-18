@@ -25,19 +25,20 @@ public class CheckClassVersions {
 	boolean verbose = false;
 
 	public static void main(String[] args) {
-		run(args == null ? null : args[0]);
+		run(args);
 	}
 
-	public static void run(String args) {
+	public static void run(String[] args) {
 		run(args, "false");
 	}
 
-	public static void run(String args, String verbose) {
-		if (args == null || args.equals(""))
-			args = Menus.getPlugInsPath();
+	public static void run(String[] args, String verbose) {
+		if (args == null || args.length == 0)
+			args = new String[] { Menus.getPlugInsPath() };
 		CheckClassVersions checker = new CheckClassVersions();
 		checker.verbose = verbose.equals("true");
-		checker.getClassVersions(args);
+		for (int i = 0; i < args.length; i++)
+			checker.getClassVersions(args[i]);
 		checker.print();
 	}
 
