@@ -48,15 +48,15 @@ src-plugins:
 	export PATH="$$JAVA_HOME"/bin:"$$PATH" && \
 	$(MAKE) -C $@
 
-check: check-class-versions check-architectures check-submodules
+check: check-class-versions check-precompiled check-submodules
 
 check-class-versions: src-plugins $(TARGET)$(EXE)
 	./$(TARGET)$(EXE) --headless \
 		--main-class=fiji.CheckClassVersions plugins/ jars/
 
-check-architectures:
-	./scripts/check-generated-content.sh fiji.cxx \
-		$(patsubst %,fiji-%,$(patsubst win%,win%.exe,$(ARCHS)))
+PRECOMPILED=$(patsubst %,precompiled/fiji-%,$(patsubst win%,win%.exe,$(ARCHS)))
+check-precompiled:
+	./scripts/check-generated-content.sh fiji.cxx $(PRECOMPILED)
 
 check-submodules:
 	count=0; \
@@ -178,6 +178,11 @@ endif
 fiji.o: fiji.cxx Makefile $(JDK)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
+save-precompiled: precompiled/$(TARGET)$(EXE)
+
+precompiled/$(TARGET)$(EXE): $(TARGET)$(EXE)
+	cp $< $@
+
 ifeq ($(FIJI_ARGS),)
 ifneq ($(FIJI_RUN_PLUGIN),)
 FIJI_ARGS=-eval 'run("$(FIJI_RUN_PLUGIN)");'
@@ -223,7 +228,7 @@ $(JDK):
 portable-app: Fiji.app
 	for arch in linux linux-amd64 win32; do \
 		case $$arch in win32) exe=.exe;; *) exe=;; esac; \
-		cp fiji-$$arch$$exe $</; \
+		cp precompiled/fiji-$$arch$$exe $</; \
 		jdk=$$(git ls-tree --name-only origin/java/$$arch:); \
 		jre=$$jdk/jre; \
 		git archive --prefix=$</java/$$arch/$$jre/ \
@@ -236,7 +241,7 @@ Fiji.app: RESOURCES=$@/Contents/Resources
 Fiji.app: PLIST=$@/Contents/Info.plist
 
 # TODO: Tried to make it work for powerpc AND mac-intel
-Fiji.app: fiji-macosx-intel
+Fiji.app: precompiled/fiji-macosx-intel
 	mkdir -p $(MACOS)
 	mkdir -p $(RESOURCES)
 	echo '<?xml version="1.0" encoding="UTF-8"?>' > $(PLIST)
@@ -263,7 +268,7 @@ Fiji.app: fiji-macosx-intel
 	echo '		<string>NSApplication</string>' >> $(PLIST)
 	echo '</dict>' >> $(PLIST)
 	echo '</plist>"' >> $(PLIST)
-	cp fiji-macosx-intel $(MACOS)/
+	cp precompiled/fiji-macosx-intel $(MACOS)/
 	for d in java plugins macros ij.jar jars misc; do \
 		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
 	done
@@ -280,7 +285,8 @@ Fiji.app-%:
 		case $$ARCH in win*) EXE=.exe;; *) EXE=;; esac; \
 		mkdir -p $@/$(JAVA_HOME) && \
 		mkdir -p $@/images && \
-		cp -R fiji-$$ARCH$$EXE ij.jar plugins macros jars misc $@ && \
+		cp -R precompiled/fiji-$$ARCH$$EXE $@/fiji$$EXE && \
+		cp -R ij.jar plugins macros jars misc $@ && \
 		REL_PATH=$$(echo $(JAVA_HOME) | sed "s|java/$(ARCH)/||") && \
 		git archive --prefix=java/$(ARCH)/$$REL_PATH/ \
 				origin/java/$(ARCH):$$REL_PATH | \
