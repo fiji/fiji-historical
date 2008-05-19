@@ -167,7 +167,7 @@ CXXFLAGS=-g $(INCLUDES) $(EXTRADEFS) \
 	-DJAVA_HOME=\"$(JAVA_HOME)\" -DJAVA_LIB_PATH=\"$(JAVA_LIB_PATH)\"
 LIBS=$(LIBDL) $(LIBMACOSX)
 
-TARGET=fiji-$(ARCH)
+TARGET=fiji
 
 $(TARGET)$(EXE): fiji.o
 	$(CXX) $(LDFLAGS) $(EXTRADEFS) -o $@ $< $(LIBS)
@@ -178,9 +178,9 @@ endif
 fiji.o: fiji.cxx Makefile $(JDK)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-save-precompiled: precompiled/$(TARGET)$(EXE)
+save-precompiled: precompiled/$(TARGET)-$(ARCH)$(EXE)
 
-precompiled/$(TARGET)$(EXE): $(TARGET)$(EXE)
+precompiled/$(TARGET)-$(ARCH)$(EXE): $(TARGET)$(EXE)
 	cp $< $@
 
 ifeq ($(FIJI_ARGS),)
