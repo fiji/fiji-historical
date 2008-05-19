@@ -2,7 +2,7 @@
 /fiji
 *.swp
 /IJ_Prefs.txt
-/Fiji.app
+/Fiji.app*
 *~
 /MMConfig_demo.cfg
 /MMStartup.bsh
