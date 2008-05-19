@@ -104,7 +104,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		if (name.endsWith(".ipl") ||
 			(buf[0]==105 && buf[1]==105 && buf[2]==105 && buf[3]==105) ||
 			(buf[0]==109 && buf[1]==109 && buf[2]==109 && buf[3]==109)) {
-				return tryPlugIn("IPLab_Reader", path);
+				return tryPlugIn("io.IPLab_Reader", path);
 		}
 
 		// Packard InstantImager format (.img) handler -> check HERE
@@ -206,12 +206,12 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 
 		// Albert Cardona: read .mrc files (little endian). Documentation at: http://ami.scripps.edu/prtl_data/mrc_specification.htm . The parsing of the header is a bare minimum of what could be done.
 		if (name.endsWith(".mrc")) {
-			return tryPlugIn("MRC_Leginon", path);
+			return tryPlugIn("io.Open_MRC_Leginon", path);
 		}
 
 		// Albert Cardona: read .dat files from the EMMENU software
 		if (name.endsWith(".dat") && 1 == buf[1] && 0 == buf[2]) { // 'new format' only
-			return tryPlugIn("DAT_EMMENU", path);
+			return tryPlugIn("io.Open_DAT_EMMENU", path);
 		}
 
 		// Albert Cardona: read TrakEM2 .xml files
@@ -235,9 +235,9 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 
 		// Stephan Saalfeld: read .df3 files. Documentation at: http://www.povray.org/documentation/view/3.6.1/374/
 		if (name.endsWith(".df3")) {
-			return tryPlugIn("Open_DF3", path);
+			return tryPlugIn("io.Open_DF3", path);
 		}
-		
+
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type
 		// and then call appropriate plugin using the above as models
