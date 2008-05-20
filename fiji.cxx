@@ -1,4 +1,6 @@
-#include "jni.h"
+#include <JavaVM/jni.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 
 #include <iostream>
 using std::cerr;
@@ -21,6 +23,11 @@ using std::string;
 
 static const char *relative_java_home = JAVA_HOME;
 static const char *library_path = JAVA_LIB_PATH;
+
+// memory allocation, defaults to 2/3 of the available memory
+// -Xmx...m = <memory found (in bytes)> / memory_fraction / 1024
+// Note: -Xmx expects memory in MB
+static size_t memory_fraction = 1024 * 3 / 2;
 
 // FIXME: these may need to change on Windows
 #include <sys/types.h>
@@ -136,6 +143,7 @@ char **main_argv;
 int main_argc;
 const char *main_class = "ij.ImageJ";
 
+
 static char *get_fiji_dir(const char *argv0)
 {
 	const char *slash = strrchr(argv0, '/');
@@ -154,6 +162,7 @@ static char *get_fiji_dir(const char *argv0)
 
 	return buffer;
 }
+
 
 static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 {
@@ -362,8 +371,73 @@ static void *start_ij(void *dummy)
 	static char java_home_path[65536];
 	int dashdash = 0;
 
+	size_t memory_size = 0;
+	
 	memset(&options, 0, sizeof(options));
 
+	
+#ifdef MACOSX
+	
+	/* Reading the command line options from the Info.plist file in the Application bundle
+	 This routine expects a separate dictionary for fiji with the options from the command
+	 line as keys. Currently the --heap and --system is implemented. 
+	 If Info.plist is not present (i.e. if started from the cmd-line), the whole thing will
+	 be just skipped.
+	 Example: Setting the java heap to 1024m
+	 <key>fiji</key>
+	 <dict>
+		<key>heap</key>
+		<string>1024</string>
+	 </dict>
+	 */
+	
+	CFBundleRef		fijiBundle;
+	CFDictionaryRef bundleInfoDict;
+	CFDictionaryRef fijiInfoDict;
+    CFStringRef     propertyString;
+	char c_propertyString[1024];
+	
+	// Get the main bundle for the app
+	fijiBundle = CFBundleGetMainBundle();
+
+	if ( fijiBundle != NULL ) {
+
+		// Get an instance of the non-localized keys.
+		bundleInfoDict = CFBundleGetInfoDictionary( fijiBundle );
+		
+		// If we succeeded, look for a fiji dictionary.
+		if ( bundleInfoDict != NULL ) {
+			
+			fijiInfoDict = (CFDictionaryRef) CFDictionaryGetValue( bundleInfoDict, CFSTR("fiji") );
+			
+			// If we succeeded, look for fiji property.
+			if ( fijiInfoDict != NULL ) {
+		
+				propertyString = (CFStringRef) CFDictionaryGetValue( fijiInfoDict, CFSTR("heap") );
+				if ( propertyString != NULL ) {
+					CFStringGetCString(propertyString, c_propertyString, 1024, kCFStringEncodingMacRoman);
+					cerr << "heap = " << c_propertyString << "\n";
+					size_t java_heap = atol(c_propertyString);
+					if ( java_heap > 0 ) {
+						memory_size = java_heap * 1024;
+						memory_fraction = 1;
+					}
+				}
+				propertyString = (CFStringRef) CFDictionaryGetValue( fijiInfoDict, CFSTR("system") );
+				if ( propertyString != NULL ) {
+					CFStringGetCString(propertyString, c_propertyString, 1024, kCFStringEncodingMacRoman);
+					cerr << "system = " << c_propertyString << "\n";
+					if ( atol(c_propertyString) > 0 ) {
+						options.use_system_jvm++;
+					}
+				}
+			}
+		}
+	} 
+		
+#endif
+	
+	
 	int count = 1;
 	for (int i = 1; i < main_argc; i++)
 		if (!strcmp(main_argv[i], "--"))
@@ -375,6 +449,11 @@ static void *start_ij(void *dummy)
 		else if (!strncmp(main_argv[i], "--plugins=", 10))
 			snprintf(plugin_path, sizeof(plugin_path),
 					"-Dplugins.dir=%s", main_argv[i] + 10);
+		else if (!strncmp(main_argv[i], "--heap=", 7)) {
+			/* This option sets the memory size (in mb) */
+			memory_size = atol(main_argv[i] + 7) * 1024;
+			memory_fraction = 1;
+		}
 		else if (!strcmp(main_argv[i], "--headless")) {
 			headless = 1;
 			/* handle "--headless script.ijm" gracefully */
@@ -391,7 +470,10 @@ static void *start_ij(void *dummy)
 			main_argv[count++] = main_argv[i];
 	main_argc = count;
 
-	size_t memory_size = get_memory_size(0);
+	// if arguments don't set the memory size, set it after available memory
+	if ( memory_size == 0 ) {
+		memory_size = get_memory_size(0);
+	}
 	static char heap_size[1024];
 
 #ifdef MACOSX
@@ -413,12 +495,13 @@ static void *start_ij(void *dummy)
 	add_option(options, plugin_path, 0);
 
 	if (memory_size > 0) {
-		memory_size = memory_size / 1024 * 2 / 3 / 1024;
+		memory_size = memory_size / memory_fraction / 1024;
 		if (sizeof(void *) == 4 && memory_size > MAX_32BIT_HEAP)
 			memory_size = MAX_32BIT_HEAP;
 		snprintf(heap_size, sizeof(heap_size),
 			"-Xmx%dm", (int)memory_size);
 		add_option(options, heap_size, 0);
+		cerr << "Java heap arg: " << heap_size << "\n";
 	}
 
 	if (headless)
@@ -467,7 +550,7 @@ static void *start_ij(void *dummy)
 		show_commandline(options);
 		exit(0);
 	}
-
+		
 	memset(&args, 0, sizeof(args));
 	args.version  = JNI_VERSION_1_2;
 	args.options = prepare_java_options(options.java_options);
@@ -511,31 +594,139 @@ static void *start_ij(void *dummy)
 		/* This does not return until ImageJ exits */
 		vm->DestroyJavaVM();
 	} else {
-#ifdef MACOSX
-		add_option(options, "-Xdock:name=Fiji", 0);
-		string icon_option = "-Xdock:icon=";
-		icon_option += fiji_dir;
-		icon_option += "/images/Fiji.icns";
-		add_option(options, icon_option, 0);
-#endif
-
 		/* fall back to system-wide Java */
+#ifdef MACOSX
+		/* 
+		 MacOSX specific stuff for system java
+		 -------------------------------------
+		 Non-macosx works but places java into separate pid,
+		 which causes all kinds of strange behaviours (app can launch multiple times, etc).
+		 
+		 Search for system wide java >= 1.5 
+		 and if found, launch Fiji with the system wide java 
+		 This is an adaptation from simple.c from Apple's simpleJavaLauncher code
+		*/
+		 
+		CFStringRef targetJVM = CFSTR("1.5"); // Minimum Java version 1.5
+		CFBundleRef JavaVMBundle;
+		CFURLRef    JavaVMBundleURL;
+		CFURLRef    JavaVMBundlerVersionsDirURL;
+		CFURLRef    TargetJavaVM;
+		UInt8 pathToTargetJVM [PATH_MAX] = "\0";
+		struct stat sbuf;
+		
+		// Look for the JavaVM bundle using its identifier
+		JavaVMBundle = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.JavaVM") );
+		
+		if(JavaVMBundle != NULL) {
+			// Get a path for the JavaVM bundle
+			JavaVMBundleURL = CFBundleCopyBundleURL(JavaVMBundle);
+			CFRelease(JavaVMBundle);
+			
+			if(JavaVMBundleURL != NULL) {
+				// Append to the path the Versions Component
+				JavaVMBundlerVersionsDirURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault,JavaVMBundleURL,CFSTR("Versions"),true);
+				CFRelease(JavaVMBundleURL);
+				
+				if(JavaVMBundlerVersionsDirURL != NULL) {
+					// Append to the path the target JVM's Version
+					TargetJavaVM = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault,JavaVMBundlerVersionsDirURL,targetJVM,true);
+					CFRelease(JavaVMBundlerVersionsDirURL);
+					
+					if(TargetJavaVM != NULL) {
+						if(CFURLGetFileSystemRepresentation (TargetJavaVM,true,pathToTargetJVM,PATH_MAX )) {
+							// Check to see if the directory, or a sym link for the target JVM directory exists, and if so set the
+							// environment variable JAVA_JVM_VERSION to the target JVM.
+							if(stat((char*)pathToTargetJVM,&sbuf) == 0) {
+								// Ok, the directory exists, so now we need to set the environment var JAVA_JVM_VERSION to the CFSTR targetJVM
+								// We can reuse the pathToTargetJVM buffer to set the environement var.
+								if(CFStringGetCString(targetJVM,(char*)pathToTargetJVM,PATH_MAX,kCFStringEncodingUTF8))
+									setenv("JAVA_JVM_VERSION", (char*)pathToTargetJVM,1);
+							}
+						}
+						CFRelease(TargetJavaVM);
+					}
+				}
+			}
+		}
+	
+		/* JNI_VERSION_1_4 is used on Mac OS X to indicate the 1.4.x and later JVM's */
+		args.version  = JNI_VERSION_1_4;
+		args.options = prepare_java_options(options.java_options);
+		args.nOptions = options.java_options.nr;
+		args.ignoreUnrecognized = JNI_TRUE;
+		
+		/* start a VM session */    
+		int result = JNI_CreateJavaVM(&vm, (void**)&env, &args);
+		
+		if ( result != 0 ) {
+			fprintf(stderr, "[Fiji Java Error] Error starting up VM.\n");
+			exit(result);
+			return NULL;
+		}
+		
+		/* Find the main class */
+		string slashed(main_class);
+		replace(slashed.begin(), slashed.end(), '.', '/');
+		jclass mainClass = env->FindClass(slashed.c_str());
+		if ( mainClass == NULL ) {
+			env->ExceptionDescribe();
+			result = -1;
+			goto leave;
+		}
+		
+		/* Get the application's main method */
+		jmethodID mainID = env->GetStaticMethodID(mainClass, "main",
+													 "([Ljava/lang/String;)V");
+		if (mainID == NULL) {
+			if (env->ExceptionOccurred()) {
+				env->ExceptionDescribe();
+			} else {
+				fprintf(stderr, "[Fiji Java Error] No main method found in specified class.\n");
+			}
+			result = -1;
+			goto leave;
+		}
+		
+		/* Build argument array */
+		jobjectArray mainArgs = prepare_ij_options(env, options.ij_options);
+		if (mainArgs == nil) {
+			env->ExceptionDescribe();
+			goto leave;
+		}
+		
+		
+		cerr << "About to call system JVM for OSX only...\n"; // debugging, should be in syslog file
+		
+		/* Invoke main method passing in the argument object. */
+		env->CallStaticVoidMethod(mainClass, mainID, mainArgs);
+		if (env->ExceptionOccurred()) {
+			env->ExceptionDescribe();
+			result = -1;
+			goto leave;
+		}
+	
+	leave:
+		vm->DestroyJavaVM();
+		exit(result);
+		return NULL;
+
+#else
+		/*
+		 Code for the remaining platforms
+		 */
+		
 		add_option(options, "ij.ImageJ", 0);
 		append_string_array(options.java_options, options.ij_options);
 		append_string(options.java_options, NULL);
 		prepend_string(options.java_options, "java");
-#ifdef MACOSX
-		/*
-		 * On MacOSX, one must (stupidly) fork() before exec() to
-		 * clean up some pthread state somehow, otherwise the exec()
-		 * will fail with "Operation not supported".
-		 */
-		if (fork())
-			exit(0);
-#endif
+		
 		if (execvp("java", options.java_options.list))
 			cerr << "Could not launch system-wide Java" << endl;
 		exit(1);
+		
+#endif	
+		
 	}
 	return NULL;
 }
@@ -551,14 +742,24 @@ static void start_ij_macosx(void *dummy)
 	char name[32];
 	sprintf(name, "APP_NAME_%ld", (long)getpid());
 	setenv(name, "Fiji", 1);
+	cerr << "AppName: " << name << "\n";
 
 	/* set the Dock icon */
 	string icon = "APP_ICON_";
 	icon += (name + 9);
 	string icon_path = fiji_dir;
-	icon_path += "/images/Fiji.icns";
+	// check if we're launched from within an Application bundle or command line
+	// If from a bundle, Fiji.app should be in the path. 
+	if ( icon_path.find("Fiji.app") == string::npos ) {
+		// TODO: use getcwd(ptr, ptr_size) to get absolute directory in this case
+		icon_path += "/images/Fiji.icns";
+	} else {
+		icon_path += "/../Resources/Fiji.icns";
+	}
 	setenv(strdup(icon.c_str()), strdup(icon_path.c_str()), 1);
+	cerr << "AppIcon: " << icon.c_str() << "=" << icon_path.c_str() << "\n";
 
+	
 	pthread_t thread;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);

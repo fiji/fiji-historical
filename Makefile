@@ -143,7 +143,7 @@ ifneq (,$(findstring macosx,$(ARCH)))
 	JAVA_LIB_DIR=../Libraries
 	INCLUDES=-I$(JDK)/Headers
 	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
-	LIBMACOSX=-lpthread -framework CoreFoundation
+	LIBMACOSX=-lpthread -framework CoreFoundation -framework JavaVM
 endif
 ifeq ($(ARCH),win64)
 	CXX=PATH="$$(pwd)/root-x86_64-pc-linux/bin:$$PATH" x86_64-pc-mingw32-g++
@@ -191,7 +191,8 @@ endif
 
 # ------------------------------------------------------------------------
 # JDK
-.PHONY: $(JDK)
+# Erwin: don't update JDK
+# .PHONY: $(JDK)
 $(JDK):
 	@echo "Making $@"
 	@test -d "$(JDK)/.git" || \
