@@ -1,6 +1,7 @@
 A loose TODO list for Fiji
 ==========================
 
+- heed Erwin's advice and http://developer.apple.com/java/faq/development.html
 - merge VIB's and Fiji's HandleExtraFileTypes.java
 - add a plugin finder (a la Google suggest) to the Control Panel, and make
   it wider by default
