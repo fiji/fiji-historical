@@ -28,6 +28,7 @@ import java.awt.event.WindowAdapter;
 import java.util.Collections;
 
 import common.AbstractInterpreter;
+import common.RefreshScripts;
 
 /** A dynamic Jython interpreter for ImageJ.
  *	It'd be nice to have TAB expand ImageJ class names and methods.
@@ -98,7 +99,12 @@ public class Jython_Interpreter extends AbstractInterpreter {
 
 	/** pre-import all ImageJ java classes and TrakEM2 java classes */
 	static public String importAll(PythonInterpreter pi) {
-		pi.exec("from ij import *\nfrom ij.gui import *\nfrom ij.io import *\nfrom ij.macro import *\nfrom ij.measure import *\nfrom ij.plugin import *\nfrom ij.plugin.filter import *\nfrom ij.plugin.frame import *\nfrom ij.process import *\nfrom ij.text import *\nfrom ij.util import *\nfrom java.lang import *\n");
+		try {
+			pi.exec("from ij import *\nfrom ij.gui import *\nfrom ij.io import *\nfrom ij.macro import *\nfrom ij.measure import *\nfrom ij.plugin import *\nfrom ij.plugin.filter import *\nfrom ij.plugin.frame import *\nfrom ij.process import *\nfrom ij.text import *\nfrom ij.util import *\nfrom java.lang import *\n");
+		} catch (Exception e) {
+			RefreshScripts.printError(e);
+			return "";
+		}
 		String msg = "All ImageJ and java.lang";
 		try {
 			pi.exec("from ini.trakem2 import *\nfrom ini.trakem2.persistence import *\nfrom ini.trakem2.tree import *\nfrom ini.trakem2.display import *\nfrom ini.trakem2.imaging import *\nfrom ini.trakem2.io import *\nfrom ini.trakem2.utils import *\nfrom ini.trakem2.vector import *\nfrom mpi.fruitfly.analysis import *\nfrom mpi.fruitfly.fft import *\nfrom mpi.fruitfly.general import *\nfrom mpi.fruitfly.math import *\nfrom mpi.fruitfly.math.datastructures import *\nfrom mpi.fruitfly.registration import *\n");
