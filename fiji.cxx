@@ -125,6 +125,57 @@ size_t get_memory_size(int available_only)
 
 
 
+/* multi processor stuff */
+
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#elif defined(hpux) || defined(__hpux) || defined(_hpux)
+#  include <sys/pstat.h>
+#endif
+
+/*
+ * By doing this in two steps we can at least get
+ * the function to be somewhat coherent, even
+ * with this disgusting nest of #ifdefs.
+ */
+#ifndef _SC_NPROCESSORS_ONLN
+#  ifdef _SC_NPROC_ONLN
+#    define _SC_NPROCESSORS_ONLN _SC_NPROC_ONLN
+#  elif defined _SC_CRAY_NCPU
+#    define _SC_NPROCESSORS_ONLN _SC_CRAY_NCPU
+#  endif
+#endif
+
+int online_cpus(void)
+{
+#ifdef _SC_NPROCESSORS_ONLN
+	long ncpus;
+#endif
+
+#ifdef _WIN32
+	SYSTEM_INFO info;
+	GetSystemInfo(&info);
+
+	if ((int)info.dwNumberOfProcessors > 0)
+		return (int)info.dwNumberOfProcessors;
+#elif defined(hpux) || defined(__hpux) || defined(_hpux)
+	struct pst_dynamic psd;
+
+	if (!pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0))
+		return (int)psd.psd_proc_cnt;
+#endif
+
+#ifdef _SC_NPROCESSORS_ONLN
+	if ((ncpus = (long)sysconf(_SC_NPROCESSORS_ONLN)) > 0)
+		return (int)ncpus;
+#endif
+
+	return 1;
+}
+
+
+
 /* Java stuff */
 
 #ifndef JNI_CREATEVM
@@ -360,7 +411,7 @@ static void *start_ij(void *dummy)
 	static char plugin_path[PATH_MAX] = "";
 	static char ext_path[65536];
 	static char java_home_path[65536];
-	int dashdash = 0;
+	int dashdash = 0, heavy_duty = -1;
 
 	memset(&options, 0, sizeof(options));
 
@@ -387,6 +438,10 @@ static void *start_ij(void *dummy)
 			main_class = "org.jruby.Main";
 		else if (!strncmp(main_argv[i], "--main-class=", 13))
 			main_class = main_argv[i] + 13;
+		else if (!strcmp(main_argv[i], "--heavy-duty"))
+			heavy_duty = 1;
+		else if (!strcmp(main_argv[i], "--no-heavy-duty"))
+			heavy_duty = 0;
 		else
 			main_argv[count++] = main_argv[i];
 	main_argc = count;
@@ -396,6 +451,8 @@ static void *start_ij(void *dummy)
 			!getenv("SECURITYSESSIONID")
 #elif defined(__linux__)
 			!getenv("DISPLAY")
+#elif defined(WIN32)
+			getenv("SSH_CONNECTION")
 #else
 			false
 #endif
@@ -437,6 +494,15 @@ static void *start_ij(void *dummy)
 
 	if (headless)
 		add_option(options, "-Djava.awt.headless=true", 0);
+
+	if (heavy_duty < 0)
+		heavy_duty = online_cpus() > 1;
+	if (heavy_duty) {
+		add_option(options, "-Xincgc", 0);
+		add_option(options, "-XX:+UseConcMarkSweepGC", 0);
+		add_option(options, "-XX:+CMSIncrementalMode", 0);
+		add_option(options, "-XX:-UseGCOverheadLimit", 0);
+	}
 
 	if (dashdash) {
 		if (headless)
