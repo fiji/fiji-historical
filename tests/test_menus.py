@@ -23,7 +23,7 @@ for it in ij.Menus.getCommands().entrySet().iterator():
   except ClassNotFoundException:
     error = 0
     # Try without the first package name, since it may be fake
-    # for plugins in sublfolders of the plugins directory:
+    # for plugins in subfolders of the plugins directory:
     k = cl.find('.')
     if -1 != k:
       try:
