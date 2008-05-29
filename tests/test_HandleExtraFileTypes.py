@@ -1,13 +1,14 @@
 # Test whether HandleExtraFileTypes.java tryPlugIn(<classname>) calls
 # will succeed, by testing if the class is in the classpath or in the plugins folder.
 
-from ij import IJ, ImageJ
+from ij import IJ, ImageJ, Prefs
 from java.lang import Class, ClassNotFoundException, System, NoClassDefFoundError
 
 # Launch ImageJ
 ImageJ()
 print "Testing HandleExtraFileTypes.java:"
 #print "path is", System.getProperty('java.class.path')
+print "home is", Prefs.getHomeDir()
 
 # Try both system and IJ class loaders
 def checkClassName(name):
@@ -24,7 +25,7 @@ def checkClassName(name):
     except ClassNotFoundException:
       return 0
 
-path = System.getProperty("user.dir") + '/../' + "src-plugins/Input-Output/"
+path = Prefs.getHomeDir() + '/' + "src-plugins/Input-Output/"
 f = open(path + "HandleExtraFileTypes.java")
 
 error = 0
