@@ -1,6 +1,7 @@
 A loose TODO list for Fiji
 ==========================
 
+- Albert said that plugins.config-added plugins are not added alphabetically
 - heed Erwin's advice and http://developer.apple.com/java/faq/development.html
 - merge VIB's and Fiji's HandleExtraFileTypes.java
 - add a plugin finder (a la Google suggest) to the Control Panel, and make
