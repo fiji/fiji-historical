@@ -21,7 +21,8 @@ plugins/%.jar: staged-plugins/%.jar staged-plugins/%.config
 # The sed expressions here strip anything before ij.jar and replace
 # the leading directory elements of any other jar with plugins/
 
-SUBMODULE_TARGETS=ImageJA/ij.jar TrakEM2/TrakEM2_.jar VIB/VIB_.jar
+SUBMODULE_TARGETS=ImageJA/ij.jar TrakEM2/TrakEM2_.jar VIB/VIB_.jar \
+	mpicbg/mpicbg_.jar
 SUBMODULE_TARGETS_IN_FIJI=$(shell echo "$(SUBMODULE_TARGETS)" | \
 	sed -e "s|[^ ]*/ij.jar|ij.jar|" \
 		-e "s|[^ ]*/\([^ /]*\.jar\)|plugins/\1|g")

@@ -28,3 +28,6 @@
 [submodule "micromanager1.1"]
 	path = micromanager1.1
 	url = git://pacific.mpi-cbg.de/micromanager1.1/.git
+[submodule "mpicbg"]
+	path = mpicbg
+	url = git://pacific.mpi-cbg.de/mpicbg.git
