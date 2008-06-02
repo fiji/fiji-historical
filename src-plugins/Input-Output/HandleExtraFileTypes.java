@@ -96,7 +96,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		// check if the file ends in .DM3 or .dm3,
 		// and bytes make an int value of 3 which is the DM3 version number
 		if (name.endsWith(".dm3") && buf[0]==0 && buf[1]==0 && buf[2]==0 && buf[3]==3) {
-			return tryPlugIn("DM3_Reader", path);
+			return tryPlugIn("io.DM3_Reader", path);
 		}
 
 		// IPLab file handler
