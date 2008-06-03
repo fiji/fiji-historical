@@ -157,7 +157,31 @@ public class Fake {
 			this.prerequisites = prerequisites;
 		}
 
-		abstract void make() throws FakeException;
+		abstract void action() throws FakeException;
+
+		boolean upToDate() {
+			// this implements the mtime check
+			File file = new File(target);
+			if (!file.exists())
+				return false;
+			long targetModifiedTime = file.lastModified();
+
+			Iterator iter = prerequisites.iterator();
+			while (iter.hasNext()) {
+				String prereq = (String)iter.next();
+				if (new File(prereq).lastModified()
+						> targetModifiedTime)
+					return false;
+			}
+
+			return true;
+		}
+
+		void make() throws FakeException {
+			if (upToDate())
+				return;
+			action();
+		}
 
 		protected void error(String message) throws FakeException {
 			throw new FakeException(message
@@ -170,7 +194,7 @@ public class Fake {
 			super(target, prerequisites);
 		}
 
-		public void make() throws FakeException {
+		public void action() throws FakeException {
 			Iterator iter = prerequisites.iterator();
 			while (iter.hasNext()) {
 				String prereq = (String)iter.next();
@@ -193,7 +217,7 @@ public class Fake {
 			super(target, prerequisites);
 		}
 
-		void make() throws FakeException {
+		void action() throws FakeException {
 			error("Not yet implemented");
 		}
 	}
@@ -203,7 +227,7 @@ public class Fake {
 			super(target, prerequisites);
 		}
 
-		void make() throws FakeException {
+		void action() throws FakeException {
 			error("Not yet implemented");
 		}
 	}
@@ -213,7 +237,7 @@ public class Fake {
 			super(target, prerequisites);
 		}
 
-		void make() throws FakeException {
+		void action() throws FakeException {
 			error("Not yet implemented");
 		}
 	}
@@ -223,7 +247,7 @@ public class Fake {
 			super(target, prerequisites);
 		}
 
-		void make() throws FakeException {
+		void action() throws FakeException {
 			error("Not yet implemented");
 		}
 	}
@@ -236,7 +260,7 @@ public class Fake {
 			this.program = program;
 		}
 
-		void make() throws FakeException {
+		void action() throws FakeException {
 			error("Not yet implemented");
 		}
 	}
