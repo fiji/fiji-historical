@@ -14,6 +14,8 @@
 /root-x86_64-pc-linux
 /jars/jython2.2.1/cachedir
 /tmp.ijm
+/fake/Fake*.class
+/fake.jar
 /misc/Fiji.jar
 /plugins/Jython_Interpreter.jar
 /plugins/Clojure_Interpreter.jar
