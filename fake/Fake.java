@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import java.lang.reflect.Method;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,6 +19,7 @@ import java.util.regex.Pattern;
 
 public class Fake {
 	protected static boolean debug = true;
+	protected static Method javac;
 
 	public static void main(String[] args) {
 		new Fake().make(args);
@@ -115,20 +118,30 @@ public class Fake {
 
 	static class GlobFilter implements FilenameFilter {
 		Pattern pattern;
+		long newerThan;
 
-		GlobFilter(String glob) {
+		GlobFilter(String glob, long newerThan) {
 			String regex = "^" + glob.replace(".", "\\.")
 				.replace("^", "\\^").replace("$", "\\$")
 				.replace("?", ".").replace("*", ".*") + "$";
 			pattern = Pattern.compile(regex);
+			this.newerThan = newerThan;
 		}
 
 		public boolean accept(File dir, String name) {
+			if (newerThan > 0 && newerThan > new File(dir, name)
+					.lastModified())
+				return false;
 			return pattern.matcher(name).matches();
 		}
 	}
 
 	protected static int expandGlob(String glob, List list)
+			throws FakeException {
+		return expandGlob(glob, list, 0);
+	}
+
+	protected static int expandGlob(String glob, List list, long newerThan)
 			throws FakeException {
 		// find first wildcard
 		int star = glob.indexOf('*'), qmark = glob.indexOf('?');
@@ -160,7 +173,8 @@ public class Fake {
 		String remainder = nextSlash < 0 ?
 			null : glob.substring(nextSlash);
 
-		String[] names = parentDirectory.list(new GlobFilter(pattern));
+		String[] names = parentDirectory.list(new GlobFilter(pattern,
+					newerThan));
 
 		parentPath = prevSlash < 0 ? "" : parentPath + "/";
 		int count = nextSlash < 0 ? names.length : 0;
@@ -172,14 +186,76 @@ public class Fake {
 				if (starstar)
 					count += expandGlob(parentPath
 						+ names[i] + "/**" + remainder,
-						list);
+						list, newerThan);
 				count += expandGlob(parentPath + names[i]
-						+ remainder, list);
+						+ remainder, list, newerThan);
 			}
 
 		return count;
 	}
 
+	// adds the .class files for a certain .java file
+	protected static void java2classFiles(String path, List result,
+			long newerThan) throws FakeException {
+		if (!path.endsWith(".java")) {
+			result.add(path);
+			return;
+		}
+
+		String stem = path.substring(0, path.length() - 5);
+		if (expandGlob(stem + ".class", result, newerThan) == 0)
+			throw new FakeException("No class file compiled for '"
+				+ path + "'");
+		expandGlob(stem + "$*.class", result, newerThan);
+	}
+
+	// this function handles the javac singleton
+	protected static synchronized void callJavac(String[] arguments)
+			throws Exception {
+		if (javac == null) {
+			Class main = Class.forName("com.sun.tools.javac.Main");
+			javac = main.getMethod("compile",
+					new Class[] { arguments.getClass() });
+		}
+
+		Object result = javac.invoke(null, new Object[] { arguments });
+		if (!result.equals(new Integer(0)))
+			throw new FakeException("Compile error");
+	}
+
+	// returns all .java files in the list, and returns a list where
+	// all the .java files have been replaced by their .class files.
+	protected static List compileJavas(List javas) throws FakeException {
+		List arguments = new ArrayList();
+		arguments.add("-source");
+		arguments.add("1.5");
+		arguments.add("-target");
+		arguments.add("1.5");
+
+		Iterator iter = javas.iterator();
+		while (iter.hasNext()) {
+			String path = (String)iter.next();
+			if (path.endsWith(".java"))
+				arguments.add(path);
+		}
+
+		String[] args = new String[arguments.size()];
+		long now = System.currentTimeMillis();
+
+		try {
+			callJavac((String[])arguments.toArray(args));
+		} catch (FakeException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new FakeException("Compile error: " + e);
+		}
+
+		List result = new ArrayList();
+		iter = javas.iterator();
+		while (iter.hasNext())
+			java2classFiles((String)iter.next(), result, now);
+		return result;
+	}
 
 	// the rule pool
 
@@ -347,6 +423,7 @@ public class Fake {
 		}
 
 		void action() throws FakeException {
+			List files = compileJavas(nonUpToDates);
 			error("Not yet implemented");
 		}
 	}
