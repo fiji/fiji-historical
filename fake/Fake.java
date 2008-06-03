@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class Fake {
+	protected static boolean debug = true;
+
 	public static void main(String[] args) {
 		new Fake().make(args);
 	}
@@ -189,7 +191,23 @@ public class Fake {
 
 		protected void error(String message) throws FakeException {
 			throw new FakeException(message
-					+ "\n\tin rule " + target);
+					+ "\n\tin rule " + this);
+		}
+
+		public String toString() {
+			String result = "";
+			if (debug) {
+				String type = getClass().getName();
+				int dollar = type.lastIndexOf('$');
+				if (dollar >= 0)
+					type = type.substring(dollar + 1);
+				result += "(" + type + ") ";
+			}
+			result += target + " <-";
+			Iterator iter = prerequisites.iterator();
+			while (iter.hasNext())
+				result += " " + iter.next();
+			return result;
 		}
 	}
 
