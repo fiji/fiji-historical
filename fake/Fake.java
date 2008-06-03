@@ -178,9 +178,13 @@ public class Fake {
 		}
 
 		void make() throws FakeException {
-			if (upToDate())
-				return;
-			action();
+			try {
+				if (upToDate())
+					return;
+				action();
+			} catch (Exception e) {
+				error(e.getMessage());
+			}
 		}
 
 		protected void error(String message) throws FakeException {
@@ -203,11 +207,7 @@ public class Fake {
 					error("Unknown target: " + prereq);
 
 				Rule rule = (Rule)allRules.get(prereq);
-				try {
-					rule.make();
-				} catch (Exception e) {
-					error(e.getMessage());
-				}
+				rule.make();
 			}
 		}
 	}
