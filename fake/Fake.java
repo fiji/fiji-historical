@@ -240,7 +240,7 @@ public class Fake {
 
 	abstract static class Rule {
 		protected String target;
-		protected List prerequisites;
+		protected List prerequisites, nonUpToDates;
 
 		Rule(String target, List prerequisites) {
 			this.target = target;
@@ -252,19 +252,22 @@ public class Fake {
 		boolean upToDate() {
 			// this implements the mtime check
 			File file = new File(target);
-			if (!file.exists())
+			if (!file.exists()) {
+				nonUpToDates = prerequisites;
 				return false;
+			}
 			long targetModifiedTime = file.lastModified();
 
+			nonUpToDates = new ArrayList();
 			Iterator iter = prerequisites.iterator();
 			while (iter.hasNext()) {
 				String prereq = (String)iter.next();
 				if (new File(prereq).lastModified()
 						> targetModifiedTime)
-					return false;
+					nonUpToDates.add(prereq);
 			}
 
-			return true;
+			return nonUpToDates.size() == 0;
 		}
 
 		void make() throws FakeException {
