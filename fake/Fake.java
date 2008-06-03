@@ -38,6 +38,9 @@ public class Fake {
 		}
 	}
 
+
+	// the parser
+
 	class Parser {
 		String path = "Fakefile";
 		BufferedReader reader;
@@ -107,11 +110,8 @@ public class Fake {
 		}
 	}
 
-	protected static Map allRules = new HashMap();
 
-	public static void addRule(Rule rule) {
-		allRules.put(rule.target, rule);
-	}
+	// several utility functions
 
 	static class GlobFilter implements FilenameFilter {
 		Pattern pattern;
@@ -180,6 +180,15 @@ public class Fake {
 		return count;
 	}
 
+
+	// the rule pool
+
+	protected static Map allRules = new HashMap();
+
+	public static void addRule(Rule rule) {
+		allRules.put(rule.target, rule);
+	}
+
 	public static Rule addRule(String target, String prerequisites)
 			throws FakeException {
 		List list = new ArrayList();
@@ -224,6 +233,10 @@ public class Fake {
 
 		return rule;
 	}
+
+
+
+	// the different rule types
 
 	abstract static class Rule {
 		protected String target;
@@ -357,6 +370,9 @@ public class Fake {
 			error("Not yet implemented");
 		}
 	}
+
+
+	// our very own exception
 
 	static class FakeException extends Exception {
 		public FakeException(String message) {
