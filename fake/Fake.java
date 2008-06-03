@@ -25,7 +25,6 @@ import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
 
 public class Fake {
-	protected static boolean debug = true;
 	protected static Method javac;
 
 	public static void main(String[] args) {
@@ -93,8 +92,15 @@ public class Fake {
 					continue;
 
 				int arrow = line.indexOf("<-");
-				if (arrow < 0)
-					error("Invalid line (missing colon)");
+				if (arrow < 0) {
+					int equal = line.indexOf('=');
+					if (equal < 0)
+						error("Invalid line");
+					String key = line.substring(0, equal);
+					String val = line.substring(equal + 1);
+					setVariable(key.trim(), val.trim());
+					continue;
+				}
 
 				String target = line.substring(0, arrow).trim();
 				String list = line.substring(arrow + 2).trim();
@@ -239,9 +245,13 @@ public class Fake {
 	protected static List compileJavas(List javas) throws FakeException {
 		List arguments = new ArrayList();
 		arguments.add("-source");
-		arguments.add("1.5");
+		arguments.add(javaVersion);
 		arguments.add("-target");
-		arguments.add("1.5");
+		arguments.add(javaVersion);
+		if (showDeprecation) {
+			arguments.add("-deprecation");
+			arguments.add("-Xlint:unchecked");
+		}
 
 		Iterator iter = javas.iterator();
 		while (iter.hasNext()) {
@@ -321,6 +331,24 @@ public class Fake {
 		}
 	}
 
+
+	// the variables
+
+	protected static boolean debug = false;
+	protected static boolean showDeprecation = true;
+	protected static String javaVersion = "1.5";
+
+	public static void setVariable(String key, String value)
+			throws FakeException {
+		if (key.equalsIgnoreCase("javaVersion"))
+			javaVersion = value;
+		else if (key.equalsIgnoreCase("debug"))
+			debug = value.equalsIgnoreCase("true");
+		else if (key.equals("showDeprecation"))
+			showDeprecation = value.equalsIgnoreCase("true");
+		else
+			throw new FakeException("Unknown variable: " + key);
+	}
 
 	// the rule pool
 

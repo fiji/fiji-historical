@@ -39,7 +39,11 @@ fiji <- fiji.cxx
 
 Empty lines and lines starting with a "#" are ignored.
 
-The supported rules are:
+Lines containing no arrow but an equal sign are treated as variable
+assignments.  Later assignments override earlier ones, unknown variable
+names will lead to an error.
+
+Lines containing an arrow are treated as rules.  The supported rules are:
 
 jar <- directory
 
