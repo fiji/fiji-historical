@@ -417,6 +417,7 @@ public class Fake {
 					return;
 				action();
 			} catch (Exception e) {
+				new File(target).delete();
 				error(e.getMessage());
 			}
 		}
