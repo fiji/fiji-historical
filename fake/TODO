@@ -1,0 +1,8 @@
+- check out Git, or alternatively download via HTTP
+- touch the mtime of "unchanged" .jar files
+- check variable names again
+- handle <target>[jar:<jarfile>]
+- add a fallback if g++ was not found (precompiled)
+- add globbing for conditional variables
+- fix javac (java.lang.reflect.InvocationTargetException is missing)
+- verify (and add a test) that changed .config files triggers recompiling jars
