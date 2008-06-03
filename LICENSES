@@ -33,7 +33,7 @@ Name					File					Author(s)						Contact	(2008)							License
 
 * Interactive 3D Surface Plot 		Interactive_3D_Surface_Plot.jar		Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
 * itext-1.3.jar 			itext-1.3.jar 				Bruno Lowagie, Paulo Soares 				http://www.lowagie.com/iText/ 					MPL/LGPL
-* IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin 			acardona@ini.phys.ethz.ch 					GPL
+* IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin, G. Jefferis 	acardona@ini.phys.ethz.ch 					GPL/public domain
 * IPLab Reader 				IPLab_Reader.jar			Wayne Rasband 						wsr@nih.gov 							PD
 * Java Matrix package 			Jama-1.0.2.jar 				http://math.nist.gov/javanumerics/jama/#Authors 	http://math.nist.gov/javanumerics/jama/#Authors 		PD
 * Javascript Rhino Engine 		js.jar 					http://www.mozilla.org/rhino/ 				http://www.mozilla.org/rhino/ 					MPL 1.1/GPL 2  see http://developer.mozilla.org/en/docs/Rhino_License

@@ -27,6 +27,8 @@ import clojure.lang.LineNumberingPushbackReader;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.io.PipedWriter;
@@ -70,13 +72,39 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			// ok create window
 			super.run(arg);
 			super.window.setTitle("Clojure Interpreter");
+
+			// Add crude support for closing parenthesis with control+)
+			prompt.addKeyListener(new KeyListener() {
+				public void keyPressed(KeyEvent ke) {
+					if (')' == ke.getKeyChar() && ke.isControlDown()) {
+						String text = prompt.getText();
+						int b = 0;
+						for (int i=text.length()-1; i>-1; i--) {
+							switch (text.charAt(i)) {
+								case '(': b++; break;
+								case ')': b--; break;
+							}
+						}
+						if (b > 0) {
+							StringBuffer sb = new StringBuffer(text);
+							for (int i=0; i<b; i++) sb.append(')');
+							prompt.setText(sb.toString());
+						} else if (b < 0) {
+							IJ.log("There are " + Math.abs(b) + " more closing parentheses than opening ones!");
+						}
+					}
+				}
+				public void keyTyped(KeyEvent ke) {}
+				public void keyReleased(KeyEvent ke) {}
+			});
 		}
 	}
 
 	/** Override super. */
 	protected void windowClosing() {
 		LispThread instance = LispThread.getInstance();
-		if (null != instance) instance.quit();
+		//if (null != instance) instance.quit(); // CAN'T QUIT, there may be other threads running it.
+		loaded = false;
 	}
 
 	/** Evaluate clojure code. Calls static method evaluate(text). */ // overrides super
@@ -175,6 +203,9 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 				instance = null;
 				out = null;
 				unlock();
+			}
+			synchronized (RUN) {
+				RUN.notifyAll();
 			}
 		}
 		/** Parsing in the context of (binding [*out* (.getStdOut Clojure.Clojure_Interpreter)] &amp; body) if this.out is not null.*/
