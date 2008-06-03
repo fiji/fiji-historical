@@ -143,6 +143,10 @@ public class Fake {
 
 	protected static int expandGlob(String glob, List list, long newerThan)
 			throws FakeException {
+		if (debug)
+			System.err.println("expandGlob " + glob + (newerThan > 0
+				?  " > " + new java.util.Date(newerThan) : ""));
+
 		// find first wildcard
 		int star = glob.indexOf('*'), qmark = glob.indexOf('?');
 
