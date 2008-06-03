@@ -130,9 +130,6 @@ public class Fake {
 
 	protected static int expandGlob(String glob, List list)
 			throws FakeException {
-		if (glob.indexOf("**") >= 0)
-			throw new FakeException("Unsupported glob: " + glob);
-
 		// find first wildcard
 		int star = glob.indexOf('*'), qmark = glob.indexOf('?');
 
@@ -144,6 +141,7 @@ public class Fake {
 
 		if (qmark >= 0 && qmark < star)
 			star = qmark;
+		boolean starstar = glob.substring(star).startsWith("**");
 
 		int prevSlash = glob.lastIndexOf('/', star);
 		int nextSlash = glob.indexOf('/', star);
@@ -169,9 +167,15 @@ public class Fake {
 		for (int i = 0; i < names.length; i++)
 			if (nextSlash < 0)
 				list.add(parentPath + names[i]);
-			else if (new File(parentPath + names[i]).isDirectory())
+			else if (new File(parentPath + names[i])
+					.isDirectory()) {
+				if (starstar)
+					count += expandGlob(parentPath
+						+ names[i] + "/**" + remainder,
+						list);
 				count += expandGlob(parentPath + names[i]
 						+ remainder, list);
+			}
 
 		return count;
 	}
