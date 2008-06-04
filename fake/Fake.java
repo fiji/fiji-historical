@@ -53,16 +53,18 @@ public class Fake {
 
 	// the parser
 
-	class Parser {
-		String path = "Fakefile";
+	static class Parser {
+		public final static String path = "Fakefile";
 		BufferedReader reader;
 		String line;
 		int lineNumber;
 
 		public Parser(String[] args) throws FakeException {
-			if (args != null && args.length > 0)
-				path = args[0];
+			this(args != null && args.length > 0 ? args[0] : path,
+					args);
+		}
 
+		public Parser(String path, String[] args) throws FakeException {
 			try {
 				InputStream stream = new FileInputStream(path);
 				InputStreamReader input =
@@ -334,6 +336,26 @@ public class Fake {
 		}
 	}
 
+	public static void copyFile(String source, String target)
+			throws FakeException {
+		try {
+			OutputStream out = new FileOutputStream(target);
+			InputStream in = new FileInputStream(source);
+			byte[] buffer = new byte[1<<16];
+			for (;;) {
+				int len = in.read(buffer);
+				if (len < 0)
+					break;
+				out.write(buffer, 0, len);
+			}
+			in.close();
+			out.close();
+		} catch (IOException e) {
+			throw new FakeException("Could not copy "
+				+ source + " to " + target + ": " + e);
+		}
+	}
+
 	protected static class StreamDumper extends Thread {
 		BufferedReader in;
 		PrintStream out;
@@ -518,6 +540,11 @@ public class Fake {
 					+ "\n\tin rule " + this);
 		}
 
+		public String getLastPrerequisite() {
+			int index = prerequisites.size() - 1;
+			return (String)prerequisites.get(index);
+		}
+
 		public String toString() {
 			String result = "";
 			if (debug) {
@@ -555,12 +582,55 @@ public class Fake {
 	}
 
 	static class SubFake extends Rule {
+		String source;
+
 		SubFake(String target, List prerequisites) {
 			super(target, prerequisites);
+			source = getLastPrerequisite()
+				+ new File(target).getName();
+			if (target.endsWith("/"))
+				target = target.substring(0,
+						target.length() - 1);
+		}
+
+		boolean upToDate() {
+			return false;
 		}
 
 		void action() throws FakeException {
-			error("Not yet implemented");
+			Iterator iter = prerequisites.iterator();
+			while (iter.hasNext())
+				action((String)iter.next());
+			if (target.indexOf('.') >= 0)
+				copyFile(source, target);
+		}
+
+		void action(String directory) throws FakeException {
+			String fakeFile = directory + '/' + Parser.path;
+			boolean tryFake = new File(fakeFile).exists();
+			if (debug)
+				System.err.println((tryFake ? "F" : "M")
+					+ "aking in " + directory + "/");
+
+			try {
+				if (tryFake) {
+					// Try "Fake"
+					Parser parser = new Parser(fakeFile,
+							null);
+					Rule all = parser.parseRules();
+					all.make();
+				} else
+					// Try "make"
+					execute(new String[] { "make" },
+						new File(directory));
+			} catch (Exception e) {
+				if (!(e instanceof FakeException))
+					e.printStackTrace();
+				throw new FakeException((tryFake ?
+					"Fake" : "make") + " failed");
+			}
+			if (debug)
+				System.err.println("Leaving " + directory);
 		}
 	}
 
@@ -568,27 +638,11 @@ public class Fake {
 		String source;
 		CopyJar(String target, List prerequisites) {
 			super(target, prerequisites);
-			int index = prerequisites.size() - 1;
-			source = (String)prerequisites.get(index);
+			source = getLastPrerequisite();
 		}
 
 		void action() throws FakeException {
-			try {
-				OutputStream out = new FileOutputStream(target);
-				InputStream in = new FileInputStream(source);
-				byte[] buffer = new byte[1<<16];
-				for (;;) {
-					int len = in.read(buffer);
-					if (len < 0)
-						break;
-					out.write(buffer, 0, len);
-				}
-				in.close();
-				out.close();
-			} catch(Exception e) {
-				throw new FakeException("Could not copy "
-					+ source + " to " + target + ": " + e);
-			}
+			copyFile(source, target);
 		}
 
 		boolean upToDate() {
@@ -644,11 +698,7 @@ public class Fake {
 		}
 
 		void action() throws FakeException {
-			int index = prerequisites.size() - 1;
-			String source = (String)prerequisites.get(index);
-			List list = new ArrayList();
-			list.add(source);
-			compileJavas(list);
+			compileJavas(prerequisites);
 		}
 	}
 
