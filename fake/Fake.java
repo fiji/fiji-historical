@@ -357,10 +357,26 @@ public class Fake {
 		}
 	}
 
+	// the parameter "file" is only used to set the cwd
+	protected static void execute(List arguments, String file)
+			throws Exception {
+		execute(arguments, new File(file).getParentFile());
+	}
+
+	protected static void execute(String[] args, String file)
+			throws Exception {
+		execute(args, new File(file).getParentFile());
+	}
+
 	protected static void execute(List arguments, File dir)
 			throws Exception {
 		String[] args = new String[arguments.size()];
 		arguments.toArray(args);
+		execute(args, dir);
+	}
+
+	protected static void execute(String[] args, File dir)
+			throws Exception {
 		Process proc = Runtime.getRuntime().exec(args, null, dir);
 		new StreamDumper(proc.getErrorStream(), System.err).start();
 		new StreamDumper(proc.getInputStream(), System.out).start();
@@ -672,8 +688,7 @@ public class Fake {
 			add("CXXFLAGS", path, arguments);
 			arguments.add(path);
 			try {
-				File dir = new File(path).getParentFile();
-				execute(arguments, dir);
+				execute(arguments, path);
 				return path.substring(0, path.length() - 4)
 					+ ".o";
 			} catch(Exception e) {
@@ -689,8 +704,7 @@ public class Fake {
 			add("CFLAGS", path, arguments);
 			arguments.add(path);
 			try {
-				File dir = new File(path).getParentFile();
-				execute(arguments, dir);
+				execute(arguments, path);
 				return path.substring(0, path.length() - 2)
 					+ ".o";
 			} catch(Exception e) {
@@ -708,8 +722,7 @@ public class Fake {
 			arguments.addAll(objects);
 			add("LIBS", target, arguments);
 			try {
-				File dir = new File(target).getParentFile();
-				execute(arguments, dir);
+				execute(arguments, target);
 			} catch(Exception e) {
 				e.printStackTrace();
 				throw new FakeException("Could not link "
