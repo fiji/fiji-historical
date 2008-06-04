@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintStream;
 
 import java.lang.reflect.Method;
 
@@ -331,6 +332,42 @@ public class Fake {
 		}
 	}
 
+	protected static class StreamDumper extends Thread {
+		BufferedReader in;
+		PrintStream out;
+
+		StreamDumper(InputStream in, PrintStream out) {
+			this.in = new BufferedReader(new InputStreamReader(in));
+			this.out = out;
+		}
+
+		public void run() {
+			for (;;) {
+				try {
+					String line = in.readLine();
+					if (line == null)
+						break;
+					out.println(line);
+				} catch(Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	protected static void execute(List arguments, File dir)
+			throws Exception {
+		String[] args = new String[arguments.size()];
+		arguments.toArray(args);
+		Process proc = Runtime.getRuntime().exec(args, null, dir);
+		new StreamDumper(proc.getErrorStream(), System.err).start();
+		new StreamDumper(proc.getInputStream(), System.out).start();
+		proc.waitFor();
+		int exitValue = proc.exitValue();
+		if (exitValue != 0)
+			throw new FakeException("Failed: " + exitValue);
+	}
+
 
 	// the variables
 
@@ -382,6 +419,9 @@ public class Fake {
 			else
 				rule = new CompileJar(target, list);
 		}
+		else if (prerequisites.endsWith(".c") ||
+				prerequisites.endsWith(".cxx"))
+			rule = new CompileCProgram(target, list);
 		else if (target.endsWith(")")) {
 			int paren = target.indexOf('(');
 
@@ -529,6 +569,88 @@ public class Fake {
 
 		void action() throws FakeException {
 			error("Not yet implemented");
+		}
+	}
+
+	static class CompileCProgram extends Rule {
+		boolean linkCPlusPlus = false;
+
+		CompileCProgram(String target, List prerequisites) {
+			super(target, prerequisites);
+		}
+
+		void action() throws FakeException {
+			List out = new ArrayList();
+
+			Iterator iter = prerequisites.iterator();
+			while (iter.hasNext()) {
+				String path = (String)iter.next();
+				if (path.endsWith(".c")) {
+					out.add(compileC(path));
+				}
+				else if (path.endsWith(".cxx"))
+					out.add(compileCXX(path));
+				else
+					throw new FakeException("Cannot compile"
+						+ " " + path);
+			}
+			link(target, out);
+		}
+
+		void add(String variable, String path, List arguments) {
+		}
+
+		String compileCXX(String path) throws FakeException {
+			linkCPlusPlus = true;
+			List arguments = new ArrayList();
+			arguments.add("g++");
+			arguments.add("-c");
+			add("CXXFLAGS", path, arguments);
+			arguments.add(path);
+			try {
+				File dir = new File(path).getParentFile();
+				execute(arguments, dir);
+				return path.substring(0, path.length() - 4)
+					+ ".o";
+			} catch(Exception e) {
+				throw new FakeException("Could not compile "
+					+ path + ": " + e);
+			}
+		}
+
+		String compileC(String path) throws FakeException {
+			List arguments = new ArrayList();
+			arguments.add("gcc");
+			arguments.add("-c");
+			add("CFLAGS", path, arguments);
+			arguments.add(path);
+			try {
+				File dir = new File(path).getParentFile();
+				execute(arguments, dir);
+				return path.substring(0, path.length() - 2)
+					+ ".o";
+			} catch(Exception e) {
+				throw new FakeException("Could not compile "
+					+ path + ": " + e);
+			}
+		}
+
+		void link(String target, List objects) throws FakeException {
+			List arguments = new ArrayList();
+			arguments.add(linkCPlusPlus ? "g++" : "gcc");
+			arguments.add("-o");
+			arguments.add(target);
+			add("LDFLAGS", target, arguments);
+			arguments.addAll(objects);
+			add("LIBS", target, arguments);
+			try {
+				File dir = new File(target).getParentFile();
+				execute(arguments, dir);
+			} catch(Exception e) {
+				e.printStackTrace();
+				throw new FakeException("Could not link "
+					+ target + ": " + e);
+			}
 		}
 	}
 
