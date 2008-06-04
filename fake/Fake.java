@@ -424,6 +424,8 @@ public class Fake {
 		else if (prerequisites.endsWith(".c") ||
 				prerequisites.endsWith(".cxx"))
 			rule = new CompileCProgram(target, list);
+		else if (target.endsWith(".class"))
+			rule = new CompileClass(target, list);
 		else if (target.endsWith(")")) {
 			int paren = target.indexOf('(');
 
@@ -485,6 +487,9 @@ public class Fake {
 			try {
 				if (upToDate())
 					return;
+				if (debug)
+					System.err.println("Need to make "
+						+ this);
 				action();
 			} catch (Exception e) {
 				new File(target).delete();
@@ -612,8 +617,6 @@ public class Fake {
 		}
 
 		void action() throws FakeException {
-			if (debug)
-				System.err.println("Compiling " + nonUpToDates);
 			List files = compileJavas(nonUpToDates);
 			makeJar(target, null, files);
 		}
@@ -625,7 +628,11 @@ public class Fake {
 		}
 
 		void action() throws FakeException {
-			error("Not yet implemented");
+			int index = prerequisites.size() - 1;
+			String source = (String)prerequisites.get(index);
+			List list = new ArrayList();
+			list.add(source);
+			compileJavas(list);
 		}
 	}
 
