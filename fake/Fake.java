@@ -792,14 +792,71 @@ public class Fake {
 
 	static class ExecuteProgram extends Rule {
 		String program;
+		File cwd;
+
 		ExecuteProgram(String target, List prerequisites,
 				String program, File cwd) {
 			super(target, prerequisites, cwd);
 			this.program = program;
+			this.cwd = cwd;
 		}
 
 		void action() throws FakeException {
-			error("Not yet implemented");
+			try {
+				execute(splitCommandLine(program), cwd);
+			} catch (Exception e) {
+				if (!(e instanceof FakeException))
+					e.printStackTrace();
+				throw new FakeException("Program failed: '"
+					+ program + "'\n" + e);
+			}
+		}
+
+		List splitCommandLine(String program) throws FakeException {
+			List result = new ArrayList();
+			int len = program.length();
+			String current = "";
+
+			for (int i = 0; i < len; i++) {
+				char c = program.charAt(i);
+				if (isQuote(c)) {
+					int i2 = findClosingQuote(program,
+							c, i + 1, len);
+					current += program.substring(i + 1, i2);
+					i = i2;
+					continue;
+				}
+				if (c == ' ' || c == '\t') {
+					if (current.equals(""))
+						continue;
+					result.add(current);
+					current = "";
+				} else
+					current += c;
+			}
+			if (!current.equals(""))
+				result.add(current);
+			return result;
+		}
+
+		int findClosingQuote(String s, char quote, int index, int len)
+				throws FakeException {
+			for (int i = index; i < len; i++) {
+				char c = s.charAt(i);
+				if (c == quote)
+					return i;
+				if (isQuote(c))
+					i = findClosingQuote(s, c, i + 1, len);
+			}
+			String spaces = "               ";
+			for (int i = 0; i < index; i++)
+				spaces += " ";
+			throw new FakeException("Unclosed quote: " + program
+				+ "\n" + spaces + "^");
+		}
+
+		boolean isQuote(char c) {
+			return c == '"' || c == '\'';
 		}
 	}
 
