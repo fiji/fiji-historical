@@ -12,6 +12,7 @@ import java.io.PrintStream;
 import java.lang.reflect.Method;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.StringTokenizer;
 
 import java.util.jar.Manifest;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.JarOutputStream;
 
@@ -542,12 +544,65 @@ public class Fake {
 	}
 
 	static class CopyJar extends Rule {
+		String source;
 		CopyJar(String target, List prerequisites) {
 			super(target, prerequisites);
+			int index = prerequisites.size() - 1;
+			source = (String)prerequisites.get(index);
 		}
 
 		void action() throws FakeException {
-			error("Not yet implemented");
+			try {
+				OutputStream out = new FileOutputStream(target);
+				InputStream in = new FileInputStream(source);
+				byte[] buffer = new byte[1<<16];
+				for (;;) {
+					int len = in.read(buffer);
+					if (len < 0)
+						break;
+					out.write(buffer, 0, len);
+				}
+				in.close();
+				out.close();
+			} catch(Exception e) {
+				throw new FakeException("Could not copy "
+					+ source + " to " + target + ": " + e);
+			}
+		}
+
+		boolean upToDate() {
+			if (super.upToDate())
+				return true;
+
+			// TODO: check if there is a rule to make the sources
+			JarFile targetJar, sourceJar;
+
+			try {
+				targetJar = new JarFile(target);
+			} catch(IOException e) {
+				return false;
+			}
+			try {
+				sourceJar = new JarFile(source);
+			} catch(IOException e) {
+				return true;
+			}
+
+			Enumeration iter = sourceJar.entries();
+			while (iter.hasMoreElements()) {
+				JarEntry entry = (JarEntry)iter.nextElement();
+				JarEntry other = (JarEntry)
+					targetJar.getEntry(entry.getName());
+				if (other == null)
+					return false;
+				if (entry.hashCode() != other.hashCode())
+					return false;
+			}
+			try {
+				targetJar.close();
+				sourceJar.close();
+			} catch(IOException e) { }
+			return true;
 		}
 	}
 
@@ -557,6 +612,8 @@ public class Fake {
 		}
 
 		void action() throws FakeException {
+			if (debug)
+				System.err.println("Compiling " + nonUpToDates);
 			List files = compileJavas(nonUpToDates);
 			makeJar(target, null, files);
 		}
