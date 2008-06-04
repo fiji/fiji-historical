@@ -473,6 +473,7 @@ public class Fake {
 	// the variables
 
 	protected static boolean debug = false;
+	protected static boolean verbose = false;
 	protected static boolean showDeprecation = true;
 	protected static String javaVersion = "1.5";
 
@@ -482,6 +483,8 @@ public class Fake {
 			javaVersion = value;
 		else if (key.equalsIgnoreCase("debug"))
 			debug = value.equalsIgnoreCase("true");
+		else if (key.equalsIgnoreCase("verbose"))
+			verbose = value.equalsIgnoreCase("true");
 		else if (key.equals("showDeprecation"))
 			showDeprecation = value.equalsIgnoreCase("true");
 		else
@@ -533,9 +536,7 @@ public class Fake {
 			try {
 				if (upToDate())
 					return;
-				if (debug)
-					System.err.println("Need to make "
-						+ this);
+				System.err.println("Faking " + this);
 				action();
 			} catch (Exception e) {
 				new File(target).delete();
@@ -555,7 +556,7 @@ public class Fake {
 
 		public String toString() {
 			String result = "";
-			if (debug) {
+			if (verbose) {
 				String type = getClass().getName();
 				int dollar = type.lastIndexOf('$');
 				if (dollar >= 0)
@@ -616,9 +617,8 @@ public class Fake {
 		void action(String directory) throws FakeException {
 			String fakeFile = directory + '/' + Parser.path;
 			boolean tryFake = new File(fakeFile).exists();
-			if (debug)
-				System.err.println((tryFake ? "F" : "M")
-					+ "aking in " + directory + "/");
+			System.err.println((tryFake ? "F" : "M")
+				+ "aking in " + directory + "/");
 
 			try {
 				if (tryFake) {
@@ -638,8 +638,7 @@ public class Fake {
 				throw new FakeException((tryFake ?
 					"Fake" : "make") + " failed: " + e);
 			}
-			if (debug)
-				System.err.println("Leaving " + directory);
+			System.err.println("Leaving " + directory);
 		}
 	}
 
