@@ -125,6 +125,58 @@ public class Fake {
 			return result;
 		}
 
+		public Rule addRule(String target, String prerequisites)
+				throws FakeException {
+			List list = new ArrayList();
+			StringTokenizer tokenizer =
+				new StringTokenizer(prerequisites);
+
+			while (tokenizer.hasMoreTokens()) {
+				String token = tokenizer.nextToken();
+				if (expandGlob(token, list) == 0)
+					throw new FakeException("Glob did not "
+						+ "match any file: '"
+						+ token + "'");
+			}
+
+			Rule rule = null;
+
+			if (allRules.isEmpty())
+				rule = new All(target, list);
+			else if (new File(prerequisites).isDirectory())
+				rule = new SubFake(target, list);
+			else if (target.endsWith(".jar")) {
+				if (prerequisites.endsWith(".jar"))
+					rule = new CopyJar(target, list);
+				else
+					rule = new CompileJar(target, list);
+			}
+			else if (prerequisites.endsWith(".c") ||
+					prerequisites.endsWith(".cxx"))
+				rule = new CompileCProgram(target, list);
+			else if (target.endsWith(".class"))
+				rule = new CompileClass(target, list);
+			else if (target.endsWith(")")) {
+				int paren = target.indexOf('(');
+
+				if (paren < 0)
+					throw new FakeException("Invalid rule");
+
+				String program = target.substring(paren + 1,
+					target.length() - 1);
+				target = target.substring(0, paren).trim();
+
+				rule = new ExecuteProgram(target, list, program);
+			}
+
+			if (rule == null)
+				throw new FakeException("Unrecognized rule");
+
+			allRules.put(rule.target, rule);
+
+			return rule;
+		}
+
 		protected void error(String message) throws FakeException {
 			throw new FakeException(path + ":" + lineNumber + ": "
 					+ message + "\n\t" + line);
@@ -430,61 +482,6 @@ public class Fake {
 	// the rule pool
 
 	protected static Map allRules = new HashMap();
-
-	public static void addRule(Rule rule) {
-		allRules.put(rule.target, rule);
-	}
-
-	public static Rule addRule(String target, String prerequisites)
-			throws FakeException {
-		List list = new ArrayList();
-		StringTokenizer tokenizer = new StringTokenizer(prerequisites);
-
-		while (tokenizer.hasMoreTokens()) {
-			String token = tokenizer.nextToken();
-			if (expandGlob(token, list) == 0)
-				throw new FakeException("Glob did not match any"
-					+ " file: '" + token + "'");
-		}
-
-		Rule rule = null;
-
-		if (allRules.isEmpty())
-			rule = new All(target, list);
-		else if (new File(prerequisites).isDirectory())
-			rule = new SubFake(target, list);
-		else if (target.endsWith(".jar")) {
-			if (prerequisites.endsWith(".jar"))
-				rule = new CopyJar(target, list);
-			else
-				rule = new CompileJar(target, list);
-		}
-		else if (prerequisites.endsWith(".c") ||
-				prerequisites.endsWith(".cxx"))
-			rule = new CompileCProgram(target, list);
-		else if (target.endsWith(".class"))
-			rule = new CompileClass(target, list);
-		else if (target.endsWith(")")) {
-			int paren = target.indexOf('(');
-
-			if (paren < 0)
-				throw new FakeException("Invalid rule");
-
-			String program = target.substring(paren + 1,
-				target.length() - 1);
-			target = target.substring(0, paren - 1).trim();
-
-			rule = new ExecuteProgram(target, list, program);
-		}
-
-		if (rule == null)
-			throw new FakeException("Unrecognized rule");
-
-		addRule(rule);
-
-		return rule;
-	}
-
 
 
 	// the different rule types
