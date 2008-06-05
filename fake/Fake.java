@@ -445,8 +445,22 @@ public class Fake {
 				link(target, out);
 			}
 
-			void add(String variable, String path, List arguments) {
-				// TODO
+			// TODO: handle globs, too?  If so, in checkVariables()?
+			void add(String variable, String path, List arguments)
+					throws FakeException {
+				add(variables.get(variable), arguments);
+				add(variables.get(variable + "(" + path + ")"),
+						arguments);
+				add(variables.get(variable + "(" + target + ")"),
+						arguments);
+			}
+
+			void add(Object flags, List arguments)
+					throws FakeException {
+				if (flags == null)
+					return;
+				List list = splitCommandLine((String)flags);
+				arguments.addAll(list);
 			}
 
 			String compileCXX(String path) throws FakeException {
