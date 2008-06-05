@@ -145,21 +145,20 @@ public class Fake {
 			Rule rule = null;
 
 			if (allRules.isEmpty())
-				rule = new All(target, list, cwd);
+				rule = new All(target, list);
 			else if (new File(prerequisites).isDirectory())
-				rule = new SubFake(target, list, cwd);
+				rule = new SubFake(target, list);
 			else if (target.endsWith(".jar")) {
 				if (prerequisites.endsWith(".jar"))
-					rule = new CopyJar(target, list, cwd);
+					rule = new CopyJar(target, list);
 				else
-					rule = new CompileJar(target, list,
-							cwd);
+					rule = new CompileJar(target, list);
 			}
 			else if (prerequisites.endsWith(".c") ||
 					prerequisites.endsWith(".cxx"))
-				rule = new CompileCProgram(target, list, cwd);
+				rule = new CompileCProgram(target, list);
 			else if (target.endsWith(".class"))
-				rule = new CompileClass(target, list, cwd);
+				rule = new CompileClass(target, list);
 			else if (target.endsWith(")")) {
 				int paren = target.indexOf('(');
 
@@ -171,7 +170,7 @@ public class Fake {
 				target = target.substring(0, paren).trim();
 
 				rule = new ExecuteProgram(target, list,
-					program, cwd);
+					program);
 			}
 
 			if (rule == null)
@@ -192,12 +191,10 @@ public class Fake {
 		abstract class Rule {
 			protected String target;
 			protected List prerequisites, nonUpToDates;
-			protected File cwd;
 
-			Rule(String target, List prerequisites, File cwd) {
+			Rule(String target, List prerequisites) {
 				this.target = target;
 				this.prerequisites = prerequisites;
-				this.cwd = cwd;
 			}
 
 			abstract void action() throws FakeException;
@@ -264,8 +261,8 @@ public class Fake {
 		}
 
 		class All extends Rule {
-			All(String target, List prerequisites, File cwd) {
-				super(target, prerequisites, cwd);
+			All(String target, List prerequisites) {
+				super(target, prerequisites);
 			}
 
 			public void action() throws FakeException {
@@ -286,8 +283,8 @@ public class Fake {
 		class SubFake extends Rule {
 			String source;
 
-			SubFake(String target, List prerequisites, File cwd) {
-				super(target, prerequisites, cwd);
+			SubFake(String target, List prerequisites) {
+				super(target, prerequisites);
 				source = getLastPrerequisite()
 					+ new File(target).getName();
 				if (target.endsWith("/"))
@@ -340,8 +337,8 @@ public class Fake {
 
 		class CopyJar extends Rule {
 			String source;
-			CopyJar(String target, List prerequisites, File cwd) {
-				super(target, prerequisites, cwd);
+			CopyJar(String target, List prerequisites) {
+				super(target, prerequisites);
 				source = getLastPrerequisite();
 			}
 
@@ -388,9 +385,8 @@ public class Fake {
 		}
 
 		class CompileJar extends Rule {
-			CompileJar(String target, List prerequisites,
-					File cwd) {
-				super(target, prerequisites, cwd);
+			CompileJar(String target, List prerequisites) {
+				super(target, prerequisites);
 			}
 
 			void action() throws FakeException {
@@ -400,9 +396,8 @@ public class Fake {
 		}
 
 		class CompileClass extends Rule {
-			CompileClass(String target, List prerequisites,
-					File cwd) {
-				super(target, prerequisites, cwd);
+			CompileClass(String target, List prerequisites) {
+				super(target, prerequisites);
 			}
 
 			void action() throws FakeException {
@@ -413,9 +408,8 @@ public class Fake {
 		class CompileCProgram extends Rule {
 			boolean linkCPlusPlus = false;
 
-			CompileCProgram(String target, List prerequisites,
-					File cwd) {
-				super(target, prerequisites, cwd);
+			CompileCProgram(String target, List prerequisites) {
+				super(target, prerequisites);
 			}
 
 			void action() throws FakeException {
@@ -494,13 +488,11 @@ public class Fake {
 
 		class ExecuteProgram extends Rule {
 			String program;
-			File cwd;
 
 			ExecuteProgram(String target, List prerequisites,
-					String program, File cwd) {
-				super(target, prerequisites, cwd);
+					String program) {
+				super(target, prerequisites);
 				this.program = program;
-				this.cwd = cwd;
 			}
 
 			void action() throws FakeException {
