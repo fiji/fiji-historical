@@ -23,6 +23,16 @@ using std::string;
 
 static const char *relative_java_home = JAVA_HOME;
 static const char *library_path = JAVA_LIB_PATH;
+#ifdef JAVA_OSEXT
+static const char *java_osext = JAVA_OSEXT;
+#else
+static const char *java_osext = NULL;
+#endif
+#ifdef JAVA_EXT
+static const char *java_ext = JAVA_EXT;
+#else
+static const char *java_ext = NULL;
+#endif
 
 // memory allocation, defaults to 2/3 of the available memory
 // -Xmx...m = <memory found (in bytes)> / memory_fraction / 1024
@@ -366,8 +376,9 @@ static void *start_ij(void *dummy)
 	JavaVMInitArgs args;
 	JNIEnv *env;
 	static string class_path;
+	static string ext_path;
 	static char plugin_path[PATH_MAX] = "";
-	static char ext_path[65536];
+	// static char ext_path[65536] = "";
 	static char java_home_path[65536];
 	int dashdash = 0;
 
@@ -431,10 +442,16 @@ static void *start_ij(void *dummy)
 						options.use_system_jvm++;
 					}
 				}
+				propertyString = (CFStringRef) CFDictionaryGetValue( fijiInfoDict, CFSTR("ext") );
+				if ( propertyString != NULL ) {
+					CFStringGetCString(propertyString, c_propertyString, 1024, kCFStringEncodingMacRoman);
+					cerr << "ext = " << c_propertyString << "\n";
+					ext_path = c_propertyString;
+				}
 			}
 		}
-	} 
-		
+	}
+	
 #endif
 	
 	
@@ -449,6 +466,8 @@ static void *start_ij(void *dummy)
 		else if (!strncmp(main_argv[i], "--plugins=", 10))
 			snprintf(plugin_path, sizeof(plugin_path),
 					"-Dplugins.dir=%s", main_argv[i] + 10);
+		else if (!strncmp(main_argv[i], "--ext=", 6))
+			ext_path += main_argv[i] + 6;
 		else if (!strncmp(main_argv[i], "--heap=", 7)) {
 			/* This option sets the memory size (in mb) */
 			memory_size = atol(main_argv[i] + 7) * 1024;
@@ -475,14 +494,31 @@ static void *start_ij(void *dummy)
 		memory_size = get_memory_size(0);
 	}
 	static char heap_size[1024];
-
-#ifdef MACOSX
-	snprintf(ext_path, sizeof(ext_path),
-			"-Djava.ext.dirs=%s/%s/lib/ext",
-			fiji_dir, relative_java_home);
-	add_option(options, ext_path, 0);
-#endif
-
+	
+	// Dealing with the -Djava.ext.dirs option
+	//
+	cerr << "java_ext" << java_ext << "\n";
+	// Only if command line or bundle hasn't set the ext_path 
+	// set the ext_path to the compiler option (if JAVA_EXT compiler option was given)
+	if ( ext_path.size() == 0 && java_ext != NULL ) {
+		ext_path = fiji_dir;
+		ext_path += "/";
+		ext_path += relative_java_home;
+		ext_path += "/";
+		ext_path += java_ext;
+	}
+	// Add a -Djava.ext.dirs if ext_path has been set by bundle, command line option or compiler flag 
+	if ( ext_path.size() != 0 ) {
+		// if there are OS specific extensions, append them to the ext_path
+		if ( java_osext != NULL ) {
+			ext_path += ":";
+			ext_path += java_osext;
+		}
+		ext_path.insert(0, "-Djava.ext.dirs=");
+		add_option(options, ext_path.c_str(), 0);
+	}
+	
+	
 	if (build_classpath(class_path, string(fiji_dir) + "/plugins", 0))
 		return NULL;
 	if (build_classpath(class_path, string(fiji_dir) + "/jars", 0))
@@ -649,12 +685,17 @@ static void *start_ij(void *dummy)
 				}
 			}
 		}
-	
+		
+		cerr << "ext=" << ext_path << "\n";
+				
 		/* JNI_VERSION_1_4 is used on Mac OS X to indicate the 1.4.x and later JVM's */
+		memset(&args, 0, sizeof(args));
 		args.version  = JNI_VERSION_1_4;
 		args.options = prepare_java_options(options.java_options);
 		args.nOptions = options.java_options.nr;
 		args.ignoreUnrecognized = JNI_TRUE;
+		
+		vm = NULL; env = NULL;
 		
 		/* start a VM session */    
 		int result = JNI_CreateJavaVM(&vm, (void**)&env, &args);
@@ -663,7 +704,8 @@ static void *start_ij(void *dummy)
 			fprintf(stderr, "[Fiji Java Error] Error starting up VM.\n");
 			exit(result);
 			return NULL;
-		}
+		}		
+		
 		
 		/* Find the main class */
 		string slashed(main_class);

@@ -86,7 +86,7 @@ mm:
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 
-ARCHS=linux linux-amd64 macosx-intel win32 win64
+ARCHS=linux linux-amd64 macosx win32 win64
 
 LIBDL=-ldl
 INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH_INCLUDE)
@@ -106,11 +106,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	ARCH=win32
 endif
 ifeq ($(uname_S),Darwin)
-ifeq ($(uname_M),Power Macintosh)
 	ARCH=macosx
-else
-	ARCH=macosx-intel
-endif
 endif
 endif
 
@@ -134,15 +130,18 @@ ifeq ($(ARCH),win32)
 	EXE=.exe
 	STRIP_TARGET=1
 endif
-ifeq ($(ARCH),macosx-intel)
+ifeq ($(ARCH),macosx)
 	EXTRADEFS+= -arch i386 -arch ppc -arch x86_64 -arch ppc64
-endif
-ifneq (,$(findstring macosx,$(ARCH)))
-	JAVA_HOME=$(JDK)/Home
-	JAVA_LIB_PATH=../Libraries/libjvm.dylib
-	JAVA_LIB_DIR=../Libraries
+	JAVA_VERSION=1.5
+	JDK=/System/Library/Frameworks/JavaVM.framework/Versions/$(JAVA_VERSION)
+	JAVA_HOME=java/macosx
+	JAVA_LIB_PATH=
+	JAVA_LIB_DIR=
+	JAVA_OSEXT=/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Versions/$(JAVA_VERSION)/Home/lib/ext
+	JAVA_EXT+=ext
 	INCLUDES=-I$(JDK)/Headers
-	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
+	EXTRADEFS+= -DMACOSX -DJAVA_VERSION=\"$(JAVA_VERSION)\" -DJAVA_OSEXT=\"$(JAVA_OSEXT)\" -DJAVA_EXT=\"$(JAVA_EXT)\"
+	EXTRADEFS+= -mmacosx-version-min=10.4
 	LIBMACOSX=-lpthread -framework CoreFoundation -framework JavaVM
 endif
 ifeq ($(ARCH),win64)
@@ -191,25 +190,27 @@ endif
 
 # ------------------------------------------------------------------------
 # JDK
-# Erwin: don't update JDK
-# .PHONY: $(JDK)
+# Erwin: don't pull JDK if macosx
+#.PHONY: $(JDK)
 $(JDK):
-	@echo "Making $@"
-	@test -d "$(JDK)/.git" || \
-		(OBJECTSDIR="$$(pwd -W 2> /dev/null || pwd)/.git/objects" && \
-		 cd "$(JDK)" && \
-		 git init && \
-		 echo "$$OBJECTSDIR" > .git/objects/info/alternates && \
-		 BRANCH="refs/remotes/origin/$(JDK)" && \
-		 SHA1=$$(cd ../.. && git rev-parse --verify $$BRANCH) && \
-		 git update-ref "$$BRANCH" $$SHA1 && \
-		 git config remote.origin.url ../.. && \
-		 git config remote.origin.fetch +"$$BRANCH:$$BRANCH" && \
-		 git config branch.master.remote origin && \
-		 git config branch.master.merge "$$BRANCH" && \
-		 git fetch)
-	@echo "Updating $@"
-	@(cd "$(JDK)" && git pull origin "refs/remotes/origin/$(JDK)")
+	ifneq ($(ARCH),macosx)
+		@echo "Making $@"
+		@test -d "$(JDK)/.git" || \
+			(OBJECTSDIR="$$(pwd -W 2> /dev/null || pwd)/.git/objects" && \
+			 cd "$(JDK)" && \
+			 git init && \
+			 echo "$$OBJECTSDIR" > .git/objects/info/alternates && \
+			 BRANCH="refs/remotes/origin/$(JDK)" && \
+			 SHA1=$$(cd ../.. && git rev-parse --verify $$BRANCH) && \
+			 git update-ref "$$BRANCH" $$SHA1 && \
+			 git config remote.origin.url ../.. && \
+			 git config remote.origin.fetch +"$$BRANCH:$$BRANCH" && \
+			 git config branch.master.remote origin && \
+			 git config branch.master.merge "$$BRANCH" && \
+			 git fetch)
+		@echo "Updating $@"
+		@(cd "$(JDK)" && git pull origin "refs/remotes/origin/$(JDK)")
+	endif
 
 # ------------------------------------------------------------------------
 
@@ -228,8 +229,8 @@ Fiji.app: MACOS=$@/Contents/MacOS
 Fiji.app: RESOURCES=$@/Contents/Resources
 Fiji.app: PLIST=$@/Contents/Info.plist
 
-# TODO: Tried to make it work for powerpc AND mac-intel
-Fiji.app: fiji-macosx-intel
+
+Fiji.app: fiji-macosx
 	mkdir -p $(MACOS)
 	mkdir -p $(RESOURCES)
 	echo '<?xml version="1.0" encoding="UTF-8"?>' > $(PLIST)
@@ -237,7 +238,7 @@ Fiji.app: fiji-macosx-intel
 	echo '<plist version="1.0">' >> $(PLIST)
 	echo '<dict>' >> $(PLIST)
 	echo '	<key>CFBundleExecutable</key>' >> $(PLIST)
-	echo '		<string>fiji-macosx-intel</string>' >> $(PLIST)
+	echo '		<string>fiji-macosx</string>' >> $(PLIST)
 	echo '	<key>CFBundleGetInfoString</key>' >> $(PLIST)
 	echo '		<string>Fiji for Mac OS X</string>' >> $(PLIST)
 	echo '	<key>CFBundleIconFile</key>' >> $(PLIST)
@@ -256,11 +257,11 @@ Fiji.app: fiji-macosx-intel
 	echo '		<string>NSApplication</string>' >> $(PLIST)
 	echo '</dict>' >> $(PLIST)
 	echo '</plist>"' >> $(PLIST)
-	cp fiji-macosx-intel $(MACOS)/
+	cp fiji-macosx $(MACOS)/
 	for d in java plugins macros ij.jar jars misc; do \
 		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
 	done
-	git archive --prefix=$@/java/macosx-intel/ origin/java/macosx-intel: | \
+	git archive --prefix=$@/java/macosx/ origin/java/macosx: | \
 		tar xvf -
 	cp ij.jar $@/
 	cp -R plugins macros jars misc $@/
