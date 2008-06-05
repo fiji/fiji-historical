@@ -37,7 +37,7 @@ public class Fake {
 	public void make(String[] args) {
 		try {
 			Parser parser = new Parser(args);
-			Rule all = parser.parseRules();
+			Parser.Rule all = parser.parseRules();
 			all.make();
 		}
 		catch (FakeException e) {
@@ -53,12 +53,13 @@ public class Fake {
 
 	// the parser
 
-	static class Parser {
+	class Parser {
 		public final static String path = "Fakefile";
 		BufferedReader reader;
 		String line;
 		int lineNumber;
 		File cwd;
+		protected Map allRules = new HashMap();
 
 		public Parser(String[] args) throws FakeException {
 			this(args != null && args.length > 0 ? args[0] : path,
@@ -185,6 +186,385 @@ public class Fake {
 			throw new FakeException(path + ":" + lineNumber + ": "
 					+ message + "\n\t" + line);
 		}
+
+		// the different rule types
+
+		abstract class Rule {
+			protected String target;
+			protected List prerequisites, nonUpToDates;
+			protected File cwd;
+
+			Rule(String target, List prerequisites, File cwd) {
+				this.target = target;
+				this.prerequisites = prerequisites;
+				this.cwd = cwd;
+			}
+
+			abstract void action() throws FakeException;
+
+			boolean upToDate() {
+				// this implements the mtime check
+				File file = new File(cwd, target);
+				if (!file.exists()) {
+					nonUpToDates = prerequisites;
+					return false;
+				}
+				long targetModifiedTime = file.lastModified();
+
+				nonUpToDates = new ArrayList();
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String prereq = (String)iter.next();
+					if (new File(prereq).lastModified()
+							> targetModifiedTime)
+						nonUpToDates.add(prereq);
+				}
+
+				return nonUpToDates.size() == 0;
+			}
+
+			void make() throws FakeException {
+				try {
+					if (upToDate())
+						return;
+					System.err.println("Faking " + this);
+					action();
+				} catch (Exception e) {
+					new File(target).delete();
+					error(e.getMessage());
+				}
+			}
+
+			protected void error(String message)
+					throws FakeException {
+				throw new FakeException(message
+						+ "\n\tin rule " + this);
+			}
+
+			public String getLastPrerequisite() {
+				int index = prerequisites.size() - 1;
+				return (String)prerequisites.get(index);
+			}
+
+			public String toString() {
+				String result = "";
+				if (verbose) {
+					String type = getClass().getName();
+					int dollar = type.lastIndexOf('$');
+					if (dollar >= 0)
+						type = type.substring(dollar + 1);
+					result += "(" + type + ") ";
+				}
+				result += target + " <-";
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext())
+					result += " " + iter.next();
+				return result;
+			}
+		}
+
+		class All extends Rule {
+			All(String target, List prerequisites, File cwd) {
+				super(target, prerequisites, cwd);
+			}
+
+			public void action() throws FakeException {
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String prereq = (String)iter.next();
+
+					if (!allRules.containsKey(prereq))
+						error("Unknown target: "
+							+ prereq);
+
+					Rule rule = (Rule)allRules.get(prereq);
+					rule.make();
+				}
+			}
+		}
+
+		class SubFake extends Rule {
+			String source;
+
+			SubFake(String target, List prerequisites, File cwd) {
+				super(target, prerequisites, cwd);
+				source = getLastPrerequisite()
+					+ new File(target).getName();
+				if (target.endsWith("/"))
+					target = target.substring(0,
+							target.length() - 1);
+			}
+
+			boolean upToDate() {
+				return false;
+			}
+
+			void action() throws FakeException {
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext())
+					action((String)iter.next());
+				if (target.indexOf('.') >= 0)
+					copyFile(source, target, cwd);
+			}
+
+			void action(String directory) throws FakeException {
+				String fakeFile = directory + '/' + Parser.path;
+				boolean tryFake = new File(fakeFile).exists();
+				System.err.println((tryFake ? "F" : "M")
+					+ "aking in " + directory + "/");
+
+				try {
+					if (tryFake) {
+						// Try "Fake"
+						Parser parser =
+							new Parser(fakeFile,
+								null);
+						parser.cwd = new File(cwd,
+								directory);
+						Rule all = parser.parseRules();
+						all.make();
+					} else
+						// Try "make"
+						execute(new String[] { "make" },
+							new File(directory));
+				} catch (Exception e) {
+					if (!(e instanceof FakeException))
+						e.printStackTrace();
+					throw new FakeException((tryFake ?
+						"Fake" : "make")
+						+ " failed: " + e);
+				}
+				System.err.println("Leaving " + directory);
+			}
+		}
+
+		class CopyJar extends Rule {
+			String source;
+			CopyJar(String target, List prerequisites, File cwd) {
+				super(target, prerequisites, cwd);
+				source = getLastPrerequisite();
+			}
+
+			void action() throws FakeException {
+				copyFile(source, target, cwd);
+			}
+
+			boolean upToDate() {
+				if (super.upToDate())
+					return true;
+
+				JarFile targetJar, sourceJar;
+
+				try {
+					targetJar = new JarFile(target);
+				} catch(IOException e) {
+					return false;
+				}
+				try {
+					sourceJar = new JarFile(source);
+				} catch(IOException e) {
+					return true;
+				}
+
+				Enumeration iter = sourceJar.entries();
+				while (iter.hasMoreElements()) {
+					JarEntry entry =
+						(JarEntry)iter.nextElement();
+					JarEntry other = (JarEntry)
+						targetJar.getEntry(
+							entry.getName());
+					if (other == null)
+						return false;
+					if (entry.hashCode() !=
+							other.hashCode())
+						return false;
+				}
+				try {
+					targetJar.close();
+					sourceJar.close();
+				} catch(IOException e) { }
+				return true;
+			}
+		}
+
+		class CompileJar extends Rule {
+			CompileJar(String target, List prerequisites,
+					File cwd) {
+				super(target, prerequisites, cwd);
+			}
+
+			void action() throws FakeException {
+				List files = compileJavas(nonUpToDates, cwd);
+				makeJar(target, null, files);
+			}
+		}
+
+		class CompileClass extends Rule {
+			CompileClass(String target, List prerequisites,
+					File cwd) {
+				super(target, prerequisites, cwd);
+			}
+
+			void action() throws FakeException {
+				compileJavas(prerequisites, cwd);
+			}
+		}
+
+		class CompileCProgram extends Rule {
+			boolean linkCPlusPlus = false;
+
+			CompileCProgram(String target, List prerequisites,
+					File cwd) {
+				super(target, prerequisites, cwd);
+			}
+
+			void action() throws FakeException {
+				List out = new ArrayList();
+
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String path = (String)iter.next();
+					if (path.endsWith(".c")) {
+						out.add(compileC(path));
+					}
+					else if (path.endsWith(".cxx"))
+						out.add(compileCXX(path));
+					else
+						throw new FakeException("Cannot"
+							+ " compile " + path);
+				}
+				link(target, out);
+			}
+
+			void add(String variable, String path, List arguments) {
+				// TODO
+			}
+
+			String compileCXX(String path) throws FakeException {
+				linkCPlusPlus = true;
+				List arguments = new ArrayList();
+				arguments.add("g++");
+				arguments.add("-c");
+				add("CXXFLAGS", path, arguments);
+				arguments.add(path);
+				try {
+					execute(arguments, path);
+					return path.substring(0, path.length() - 4)
+						+ ".o";
+				} catch(Exception e) {
+					throw new FakeException("Could not "
+						+ "compile " + path + ": " + e);
+				}
+			}
+
+			String compileC(String path) throws FakeException {
+				List arguments = new ArrayList();
+				arguments.add("gcc");
+				arguments.add("-c");
+				add("CFLAGS", path, arguments);
+				arguments.add(path);
+				try {
+					execute(arguments, path);
+					return path.substring(0,
+						path.length() - 2) + ".o";
+				} catch(Exception e) {
+					throw new FakeException("Could not "
+						+ "compile " + path + ": " + e);
+				}
+			}
+
+			void link(String target, List objects)
+					throws FakeException {
+				List arguments = new ArrayList();
+				arguments.add(linkCPlusPlus ? "g++" : "gcc");
+				arguments.add("-o");
+				arguments.add(target);
+				add("LDFLAGS", target, arguments);
+				arguments.addAll(objects);
+				add("LIBS", target, arguments);
+				try {
+					execute(arguments, target);
+				} catch(Exception e) {
+					e.printStackTrace();
+					throw new FakeException("Could not link "
+						+ target + ": " + e);
+				}
+			}
+		}
+
+		class ExecuteProgram extends Rule {
+			String program;
+			File cwd;
+
+			ExecuteProgram(String target, List prerequisites,
+					String program, File cwd) {
+				super(target, prerequisites, cwd);
+				this.program = program;
+				this.cwd = cwd;
+			}
+
+			void action() throws FakeException {
+				try {
+					execute(splitCommandLine(program), cwd);
+				} catch (Exception e) {
+					if (!(e instanceof FakeException))
+						e.printStackTrace();
+					throw new FakeException("Program failed: '"
+						+ program + "'\n" + e);
+				}
+			}
+
+			List splitCommandLine(String program)
+					throws FakeException {
+				List result = new ArrayList();
+				int len = program.length();
+				String current = "";
+
+				for (int i = 0; i < len; i++) {
+					char c = program.charAt(i);
+					if (isQuote(c)) {
+						int i2 = findClosingQuote(
+							program, c, i + 1, len);
+						current += program.substring(i
+								+ 1, i2);
+						i = i2;
+						continue;
+					}
+					if (c == ' ' || c == '\t') {
+						if (current.equals(""))
+							continue;
+						result.add(current);
+						current = "";
+					} else
+						current += c;
+				}
+				if (!current.equals(""))
+					result.add(current);
+				return result;
+			}
+
+			int findClosingQuote(String s, char quote, int index,
+					int len)
+					throws FakeException {
+				for (int i = index; i < len; i++) {
+					char c = s.charAt(i);
+					if (c == quote)
+						return i;
+					if (isQuote(c))
+						i = findClosingQuote(s, c,
+								i + 1, len);
+				}
+				String spaces = "               ";
+				for (int i = 0; i < index; i++)
+					spaces += " ";
+				throw new FakeException("Unclosed quote: "
+					+ program + "\n" + spaces + "^");
+			}
+
+			boolean isQuote(char c) {
+				return c == '"' || c == '\'';
+			}
+		}
 	}
 
 
@@ -217,10 +597,6 @@ public class Fake {
 
 	protected static int expandGlob(String glob, List list, long newerThan)
 			throws FakeException {
-		if (debug)
-			System.err.println("expandGlob " + glob + (newerThan > 0
-				?  " > " + new java.util.Date(newerThan) : ""));
-
 		// find first wildcard
 		int star = glob.indexOf('*'), qmark = glob.indexOf('?');
 
@@ -303,7 +679,7 @@ public class Fake {
 
 	// returns all .java files in the list, and returns a list where
 	// all the .java files have been replaced by their .class files.
-	protected static List compileJavas(List javas, File cwd)
+	protected List compileJavas(List javas, File cwd)
 			throws FakeException {
 		List arguments = new ArrayList();
 		arguments.add("-source");
@@ -472,12 +848,12 @@ public class Fake {
 
 	// the variables
 
-	protected static boolean debug = false;
-	protected static boolean verbose = false;
-	protected static boolean showDeprecation = true;
-	protected static String javaVersion = "1.5";
+	protected boolean debug = false;
+	protected boolean verbose = false;
+	protected boolean showDeprecation = true;
+	protected String javaVersion = "1.5";
 
-	public static void setVariable(String key, String value)
+	public void setVariable(String key, String value)
 			throws FakeException {
 		if (key.equalsIgnoreCase("javaVersion"))
 			javaVersion = value;
@@ -490,375 +866,6 @@ public class Fake {
 		else
 			throw new FakeException("Unknown variable: " + key);
 	}
-
-	// the rule pool
-
-	protected static Map allRules = new HashMap();
-
-
-	// the different rule types
-
-	abstract static class Rule {
-		protected String target;
-		protected List prerequisites, nonUpToDates;
-		protected File cwd;
-
-		Rule(String target, List prerequisites, File cwd) {
-			this.target = target;
-			this.prerequisites = prerequisites;
-			this.cwd = cwd;
-		}
-
-		abstract void action() throws FakeException;
-
-		boolean upToDate() {
-			// this implements the mtime check
-			File file = new File(cwd, target);
-			if (!file.exists()) {
-				nonUpToDates = prerequisites;
-				return false;
-			}
-			long targetModifiedTime = file.lastModified();
-
-			nonUpToDates = new ArrayList();
-			Iterator iter = prerequisites.iterator();
-			while (iter.hasNext()) {
-				String prereq = (String)iter.next();
-				if (new File(prereq).lastModified()
-						> targetModifiedTime)
-					nonUpToDates.add(prereq);
-			}
-
-			return nonUpToDates.size() == 0;
-		}
-
-		void make() throws FakeException {
-			try {
-				if (upToDate())
-					return;
-				System.err.println("Faking " + this);
-				action();
-			} catch (Exception e) {
-				new File(target).delete();
-				error(e.getMessage());
-			}
-		}
-
-		protected void error(String message) throws FakeException {
-			throw new FakeException(message
-					+ "\n\tin rule " + this);
-		}
-
-		public String getLastPrerequisite() {
-			int index = prerequisites.size() - 1;
-			return (String)prerequisites.get(index);
-		}
-
-		public String toString() {
-			String result = "";
-			if (verbose) {
-				String type = getClass().getName();
-				int dollar = type.lastIndexOf('$');
-				if (dollar >= 0)
-					type = type.substring(dollar + 1);
-				result += "(" + type + ") ";
-			}
-			result += target + " <-";
-			Iterator iter = prerequisites.iterator();
-			while (iter.hasNext())
-				result += " " + iter.next();
-			return result;
-		}
-	}
-
-	static class All extends Rule {
-		All(String target, List prerequisites, File cwd) {
-			super(target, prerequisites, cwd);
-		}
-
-		public void action() throws FakeException {
-			Iterator iter = prerequisites.iterator();
-			while (iter.hasNext()) {
-				String prereq = (String)iter.next();
-
-				if (!allRules.containsKey(prereq))
-					error("Unknown target: " + prereq);
-
-				Rule rule = (Rule)allRules.get(prereq);
-				rule.make();
-			}
-		}
-	}
-
-	static class SubFake extends Rule {
-		String source;
-
-		SubFake(String target, List prerequisites, File cwd) {
-			super(target, prerequisites, cwd);
-			source = getLastPrerequisite()
-				+ new File(target).getName();
-			if (target.endsWith("/"))
-				target = target.substring(0,
-						target.length() - 1);
-		}
-
-		boolean upToDate() {
-			return false;
-		}
-
-		void action() throws FakeException {
-			Iterator iter = prerequisites.iterator();
-			while (iter.hasNext())
-				action((String)iter.next());
-			if (target.indexOf('.') >= 0)
-				copyFile(source, target, cwd);
-		}
-
-		void action(String directory) throws FakeException {
-			String fakeFile = directory + '/' + Parser.path;
-			boolean tryFake = new File(fakeFile).exists();
-			System.err.println((tryFake ? "F" : "M")
-				+ "aking in " + directory + "/");
-
-			try {
-				if (tryFake) {
-					// Try "Fake"
-					Parser parser = new Parser(fakeFile,
-							null);
-					parser.cwd = new File(cwd, directory);
-					Rule all = parser.parseRules();
-					all.make();
-				} else
-					// Try "make"
-					execute(new String[] { "make" },
-						new File(directory));
-			} catch (Exception e) {
-				if (!(e instanceof FakeException))
-					e.printStackTrace();
-				throw new FakeException((tryFake ?
-					"Fake" : "make") + " failed: " + e);
-			}
-			System.err.println("Leaving " + directory);
-		}
-	}
-
-	static class CopyJar extends Rule {
-		String source;
-		CopyJar(String target, List prerequisites, File cwd) {
-			super(target, prerequisites, cwd);
-			source = getLastPrerequisite();
-		}
-
-		void action() throws FakeException {
-			copyFile(source, target, cwd);
-		}
-
-		boolean upToDate() {
-			if (super.upToDate())
-				return true;
-
-			// TODO: check if there is a rule to make the sources
-			JarFile targetJar, sourceJar;
-
-			try {
-				targetJar = new JarFile(target);
-			} catch(IOException e) {
-				return false;
-			}
-			try {
-				sourceJar = new JarFile(source);
-			} catch(IOException e) {
-				return true;
-			}
-
-			Enumeration iter = sourceJar.entries();
-			while (iter.hasMoreElements()) {
-				JarEntry entry = (JarEntry)iter.nextElement();
-				JarEntry other = (JarEntry)
-					targetJar.getEntry(entry.getName());
-				if (other == null)
-					return false;
-				if (entry.hashCode() != other.hashCode())
-					return false;
-			}
-			try {
-				targetJar.close();
-				sourceJar.close();
-			} catch(IOException e) { }
-			return true;
-		}
-	}
-
-	static class CompileJar extends Rule {
-		CompileJar(String target, List prerequisites, File cwd) {
-			super(target, prerequisites, cwd);
-		}
-
-		void action() throws FakeException {
-			List files = compileJavas(nonUpToDates, cwd);
-			makeJar(target, null, files);
-		}
-	}
-
-	static class CompileClass extends Rule {
-		CompileClass(String target, List prerequisites, File cwd) {
-			super(target, prerequisites, cwd);
-		}
-
-		void action() throws FakeException {
-			compileJavas(prerequisites, cwd);
-		}
-	}
-
-	static class CompileCProgram extends Rule {
-		boolean linkCPlusPlus = false;
-
-		CompileCProgram(String target, List prerequisites, File cwd) {
-			super(target, prerequisites, cwd);
-		}
-
-		void action() throws FakeException {
-			List out = new ArrayList();
-
-			Iterator iter = prerequisites.iterator();
-			while (iter.hasNext()) {
-				String path = (String)iter.next();
-				if (path.endsWith(".c")) {
-					out.add(compileC(path));
-				}
-				else if (path.endsWith(".cxx"))
-					out.add(compileCXX(path));
-				else
-					throw new FakeException("Cannot compile"
-						+ " " + path);
-			}
-			link(target, out);
-		}
-
-		void add(String variable, String path, List arguments) {
-		}
-
-		String compileCXX(String path) throws FakeException {
-			linkCPlusPlus = true;
-			List arguments = new ArrayList();
-			arguments.add("g++");
-			arguments.add("-c");
-			add("CXXFLAGS", path, arguments);
-			arguments.add(path);
-			try {
-				execute(arguments, path);
-				return path.substring(0, path.length() - 4)
-					+ ".o";
-			} catch(Exception e) {
-				throw new FakeException("Could not compile "
-					+ path + ": " + e);
-			}
-		}
-
-		String compileC(String path) throws FakeException {
-			List arguments = new ArrayList();
-			arguments.add("gcc");
-			arguments.add("-c");
-			add("CFLAGS", path, arguments);
-			arguments.add(path);
-			try {
-				execute(arguments, path);
-				return path.substring(0, path.length() - 2)
-					+ ".o";
-			} catch(Exception e) {
-				throw new FakeException("Could not compile "
-					+ path + ": " + e);
-			}
-		}
-
-		void link(String target, List objects) throws FakeException {
-			List arguments = new ArrayList();
-			arguments.add(linkCPlusPlus ? "g++" : "gcc");
-			arguments.add("-o");
-			arguments.add(target);
-			add("LDFLAGS", target, arguments);
-			arguments.addAll(objects);
-			add("LIBS", target, arguments);
-			try {
-				execute(arguments, target);
-			} catch(Exception e) {
-				e.printStackTrace();
-				throw new FakeException("Could not link "
-					+ target + ": " + e);
-			}
-		}
-	}
-
-	static class ExecuteProgram extends Rule {
-		String program;
-		File cwd;
-
-		ExecuteProgram(String target, List prerequisites,
-				String program, File cwd) {
-			super(target, prerequisites, cwd);
-			this.program = program;
-			this.cwd = cwd;
-		}
-
-		void action() throws FakeException {
-			try {
-				execute(splitCommandLine(program), cwd);
-			} catch (Exception e) {
-				if (!(e instanceof FakeException))
-					e.printStackTrace();
-				throw new FakeException("Program failed: '"
-					+ program + "'\n" + e);
-			}
-		}
-
-		List splitCommandLine(String program) throws FakeException {
-			List result = new ArrayList();
-			int len = program.length();
-			String current = "";
-
-			for (int i = 0; i < len; i++) {
-				char c = program.charAt(i);
-				if (isQuote(c)) {
-					int i2 = findClosingQuote(program,
-							c, i + 1, len);
-					current += program.substring(i + 1, i2);
-					i = i2;
-					continue;
-				}
-				if (c == ' ' || c == '\t') {
-					if (current.equals(""))
-						continue;
-					result.add(current);
-					current = "";
-				} else
-					current += c;
-			}
-			if (!current.equals(""))
-				result.add(current);
-			return result;
-		}
-
-		int findClosingQuote(String s, char quote, int index, int len)
-				throws FakeException {
-			for (int i = index; i < len; i++) {
-				char c = s.charAt(i);
-				if (c == quote)
-					return i;
-				if (isQuote(c))
-					i = findClosingQuote(s, c, i + 1, len);
-			}
-			String spaces = "               ";
-			for (int i = 0; i < index; i++)
-				spaces += " ";
-			throw new FakeException("Unclosed quote: " + program
-				+ "\n" + spaces + "^");
-		}
-
-		boolean isQuote(char c) {
-			return c == '"' || c == '\'';
-		}
-	}
-
 
 	// our very own exception
 
