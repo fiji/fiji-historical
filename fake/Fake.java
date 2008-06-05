@@ -321,37 +321,7 @@ public class Fake {
 				if (super.upToDate())
 					return true;
 
-				JarFile targetJar, sourceJar;
-
-				try {
-					targetJar = new JarFile(target);
-				} catch(IOException e) {
-					return false;
-				}
-				try {
-					sourceJar = new JarFile(source);
-				} catch(IOException e) {
-					return true;
-				}
-
-				Enumeration iter = sourceJar.entries();
-				while (iter.hasMoreElements()) {
-					JarEntry entry =
-						(JarEntry)iter.nextElement();
-					JarEntry other = (JarEntry)
-						targetJar.getEntry(
-							entry.getName());
-					if (other == null)
-						return false;
-					if (entry.hashCode() !=
-							other.hashCode())
-						return false;
-				}
-				try {
-					targetJar.close();
-					sourceJar.close();
-				} catch(IOException e) { }
-				return true;
+				return jarUpToDate(source, target);
 			}
 		}
 
@@ -833,6 +803,38 @@ public class Fake {
 				+ " failed: " + e);
 		}
 		System.err.println("Leaving " + directory);
+	}
+
+	protected static boolean jarUpToDate(String source, String target) {
+		JarFile targetJar, sourceJar;
+
+		try {
+			targetJar = new JarFile(target);
+		} catch(IOException e) {
+			return false;
+		}
+		try {
+			sourceJar = new JarFile(source);
+		} catch(IOException e) {
+			return true;
+		}
+
+		Enumeration iter = sourceJar.entries();
+		while (iter.hasMoreElements()) {
+			JarEntry entry = (JarEntry)iter.nextElement();
+			JarEntry other =
+				(JarEntry)targetJar.getEntry(entry.getName());
+			if (other == null)
+				return false;
+			if (entry.hashCode() != other.hashCode())
+				return false;
+		}
+		try {
+			targetJar.close();
+			sourceJar.close();
+		} catch(IOException e) { }
+
+		return true;
 	}
 
 
