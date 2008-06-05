@@ -384,11 +384,10 @@ public class Fake {
 				arguments.add(path);
 				try {
 					execute(arguments, path);
-					return path.substring(0, path.length() - 4)
-						+ ".o";
+					return path.substring(0,
+						path.length() - 4) + ".o";
 				} catch(Exception e) {
-					throw new FakeException("Could not "
-						+ "compile " + path + ": " + e);
+					return error("compile", path, e);
 				}
 			}
 
@@ -403,8 +402,7 @@ public class Fake {
 					return path.substring(0,
 						path.length() - 2) + ".o";
 				} catch(Exception e) {
-					throw new FakeException("Could not "
-						+ "compile " + path + ": " + e);
+					return error("compile", path, e);
 				}
 			}
 
@@ -420,10 +418,14 @@ public class Fake {
 				try {
 					execute(arguments, target);
 				} catch(Exception e) {
-					e.printStackTrace();
-					throw new FakeException("Could not link "
-						+ target + ": " + e);
+					error("link", target, e);
 				}
+			}
+
+			String error(String action, String file, Exception e)
+					throws FakeException {
+				throw new FakeException("Could not " + action
+					+ " " + file + ": " + e);
 			}
 		}
 
@@ -445,57 +447,6 @@ public class Fake {
 					throw new FakeException("Program failed: '"
 						+ program + "'\n" + e);
 				}
-			}
-
-			List splitCommandLine(String program)
-					throws FakeException {
-				List result = new ArrayList();
-				int len = program.length();
-				String current = "";
-
-				for (int i = 0; i < len; i++) {
-					char c = program.charAt(i);
-					if (isQuote(c)) {
-						int i2 = findClosingQuote(
-							program, c, i + 1, len);
-						current += program.substring(i
-								+ 1, i2);
-						i = i2;
-						continue;
-					}
-					if (c == ' ' || c == '\t') {
-						if (current.equals(""))
-							continue;
-						result.add(current);
-						current = "";
-					} else
-						current += c;
-				}
-				if (!current.equals(""))
-					result.add(current);
-				return result;
-			}
-
-			int findClosingQuote(String s, char quote, int index,
-					int len)
-					throws FakeException {
-				for (int i = index; i < len; i++) {
-					char c = s.charAt(i);
-					if (c == quote)
-						return i;
-					if (isQuote(c))
-						i = findClosingQuote(s, c,
-								i + 1, len);
-				}
-				String spaces = "               ";
-				for (int i = 0; i < index; i++)
-					spaces += " ";
-				throw new FakeException("Unclosed quote: "
-					+ program + "\n" + spaces + "^");
-			}
-
-			boolean isQuote(char c) {
-				return c == '"' || c == '\'';
 			}
 		}
 	}
@@ -835,6 +786,56 @@ public class Fake {
 		} catch(IOException e) { }
 
 		return true;
+	}
+
+	protected static List splitCommandLine(String program)
+			throws FakeException {
+		List result = new ArrayList();
+		if (program == null)
+			return result;
+		int len = program.length();
+		String current = "";
+
+		for (int i = 0; i < len; i++) {
+			char c = program.charAt(i);
+			if (isQuote(c)) {
+				int i2 = findClosingQuote(program,
+						c, i + 1, len);
+				current += program.substring(i + 1, i2);
+				i = i2;
+				continue;
+			}
+			if (c == ' ' || c == '\t') {
+				if (current.equals(""))
+					continue;
+				result.add(current);
+				current = "";
+			} else
+				current += c;
+		}
+		if (!current.equals(""))
+			result.add(current);
+		return result;
+	}
+
+	protected static int findClosingQuote(String s, char quote,
+			int index, int len) throws FakeException {
+		for (int i = index; i < len; i++) {
+			char c = s.charAt(i);
+			if (c == quote)
+				return i;
+			if (isQuote(c))
+				i = findClosingQuote(s, c, i + 1, len);
+		}
+		String spaces = "               ";
+		for (int i = 0; i < index; i++)
+			spaces += " ";
+		throw new FakeException("Unclosed quote: "
+			+ s + "\n" + spaces + "^");
+	}
+
+	protected static boolean isQuote(char c) {
+		return c == '"' || c == '\'';
 	}
 
 
