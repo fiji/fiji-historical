@@ -186,6 +186,33 @@ public class Fake {
 					+ message + "\n\t" + line);
 		}
 
+		// the variables
+
+		protected boolean debug = false;
+		protected boolean verbose = false;
+		protected boolean showDeprecation = true;
+		protected String javaVersion = "1.5";
+
+		public void setVariable(String key, String value)
+				throws FakeException {
+			if (key.equalsIgnoreCase("javaVersion"))
+				javaVersion = value;
+			else if (key.equalsIgnoreCase("debug"))
+				debug = getBool(value);
+			else if (key.equalsIgnoreCase("verbose"))
+				verbose = getBool(value);
+			else if (key.equals("showDeprecation"))
+				showDeprecation = getBool(value);
+			else
+				throw new FakeException("Unknown variable: "
+						+ key);
+		}
+
+		public boolean getBool(String string) {
+			return string.equalsIgnoreCase("true") ||
+				string.equals("1");
+		}
+
 		// the different rule types
 
 		abstract class Rule {
@@ -331,7 +358,8 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
-				List files = compileJavas(nonUpToDates, cwd);
+				List files = compileJavas(nonUpToDates,
+						Parser.this);
 				makeJar(target, null, files);
 			}
 		}
@@ -342,7 +370,7 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
-				compileJavas(prerequisites, cwd);
+				compileJavas(prerequisites, Parser.this);
 			}
 		}
 
@@ -563,14 +591,14 @@ public class Fake {
 
 	// returns all .java files in the list, and returns a list where
 	// all the .java files have been replaced by their .class files.
-	protected List compileJavas(List javas, File cwd)
+	protected List compileJavas(List javas, Parser parser)
 			throws FakeException {
 		List arguments = new ArrayList();
 		arguments.add("-source");
-		arguments.add(javaVersion);
+		arguments.add(parser.javaVersion);
 		arguments.add("-target");
-		arguments.add(javaVersion);
-		if (showDeprecation) {
+		arguments.add(parser.javaVersion);
+		if (parser.showDeprecation) {
 			arguments.add("-deprecation");
 			arguments.add("-Xlint:unchecked");
 		}
@@ -579,7 +607,7 @@ public class Fake {
 		while (iter.hasNext()) {
 			String path = (String)iter.next();
 			if (path.endsWith(".java"))
-				arguments.add(cwd + "/" + path);
+				arguments.add(parser.cwd + "/" + path);
 		}
 
 		String[] args = new String[arguments.size()];
@@ -838,27 +866,6 @@ public class Fake {
 		return c == '"' || c == '\'';
 	}
 
-
-	// the variables
-
-	protected boolean debug = false;
-	protected boolean verbose = false;
-	protected boolean showDeprecation = true;
-	protected String javaVersion = "1.5";
-
-	public void setVariable(String key, String value)
-			throws FakeException {
-		if (key.equalsIgnoreCase("javaVersion"))
-			javaVersion = value;
-		else if (key.equalsIgnoreCase("debug"))
-			debug = value.equalsIgnoreCase("true");
-		else if (key.equalsIgnoreCase("verbose"))
-			verbose = value.equalsIgnoreCase("true");
-		else if (key.equals("showDeprecation"))
-			showDeprecation = value.equalsIgnoreCase("true");
-		else
-			throw new FakeException("Unknown variable: " + key);
-	}
 
 	// our very own exception
 
