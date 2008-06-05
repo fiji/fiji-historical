@@ -287,9 +287,6 @@ public class Fake {
 				super(target, prerequisites);
 				source = getLastPrerequisite()
 					+ new File(target).getName();
-				if (target.endsWith("/"))
-					target = target.substring(0,
-							target.length() - 1);
 			}
 
 			boolean upToDate() {
@@ -305,33 +302,7 @@ public class Fake {
 			}
 
 			void action(String directory) throws FakeException {
-				String fakeFile = directory + '/' + Parser.path;
-				boolean tryFake = new File(fakeFile).exists();
-				System.err.println((tryFake ? "F" : "M")
-					+ "aking in " + directory + "/");
-
-				try {
-					if (tryFake) {
-						// Try "Fake"
-						Parser parser =
-							new Parser(fakeFile,
-								null);
-						parser.cwd = new File(cwd,
-								directory);
-						Rule all = parser.parseRules();
-						all.make();
-					} else
-						// Try "make"
-						execute(new String[] { "make" },
-							new File(directory));
-				} catch (Exception e) {
-					if (!(e instanceof FakeException))
-						e.printStackTrace();
-					throw new FakeException((tryFake ?
-						"Fake" : "make")
-						+ " failed: " + e);
-				}
-				System.err.println("Leaving " + directory);
+				fakeOrMake(cwd, directory);
 			}
 		}
 
@@ -835,6 +806,33 @@ public class Fake {
 		int exitValue = proc.exitValue();
 		if (exitValue != 0)
 			throw new FakeException("Failed: " + exitValue);
+	}
+
+	protected void fakeOrMake(File cwd, String directory)
+			throws FakeException {
+		String fakeFile = directory + '/' + Parser.path;
+		boolean tryFake = new File(fakeFile).exists();
+		System.err.println((tryFake ? "F" : "M") + "aking in "
+			+ directory + (directory.endsWith("/") ? "" : "/"));
+
+		try {
+			if (tryFake) {
+				// Try "Fake"
+				Parser parser = new Parser(fakeFile, null);
+				parser.cwd = new File(cwd, directory);
+				Parser.Rule all = parser.parseRules();
+				all.make();
+			} else
+				// Try "make"
+				execute(new String[] { "make" },
+					new File(directory));
+		} catch (Exception e) {
+			if (!(e instanceof FakeException))
+				e.printStackTrace();
+			throw new FakeException((tryFake ?  "Fake" : "make")
+				+ " failed: " + e);
+		}
+		System.err.println("Leaving " + directory);
 	}
 
 
