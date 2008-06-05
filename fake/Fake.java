@@ -14,9 +14,11 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import java.util.jar.Manifest;
@@ -32,6 +34,18 @@ public class Fake {
 
 	public static void main(String[] args) {
 		new Fake().make(args);
+	}
+
+	final static Set variableNames = new HashSet();
+
+	public Fake() {
+		variableNames.add("DEBUG");
+		variableNames.add("JAVAVERSION");
+		variableNames.add("SHOWDEPRECATION");
+		variableNames.add("VERBOSE");
+		variableNames.add("CFLAGS");
+		variableNames.add("CXXFLAGS");
+		variableNames.add("LDFLAGS");
 	}
 
 	public void make(String[] args) {
@@ -60,6 +74,7 @@ public class Fake {
 		int lineNumber;
 		File cwd;
 		protected Map allRules = new HashMap();
+		protected Set allPrerequisites = new HashSet();
 
 		public Parser(String[] args) throws FakeException {
 			this(args != null && args.length > 0 ? args[0] : path,
@@ -122,8 +137,12 @@ public class Fake {
 				}
 			}
 
+			lineNumber = -1;
+
 			if (result == null)
 				error("Could not find default rule");
+
+			checkVariableNames();
 
 			return result;
 		}
@@ -178,10 +197,16 @@ public class Fake {
 
 			allRules.put(rule.target, rule);
 
+			Iterator iter = list.iterator();
+			while (iter.hasNext())
+				allPrerequisites.add(iter.next());
+
 			return rule;
 		}
 
 		protected void error(String message) throws FakeException {
+			if (lineNumber < 0)
+				throw new FakeException(path + ":" + message);
 			throw new FakeException(path + ":" + lineNumber + ": "
 					+ message + "\n\t" + line);
 		}
@@ -192,9 +217,15 @@ public class Fake {
 		protected boolean verbose = false;
 		protected boolean showDeprecation = true;
 		protected String javaVersion = "1.5";
+		protected Map variables = new HashMap();
 
 		public void setVariable(String key, String value)
 				throws FakeException {
+			int paren = key.indexOf('(');
+			String name = paren < 0 ? key : key.substring(0, paren);
+			if (!variableNames.contains(name.toUpperCase()))
+				throw new FakeException("Unknown variable: "
+						+ name);
 			if (key.equalsIgnoreCase("javaVersion"))
 				javaVersion = value;
 			else if (key.equalsIgnoreCase("debug"))
@@ -204,8 +235,23 @@ public class Fake {
 			else if (key.equals("showDeprecation"))
 				showDeprecation = getBool(value);
 			else
-				throw new FakeException("Unknown variable: "
-						+ key);
+				variables.put(key, value);
+		}
+
+		public void checkVariableNames() throws FakeException {
+			Iterator iter = variables.keySet().iterator();
+			while (iter.hasNext()) {
+				String key = (String)iter.next();
+				int paren = key.indexOf('(');
+				if (paren < 0 || !key.endsWith(")"))
+					continue;
+				String name = key.substring(paren + 1,
+						key.length() - 1);
+				if (!allPrerequisites.contains(name) &&
+						!allRules.containsKey(name))
+					throw new FakeException("Invalid target"
+						+ " for variable " + key);
+			}
 		}
 
 		public boolean getBool(String string) {
