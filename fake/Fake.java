@@ -237,7 +237,7 @@ public class Fake {
 			if (rule == null)
 				throw new FakeException("Unrecognized rule");
 
-			allRules.put(rule.target, rule);
+			allRules.put(target, rule);
 
 			Iterator iter = list.iterator();
 			while (iter.hasNext())
@@ -693,6 +693,8 @@ public class Fake {
 
 			CompileCProgram(String target, List prerequisites) {
 				super(target, prerequisites);
+				if (getPlatform().startsWith("win"))
+					this.target += ".exe";
 			}
 
 			void action() throws FakeException {
