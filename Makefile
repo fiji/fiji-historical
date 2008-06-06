@@ -139,7 +139,8 @@ endif
 ifeq ($(ARCH),macosx-intel)
 	EXTRADEFS+= $(shell file -L \
 	 /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation \
-	 | sed -n "s/^.*for architecture \\([a-z0-9_]*\\).*$$/-arch \\1/p")
+	 | sed -n "s/^.*for architecture \\([a-z0-9_]*\\).*$$/-arch \\1/p") \
+	 -sectcreate __TEXT __info_plist Info.plist
 endif
 ifneq (,$(findstring macosx,$(ARCH)))
 	JAVA_HOME=$(JDK)/Home
@@ -249,30 +250,7 @@ Fiji.app: PLIST=$@/Contents/Info.plist
 Fiji.app: precompiled/fiji-macosx-intel
 	mkdir -p $(MACOS)
 	mkdir -p $(RESOURCES)
-	echo '<?xml version="1.0" encoding="UTF-8"?>' > $(PLIST)
-	echo '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> $(PLIST)
-	echo '<plist version="1.0">' >> $(PLIST)
-	echo '<dict>' >> $(PLIST)
-	echo '	<key>CFBundleExecutable</key>' >> $(PLIST)
-	echo '		<string>fiji-macosx-intel</string>' >> $(PLIST)
-	echo '	<key>CFBundleGetInfoString</key>' >> $(PLIST)
-	echo '		<string>Fiji for Mac OS X</string>' >> $(PLIST)
-	echo '	<key>CFBundleIconFile</key>' >> $(PLIST)
-	echo '		<string>Fiji.icns</string>' >> $(PLIST)
-	echo '	<key>CFBundleIdentifier</key>' >> $(PLIST)
-	echo '		<string>org.fiji</string>' >> $(PLIST)
-	echo '	<key>CFBundleInfoDictionaryVersion</key>' >> $(PLIST)
-	echo '		<string>6.0</string>' >> $(PLIST)
-	echo '	<key>CFBundleName</key>' >> $(PLIST)
-	echo '		<string>Fiji</string>' >> $(PLIST)
-	echo '	<key>CFBundlePackageType</key>' >> $(PLIST)
-	echo '		<string>APPL</string>' >> $(PLIST)
-	echo '	<key>CFBundleVersion</key>' >> $(PLIST)
-	echo '		<string>1.0</string>' >> $(PLIST)
-	echo '	<key>NSPrincipalClass</key>' >> $(PLIST)
-	echo '		<string>NSApplication</string>' >> $(PLIST)
-	echo '</dict>' >> $(PLIST)
-	echo '</plist>"' >> $(PLIST)
+	cp Info.plist $(PLIST)
 	cp precompiled/fiji-macosx-intel $(MACOS)/
 	for d in java plugins macros ij.jar jars misc; do \
 		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
