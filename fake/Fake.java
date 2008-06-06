@@ -829,6 +829,12 @@ public class Fake {
 
 			void link(String target, List objects)
 					throws FakeException {
+				File file = new File(target);
+				if (file.exists() && !file.delete() &&
+						!file.renameTo(new File(target
+							+ ".old")))
+					error("Could not move " + target
+						+ "out of the way before link");
 				List arguments = new ArrayList();
 				arguments.add(linkCPlusPlus ? "g++" : "gcc");
 				arguments.add("-o");
