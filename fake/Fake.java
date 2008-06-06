@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.ByteArrayInputStream;
 
 import java.lang.reflect.Method;
 
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import java.util.jar.Attributes.Name;
 import java.util.jar.Manifest;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -46,6 +48,7 @@ public class Fake {
 		variableNames.add("CFLAGS");
 		variableNames.add("CXXFLAGS");
 		variableNames.add("LDFLAGS");
+		variableNames.add("MAINCLASS");
 	}
 
 	public void make(String[] args) {
@@ -234,8 +237,11 @@ public class Fake {
 				verbose = getBool(value);
 			else if (key.equals("showDeprecation"))
 				showDeprecation = getBool(value);
-			else
-				variables.put(key, value);
+			else {
+				name = name.toUpperCase() + (paren < 0 ?
+					"" : key.substring(paren));
+				variables.put(name, value);
+			}
 		}
 
 		public void checkVariableNames() throws FakeException {
@@ -300,6 +306,8 @@ public class Fake {
 					System.err.println("Faking " + this);
 					action();
 				} catch (Exception e) {
+					if (!(e instanceof FakeException))
+						e.printStackTrace();
 					new File(target).delete();
 					error(e.getMessage());
 				}
@@ -406,7 +414,20 @@ public class Fake {
 			void action() throws FakeException {
 				List files = compileJavas(nonUpToDates,
 						Parser.this);
-				makeJar(target, null, files);
+				makeJar(target, getMainClass(), files);
+			}
+
+			String getVar(String name, String target) {
+				return (String)variables.get(name
+					+ (target == null ?
+						"" : "(" + target + ")"));
+			}
+
+			String getMainClass() {
+				String result = getVar("MAINCLASS", target);
+				if (result == null)
+					result = getVar("MAINCLASS", null);
+				return result;
 			}
 		}
 
@@ -678,6 +699,7 @@ public class Fake {
 		} catch (FakeException e) {
 			throw e;
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new FakeException("Compile error: " + e);
 		}
 
@@ -692,9 +714,13 @@ public class Fake {
 			throws FakeException {
 		Manifest manifest = null;
 		if (mainClass != null) {
-			manifest = new Manifest();
-			manifest.getMainAttributes().put("Main-Class",
-					mainClass);
+			String text = "Manifest-Version: 1.0\nMain-Class: "
+				+ mainClass + "\n";
+			InputStream input =
+				new ByteArrayInputStream(text.getBytes());
+			try {
+				manifest = new Manifest(input);
+			} catch(Exception e) { }
 		}
 
 		try {
@@ -711,7 +737,7 @@ public class Fake {
 					+ path + " before building it anew");
 
 			OutputStream out = new FileOutputStream(path);
-			JarOutputStream jar = mainClass == null ?
+			JarOutputStream jar = manifest == null ?
 				new JarOutputStream(out) :
 				new JarOutputStream(out, manifest);
 
