@@ -53,7 +53,7 @@ UseHEFT();
 // Generate the Jython menu listing of .py files as plugins
 // and same for JRuby .rb and Cloure .clj
 macro "AutoRun" {
-  call("fiji.SetIcon.run",
+  call("fiji.SetIcon.run", "Fiji",
 	"file:" + getDirectory("macros") + "../images/icon.png");
   run("Refresh Jython Scripts");
   run("Refresh JRuby Scripts");
