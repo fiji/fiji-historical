@@ -79,6 +79,9 @@ public class Fake {
 			fijiHome = fijiHome.substring(5, slash + 1);
 		if (getPlatform().startsWith("win") && fijiHome.startsWith("/"))
 			fijiHome = fijiHome.substring(1);
+		if (fijiHome.endsWith("precompiled/"))
+			fijiHome = fijiHome.substring(0,
+					fijiHome.length() - 12);
 
 		String pythonHome = fijiHome + "jars/jython2.2.1/jython.jar";
 		System.setProperty("python.home", pythonHome);
