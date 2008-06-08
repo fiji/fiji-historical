@@ -149,6 +149,18 @@ ifneq (,$(findstring macosx,$(ARCH)))
 	INCLUDES=-I$(JDK)/Headers
 	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
 	LIBMACOSX=-lpthread -framework CoreFoundation -framework JavaVM
+
+$(TARGET): Info.plist
+
+precompiled/fiji-tiger: fiji.o
+	$(CXX)  -arch ppc -arch i386 -mmacosx-version-min=10.4 -o $@ $< \
+		$(LIBMACOSX)
+
+precompiled/fiji-tiger-pita: fiji-tiger-pita.o
+	$(CXX) -arch ppc -arch i386 -mmacosx-version-min=10.4 -o $@ $<
+
+fiji-tiger-pita.o: fiji-tiger-pita.c
+	$(CXX) -arch ppc -arch i386 -mmacosx-version-min=10.4 -c -o $@ $<
 endif
 ifeq ($(ARCH),win64)
 	CXX=PATH="$$(pwd)/root-x86_64-pc-linux/bin:$$PATH" x86_64-pc-mingw32-g++
@@ -245,13 +257,18 @@ portable-app: Fiji.app
 Fiji.app: MACOS=$@/Contents/MacOS
 Fiji.app: RESOURCES=$@/Contents/Resources
 Fiji.app: PLIST=$@/Contents/Info.plist
+Fiji.app: precompiled/fiji-macosx
+Fiji.app: precompiled/fiji-tiger
+Fiji.app: precompiled/fiji-tiger-pita
 
-# TODO: Tried to make it work for powerpc AND mac-intel
-Fiji.app: precompiled/fiji-macosx-intel
+Fiji.app:
+	test ! -d $@ || rm -rf Fiji.app
 	mkdir -p $(MACOS)
 	mkdir -p $(RESOURCES)
 	cp Info.plist $(PLIST)
-	cp precompiled/fiji-macosx-intel $(MACOS)/
+	cp precompiled/fiji-macosx $(MACOS)/
+	cp precompiled/fiji-tiger $(MACOS)/
+	cp precompiled/fiji-tiger-pita $(MACOS)/
 	for d in java plugins macros ij.jar jars misc; do \
 		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
 	done
