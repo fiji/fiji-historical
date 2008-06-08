@@ -254,6 +254,7 @@ Fiji.app: precompiled/fiji-tiger
 Fiji.app: precompiled/fiji-tiger-pita
 
 Fiji.app: precompiled/fiji-macosx
+	test ! -d $@ || rm -rf Fiji.app
 	mkdir -p $(MACOS)
 	mkdir -p $(RESOURCES)
 	cp Info.plist $(PLIST)
