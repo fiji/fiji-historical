@@ -78,6 +78,7 @@ public class Fake {
 		File cwd;
 		protected Map allRules = new HashMap();
 		protected Set allPrerequisites = new HashSet();
+		protected Set allPlatforms;
 
 		public Parser(String[] args) throws FakeException {
 			this(args != null && args.length > 0 ? args[0] : path,
@@ -96,6 +97,15 @@ public class Fake {
 
 			lineNumber = 0;
 			cwd = new File(".");
+
+			if (allPlatforms == null) {
+				allPlatforms = new HashSet();
+				allPlatforms.add("linux");
+				allPlatforms.add("linux64");
+				allPlatforms.add("win32");
+				allPlatforms.add("win64");
+				allPlatforms.add("macosx");
+			}
 		}
 
 		public Rule parseRules() throws FakeException {
@@ -254,7 +264,8 @@ public class Fake {
 				String name = key.substring(paren + 1,
 						key.length() - 1);
 				if (!allPrerequisites.contains(name) &&
-						!allRules.containsKey(name))
+						!allRules.containsKey(name) &&
+						!allPlatforms.contains(name))
 					throw new FakeException("Invalid target"
 						+ " for variable " + key);
 			}
@@ -466,14 +477,15 @@ public class Fake {
 				link(target, out);
 			}
 
-			// TODO: handle globs, too?  If so, in checkVariables()?
 			void add(String variable, String path, List arguments)
 					throws FakeException {
 				add(variables.get(variable), arguments);
-				add(variables.get(variable + "(" + path + ")"),
-						arguments);
-				add(variables.get(variable + "(" + target + ")"),
-						arguments);
+				add(variables.get(variable + "("
+					+ getPlatform() + ")"), arguments);
+				add(variables.get(variable
+					+ "(" + path + ")"), arguments);
+				add(variables.get(variable
+					+ "(" + target + ")"), arguments);
 			}
 
 			void add(Object flags, List arguments)
@@ -950,6 +962,20 @@ public class Fake {
 
 	protected static boolean isQuote(char c) {
 		return c == '"' || c == '\'';
+	}
+
+	public static String getPlatform() {
+		boolean is64bit =
+			System.getProperty("os.arch", "").indexOf("64") >= 0;
+		String osName = System.getProperty("os.name", "<unknown>");
+		if (osName.equals("Linux"))
+			return "linux" + (is64bit ? "64" : "");
+		if (osName.equals("Mac OS X"))
+			return "macosx";
+		if (osName.startsWith("Windows"))
+			return "win" + (is64bit ? "64" : "32");
+		System.err.println("Unknown platform: " + osName);
+		return osName;
 	}
 
 
