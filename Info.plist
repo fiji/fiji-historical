@@ -35,6 +35,8 @@
 		<string>0</string>
 		<key>ext</key>
 		<string></string>
+		<key>allowMultiple</key>
+		<string>false</string>
 		<key>JVMOptions</key>
 		<string></string>
 	</dict>
