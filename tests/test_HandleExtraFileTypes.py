@@ -7,8 +7,6 @@ from java.lang import Class, ClassNotFoundException, System, NoClassDefFoundErro
 # Launch ImageJ
 ImageJ()
 print "Testing HandleExtraFileTypes.java:"
-#print "path is", System.getProperty('java.class.path')
-print "home is", Prefs.getHomeDir()
 
 # Try both system and IJ class loaders
 def checkClassName(name):
@@ -25,7 +23,8 @@ def checkClassName(name):
     except ClassNotFoundException:
       return 0
 
-path = Prefs.getHomeDir() + '/' + "src-plugins/Input-Output/"
+path = System.getProperty('plugins.dir') + '/' + "src-plugins/Input-Output/"
+print "path: ", path
 f = open(path + "HandleExtraFileTypes.java")
 
 error = 0
