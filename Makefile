@@ -53,7 +53,7 @@ check: check-class-versions check-precompiled check-submodules
 
 check-class-versions: src-plugins $(TARGET)$(EXE)
 	./$(TARGET)$(EXE) --headless \
-		--main-class=fiji.CheckClassVersions plugins/ jars/
+		--main-class=fiji.CheckClassVersions plugins/ jars/ misc/
 
 PRECOMPILED=$(patsubst %,precompiled/fiji-%,$(patsubst win%,win%.exe,$(ARCHS)))
 check-precompiled:
