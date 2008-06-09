@@ -88,7 +88,7 @@ mm:
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 
-ARCHS=linux linux-amd64 macosx-intel win32 win64
+ARCHS=linux linux-amd64 macosx win32 win64
 
 LIBDL=-ldl
 INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH_INCLUDE)
@@ -108,11 +108,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	ARCH=win32
 endif
 ifeq ($(uname_S),Darwin)
-ifeq ($(uname_M),Power Macintosh)
 	ARCH=macosx
-else
-	ARCH=macosx-intel
-endif
 endif
 endif
 
@@ -136,18 +132,18 @@ ifeq ($(ARCH),win32)
 	EXE=.exe
 	STRIP_TARGET=1
 endif
-ifeq ($(ARCH),macosx-intel)
+ifeq ($(ARCH),macosx)
 	EXTRADEFS+= $(shell file -L \
 	 /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation \
 	 | sed -n "s/^.*for architecture \\([a-z0-9_]*\\).*$$/-arch \\1/p") \
-	 -sectcreate __TEXT __info_plist Info.plist
-endif
-ifneq (,$(findstring macosx,$(ARCH)))
+	 -sectcreate __TEXT __info_plist Info.plist \
+	 -mmacosx-version-min=10.4
+	JDK=java/macosx-java3d
 	JAVA_HOME=$(JDK)/Home
 	JAVA_LIB_PATH=../Libraries/libjvm.dylib
-	JAVA_LIB_DIR=../Libraries
-	INCLUDES=-I$(JDK)/Headers
-	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
+	JAVA_LIB_DIR=
+	INCLUDES= -I/System/Library/Frameworks/JavaVM.framework/Headers
+	EXTRADEFS+= -DMACOSX
 	LIBMACOSX=-lpthread -framework CoreFoundation -framework JavaVM
 
 $(TARGET): Info.plist
@@ -218,11 +214,7 @@ dev: $(JDK) $(TARGET)$(EXE)
 
 # ------------------------------------------------------------------------
 # JDK
-ifneq ($(ARCH),macosx)
-ifneq ($(ARCH),macosx-intel)
 .PHONY: $(JDK)
-endif
-endif
 $(JDK):
 	@echo "Making $@"
 	@test -d "$(JDK)/.git" || \
@@ -261,8 +253,7 @@ Fiji.app: precompiled/fiji-macosx
 Fiji.app: precompiled/fiji-tiger
 Fiji.app: precompiled/fiji-tiger-pita
 
-Fiji.app:
-	test ! -d $@ || rm -rf Fiji.app
+Fiji.app: precompiled/fiji-macosx
 	mkdir -p $(MACOS)
 	mkdir -p $(RESOURCES)
 	cp Info.plist $(PLIST)
@@ -272,7 +263,11 @@ Fiji.app:
 	for d in java plugins macros ij.jar jars misc; do \
 		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
 	done
-	git archive --prefix=$@/java/macosx-intel/ origin/java/macosx-intel: | \
+	ln -s Contents/Resources $@/images
+	ln -s ../Resources $(MACOS)/images
+	cp images/icon.png $@/images/
+	git archive --prefix=$@/java/macosx-java3d/ \
+		origin/java/macosx-java3d: | \
 		tar xvf -
 	cp ij.jar $@/
 	cp -R plugins macros jars misc $@/
@@ -306,6 +301,8 @@ fiji-%.zip: Fiji.app-%
 
 fiji-%.dmg: Fiji.app
 	sh scripts/mkdmg.sh $@ $<
+
+dmg: fiji-macosx.dmg
 
 # All targets...
 
