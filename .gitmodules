@@ -13,11 +13,8 @@
 [submodule "java/linux-amd64"]
 	path = java/linux-amd64
 	url = .
-[submodule "java/macosx"]
-	path = java/macosx
-	url = .
-[submodule "java/macosx-intel"]
-	path = java/macosx-intel
+[submodule "macosx-java3d"]
+	path = macosx-java3d
 	url = .
 [submodule "java/win32"]
 	path = java/win32
