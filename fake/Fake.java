@@ -240,6 +240,7 @@ public class Fake {
 		protected boolean verbose = false;
 		protected boolean showDeprecation = true;
 		protected String javaVersion = "1.5";
+		protected boolean ignoreMissingFakefiles = false;
 		protected Map variables = new HashMap();
 
 		public void setVariable(String key, String value)
@@ -256,8 +257,10 @@ public class Fake {
 				debug = getBool(value);
 			else if (key.equalsIgnoreCase("verbose"))
 				verbose = getBool(value);
-			else if (key.equals("showDeprecation"))
+			else if (key.equalsIgnoreCase("showDeprecation"))
 				showDeprecation = getBool(value);
+			else if (key.equalsIgnoreCase("ignoreMissingFakefiles"))
+				ignoreMissingFakefiles = getBool(value);
 			else {
 				name = name.toUpperCase() + (paren < 0 ?
 					"" : key.substring(paren));
@@ -469,12 +472,19 @@ public class Fake {
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext())
 					action((String)iter.next());
+
+				if (getVarBool("IGNOREMISSINGFAKEFILES") &&
+						!new File(makePath(cwd,
+							source)).exists())
+					return;
+
 				if (target.indexOf('.') >= 0)
 					copyFile(source, target, cwd);
 			}
 
 			void action(String directory) throws FakeException {
-				fakeOrMake(cwd, directory, verbose);
+				fakeOrMake(cwd, directory, verbose,
+						ignoreMissingFakefiles);
 			}
 		}
 
@@ -941,10 +951,15 @@ public class Fake {
 			throw new FakeException("Failed: " + exitValue);
 	}
 
-	protected void fakeOrMake(File cwd, String directory, boolean verbose)
-			throws FakeException {
+	protected void fakeOrMake(File cwd, String directory, boolean verbose,
+			boolean ignoreMissingFakefiles) throws FakeException {
 		String fakeFile = directory + '/' + Parser.path;
 		boolean tryFake = new File(fakeFile).exists();
+		if (ignoreMissingFakefiles && !tryFake &&
+				!(new File(directory + "/Makefile").exists())) {
+			System.err.println("Ignore " + directory);
+			return;
+		}
 		System.err.println((tryFake ? "F" : "M") + "aking in "
 			+ directory + (directory.endsWith("/") ? "" : "/"));
 
