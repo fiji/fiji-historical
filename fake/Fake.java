@@ -429,7 +429,7 @@ public class Fake {
 			}
 
 			void action(String directory) throws FakeException {
-				fakeOrMake(cwd, directory);
+				fakeOrMake(cwd, directory, verbose);
 			}
 		}
 
@@ -518,7 +518,7 @@ public class Fake {
 				addFlags("CXXFLAGS", path, arguments);
 				arguments.add(path);
 				try {
-					execute(arguments, path);
+					execute(arguments, path, verbose);
 					return path.substring(0,
 						path.length() - 4) + ".o";
 				} catch(Exception e) {
@@ -533,7 +533,7 @@ public class Fake {
 				addFlags("CFLAGS", path, arguments);
 				arguments.add(path);
 				try {
-					execute(arguments, path);
+					execute(arguments, path, verbose);
 					return path.substring(0,
 						path.length() - 2) + ".o";
 				} catch(Exception e) {
@@ -551,7 +551,7 @@ public class Fake {
 				arguments.addAll(objects);
 				addFlags("LIBS", target, arguments);
 				try {
-					execute(arguments, target);
+					execute(arguments, target, verbose);
 				} catch(Exception e) {
 					error("link", target, e);
 				}
@@ -575,7 +575,8 @@ public class Fake {
 
 			void action() throws FakeException {
 				try {
-					execute(splitCommandLine(program), cwd);
+					execute(splitCommandLine(program), cwd,
+						verbose);
 				} catch (Exception e) {
 					if (!(e instanceof FakeException))
 						e.printStackTrace();
@@ -841,25 +842,31 @@ public class Fake {
 	}
 
 	// the parameter "file" is only used to set the cwd
-	protected static void execute(List arguments, String file)
-			throws Exception {
-		execute(arguments, new File(file).getParentFile());
+	protected static void execute(List arguments, String file,
+			boolean verbose) throws Exception {
+		execute(arguments, new File(file).getParentFile(), verbose);
 	}
 
-	protected static void execute(String[] args, String file)
-			throws Exception {
-		execute(args, new File(file).getParentFile());
+	protected static void execute(String[] args, String file,
+			boolean verbose) throws Exception {
+		execute(args, new File(file).getParentFile(), verbose);
 	}
 
-	protected static void execute(List arguments, File dir)
+	protected static void execute(List arguments, File dir, boolean verbose)
 			throws Exception {
 		String[] args = new String[arguments.size()];
 		arguments.toArray(args);
-		execute(args, dir);
+		execute(args, dir, verbose);
 	}
 
-	protected static void execute(String[] args, File dir)
+	protected static void execute(String[] args, File dir, boolean verbose)
 			throws Exception {
+		if (verbose) {
+			String output = "Executing:";
+			for (int i = 0; i < args.length; i++)
+				output += " '" + args[i] + "'";
+			System.err.println(output);
+		}
 		Process proc = Runtime.getRuntime().exec(args, null, dir);
 		new StreamDumper(proc.getErrorStream(), System.err).start();
 		new StreamDumper(proc.getInputStream(), System.out).start();
@@ -869,7 +876,7 @@ public class Fake {
 			throw new FakeException("Failed: " + exitValue);
 	}
 
-	protected void fakeOrMake(File cwd, String directory)
+	protected void fakeOrMake(File cwd, String directory, boolean verbose)
 			throws FakeException {
 		String fakeFile = directory + '/' + Parser.path;
 		boolean tryFake = new File(fakeFile).exists();
@@ -886,7 +893,7 @@ public class Fake {
 			} else
 				// Try "make"
 				execute(new String[] { "make" },
-					new File(directory));
+					new File(directory), verbose);
 		} catch (Exception e) {
 			if (!(e instanceof FakeException))
 				e.printStackTrace();
