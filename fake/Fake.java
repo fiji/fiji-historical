@@ -236,9 +236,10 @@ public class Fake {
 				throws FakeException {
 			int paren = key.indexOf('(');
 			String name = paren < 0 ? key : key.substring(0, paren);
-			if (!variableNames.contains(name.toUpperCase()))
-				throw new FakeException("Unknown variable: "
-						+ name);
+
+			value = expandVariables(value, paren < 0 ? null :
+				key.substring(paren + 1, key.length() - 1));
+
 			if (key.equalsIgnoreCase("javaVersion"))
 				javaVersion = value;
 			else if (key.equalsIgnoreCase("debug"))
@@ -252,6 +253,40 @@ public class Fake {
 					"" : key.substring(paren));
 				variables.put(name, value);
 			}
+		}
+
+		public String expandVariables(String value) {
+			return expandVariables(value, null, null);
+		}
+
+		public String expandVariables(String value, String subkey) {
+			return expandVariables(value, subkey, null);
+		}
+
+		public String expandVariables(String value,
+				String subkey, String subkey2) {
+			for (;;) {
+				int dollar = value.indexOf('$');
+				if (dollar < 0)
+					return value;
+
+				int end = dollar + 1;
+				while (end < value.length() &&
+						isAlnum(value.charAt(end)))
+					end++;
+				String name = value.substring(dollar + 1, end);
+				String substitute = getVariable(name,
+						subkey, subkey2);
+				value = value.substring(0, dollar)
+					+ (substitute == null ? "" : substitute)
+					+ (end < value.length() ?
+						value.substring(end) : "");
+			}
+		}
+
+		public boolean isAlnum(char c) {
+			return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+				|| (c >= '0' && c <= '9') || c == '_';
 		}
 
 		public void checkVariableNames() throws FakeException {
