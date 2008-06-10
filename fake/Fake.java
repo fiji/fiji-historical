@@ -189,8 +189,9 @@ public class Fake {
 		public Rule addRule(String target, String prerequisites)
 				throws FakeException {
 			List list = new ArrayList();
-			StringTokenizer tokenizer =
-				new StringTokenizer(prerequisites);
+			StringTokenizer tokenizer = new
+				StringTokenizer(expandVariables(prerequisites,
+							target), " \t\n");
 
 			while (tokenizer.hasMoreTokens()) {
 				String token = tokenizer.nextToken();
