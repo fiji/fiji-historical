@@ -824,6 +824,11 @@ public class Fake {
 			arguments.add("-deprecation");
 			arguments.add("-Xlint:unchecked");
 		}
+		String classPath = System.getProperty("java.class.path");
+		if (classPath != null && !classPath.equals("")) {
+			arguments.add("-classpath");
+			arguments.add(classPath);
+		}
 
 		Iterator iter = javas.iterator();
 		while (iter.hasNext()) {
