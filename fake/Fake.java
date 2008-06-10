@@ -45,6 +45,7 @@ public class Fake {
 		variableNames.add("JAVAVERSION");
 		variableNames.add("SHOWDEPRECATION");
 		variableNames.add("VERBOSE");
+		variableNames.add("IGNOREMISSINGFAKEFILES");
 		variableNames.add("CFLAGS");
 		variableNames.add("CXXFLAGS");
 		variableNames.add("LDFLAGS");
@@ -236,11 +237,6 @@ public class Fake {
 
 		// the variables
 
-		protected boolean debug = false;
-		protected boolean verbose = false;
-		protected boolean showDeprecation = true;
-		protected String javaVersion = "1.5";
-		protected boolean ignoreMissingFakefiles = false;
 		protected Map variables = new HashMap();
 
 		public void setVariable(String key, String value)
@@ -251,21 +247,9 @@ public class Fake {
 			value = expandVariables(value, paren < 0 ? null :
 				key.substring(paren + 1, key.length() - 1));
 
-			if (key.equalsIgnoreCase("javaVersion"))
-				javaVersion = value;
-			else if (key.equalsIgnoreCase("debug"))
-				debug = getBool(value);
-			else if (key.equalsIgnoreCase("verbose"))
-				verbose = getBool(value);
-			else if (key.equalsIgnoreCase("showDeprecation"))
-				showDeprecation = getBool(value);
-			else if (key.equalsIgnoreCase("ignoreMissingFakefiles"))
-				ignoreMissingFakefiles = getBool(value);
-			else {
-				name = name.toUpperCase() + (paren < 0 ?
-					"" : key.substring(paren));
-				variables.put(name, value);
-			}
+			name = name.toUpperCase() + (paren < 0 ?
+				"" : key.substring(paren));
+			variables.put(name, value);
 		}
 
 		public String expandVariables(String value) {
@@ -355,8 +339,9 @@ public class Fake {
 		}
 
 		public boolean getBool(String string) {
-			return string.equalsIgnoreCase("true") ||
-				string.equals("1");
+			return string != null &&
+				(string.equalsIgnoreCase("true") ||
+				 string.equals("1"));
 		}
 
 		// the different rule types
@@ -420,7 +405,7 @@ public class Fake {
 
 			public String toString() {
 				String result = "";
-				if (verbose) {
+				if (getVarBool("VERBOSE")) {
 					String type = getClass().getName();
 					int dollar = type.lastIndexOf('$');
 					if (dollar >= 0)
@@ -432,6 +417,23 @@ public class Fake {
 				while (iter.hasNext())
 					result += " " + iter.next();
 				return result;
+			}
+
+			String getVar(String key) {
+				return getVariable(key, target);
+			}
+
+			String getVar(String key, String subkey) {
+				return getVariable(key, subkey, target);
+			}
+
+			boolean getVarBool(String key) {
+				return getBool(getVariable(key, target));
+			}
+
+			boolean getVarBool(String key, String subkey) {
+				return getBool(getVariable(key,
+							subkey, target));
 			}
 		}
 
@@ -483,8 +485,10 @@ public class Fake {
 			}
 
 			void action(String directory) throws FakeException {
-				fakeOrMake(cwd, directory, verbose,
-						ignoreMissingFakefiles);
+				fakeOrMake(cwd, directory,
+					getVarBool("VERBOSE", directory),
+					getVarBool("IGNOREMISSINGFAKEFILES",
+						directory));
 			}
 		}
 
@@ -514,7 +518,9 @@ public class Fake {
 
 			void action() throws FakeException {
 				List files = compileJavas(nonUpToDates,
-						Parser.this);
+					cwd, getVar("JAVAVERSION"),
+					getVarBool("VERBOSE"),
+					getVarBool("SHOWDEPRECATION"));
 				makeJar(target, getMainClass(), files);
 			}
 
@@ -529,7 +535,10 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
-				compileJavas(prerequisites, Parser.this);
+				compileJavas(prerequisites,
+					cwd, getVar("JAVAVERSION"),
+					getVarBool("VERBOSE"),
+					getVarBool("SHOWDEPRECATION"));
 			}
 		}
 
@@ -573,7 +582,8 @@ public class Fake {
 				addFlags("CXXFLAGS", path, arguments);
 				arguments.add(path);
 				try {
-					execute(arguments, path, verbose);
+					execute(arguments, path,
+						getVarBool("VERBOSE", path));
 					return path.substring(0,
 						path.length() - 4) + ".o";
 				} catch(Exception e) {
@@ -588,7 +598,8 @@ public class Fake {
 				addFlags("CFLAGS", path, arguments);
 				arguments.add(path);
 				try {
-					execute(arguments, path, verbose);
+					execute(arguments, path,
+						getVarBool("VERBOSE", path));
 					return path.substring(0,
 						path.length() - 2) + ".o";
 				} catch(Exception e) {
@@ -606,7 +617,8 @@ public class Fake {
 				arguments.addAll(objects);
 				addFlags("LIBS", target, arguments);
 				try {
-					execute(arguments, target, verbose);
+					execute(arguments, target,
+						getVarBool("VERBOSE", path));
 				} catch(Exception e) {
 					error("link", target, e);
 				}
@@ -631,7 +643,7 @@ public class Fake {
 			void action() throws FakeException {
 				try {
 					execute(splitCommandLine(program), cwd,
-						verbose);
+						getVarBool("VERBOSE", program));
 				} catch (Exception e) {
 					if (!(e instanceof FakeException))
 						e.printStackTrace();
@@ -755,14 +767,17 @@ public class Fake {
 
 	// returns all .java files in the list, and returns a list where
 	// all the .java files have been replaced by their .class files.
-	protected List compileJavas(List javas, Parser parser)
+	protected List compileJavas(List javas, File cwd, String javaVersion,
+			boolean verbose, boolean showDeprecation)
 			throws FakeException {
 		List arguments = new ArrayList();
-		arguments.add("-source");
-		arguments.add(parser.javaVersion);
-		arguments.add("-target");
-		arguments.add(parser.javaVersion);
-		if (parser.showDeprecation) {
+		if (javaVersion != null && !javaVersion.equals("")) {
+			arguments.add("-source");
+			arguments.add(javaVersion);
+			arguments.add("-target");
+			arguments.add(javaVersion);
+		}
+		if (showDeprecation) {
 			arguments.add("-deprecation");
 			arguments.add("-Xlint:unchecked");
 		}
@@ -772,15 +787,14 @@ public class Fake {
 			String path = (String)iter.next();
 
 			if (path.endsWith(".java"))
-				arguments.add(makeAbsolutePath(parser.cwd,
-							path));
+				arguments.add(makeAbsolutePath(cwd, path));
 		}
 
 		String[] args = (String[])arguments.toArray(new
 				String[arguments.size()]);
 		long now = System.currentTimeMillis();
 
-		if (parser.verbose) {
+		if (verbose) {
 			String output = "Compiling .java files: javac";
 			for (int i = 0; i < args.length; i++)
 				output += " " + args[i];
@@ -800,7 +814,7 @@ public class Fake {
 		iter = javas.iterator();
 		while (iter.hasNext())
 			java2classFiles((String)iter.next(), result,
-					parser.cwd, now);
+					cwd, now);
 		return result;
 	}
 
