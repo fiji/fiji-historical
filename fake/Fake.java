@@ -546,7 +546,8 @@ public class Fake {
 					cwd, getVar("JAVAVERSION"),
 					getVarBool("VERBOSE"),
 					getVarBool("SHOWDEPRECATION"));
-				makeJar(target, getMainClass(), files);
+				makeJar(target, getMainClass(), files,
+					getVarBool("VERBOSE"));
 			}
 
 			String getMainClass() {
@@ -867,8 +868,18 @@ public class Fake {
 		return result;
 	}
 
-	protected static void makeJar(String path, String mainClass, List files)
-			throws FakeException {
+	protected static void makeJar(String path, String mainClass, List files,
+			boolean verbose) throws FakeException {
+		if (verbose) {
+			String output = "Making " + path;
+			if (mainClass != null)
+				output += " with main-class " + mainClass;
+			output += " from";
+			Iterator iter = files.iterator();
+			while (iter.hasNext())
+				output += " " + iter.next();
+			System.err.println(output);
+		}
 		Manifest manifest = null;
 		if (mainClass != null) {
 			String text = "Manifest-Version: 1.0\nMain-Class: "
@@ -914,6 +925,7 @@ public class Fake {
 
 			jar.close();
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new FakeException("Error writing "
 				+ path + ": " + e);
 		}
