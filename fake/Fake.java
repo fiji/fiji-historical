@@ -58,8 +58,15 @@ public class Fake {
 
 	public void make(String[] args) {
 		try {
-			Parser parser = new Parser(args);
-			Parser.Rule all = parser.parseRules();
+			Parser parser = new Parser();
+
+			List list = null;
+			if (args.length > 0) {
+				list = new ArrayList();
+				for (int i = 0; i < args.length; i++)
+					list.add(args[i]);
+			}
+			Parser.Rule all = parser.parseRules(list);
 			all.make();
 		}
 		catch (FakeException e) {
@@ -85,12 +92,13 @@ public class Fake {
 		protected Set allPrerequisites = new HashSet();
 		protected Set allPlatforms;
 
-		public Parser(String[] args) throws FakeException {
-			this(args != null && args.length > 0 ? args[0] : path,
-					args);
+		public Parser() throws FakeException {
+			this(null);
 		}
 
-		public Parser(String path, String[] args) throws FakeException {
+		public Parser(String path) throws FakeException {
+			if (path == null || path.equals(""))
+				path = this.path;
 			try {
 				InputStream stream = new FileInputStream(path);
 				InputStreamReader input =
@@ -113,7 +121,7 @@ public class Fake {
 			}
 		}
 
-		public Rule parseRules() throws FakeException {
+		public Rule parseRules(List targets) throws FakeException {
 			Rule result = null;
 
 			for (;;) {
@@ -171,6 +179,9 @@ public class Fake {
 				error("Could not find default rule");
 
 			checkVariableNames();
+
+			if (targets != null)
+				return new All("", targets);
 
 			return result;
 		}
@@ -384,6 +395,9 @@ public class Fake {
 
 			void make() throws FakeException {
 				try {
+					if (getVarBool("DEBUG"))
+						System.err.println("Checking "
+							+ this);
 					if (upToDate())
 						return;
 					System.err.println("Faking " + this);
@@ -458,6 +472,10 @@ public class Fake {
 					Rule rule = (Rule)allRules.get(prereq);
 					rule.make();
 				}
+			}
+
+			public boolean upToDate() {
+				return false;
 			}
 		}
 
@@ -997,9 +1015,9 @@ public class Fake {
 		try {
 			if (tryFake) {
 				// Try "Fake"
-				Parser parser = new Parser(fakeFile, null);
+				Parser parser = new Parser(fakeFile);
 				parser.cwd = new File(cwd, directory);
-				Parser.Rule all = parser.parseRules();
+				Parser.Rule all = parser.parseRules(null);
 				all.make();
 			} else
 				// Try "make"
