@@ -287,7 +287,8 @@ public class Fake {
 						isAlnum(value.charAt(end)))
 					end++;
 				String name = value.substring(dollar + 1, end);
-				String substitute = getVariable(name,
+				String substitute =
+					getVariable(name.toUpperCase(),
 						subkey, subkey2);
 				value = value.substring(0, dollar)
 					+ (substitute == null ? "" : substitute)
@@ -666,7 +667,9 @@ public class Fake {
 
 			void action() throws FakeException {
 				try {
-					execute(splitCommandLine(program), cwd,
+					String expanded =
+						expandVariables(program);
+					execute(splitCommandLine(expanded), cwd,
 						getVarBool("VERBOSE", program));
 				} catch (Exception e) {
 					if (!(e instanceof FakeException))
