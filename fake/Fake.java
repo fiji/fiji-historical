@@ -127,6 +127,16 @@ public class Fake {
 				if (line.length() == 0 || line.startsWith("#"))
 					continue;
 
+				while (line.endsWith("\\"))
+					try {
+						String next = reader.readLine();
+						line = line.substring(0,
+							line.length() - 1)
+							+ next;
+					} catch (IOException e) {
+						error("Error reading file");
+					}
+
 				int arrow = line.indexOf("<-");
 				if (arrow < 0) {
 					int equal = line.indexOf('=');
