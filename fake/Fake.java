@@ -178,7 +178,7 @@ public class Fake {
 
 			while (tokenizer.hasMoreTokens()) {
 				String token = tokenizer.nextToken();
-				if (expandGlob(token, list) == 0)
+				if (expandGlob(token, list, cwd) == 0)
 					throw new FakeException("Glob did not "
 						+ "match any file: '"
 						+ token + "'");
@@ -655,13 +655,13 @@ public class Fake {
 		}
 	}
 
-	protected static int expandGlob(String glob, List list)
+	protected static int expandGlob(String glob, List list, File cwd)
 			throws FakeException {
-		return expandGlob(glob, list, 0);
+		return expandGlob(glob, list, cwd, 0);
 	}
 
-	protected static int expandGlob(String glob, List list, long newerThan)
-			throws FakeException {
+	protected static int expandGlob(String glob, List list, File cwd,
+			long newerThan) throws FakeException {
 		// find first wildcard
 		int star = glob.indexOf('*'), qmark = glob.indexOf('?');
 
@@ -678,9 +678,9 @@ public class Fake {
 		int prevSlash = glob.lastIndexOf('/', star);
 		int nextSlash = glob.indexOf('/', star);
 
-		String parentPath = prevSlash < 0 ?
-			new File("").getAbsolutePath() :
-			glob.substring(0, prevSlash);
+
+		String parentPath = makeAbsolutePath(cwd,
+			prevSlash < 0 ? "" : glob.substring(0, prevSlash));
 		File parentDirectory = new File(parentPath);
 		if (!parentDirectory.exists())
 			throw new FakeException("Directory '" + parentDirectory
@@ -695,7 +695,7 @@ public class Fake {
 		String[] names = parentDirectory.list(new GlobFilter(pattern,
 					newerThan));
 
-		parentPath = prevSlash < 0 ? "" : parentPath + "/";
+		parentPath = parentDirectory.getAbsolutePath() + "/";
 		int count = nextSlash < 0 ? names.length : 0;
 		for (int i = 0; i < names.length; i++)
 			if (nextSlash < 0)
@@ -705,9 +705,10 @@ public class Fake {
 				if (starstar)
 					count += expandGlob(parentPath
 						+ names[i] + "/**" + remainder,
-						list, newerThan);
+						list, cwd, newerThan);
 				count += expandGlob(parentPath + names[i]
-						+ remainder, list, newerThan);
+						+ remainder, list, cwd,
+						newerThan);
 			}
 
 		return count;
@@ -715,17 +716,17 @@ public class Fake {
 
 	// adds the .class files for a certain .java file
 	protected static void java2classFiles(String path, List result,
-			long newerThan) throws FakeException {
+			File cwd, long newerThan) throws FakeException {
 		if (!path.endsWith(".java")) {
 			result.add(path);
 			return;
 		}
 
 		String stem = path.substring(0, path.length() - 5);
-		if (expandGlob(stem + ".class", result, newerThan) == 0)
+		if (expandGlob(stem + ".class", result, cwd, newerThan) == 0)
 			throw new FakeException("No class file compiled for '"
 				+ path + "'");
-		expandGlob(stem + "$*.class", result, newerThan);
+		expandGlob(stem + "$*.class", result, cwd, newerThan);
 	}
 
 	// this function handles the javac singleton
@@ -759,15 +760,25 @@ public class Fake {
 		Iterator iter = javas.iterator();
 		while (iter.hasNext()) {
 			String path = (String)iter.next();
+
 			if (path.endsWith(".java"))
-				arguments.add(parser.cwd + "/" + path);
+				arguments.add(makeAbsolutePath(parser.cwd,
+							path));
 		}
 
-		String[] args = new String[arguments.size()];
+		String[] args = (String[])arguments.toArray(new
+				String[arguments.size()]);
 		long now = System.currentTimeMillis();
 
+		if (parser.verbose) {
+			String output = "Compiling .java files: javac";
+			for (int i = 0; i < args.length; i++)
+				output += " " + args[i];
+			System.err.println(output);
+		}
+
 		try {
-			callJavac((String[])arguments.toArray(args));
+			callJavac(args);
 		} catch (FakeException e) {
 			throw e;
 		} catch (Exception e) {
@@ -778,7 +789,8 @@ public class Fake {
 		List result = new ArrayList();
 		iter = javas.iterator();
 		while (iter.hasNext())
-			java2classFiles((String)iter.next(), result, now);
+			java2classFiles((String)iter.next(), result,
+					parser.cwd, now);
 		return result;
 	}
 
@@ -1042,6 +1054,18 @@ public class Fake {
 			return "win" + (is64bit ? "64" : "32");
 		System.err.println("Unknown platform: " + osName);
 		return osName;
+	}
+
+	public static boolean isAbsolutePath(String path) {
+		boolean isWindows = getPlatform().startsWith("win");
+		return (isWindows && path.length() > 1 && path.charAt(1) == ':')
+			|| (!isWindows && path.startsWith("/"));
+	}
+
+	public static String makeAbsolutePath(File cwd, String path) {
+		if (isAbsolutePath(path))
+			return path;
+		return new File(cwd, path).getAbsolutePath();
 	}
 
 
