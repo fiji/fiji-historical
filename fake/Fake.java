@@ -12,6 +12,9 @@ import java.io.ByteArrayInputStream;
 
 import java.lang.reflect.Method;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -33,6 +36,7 @@ import java.util.regex.Pattern;
 
 public class Fake {
 	protected static Method javac;
+	protected static String toolsPath;
 
 	public static void main(String[] args) {
 		new Fake().make(args);
@@ -517,6 +521,7 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
+				toolsPath = getVar("TOOLSPATH");
 				List files = compileJavas(nonUpToDates,
 					cwd, getVar("JAVAVERSION"),
 					getVarBool("VERBOSE"),
@@ -535,6 +540,7 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
+				toolsPath = getVar("TOOLSPATH");
 				compileJavas(prerequisites,
 					cwd, getVar("JAVAVERSION"),
 					getVarBool("VERBOSE"),
@@ -753,16 +759,27 @@ public class Fake {
 
 	// this function handles the javac singleton
 	protected static synchronized void callJavac(String[] arguments)
-			throws Exception {
-		if (javac == null) {
-			Class main = Class.forName("com.sun.tools.javac.Main");
-			javac = main.getMethod("compile",
-					new Class[] { arguments.getClass() });
-		}
+			throws FakeException {
+		try {
+			if (javac == null) {
+				ClassLoader loader = getClassLoader(toolsPath);
+				String className = "com.sun.tools.javac.Main";
+				Class main = loader.loadClass(className);
+				Class[] argsType = new Class[] {
+					arguments.getClass()
+				};
+				javac = main.getMethod("compile", argsType);
+			}
 
-		Object result = javac.invoke(null, new Object[] { arguments });
-		if (!result.equals(new Integer(0)))
-			throw new FakeException("Compile error");
+			Object result = javac.invoke(null,
+					new Object[] { arguments });
+			if (!result.equals(new Integer(0)))
+				throw new FakeException("Compile error");
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new FakeException("Could not find javac " + e
+				+ " (tools path = " + toolsPath + ")");
+		}
 	}
 
 	// returns all .java files in the list, and returns a list where
@@ -1222,6 +1239,124 @@ public class Fake {
 				return result + "utf8 " + u2
 					+ " " + getString(offset);
 			return result + "unknown";
+		}
+	}
+
+	private static JarClassLoader classLoader;
+
+	public static ClassLoader getClassLoader() throws IOException {
+		return getClassLoader(null);
+	}
+
+	protected static ClassLoader getClassLoader(String jarFile)
+			throws IOException {
+		if (classLoader == null)
+			classLoader = new JarClassLoader();
+		if (jarFile != null &&
+				! classLoader.jarFiles.containsKey(jarFile))
+			classLoader.jarFiles.put(jarFile, new JarFile(jarFile));
+		return classLoader;
+	}
+
+	private static class JarClassLoader extends ClassLoader {
+		Map jarFiles;
+		Map cache;
+
+		JarClassLoader() {
+			super(Thread.currentThread().getContextClassLoader());
+			jarFiles = new HashMap();
+			cache = new HashMap();
+		}
+
+		public URL getResource(String name) {
+			Iterator iter = jarFiles.keySet().iterator();
+			while (iter.hasNext()) {
+				String file = (String)iter.next();
+				JarFile jar = (JarFile)jarFiles.get(file);
+				if (jar.getEntry(name) == null)
+					continue;
+				String url = "file:///"
+					+ file.replace('\\', '/')
+					+ "!/" + name;
+				try {
+					return new URL("jar", "", url);
+				} catch (MalformedURLException e) { }
+			}
+			return getSystemResource(name);
+		}
+
+		public InputStream getResourceAsStream(String name) {
+			return getResourceAsStream(name, false);
+		}
+
+		public InputStream getResourceAsStream(String name,
+				boolean nonSystemOnly) {
+			Iterator iter = jarFiles.values().iterator();
+			while (iter.hasNext()) {
+				JarFile jar = (JarFile)iter.next();
+				JarEntry entry = jar.getJarEntry(name);
+				if (entry == null)
+					continue;
+				try {
+					return jar.getInputStream(entry);
+				} catch (IOException e) { }
+			}
+			if (nonSystemOnly)
+				return null;
+			return super.getResourceAsStream(name);
+		}
+
+		public Class loadClass(String name)
+				throws ClassNotFoundException {
+			return loadClass(name, true);
+		}
+
+		public synchronized Class loadClass(String name,
+				boolean resolve) throws ClassNotFoundException {
+			Object cached = cache.get(name);
+			if (cached != null)
+				return (Class)cached;
+			Class result;
+			try {
+				result = super.loadClass(name, resolve);
+				if (result != null)
+					return result;
+			} catch (Exception e) { }
+			String path = name.replace('.', '/') + ".class";
+			InputStream input = getResourceAsStream(path, true);
+			try {
+				byte[] buffer = readStream(input);
+				result = defineClass(name,
+						buffer, 0, buffer.length);
+				cache.put(name, result);
+				return result;
+			} catch (IOException e) { return null; }
+		}
+
+		byte[] readStream(InputStream input) throws IOException {
+			byte[] buffer = new byte[1024];
+			int offset = 0, len = 0;
+			for (;;) {
+				if (offset == buffer.length)
+					buffer = realloc(buffer,
+							2 * buffer.length);
+				len = input.read(buffer, offset,
+						buffer.length - offset);
+				if (len < 0) {
+					input.close();
+					return realloc(buffer, offset);
+				}
+				offset += len;
+			}
+		}
+
+		byte[] realloc(byte[] buffer, int newLength) {
+			if (newLength == buffer.length)
+				return buffer;
+			byte[] newBuffer = new byte[newLength];
+			System.arraycopy(buffer, 0, newBuffer, 0,
+				Math.min(newLength, buffer.length));
+			return newBuffer;
 		}
 	}
 
