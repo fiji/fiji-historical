@@ -722,43 +722,48 @@ public class Fake {
 
 		if (qmark >= 0 && qmark < star)
 			star = qmark;
-		boolean starstar = glob.substring(star).startsWith("**");
+		boolean starstar = glob.substring(star).startsWith("**/");
 
 		int prevSlash = glob.lastIndexOf('/', star);
 		int nextSlash = glob.indexOf('/', star);
 
-
-		String parentPath = makeAbsolutePath(cwd,
-			prevSlash < 0 ? "" : glob.substring(0, prevSlash));
-		File parentDirectory = new File(parentPath);
+		String parentPath =
+			prevSlash < 0 ? "" : glob.substring(0, prevSlash + 1);
+		File parentDirectory = new File(makePath(cwd, parentPath));
 		if (!parentDirectory.exists())
 			throw new FakeException("Directory '" + parentDirectory
 				+ "' not found");
 
-		String pattern = glob.substring(prevSlash + 1, nextSlash < 0 ?
-			glob.length() : nextSlash);
+		String pattern = nextSlash < 0 ?
+			glob.substring(prevSlash + 1) :
+			glob.substring(prevSlash + 1, nextSlash);
 
 		String remainder = nextSlash < 0 ?
-			null : glob.substring(nextSlash);
+			null : glob.substring(nextSlash + 1);
+
+		int count = 0;
+
+		if (starstar) {
+			count += expandGlob(parentPath + remainder, list,
+						cwd, newerThan);
+			remainder = "**/" + remainder;
+		}
 
 		String[] names = parentDirectory.list(new GlobFilter(pattern,
 					newerThan));
 
-		parentPath = parentDirectory.getAbsolutePath() + "/";
-		int count = nextSlash < 0 ? names.length : 0;
-		for (int i = 0; i < names.length; i++)
-			if (nextSlash < 0)
-				list.add(parentPath + names[i]);
-			else if (new File(parentPath + names[i])
-					.isDirectory()) {
-				if (starstar)
-					count += expandGlob(parentPath
-						+ names[i] + "/**" + remainder,
-						list, cwd, newerThan);
-				count += expandGlob(parentPath + names[i]
-						+ remainder, list, cwd,
-						newerThan);
+		for (int i = 0; i < names.length; i++) {
+			String path = parentPath + names[i];
+			if (starstar && path.startsWith("."))
+				continue;
+			if (nextSlash < 0) {
+				list.add(path);
+				count++;
 			}
+			else if (new File(makePath(cwd, path)).isDirectory())
+				count += expandGlob(path + "/" + remainder,
+						list, cwd, newerThan);
+		}
 
 		return count;
 	}
@@ -825,7 +830,7 @@ public class Fake {
 			String path = (String)iter.next();
 
 			if (path.endsWith(".java"))
-				arguments.add(makeAbsolutePath(cwd, path));
+				arguments.add(makePath(cwd, path));
 		}
 
 		String[] args = (String[])arguments.toArray(new
@@ -1137,10 +1142,14 @@ public class Fake {
 			|| (!isWindows && path.startsWith("/"));
 	}
 
-	public static String makeAbsolutePath(File cwd, String path) {
+	public static String makePath(File cwd, String path) {
 		if (isAbsolutePath(path))
 			return path;
-		return new File(cwd, path).getAbsolutePath();
+		if (path.equals("."))
+			return cwd.toString();
+		if (cwd.toString().equals("."))
+			return path.equals("") ? "." : path;
+		return new File(cwd, path).toString();
 	}
 
 	static class ByteCodeAnalyzer {
