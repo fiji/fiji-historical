@@ -271,6 +271,41 @@ public class Fake {
 			}
 		}
 
+		public String getVariable(String key) {
+			return getVariable(key, null, null);
+		}
+
+		public String getVariable(String key, String subkey) {
+			return getVariable(key, subkey, null);
+		}
+
+		public String getVariable(String key,
+				String subkey, String subkey2) {
+			String res = null;
+			if (subkey != null)
+				res = (String)variables.get(key
+						+ "(" + subkey + ")");
+			if (subkey2 != null && res == null)
+				res = (String)variables.get(key
+						+ "(" + subkey2 + ")");
+			if (res == null)
+				res = (String)variables.get(key
+						+ "(" + getPlatform() + ")");
+			if (res == null)
+				res = (String)variables.get(key);
+			return res;
+		}
+
+		public void dumpVariables() {
+			System.err.println("Variable dump:");
+			Iterator iter = variables.keySet().iterator();
+			while (iter.hasNext()) {
+				String key = (String)iter.next();
+				System.err.println(key + " = "
+						+ variables.get(key));
+			}
+		}
+
 		public boolean getBool(String string) {
 			return string.equalsIgnoreCase("true") ||
 				string.equals("1");
@@ -428,17 +463,8 @@ public class Fake {
 				makeJar(target, getMainClass(), files);
 			}
 
-			String getVar(String name, String target) {
-				return (String)variables.get(name
-					+ (target == null ?
-						"" : "(" + target + ")"));
-			}
-
 			String getMainClass() {
-				String result = getVar("MAINCLASS", target);
-				if (result == null)
-					result = getVar("MAINCLASS", null);
-				return result;
+				return getVariable("MAINCLASS", target);
 			}
 		}
 
@@ -477,23 +503,11 @@ public class Fake {
 				link(target, out);
 			}
 
-			void add(String variable, String path, List arguments)
-					throws FakeException {
-				add(variables.get(variable), arguments);
-				add(variables.get(variable + "("
-					+ getPlatform() + ")"), arguments);
-				add(variables.get(variable
-					+ "(" + path + ")"), arguments);
-				add(variables.get(variable
-					+ "(" + target + ")"), arguments);
-			}
-
-			void add(Object flags, List arguments)
-					throws FakeException {
-				if (flags == null)
-					return;
-				List list = splitCommandLine((String)flags);
-				arguments.addAll(list);
+			void addFlags(String variable, String path,
+					List arguments) throws FakeException {
+				String value = getVariable(variable,
+						path, target);
+				arguments.addAll(splitCommandLine(value));
 			}
 
 			String compileCXX(String path) throws FakeException {
@@ -501,7 +515,7 @@ public class Fake {
 				List arguments = new ArrayList();
 				arguments.add("g++");
 				arguments.add("-c");
-				add("CXXFLAGS", path, arguments);
+				addFlags("CXXFLAGS", path, arguments);
 				arguments.add(path);
 				try {
 					execute(arguments, path);
@@ -516,7 +530,7 @@ public class Fake {
 				List arguments = new ArrayList();
 				arguments.add("gcc");
 				arguments.add("-c");
-				add("CFLAGS", path, arguments);
+				addFlags("CFLAGS", path, arguments);
 				arguments.add(path);
 				try {
 					execute(arguments, path);
@@ -533,9 +547,9 @@ public class Fake {
 				arguments.add(linkCPlusPlus ? "g++" : "gcc");
 				arguments.add("-o");
 				arguments.add(target);
-				add("LDFLAGS", target, arguments);
+				addFlags("LDFLAGS", target, arguments);
 				arguments.addAll(objects);
-				add("LIBS", target, arguments);
+				addFlags("LIBS", target, arguments);
 				try {
 					execute(arguments, target);
 				} catch(Exception e) {
