@@ -217,8 +217,8 @@ public class Fake {
 				rule = new CompileCProgram(target, list);
 			else if (target.endsWith(".class"))
 				rule = new CompileClass(target, list);
-			else if (target.endsWith(")")) {
-				int paren = target.indexOf('(');
+			else if (target.endsWith("]")) {
+				int paren = target.indexOf('[');
 
 				if (paren < 0)
 					throw new FakeException("Invalid rule");
