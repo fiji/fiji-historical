@@ -467,6 +467,15 @@ public class Fake {
 							subkey, target));
 			}
 
+			List compileJavas(List javas) throws FakeException {
+				toolsPath = getVar("TOOLSPATH");
+				return Fake.compileJavas(javas, cwd,
+					getVar("JAVAVERSION"),
+					getVarBool("VERBOSE"),
+					getVarBool("SHOWDEPRECATION"),
+					getVar("CLASSPATH"));
+			}
+
 			String getPluginsConfig() {
 				String path = getVar("pluginsConfigDirectory");
 				if (path == null || path.equals(""))
@@ -627,11 +636,7 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
-				toolsPath = getVar("TOOLSPATH");
-				compileJavas(nonUpToDates,
-					cwd, getVar("JAVAVERSION"),
-					getVarBool("VERBOSE"),
-					getVarBool("SHOWDEPRECATION"));
+				compileJavas(nonUpToDates);
 				List files = new ArrayList();
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext())
@@ -656,11 +661,7 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
-				toolsPath = getVar("TOOLSPATH");
-				compileJavas(prerequisites,
-					cwd, getVar("JAVAVERSION"),
-					getVarBool("VERBOSE"),
-					getVarBool("SHOWDEPRECATION"));
+				compileJavas(prerequisites);
 			}
 		}
 
@@ -881,8 +882,8 @@ public class Fake {
 	}
 
 	// this function handles the javac singleton
-	protected static synchronized void callJavac(String[] arguments)
-			throws FakeException {
+	protected static synchronized void callJavac(String[] arguments,
+			boolean verbose) throws FakeException {
 		try {
 			if (javac == null) {
 				ClassLoader loader = getClassLoader(toolsPath);
@@ -898,17 +899,30 @@ public class Fake {
 					new Object[] { arguments });
 			if (!result.equals(new Integer(0)))
 				throw new FakeException("Compile error");
+			return;
 		} catch (Exception e) {
-			e.printStackTrace();
-			throw new FakeException("Could not find javac " + e
+			System.err.println("Could not find javac " + e
 				+ " (tools path = " + toolsPath + ")");
+		}
+
+		// fall back to calling javac
+		String[] newArguments = new String[arguments.length + 1];
+		newArguments[0] = "javac";
+		System.arraycopy(arguments, 0, newArguments, 1,
+				arguments.length);
+		try {
+			execute(newArguments, new File("."), verbose);
+		} catch (Exception e) {
+			throw new FakeException("Could not even fall back "
+				+ " to javac in the PATH");
 		}
 	}
 
 	// returns all .java files in the list, and returns a list where
 	// all the .java files have been replaced by their .class files.
-	protected List compileJavas(List javas, File cwd, String javaVersion,
-			boolean verbose, boolean showDeprecation)
+	protected static List compileJavas(List javas, File cwd,
+			String javaVersion, boolean verbose,
+			boolean showDeprecation, String extraClassPath)
 			throws FakeException {
 		List arguments = new ArrayList();
 		if (javaVersion != null && !javaVersion.equals("")) {
@@ -922,6 +936,14 @@ public class Fake {
 			arguments.add("-Xlint:unchecked");
 		}
 		String classPath = System.getProperty("java.class.path");
+		if (extraClassPath != null && !extraClassPath.equals("")) {
+			StringTokenizer tokenizer =
+				new StringTokenizer(extraClassPath,
+						File.pathSeparator);
+			while (tokenizer.hasMoreElements())
+				classPath += File.pathSeparator
+					+ makePath(cwd, tokenizer.nextToken());
+		}
 		if (classPath != null && !classPath.equals("")) {
 			arguments.add("-classpath");
 			arguments.add(classPath);
@@ -947,7 +969,7 @@ public class Fake {
 		}
 
 		try {
-			callJavac(args);
+			callJavac(args, verbose);
 		} catch (FakeException e) {
 			throw e;
 		} catch (Exception e) {
