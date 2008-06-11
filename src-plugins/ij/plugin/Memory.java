@@ -1,6 +1,7 @@
 package ij.plugin;
 
 import ij.IJ;
+import ij.Menus;
 import ij.Prefs;
 
 import ij.gui.GenericDialog;
@@ -54,10 +55,16 @@ public class Memory implements PlugIn {
 		String fileName;
 		String pattern;
 
+		String dir = Menus.getPlugInsPath();
+		if (dir == null || dir.equals("")) {
+			IJ.error("Could not find Fiji directory");
+			return;
+		}
+
 		if (IJ.isMacOSX())
-			fileName = Prefs.getHomeDir() + "/Info.plist";
+			fileName = dir + "../Contents/Info.plist";
 		else
-			fileName = Prefs.getHomeDir() + "/jvm.cfg";
+			fileName = dir + "/jvm.cfg";
 
 		try {
 			String contents = readFile(fileName);
@@ -116,21 +123,20 @@ public class Memory implements PlugIn {
 		String key = "\n\t\t<key>memory</key>"
 			+ "\n\t\t<string>" + memory + "</string>" ;
 
-		Pattern p = Pattern.compile(".*<key>fiji</key>.*"
+		Pattern p = Pattern.compile(".*<key>fiji</key>[^<]*"
 				+ "<dict>(.*)</dict>.*", flags);
 		Matcher matcher = p.matcher(contents);
 		if (matcher.matches()) {
 			int start = matcher.start(1),
 			    end = matcher.end(1);
 			String inner = contents.substring(start, end);
-			p = Pattern.compile(".*(<key>(heap|mem|memory)"
-					+ "</key>[^<]<string>).*"
-					+ "([0-9][0-9]*[kKmMgGtT])(</string>)",
+			p = Pattern.compile(".*<key>(heap|mem|memory)</key>"
+					+ "[^<]*<string>([^<]*)</string>.*",
 					flags);
 			Matcher matcher2 = p.matcher(inner);
 			if (matcher2.matches()) {
-				int start2 = start + matcher2.end(1);
-				start += matcher2.start(1);
+				int start2 = start + matcher2.end(2);
+				start += matcher2.start(2);
 				return contents.substring(0, start)
 					+ memory
 					+ contents.substring(start2);
