@@ -1022,7 +1022,8 @@ public class Fake {
 			Iterator iter = files.iterator();
 			while (iter.hasNext()) {
 				String realName = (String)iter.next();
-				byte[] buffer = readFile(realName);
+				byte[] buffer =
+					readFile(makePath(cwd, realName));
 				ByteCodeAnalyzer analyzer =
 					new ByteCodeAnalyzer(buffer);
 				String name = analyzer.getPathForClass();
