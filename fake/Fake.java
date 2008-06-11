@@ -330,6 +330,7 @@ public class Fake {
 
 		public String getVariable(String key,
 				String subkey, String subkey2) {
+			key = key.toUpperCase();
 			String res = null;
 			if (subkey != null)
 				res = (String)variables.get(key
