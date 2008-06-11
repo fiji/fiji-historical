@@ -34,11 +34,6 @@ static int is_leopard(void)
 	char os_release[128];
 	size_t len = sizeof(os_release);;
 
-if (sysctl(mib, 2, os_release, &len, NULL, 0) == -1) {
-	fprintf(stderr, "Error: %d(%s)\n", errno, strerror(errno));
-};
-fprintf(stderr, "Hello: %.*s.\n", len, os_release);
-
 	return sysctl(mib, 2, os_release, &len, NULL, 0) != -1 &&
 		atoi(os_release) > 8;
 }
@@ -54,7 +49,6 @@ int main(int argc, char **argv)
 	}
 	strcpy(argv[0] + offset, is_leopard() ? "-macosx" : "-tiger");
 
-	fprintf(stderr, "is_leopard: %s\n", is_leopard() ? "true" : "false");
 	if (argc > 1) {
 		cpu_type_t cpu_type = CPU_TYPE_I386, result;
 		size_t size = sizeof(cpu_type);
@@ -65,7 +59,6 @@ int main(int argc, char **argv)
 					errno, strerror(errno));
 			return 1;
 		}
-		fprintf(stderr, "old: %d\n", result);
 	}
 
 	execv(argv[0], argv);
