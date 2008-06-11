@@ -29,7 +29,7 @@ import java.util.jar.Attributes.Name;
 import java.util.jar.Manifest;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
+import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 
 import java.util.regex.Pattern;
@@ -396,6 +396,16 @@ public class Fake {
 				return nonUpToDates.size() == 0;
 			}
 
+			boolean upToDate(String path) {
+				if (path == null)
+					return true;
+				long targetModified =
+					new File(cwd, target).lastModified();
+				long pathModified =
+					new File(path).lastModified();
+				return targetModified > pathModified;
+			}
+
 			void make() throws FakeException {
 				try {
 					if (getVarBool("DEBUG"))
@@ -456,6 +466,74 @@ public class Fake {
 				return getBool(getVariable(key,
 							subkey, target));
 			}
+
+			String getPluginsConfig() {
+				String path = getVar("pluginsConfigDirectory");
+				if (path == null || path.equals(""))
+					return null;
+				String key = target;
+				if (key.endsWith(".jar"))
+					key = key.substring(0,
+							key.length() - 4);
+				int slash = key.lastIndexOf('/');
+				if (slash >= 0)
+					key = key.substring(slash + 1);
+				path += "/" + key + ".config";
+				if (!new File(path).exists())
+					return null;
+				return path;
+			}
+
+			void copyJar(String source, String target, File cwd,
+					String configPath)
+					throws FakeException {
+				if (configPath == null)
+					copyFile(source, target, cwd);
+				else try {
+					copyJarWithPluginsConfig(source, target,
+						cwd, configPath);
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new FakeException("Couldn't copy "
+						+ source + " to " + target
+						+ ": " + e);
+				}
+			}
+
+			void copyJarWithPluginsConfig(String source,
+					String target, File cwd,
+					String configPath) throws Exception {
+				File file = new File(cwd, source);
+				InputStream input = new FileInputStream(file);
+				JarInputStream in = new JarInputStream(input);
+
+				Manifest manifest = in.getManifest();
+				file = new File(cwd, target);
+				OutputStream output =
+					new FileOutputStream(file);
+				JarOutputStream out = manifest == null ?
+					new JarOutputStream(output) :
+					new JarOutputStream(output, manifest);
+
+				addPluginsConfigToJar(out, configPath);
+
+				JarEntry entry;
+				while ((entry = in.getNextJarEntry()) != null) {
+					String name = entry.getName();
+					if (name.equals("plugins.config") &&
+							configPath != null) {
+						in.closeEntry();
+						continue;
+					}
+					byte[] buf = readStream(in);
+					in.closeEntry();
+					out.putNextEntry(entry);
+					out.write(buf);
+					out.closeEntry();
+				}
+				in.close();
+				out.close();
+			}
 		}
 
 		class All extends Rule {
@@ -484,11 +562,13 @@ public class Fake {
 
 		class SubFake extends Rule {
 			String source;
+			String configPath;
 
 			SubFake(String target, List prerequisites) {
 				super(target, prerequisites);
 				source = getLastPrerequisite()
 					+ new File(target).getName();
+				configPath = getPluginsConfig();
 			}
 
 			boolean upToDate() {
@@ -506,7 +586,8 @@ public class Fake {
 					return;
 
 				if (target.indexOf('.') >= 0)
-					copyFile(source, target, cwd);
+					copyJar(source, target, cwd,
+							configPath);
 			}
 
 			void action(String directory) throws FakeException {
@@ -518,18 +599,19 @@ public class Fake {
 		}
 
 		class CopyJar extends Rule {
-			String source;
+			String source, configPath;
 			CopyJar(String target, List prerequisites) {
 				super(target, prerequisites);
 				source = getLastPrerequisite();
+				configPath = getPluginsConfig();
 			}
 
 			void action() throws FakeException {
-				copyFile(source, target, cwd);
+				copyJar(source, target, cwd, configPath);
 			}
 
 			boolean upToDate() {
-				if (super.upToDate())
+				if (super.upToDate() && upToDate(configPath))
 					return true;
 
 				return jarUpToDate(source, target);
@@ -537,18 +619,30 @@ public class Fake {
 		}
 
 		class CompileJar extends Rule {
+			String configPath;
+
 			CompileJar(String target, List prerequisites) {
 				super(target, prerequisites);
+				configPath = getPluginsConfig();
 			}
 
 			void action() throws FakeException {
 				toolsPath = getVar("TOOLSPATH");
-				List files = compileJavas(nonUpToDates,
+				compileJavas(nonUpToDates,
 					cwd, getVar("JAVAVERSION"),
 					getVarBool("VERBOSE"),
 					getVarBool("SHOWDEPRECATION"));
-				makeJar(target, getMainClass(), files,
-					getVarBool("VERBOSE"));
+				List files = new ArrayList();
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext())
+					java2classFiles((String)iter.next(),
+						files, cwd, 0);
+				makeJar(target, getMainClass(), files, cwd,
+					configPath, getVarBool("VERBOSE"));
+			}
+
+			boolean upToDate() {
+				return super.upToDate() && upToDate(configPath);
 			}
 
 			String getMainClass() {
@@ -869,8 +963,22 @@ public class Fake {
 		return result;
 	}
 
+	protected static void addPluginsConfigToJar(JarOutputStream jar,
+			String configPath) throws IOException {
+		if (configPath == null)
+			return;
+
+		JarEntry entry = new JarEntry("plugins.config");
+		jar.putNextEntry(entry);
+		byte[] buffer = readFile(configPath);
+		jar.write(buffer, 0, buffer.length);
+		jar.closeEntry();
+	}
+
 	protected static void makeJar(String path, String mainClass, List files,
-			boolean verbose) throws FakeException {
+			File cwd, String configPath, boolean verbose)
+			throws FakeException {
+		path = makePath(cwd, path);
 		if (verbose) {
 			String output = "Making " + path;
 			if (mainClass != null)
@@ -910,6 +1018,7 @@ public class Fake {
 				new JarOutputStream(out) :
 				new JarOutputStream(out, manifest);
 
+			addPluginsConfigToJar(jar, configPath);
 			Iterator iter = files.iterator();
 			while (iter.hasNext()) {
 				String realName = (String)iter.next();
@@ -1375,38 +1484,37 @@ public class Fake {
 			InputStream input = getResourceAsStream(path, true);
 			try {
 				byte[] buffer = readStream(input);
+				input.close();
 				result = defineClass(name,
 						buffer, 0, buffer.length);
 				cache.put(name, result);
 				return result;
 			} catch (IOException e) { return null; }
 		}
+	}
 
-		byte[] readStream(InputStream input) throws IOException {
-			byte[] buffer = new byte[1024];
-			int offset = 0, len = 0;
-			for (;;) {
-				if (offset == buffer.length)
-					buffer = realloc(buffer,
-							2 * buffer.length);
-				len = input.read(buffer, offset,
-						buffer.length - offset);
-				if (len < 0) {
-					input.close();
-					return realloc(buffer, offset);
-				}
-				offset += len;
-			}
+	static byte[] readStream(InputStream input) throws IOException {
+		byte[] buffer = new byte[1024];
+		int offset = 0, len = 0;
+		for (;;) {
+			if (offset == buffer.length)
+				buffer = realloc(buffer,
+						2 * buffer.length);
+			len = input.read(buffer, offset,
+					buffer.length - offset);
+			if (len < 0)
+				return realloc(buffer, offset);
+			offset += len;
 		}
+	}
 
-		byte[] realloc(byte[] buffer, int newLength) {
-			if (newLength == buffer.length)
-				return buffer;
-			byte[] newBuffer = new byte[newLength];
-			System.arraycopy(buffer, 0, newBuffer, 0,
+	static byte[] realloc(byte[] buffer, int newLength) {
+		if (newLength == buffer.length)
+			return buffer;
+		byte[] newBuffer = new byte[newLength];
+		System.arraycopy(buffer, 0, newBuffer, 0,
 				Math.min(newLength, buffer.length));
-			return newBuffer;
-		}
+		return newBuffer;
 	}
 
 
