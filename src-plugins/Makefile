@@ -3,9 +3,9 @@ JAVACOPTS=-target 1.5 -source 1.5 \
 	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
 
 # common is just in this list to exclude classes within it from being copied
-JARDIRS=common Jython Clojure JRuby BSH bUnwarpJ register_virtual_stack registration3d io fiji CLI Javascript
+JARDIRS=common Jython Clojure JRuby BSH bUnwarpJ register_virtual_stack registration3d io fiji CLI Javascript ij
 FINDJARDIRS=$(patsubst %,-name % -o,$(JARDIRS))
-JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar bUnwarpJ_.jar register_virtual_stack_slices.jar registration_3d.jar IO_.jar Fiji.jar CLI_.jar Javascript_.jar
+JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar bUnwarpJ_.jar register_virtual_stack_slices.jar registration_3d.jar IO_.jar CLI_.jar Javascript_.jar
 
 JAVAS=$(filter-out $(wildcard $(patsubst %,%/*.java,$(JARDIRS))),$(wildcard *.java */*.java))
 CLASSES=$(patsubst %.java,%.class,$(JAVAS))
@@ -13,7 +13,7 @@ DESTJARS=$(patsubst %,../plugins/%,$(JARS))
 
 .PHONY: copyclasses
 
-all: $(DESTJARS) copyclasses
+all: $(DESTJARS) ../misc/Fiji.jar copyclasses
 
 # javac will generate classes that aren't in DESTCLASSES (e.g. inner
 # classes) so copy over every class file we find under this directory
@@ -29,6 +29,9 @@ copyclasses: $(CLASSES)
 
 $(DESTJARS): ../plugins/%: %
 	echo Testing whether to copy $<
+	../scripts/copy-jar-if-newer.sh $< $@
+
+../misc/Fiji.jar: Fiji.jar
 	../scripts/copy-jar-if-newer.sh $< $@
 
 ifeq ($(TARGET),)
@@ -54,11 +57,11 @@ Javascript_.jar: SOURCES=Javascript/*.java Javascript/plugins.config
 # Special rule for non-packaged IO plugins present within the src-plugins/Input-Output folder
 IO_.jar: SOURCES=io/*.java io/plugins.config
 
-Fiji.jar: SOURCES=fiji/*.java
+Fiji.jar: SOURCES=fiji/*.java ij/*/*.java
 
-.PHONY: $(JARS)
+.PHONY: $(JARS) Fiji.jar
 
-$(JARS):
+$(JARS) Fiji.jar:
 	$(MAKE) TARGET=$@ SOURCES='$(SOURCES)' $@
 
 else
