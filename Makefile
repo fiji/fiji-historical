@@ -53,7 +53,7 @@ check: check-class-versions check-precompiled check-submodules
 
 check-class-versions: src-plugins $(TARGET)$(EXE)
 	./$(TARGET)$(EXE) --headless \
-		--main-class=fiji.CheckClassVersions plugins/ jars/
+		--main-class=fiji.CheckClassVersions plugins/ jars/ misc/
 
 PRECOMPILED=$(patsubst %,precompiled/fiji-%,$(patsubst win%,win%.exe,$(ARCHS)))
 check-precompiled:
@@ -88,7 +88,7 @@ mm:
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 
-ARCHS=linux linux-amd64 macosx-intel win32 win64
+ARCHS=linux linux-amd64 macosx win32 win64
 
 LIBDL=-ldl
 INCLUDES=-I$(JAVA_HOME)/../include -I$(JAVA_HOME)/../include/$(ARCH_INCLUDE)
@@ -108,11 +108,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	ARCH=win32
 endif
 ifeq ($(uname_S),Darwin)
-ifeq ($(uname_M),Power Macintosh)
 	ARCH=macosx
-else
-	ARCH=macosx-intel
-endif
 endif
 endif
 
@@ -136,18 +132,31 @@ ifeq ($(ARCH),win32)
 	EXE=.exe
 	STRIP_TARGET=1
 endif
-ifeq ($(ARCH),macosx-intel)
+ifeq ($(ARCH),macosx)
 	EXTRADEFS+= $(shell file -L \
 	 /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation \
-	 | sed -n "s/^.*for architecture \\([a-z0-9_]*\\).*$$/-arch \\1/p")
-endif
-ifneq (,$(findstring macosx,$(ARCH)))
+	 | sed -n "s/^.*for architecture \\([a-z0-9_]*\\).*$$/-arch \\1/p") \
+	 -sectcreate __TEXT __info_plist Info.plist \
+	 -mmacosx-version-min=10.4
+	JDK=java/macosx-java3d
 	JAVA_HOME=$(JDK)/Home
 	JAVA_LIB_PATH=../Libraries/libjvm.dylib
-	JAVA_LIB_DIR=../Libraries
-	INCLUDES=-I$(JDK)/Headers
-	EXTRADEFS+= -DJNI_CREATEVM=\"JNI_CreateJavaVM_Impl\" -DMACOSX
-	LIBMACOSX=-lpthread -framework CoreFoundation
+	JAVA_LIB_DIR=
+	INCLUDES= -I/System/Library/Frameworks/JavaVM.framework/Headers
+	EXTRADEFS+= -DMACOSX
+	LIBMACOSX=-lpthread -framework CoreFoundation -framework JavaVM
+
+$(TARGET): Info.plist
+
+precompiled/fiji-tiger: fiji.o
+	$(CXX)  -arch ppc -arch i386 -mmacosx-version-min=10.4 -o $@ $< \
+		$(LIBMACOSX)
+
+precompiled/fiji-tiger-pita: fiji-tiger-pita.o
+	$(CXX) -arch ppc -arch i386 -mmacosx-version-min=10.4 -o $@ $<
+
+fiji-tiger-pita.o: fiji-tiger-pita.c
+	$(CXX) -arch ppc -arch i386 -mmacosx-version-min=10.4 -c -o $@ $<
 endif
 ifeq ($(ARCH),win64)
 	CXX=PATH="$$(pwd)/root-x86_64-pc-linux/bin:$$PATH" x86_64-pc-mingw32-g++
@@ -240,40 +249,26 @@ portable-app: Fiji.app
 Fiji.app: MACOS=$@/Contents/MacOS
 Fiji.app: RESOURCES=$@/Contents/Resources
 Fiji.app: PLIST=$@/Contents/Info.plist
+Fiji.app: precompiled/fiji-macosx
+Fiji.app: precompiled/fiji-tiger
+Fiji.app: precompiled/fiji-tiger-pita
 
-# TODO: Tried to make it work for powerpc AND mac-intel
-Fiji.app: precompiled/fiji-macosx-intel
+Fiji.app: precompiled/fiji-macosx
+	test ! -d $@ || rm -rf Fiji.app
 	mkdir -p $(MACOS)
 	mkdir -p $(RESOURCES)
-	echo '<?xml version="1.0" encoding="UTF-8"?>' > $(PLIST)
-	echo '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> $(PLIST)
-	echo '<plist version="1.0">' >> $(PLIST)
-	echo '<dict>' >> $(PLIST)
-	echo '	<key>CFBundleExecutable</key>' >> $(PLIST)
-	echo '		<string>fiji-macosx-intel</string>' >> $(PLIST)
-	echo '	<key>CFBundleGetInfoString</key>' >> $(PLIST)
-	echo '		<string>Fiji for Mac OS X</string>' >> $(PLIST)
-	echo '	<key>CFBundleIconFile</key>' >> $(PLIST)
-	echo '		<string>Fiji.icns</string>' >> $(PLIST)
-	echo '	<key>CFBundleIdentifier</key>' >> $(PLIST)
-	echo '		<string>org.fiji</string>' >> $(PLIST)
-	echo '	<key>CFBundleInfoDictionaryVersion</key>' >> $(PLIST)
-	echo '		<string>6.0</string>' >> $(PLIST)
-	echo '	<key>CFBundleName</key>' >> $(PLIST)
-	echo '		<string>Fiji</string>' >> $(PLIST)
-	echo '	<key>CFBundlePackageType</key>' >> $(PLIST)
-	echo '		<string>APPL</string>' >> $(PLIST)
-	echo '	<key>CFBundleVersion</key>' >> $(PLIST)
-	echo '		<string>1.0</string>' >> $(PLIST)
-	echo '	<key>NSPrincipalClass</key>' >> $(PLIST)
-	echo '		<string>NSApplication</string>' >> $(PLIST)
-	echo '</dict>' >> $(PLIST)
-	echo '</plist>"' >> $(PLIST)
-	cp precompiled/fiji-macosx-intel $(MACOS)/
+	cp Info.plist $(PLIST)
+	cp precompiled/fiji-macosx $(MACOS)/
+	cp precompiled/fiji-tiger $(MACOS)/
+	cp precompiled/fiji-tiger-pita $(MACOS)/
 	for d in java plugins macros ij.jar jars misc; do \
 		test -h $(MACOS)/$$d || ln -s ../../$$d $(MACOS)/; \
 	done
-	git archive --prefix=$@/java/macosx-intel/ origin/java/macosx-intel: | \
+	ln -s Contents/Resources $@/images
+	ln -s ../Resources $(MACOS)/images
+	cp images/icon.png $@/images/
+	git archive --prefix=$@/java/macosx-java3d/ \
+		origin/java/macosx-java3d: | \
 		tar xvf -
 	cp ij.jar $@/
 	cp -R plugins macros jars misc $@/
@@ -307,6 +302,8 @@ fiji-%.zip: Fiji.app-%
 
 fiji-%.dmg: Fiji.app
 	sh scripts/mkdmg.sh $@ $<
+
+dmg: fiji-macosx.dmg
 
 # All targets...
 
