@@ -119,6 +119,8 @@ public class Fake {
 				allPlatforms.add("win64");
 				allPlatforms.add("macosx");
 			}
+
+			setVariable("platform", getPlatform());
 		}
 
 		public Rule parseRules(List targets) throws FakeException {
