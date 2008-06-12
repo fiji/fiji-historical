@@ -120,7 +120,7 @@ ifeq ($(ARCH),linux-amd64)
 endif
 ifeq ($(ARCH),linux)
 	CPU=i386
-	JAVA_HOME=$(JDK)/jdk1.6.0/jre
+	JAVA_HOME=$(JDK)/jdk1.6.0_06/jre
 	JAVA_LIB_PATH=lib/i386/client/libjvm.so
 endif
 ifeq ($(ARCH),win32)
