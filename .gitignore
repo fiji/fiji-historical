@@ -2,6 +2,7 @@
 /fiji
 /fiji-tiger-pita.o
 /fiji-macosx.dmg
+/jvm.cfg
 *.swp
 /IJ_Prefs.txt
 /Fiji.app*

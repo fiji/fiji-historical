@@ -136,7 +136,6 @@ ifeq ($(ARCH),macosx)
 	EXTRADEFS+= $(shell file -L \
 	 /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation \
 	 | sed -n "s/^.*for architecture \\([a-z0-9_]*\\).*$$/-arch \\1/p") \
-	 -sectcreate __TEXT __info_plist Info.plist \
 	 -mmacosx-version-min=10.4
 	JDK=java/macosx-java3d
 	JAVA_HOME=$(JDK)/Home

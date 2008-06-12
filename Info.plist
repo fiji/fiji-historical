@@ -29,6 +29,16 @@
 	<string>NSApplication</string>
 	<key>fiji</key>
 	<dict>
+		<key>memory</key>
+		<string>auto</string>
+		<key>system</key>
+		<string>0</string>
+		<key>ext</key>
+		<string></string>
+		<key>allowMultiple</key>
+		<string>false</string>
+		<key>JVMOptions</key>
+		<string></string>
 	</dict>
 </dict>
 </plist>
