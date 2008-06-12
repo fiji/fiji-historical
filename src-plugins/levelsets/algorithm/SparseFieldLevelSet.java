@@ -111,6 +111,8 @@ public class SparseFieldLevelSet implements StagedAlgorithm
    
    // Mean grey value around seed points - taken from Fast Marching
    private int seed_greyvalue = 0;
+   // If the  grey value wasn't provided, where do we take it from - zero set or inside set
+   boolean seed_grey_zero = true;
    
    // Absolute sum of phi value changes in updated voxels
    private double total_change = 0;
@@ -928,6 +930,7 @@ public class SparseFieldLevelSet implements StagedAlgorithm
    {
       // DeferredByteArray3D statemap = fm.getStateMap();
 	  int px_zero = 0, px_inside = 0, px_outside = 0; 
+	  int grey_zero = 0, grey_inside = 0;
 	  
       DeferredObjectArray3D<StateContainer.States> statemap = init_state.getForSparseField();
       for (int x = 0; x < statemap.getXLength(); x++)
@@ -944,11 +947,13 @@ public class SparseFieldLevelSet implements StagedAlgorithm
                   layers[ZERO_LAYER].add(element);
                   elementLUT.set(x, y, z, element);
                   px_zero++;
+                  grey_zero += source.getPixel(x, y, z);
                }
                else if ( statemap.get(x, y, z) == StateContainer.States.INSIDE )
                {
                   state[x][y][z] = INSIDE_FAR;
                   px_inside++;
+                  grey_inside += source.getPixel(x, y, z);
                }
                else
                {
@@ -959,6 +964,19 @@ public class SparseFieldLevelSet implements StagedAlgorithm
          }
       }
       IJ.log("From FastMarching: Found pixels " +px_zero+" ZERO, " +px_inside + " INSIDE,"+px_outside + " OUTSIDE");
+      if ( px_inside == 0 && px_zero == 0 ) {
+    	  IJ.error("Didn't get any starting shape");
+      }
+      
+      // TODO median would be better
+      if ( this.seed_greyvalue < 0 ) {
+    	  if (this.seed_grey_zero) {
+    		  this.seed_greyvalue = grey_zero / px_zero;
+    	  } else {
+    		  this.seed_greyvalue = grey_inside / px_zero;
+    	  }
+    	  IJ.log("Grey seed not set - setting to " + this.seed_greyvalue);
+      }
    }
    
    private boolean outOfRange(int x, int y, int z)

@@ -33,6 +33,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
@@ -73,11 +74,11 @@ public class LevelSet implements PlugInFilter {
 	
 	// Test values
 	static String testImageFn = "/Users/erwin/Desktop/Dot_Blot.tif";
-//	static int [] rx = { 78, 78, 291 };
-//	static int [] ry = { 79, 150, 69 };
+	static int [] poly_rx = { 78, 78, 291 };
+	static int [] poly_ry = { 79, 150, 69 };
 	static int [] rx = { 260 };
 	static int [] ry = { 180 };
-	static boolean test_dialog = false, test_algorithm = true, test_roi = false;
+	static boolean test_dialog = false, test_algorithm = false, test_roi = true;
 	
 	
 	public LevelSet() {
@@ -115,7 +116,8 @@ public class LevelSet implements PlugInFilter {
 			ls_filter.showDialog();
 		}
 		if ( test_roi ) {
-			ls_filter.showROI(testIP, new Roi(10, 10, 20, 30));
+			ls_filter.showROI(testIP, new Roi(10, 10, 20, 30), null);
+			ls_filter.showROI(testIP, new PolygonRoi(poly_rx, poly_ry, poly_rx.length, PolygonRoi.POLYGON), null);
 		}		
 		if ( test_algorithm ) {
 			ls_filter.setup("", testIP);
@@ -157,7 +159,7 @@ public class LevelSet implements PlugInFilter {
 		
 		// Create a initial state map out of the roi
 		StateContainer sc_roi = new StateContainer();
-		sc_roi.setROI(roi, ic.getWidth(), ic.getHeight(), 0);
+		sc_roi.setROI(roi, ic.getWidth(), ic.getHeight(), 1);
 		
 		StateContainer sc_ls = null;
 		
@@ -183,8 +185,9 @@ public class LevelSet implements PlugInFilter {
 		}
 		else {
 			sc_ls = sc_roi;
+			// showROI(imp, null, sc_ls);
+			// if ( sc_ls != null ) return;
 		}
-
 		
 		// Level set
 		if ( level_sets ) {
@@ -282,7 +285,7 @@ public class LevelSet implements PlugInFilter {
 	}
 	
 	
-	public void showROI(ImagePlus ip, Roi roi) {
+	public void showROI(ImagePlus ip, Roi roi, StateContainer sc_in) {
 
 		// green coloured pixel for alive set pixel visualization
 		int[] ALIVE_PIXEL = new int[] {0, 255, 0, 0};
@@ -290,10 +293,23 @@ public class LevelSet implements PlugInFilter {
 		int[] BAND_PIXEL = new int[] {255, 0, 0, 0};
 
 		ImageProgressContainer progress = new ImageProgressContainer(new ImageContainer(ip));	
+		DeferredObjectArray3D<States> map;
+		StateContainer sc_test = null;
 		
-		StateContainer sc_test = new StateContainer();
-		sc_test.setROI(roi, progress.getWidth(), progress.getHeight(), 0);
-		DeferredObjectArray3D<States> map = sc_test.getForSparseField();
+		if ( sc_in != null ) {
+			sc_test = sc_in;
+		}		
+		if ( roi != null ) {
+			sc_test = new StateContainer();
+			sc_test.setROI(roi, progress.getWidth(), progress.getHeight(), 0);
+		}
+		if ( sc_test == null) {
+			IJ.error("sc_test not set");
+			return;
+		}
+		
+		map = sc_test.getForSparseField();
+
 		
 		int px_alive=0, px_band=0, px_far=0;
 
