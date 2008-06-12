@@ -8,6 +8,8 @@ package bUnwarpJ;
  * This work is an extension by Ignacio Arganda-Carreras and Jan Kybic 
  * of the previous UnwarpJ project by Carlos Oscar Sanchez Sorzano.
  *
+ * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation (http://www.gnu.org/licenses/gpl.txt )
@@ -25,7 +27,8 @@ package bUnwarpJ;
 
 /**
  * ====================================================================
- *  | Version: May 17th, 2007
+ *  Version: June 12th, 2008
+ *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
 
@@ -44,7 +47,7 @@ package bUnwarpJ;
 
 
 /**
- * Old version information: 
+ * Old version (UnwarpJ) information: 
  * http://bigwww.epfl.ch/thevenaz/UnwarpJ/
  */
 
@@ -1588,7 +1591,7 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
     /**
      * Set source intial affine matrix.
      *
-     * @param sFileName source mask file name
+     * @param affineMatrix initial affine matrix
      */
     public void setSourceAffineMatrix (double[][] affineMatrix) 
     {
@@ -7737,8 +7740,8 @@ static class bUnwarpJMiscTools
      *
      * @param targetImp target image representation
      * @param intervals intervals in the deformation
-     * @param cx1 first transformation coordinates in x-axis
-     * @param cy1 first transformation coordinates in y-axis
+     * @param transformation_x_1 first transformation coordinates in x-axis
+     * @param transformation_y_1 first transformation coordinates in y-axis
      * @param cx2 second transformation x- b-spline coefficients
      * @param cy2 second transformation y- b-spline coefficients
      * @param outputTransformation_x output transformation coordinates in x-axis
