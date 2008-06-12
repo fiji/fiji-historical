@@ -1152,6 +1152,18 @@ public class Fake {
 				output += " '" + args[i] + "'";
 			System.err.println(output);
 		}
+
+		if (args[0].endsWith(".py")) {
+			String args0orig = args[0];
+			args[0] = makePath(dir, args[0]);
+			if (executePython(args))
+				return;
+			if (verbose)
+				System.err.println("Falling back to Python ("
+					+ "Jython was not found in classpath)");
+			args[0] = args0orig;
+		}
+
 		Process proc = Runtime.getRuntime().exec(args, null, dir);
 		new StreamDumper(proc.getErrorStream(), System.err).start();
 		new StreamDumper(proc.getInputStream(), System.out).start();
@@ -1159,6 +1171,24 @@ public class Fake {
 		int exitValue = proc.exitValue();
 		if (exitValue != 0)
 			throw new FakeException("Failed: " + exitValue);
+	}
+
+	protected static Method jython;
+
+	protected static boolean executePython(String[] args) throws Exception {
+		if (jython == null) try {
+			ClassLoader loader = getClassLoader();
+			String className = "org.python.util.jython";
+			Class main = loader.loadClass(className);
+			Class[] argsType = new Class[] { args.getClass() };
+			jython = main.getMethod("main", argsType);
+		} catch (Exception e) {
+			return false;
+		}
+
+		/* exits with -1 if there was an error */
+		jython.invoke(null, new Object[] { args });
+		return true;
 	}
 
 	protected void fakeOrMake(File cwd, String directory, boolean verbose,
