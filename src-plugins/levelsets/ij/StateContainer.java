@@ -1,5 +1,6 @@
 package levelsets.ij;
 
+import ij.IJ;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
@@ -30,9 +31,10 @@ public class StateContainer {
 	// This has also the ability to create a binary image with the segmentation as output.
 	
 	protected static int TILE_SIZE = 5;
-	protected int avg_grey = 0;
+	protected int avg_grey = -1;
 	protected int x_size, y_size, z_size;
 	
+	protected ImageContainer ic = null;
 	
 	// it has 3 possible internal representations of the states:
 	// DeferredByteArray3D (used by fast marching)
@@ -56,7 +58,7 @@ public class StateContainer {
 		roi_map = roi;
 		x_size = x;
 		y_size = y;
-		z_size = z;
+		z_size = z == 0 ? 1 : z; // make sure we have at least a z value of 1
 	}
 		
 	// Assign with the output from FastMarching
@@ -134,6 +136,8 @@ public class StateContainer {
 		
 	}
 	
+	// TODO Make more robust so that it works with points too
+	// Simplification but currently only used for SparseField anyway
 	public int getZeroGreyValue() {
 		return avg_grey;
 	}
@@ -178,41 +182,65 @@ public class StateContainer {
 		ByteProcessor mask = (ByteProcessor) roi_map.getMask();
 		Rectangle roi_r = roi_map.getBounds();
 		int x_start = roi_r.x;
-		int x_end = roi_r.y + roi_r.width;
+		int x_end = roi_r.x + roi_r.width;
 		int y_start = roi_r.y;
 		int y_end = roi_r.y + roi_r.height;
+		int px_zero = 0, px_inside = 0;
+		int grey_zero = 0, grey_inside = 0;
+		// IJ.log("Got bounding rectangle " + roi_r.x + "/" + roi_r.y + "/" + roi_r.width + "/" + roi_r.height);
+		// IJ.log("Got bounding rectangle with coordinates " + x_start + "/" + x_end + "/" + y_start + "/" + y_end);
 
 		if ( mask == null ) {
+			IJ.log("Rectangle, just parsing borders");
 			int z = 0; // TODO z is not possible with roi
             for (int y = y_start; y < y_end; y++) {
                for (int x = x_start; x < x_end; x++) {
-            	   if ( x == x_start || y == y_start || x == x_end || y == y_end ) {
+            	   if ( x == x_start || y == y_start || x == x_end - 1 || y == y_end - 1 ) {
             		   d_map.set(x, y, z, States.ZERO);
+            		   px_zero++;
             	   } else {
             		   d_map.set(x, y, z, States.INSIDE);
+            		   px_inside++;
             	   }
                }
             }
+            // IJ.log("Zero level= " + px_zero + ", Inside = " + px_inside );
 		} else {
+			IJ.log("Shape, parsing shape");
 			int z = 0;
-			for (int y = y_start + 1; y < y_end - 1; y++) {
-				for (int x = x_start + 1; x < x_end - 1; x++) {
-					int [] mask_b = { mask.get(x-1, y), mask.get(x+1, y), mask.get(x, y-1), mask.get(x, y+1) };
+			for (int y = 0; y < roi_r.height; y++) {
+				for (int x = 0; x < roi_r.width; x++) {
+					
 					int mask_pt = mask.get(x, y);
+					
 					if ( mask_pt != 0 ) {
 						boolean border = false;
-						for ( int i = 0; i < mask_b.length; i++ ) {
-							if ( (mask_b[i] != 0 && mask_pt == 0) || (mask_b[i] == 0 && mask_pt != 0) ) {
+
+						if ( x == 0 || y == 0 || x == roi_r.width - 1 || y == roi_r.height - 1 ) {
+							border = true;
+						} else {
+							// int [] mask_ba = { mask.get(x-1, y), mask.get(x+1, y), mask.get(x, y-1), mask.get(x, y+1) };
+//							for ( int i = 0; i < mask_b.length; i++ ) {
+//								if ( (mask_b[i] != 0 && mask_pt == 0) || (mask_b[i] == 0 && mask_pt != 0) ) {
+//									border = true;
+//									break;
+//								}
+//							}
+							// lets try it the easy way and just sum up all the surrounding pixels
+							// turns out the values are 255, have to make a logical and with 1 to get the number
+							int mask_b = (mask.get(x-1, y) & 1) + (mask.get(x+1, y) & 1) + (mask.get(x, y-1) & 1) + (mask.get(x, y+1) & 1);
+							if ( mask_b != 4 ) {
 								border = true;
-								break;
 							}
-						}
 						
+						}						
 						if ( border  ) {
-							d_map.set(x, y, z, States.ZERO);
+							d_map.set(x + x_start, y + y_start, z, States.ZERO);
+							px_zero++;
 						}
 						else {
-							d_map.set(x, y, z, States.INSIDE);
+							d_map.set(x + x_start, y + y_start, z, States.INSIDE);
+							px_inside++;
 						}
 					}
 				}
