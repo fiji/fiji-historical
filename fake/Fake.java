@@ -1185,6 +1185,11 @@ public class Fake {
 			args[0] = args0orig;
 		}
 
+		/* stupid, stupid Windows... */
+		if (getPlatform().startsWith("win"))
+			for (int i = 0; i < args.length; i++)
+				args[i] = quoteArg(args[i]);
+
 		Process proc = Runtime.getRuntime().exec(args, null, dir);
 		new StreamDumper(proc.getErrorStream(), System.err).start();
 		new StreamDumper(proc.getInputStream(), System.out).start();
@@ -1193,6 +1198,30 @@ public class Fake {
 		if (exitValue != 0)
 			throw new FakeException("Failed: " + exitValue);
 	}
+
+	private static String quotables = " \"\'";
+	public static String quoteArg(String arg) {
+		for (int j = 0; j < arg.length(); j++) {
+			char c = arg.charAt(j);
+			if (quotables.indexOf(c) >= 0) {
+				String replacement;
+				if (c == '"') {
+					if (System.getenv("MSYSTEM") != null)
+						replacement = "\\" + c;
+					else
+						replacement = "'" + c + "'";
+				}
+				else
+					replacement = "\"" + c + "\"";
+				arg = arg.substring(0, j)
+					+ replacement
+					+ arg.substring(j + 1);
+				j += replacement.length() - 1;
+			}
+		}
+		return arg;
+	}
+
 
 	protected static Method jython;
 
