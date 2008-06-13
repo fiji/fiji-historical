@@ -605,7 +605,28 @@ public class Fake {
 				fakeOrMake(cwd, directory,
 					getVarBool("VERBOSE", directory),
 					getVarBool("IGNOREMISSINGFAKEFILES",
-						directory));
+						directory),
+					getVarPath("TOOLSPATH", directory),
+					getVarPath("CLASSPATH", directory));
+			}
+
+			String getVarPath(String variable, String subkey) {
+				String value = getVar(variable, subkey);
+				if (value == null)
+					return null;
+
+				String result = "";
+				StringTokenizer tokenizer =
+					new StringTokenizer(value,
+							File.pathSeparator);
+				while (tokenizer.hasMoreElements()) {
+					if (!result.equals(""))
+						result += File.pathSeparator;
+					File file =
+						new File(tokenizer.nextToken());
+					result += file.getAbsolutePath();
+				}
+				return result;
 			}
 		}
 
@@ -1192,7 +1213,8 @@ public class Fake {
 	}
 
 	protected void fakeOrMake(File cwd, String directory, boolean verbose,
-			boolean ignoreMissingFakefiles) throws FakeException {
+			boolean ignoreMissingFakefiles, String toolsPath,
+			String classPath) throws FakeException {
 		String fakeFile = directory + '/' + Parser.path;
 		boolean tryFake = new File(fakeFile).exists();
 		if (ignoreMissingFakefiles && !tryFake &&
@@ -1207,6 +1229,12 @@ public class Fake {
 			if (tryFake) {
 				// Try "Fake"
 				Parser parser = new Parser(fakeFile);
+				if (toolsPath != null)
+					parser.setVariable("TOOLSPATH",
+							toolsPath);
+				if (classPath != null)
+					parser.setVariable("CLASSPATH",
+							classPath);
 				parser.cwd = new File(cwd, directory);
 				Parser.Rule all = parser.parseRules(null);
 				all.make();
