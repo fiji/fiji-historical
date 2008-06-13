@@ -8,6 +8,8 @@ package bUnwarpJ;
  * This work is an extension by Ignacio Arganda-Carreras and Jan Kybic 
  * of the previous UnwarpJ project by Carlos Oscar Sanchez Sorzano.
  *
+ * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation (http://www.gnu.org/licenses/gpl.txt )
@@ -25,7 +27,8 @@ package bUnwarpJ;
 
 /**
  * ====================================================================
- *  | Version: May 17th, 2007
+ *  Version: June 12th, 2008
+ *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
 
@@ -44,7 +47,7 @@ package bUnwarpJ;
 
 
 /**
- * Old version information: 
+ * Old version (UnwarpJ) information: 
  * http://bigwww.epfl.ch/thevenaz/UnwarpJ/
  */
 
@@ -56,6 +59,7 @@ import ij.WindowManager;
 import ij.gui.GUI;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
+import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.gui.Toolbar;
 import ij.io.FileSaver;
@@ -113,6 +117,8 @@ import java.util.Stack;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import javax.swing.JOptionPane;
+import ij.io.OpenDialog;
+import ij.gui.PointRoi;
 
 /*====================================================================
 |   bUnwarpJ_
@@ -179,17 +185,18 @@ public class bUnwarpJ_ implements PlugIn
           } 
           else 
           {              
-              if      (args[0].equals("-help"))                 dumpSyntax();
-              else if (args[0].equals("-align"))                alignImagesMacro(args);
-              else if (args[0].equals("-elastic_transform"))    elasticTransformImageMacro(args);
-              else if (args[0].equals("-raw_transform"))        rawTransformImageMacro(args);
-              else if (args[0].equals("-compare_elastic"))      compareElasticTransformationsMacro(args);
-              else if (args[0].equals("-compare_elastic_raw"))  compareElasticRawTransformationsMacro(args);
-              else if (args[0].equals("-compare_raw"))          compareRawTransformationsMacro(args);
-              else if (args[0].equals("-convert_to_raw"))       convertToRawTransformationMacro(args);
-              else if (args[0].equals("-compose_elastic"))      composeElasticTransformationsMacro(args);
-              else if (args[0].equals("-compose_raw"))          composeRawTransformationsMacro(args);
-              else if (args[0].equals("-compose_raw_elastic"))  composeRawElasticTransformationsMacro(args);
+              if      (args[0].equals("-help"))                     dumpSyntax();
+              else if (args[0].equals("-align"))                    alignImagesMacro(args);
+              else if (args[0].equals("-elastic_transform"))        elasticTransformImageMacro(args);
+              else if (args[0].equals("-raw_transform"))            rawTransformImageMacro(args);
+              else if (args[0].equals("-compare_elastic"))          compareElasticTransformationsMacro(args);
+              else if (args[0].equals("-compare_elastic_raw"))      compareElasticRawTransformationsMacro(args);
+              else if (args[0].equals("-compare_raw"))              compareRawTransformationsMacro(args);
+              else if (args[0].equals("-convert_to_raw"))           convertToRawTransformationMacro(args);
+              else if (args[0].equals("-compose_elastic"))          composeElasticTransformationsMacro(args);
+              else if (args[0].equals("-compose_raw"))              composeRawTransformationsMacro(args);
+              else if (args[0].equals("-compose_raw_elastic"))      composeRawElasticTransformationsMacro(args);
+              else if (args[0].equals("-adapt_transform"))          adaptCoefficientsMacro(args);
           }
           return;
        }
@@ -221,6 +228,7 @@ public class bUnwarpJ_ implements PlugIn
           else if (args[0].equals("-compose_elastic"))      composeElasticTransformationsMacro(args);
           else if (args[0].equals("-compose_raw"))          composeRawTransformationsMacro(args);
           else if (args[0].equals("-compose_raw_elastic"))  composeRawElasticTransformationsMacro(args);
+          else if (args[0].equals("-adapt_transform"))      adaptCoefficientsMacro(args);
        }
        System.exit(0);
     }
@@ -259,10 +267,21 @@ public class bUnwarpJ_ implements PlugIn
        String fn_out_2 = args[12];
        double  landmarkWeight = 0;
        String fn_landmark = "";
-       if (args.length==15) 
+       String fn_affine_1 = "";
+       String fn_affine_2 = "";
+       
+       if (args.length==16) 
        {
-          landmarkWeight = ((Double) new Double(args[13])).doubleValue();
-          fn_landmark = args[14];
+          if(args[13].equals("-landmark"))
+          {
+              landmarkWeight = ((Double) new Double(args[14])).doubleValue();
+              fn_landmark = args[15];
+          }
+          else if(args[13].equals("-affine"))
+          {
+              fn_affine_1 = args[14];
+              fn_affine_2 = args[15];
+          }
        }
 
        // Show parameters
@@ -280,6 +299,8 @@ public class bUnwarpJ_ implements PlugIn
        IJ.write("Output 2               : " + fn_out_2);
        IJ.write("Landmark Weight        : " + landmarkWeight);
        IJ.write("Landmark file          : " + fn_landmark);
+       IJ.write("Affine matrix file 1   : " + fn_affine_1);
+       IJ.write("Affine matrix file 2   : " + fn_affine_2);
 
        // Produce side information
        int     imagePyramidDepth=max_scale_deformation-min_scale_deformation+1;
@@ -361,6 +382,20 @@ public class bUnwarpJ_ implements PlugIn
              targetPh.addPoint(targetPoint.x, targetPoint.y);
           }
        }
+       
+       // Load initial affine matrices
+       double[][] sourceAffineMatrix = null;
+       if(fn_affine_1 != "" && fn_affine_1.equals("NULL") == false)
+       {
+           sourceAffineMatrix = new double[2][3];
+           bUnwarpJMiscTools.loadAffineMatrix(fn_affine_1, sourceAffineMatrix);
+       }
+       double[][] targetAffineMatrix = null;
+       if(fn_affine_2 != "" && fn_affine_2.equals("NULL") == false)
+       {
+           targetAffineMatrix = new double[2][3];
+           bUnwarpJMiscTools.loadAffineMatrix(fn_affine_2, targetAffineMatrix);
+       }
 
        // Join threads
        try 
@@ -381,9 +416,10 @@ public class bUnwarpJ_ implements PlugIn
 
        final bUnwarpJTransformation warp = new bUnwarpJTransformation(
          sourceImp, targetImp, source, target, sourcePh, targetPh,
-         sourceMsk, targetMsk, min_scale_deformation, max_scale_deformation,
-         min_scale_image, divWeight, curlWeight, landmarkWeight, imageWeight,
-         consistencyWeight, stopThreshold, outputLevel, showMarquardtOptim, accurate_mode,
+         sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
+         min_scale_deformation, max_scale_deformation, min_scale_image, divWeight, 
+         curlWeight, landmarkWeight, imageWeight, consistencyWeight, stopThreshold, 
+         outputLevel, showMarquardtOptim, accurate_mode,
          saveTransf, fn_tnf_1, fn_tnf_2, output_ip_1, output_ip_2, dialog);
 
        IJ.write("\nRegistering...\n");
@@ -452,8 +488,12 @@ public class bUnwarpJ_ implements PlugIn
        IJ.write("          Output image 1      : Output result 1 in TIFF");
        IJ.write("          Output image 2      : Output result 2 in TIFF");
        IJ.write("          Optional parameters :");
-       IJ.write("             Landmark_weight  : Weight of the landmarks");
-       IJ.write("             Landmark_file    : Landmark file");
+       IJ.write("             -landmarks        ");
+       IJ.write("                   Landmark_weight  : Weight of the landmarks");
+       IJ.write("                   Landmark_file    : Landmark file");
+       IJ.write("             OR -affine        ");
+       IJ.write("                   Affine_file_1    : Initial source affine matrix transformation");
+       IJ.write("                   Affine_file_2    : Initial target affine matrix transformation");    
        IJ.write("");
        IJ.write("  -elastic_transform          : TRANSFORM A SOURCE IMAGE WITH A GIVEN ELASTIC DEFORMATION");
        IJ.write("          target_image        : In any image format");
@@ -508,17 +548,26 @@ public class bUnwarpJ_ implements PlugIn
        IJ.write("  -compose_raw_elastic                      : COMPOSE A RAW DEFORMATION WITH AN ELASTIC DEFORMATION");
        IJ.write("          target_image                      : In any image format");
        IJ.write("          source_image                      : In any image format");
-       IJ.write("          Elastic Transformation File       : As saved by bUnwarpJ in raw format");
-       IJ.write("          Raw Transformation File           : As saved by bUnwarpJ in elastic format");
+       IJ.write("          Raw Transformation File           : As saved by bUnwarpJ in raw format");
+       IJ.write("          Elastic Transformation File       : As saved by bUnwarpJ in elastic format");       
        IJ.write("          Output Raw Transformation File    : As saved by bUnwarpJ in raw format");
+       IJ.write("");
+       IJ.write("  -adapt_transform                           : ADAPT AN ELASTIC DEFORMATION GIVEN A NEW IMAGE SIZE");
+       IJ.write("          target_image                       : In any image format");
+       IJ.write("          source_image                       : In any image format");
+       IJ.write("          Input Elastic Transformation File  : As saved by bUnwarpJ in elastic format");
+       IJ.write("          Output Elastic Transformation File : As saved by bUnwarpJ in elastic format");
+       IJ.write("          Image Size Factor                  : Integer (2, 4, 8...)");
        IJ.write("");
        IJ.write("Examples:");
        IJ.write("Align two images without landmarks and without mask");
        IJ.write("   bUnwarpj_ -align target.jpg NULL source.jpg NULL 0 2 0.1 0.1 1 10 output_1.tif output_2.tif");
        IJ.write("Align two images with landmarks and mask");
-       IJ.write("   bUnwarpj_ -align target.tif target_mask.tif source.tif source_mask.tif 0 2 0.1 0.1 1 10 output_1.tif output_2.tif 1 landmarks.txt");
+       IJ.write("   bUnwarpj_ -align target.tif target_mask.tif source.tif source_mask.tif 0 2 0.1 0.1 1 10 output_1.tif output_2.tif -landmarks 1 landmarks.txt");
+       IJ.write("Align two images with landmarks and initial affine transformations");
+       IJ.write("   bUnwarpj_ -align target.tif target_mask.tif source.tif source_mask.tif 0 2 0.1 0.1 1 10 output_1.tif output_2.tif -affine affine_mat1.txt affine_mat2.txt");       
        IJ.write("Align two images using only landmarks");
-       IJ.write("   bUnwarpj_ -align target.jpg NULL source.jpg NULL 0 2 0.1 0.1 0 0 output.tif_1 output_2.tif 1 landmarks.txt");
+       IJ.write("   bUnwarpj_ -align target.jpg NULL source.jpg NULL 0 2 0.1 0.1 0 0 output.tif_1 output_2.tif -landmarks 1 landmarks.txt");
        IJ.write("Transform the source image with a previously computed elastic transformation");
        IJ.write("   bUnwarpj_ -elastic_transform target.jpg source.jpg elastic_transformation.txt output.tif");       
        IJ.write("Transform the source image with a previously computed raw transformation");
@@ -537,6 +586,8 @@ public class bUnwarpJ_ implements PlugIn
        IJ.write("   bUnwarpj_ -compose_raw target.jpg source.jpg raw_transformation_1.txt raw_transformation_2.txt output_raw_transformation.txt");
        IJ.write("Compose a raw transformation with an elastic transformation ");
        IJ.write("   bUnwarpj_ -compose_raw_elastic target.jpg source.jpg raw_transformation.txt elastic_transformation.txt output_raw_transformation.txt");
+       IJ.write("Adapt an elastic transformation to a new image size ");
+       IJ.write("   bUnwarpj_ -adapt_transform target.jpg source.jpg input_transformation.txt output_transformation.txt 2");
     } /* end dumpSyntax */
 
     /*------------------------------------------------------------------*/
@@ -556,6 +607,73 @@ public class bUnwarpJ_ implements PlugIn
         return(token);
     } /* end getTokens */
 
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to adapt coefficients to new image size.
+     *
+     * @param args program arguments
+     */
+    private static void adaptCoefficientsMacro(String args[]) 
+    {
+       // Read input parameters
+       String fn_target         = args[1];
+       String fn_source         = args[2];
+       String fn_tnf            = args[3];
+       String fn_out            = args[4];
+       String sImageSizeFactor  = args[5];
+
+       // Show parameters
+       IJ.write("Target image                 : " + fn_target);
+       IJ.write("Source image                 : " + fn_source);
+       IJ.write("Input Transformation file    : " + fn_tnf);
+       IJ.write("Output Transformation file   : " + fn_out);
+       IJ.write("Image Size Factor            : " + sImageSizeFactor);
+
+       // Open target
+       Opener opener=new Opener();
+       ImagePlus targetImp;
+       targetImp=opener.openImage(fn_target);
+       if(targetImp == null)
+           IJ.error("\nError: " + fn_target + " could not be opened\n");
+
+       // Open source
+       ImagePlus sourceImp;
+       sourceImp = opener.openImage(fn_source);
+       if(sourceImp == null)
+           IJ.error("\nError: " + fn_source + " could not be opened\n");
+       
+       bUnwarpJImageModel source = new bUnwarpJImageModel(sourceImp.getProcessor(), false);
+       source.setPyramidDepth(0);
+       source.getThread().start();
+
+       // Load transformation
+       int intervals=bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+       double [][]cx=new double[intervals+3][intervals+3];
+       double [][]cy=new double[intervals+3][intervals+3];
+       bUnwarpJMiscTools.loadTransformation(fn_tnf, cx, cy);
+
+       // Join threads
+       try {
+          source.getThread().join();
+       } catch (InterruptedException e) {
+          IJ.error("Unexpected interruption exception " + e);
+       }
+
+       // adapt coefficients.
+       int iImageSizeFactor = Integer.parseInt(sImageSizeFactor);
+       
+       for(int i = 0; i < (intervals+3); i++)
+           for(int j = 0; j < (intervals+3); j++)
+           {
+                cx[i][j] *= iImageSizeFactor;
+                cy[i][j] *= iImageSizeFactor;
+           }
+       
+       // Save transformation
+       bUnwarpJMiscTools.saveElasticTransformation(intervals, cx, cy, fn_out);
+       
+    } /* end adaptCoefficientsMacro */    
+    
     /*------------------------------------------------------------------*/
     /**
      * Method to transform an image given an elastic deformation.
@@ -1071,7 +1189,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method composeRawElasticTransformationsMacro */
     
-//} /* end class bUnwarpJ_ */
+
 
 /*====================================================================
 |   bUnwarpJClearAll
@@ -1370,6 +1488,12 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
     /** Mask for target image */
     private bUnwarpJMask       targetMsk;
 
+    // Initial Affine Matrices
+    /** Initial affine matrix for the source image */
+    private double[][] sourceAffineMatrix = null;
+    /** Initial affine matrix for the target image */
+    private double[][] targetAffineMatrix = null;
+    
     // Point handlers for the landmarks
     /** Point handlers for the landmarks in the source image */
     private bUnwarpJPointHandler sourcePh;
@@ -1454,6 +1578,28 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
 
     /*------------------------------------------------------------------*/
     /**
+     * Set source Mask.
+     *
+     * @param sFileName source mask file name
+     */
+    public void setSourceMask (String sFileName) 
+    {
+        this.sourceMsk.readFile(sFileName);        
+    } /* end setSourceMask */
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Set source intial affine matrix.
+     *
+     * @param affineMatrix initial affine matrix
+     */
+    public void setSourceAffineMatrix (double[][] affineMatrix) 
+    {
+        this.sourceAffineMatrix = affineMatrix;        
+    } /* end setSourceInitialMatrix */    
+    
+    /*------------------------------------------------------------------*/
+    /**
      * Get source Mask.
      */
     public bUnwarpJMask getSourceMask () 
@@ -1517,7 +1663,8 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
 
           finalAction.setup(sourceImp, targetImp,
              source, target, sourcePh, targetPh,
-             sourceMsk, targetMsk, min_scale_deformation, max_scale_deformation,
+             sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
+             min_scale_deformation, max_scale_deformation,
              min_scale_image, divWeight, curlWeight, landmarkWeight, imageWeight,
              consistencyWeight, stopThreshold, outputLevel, showMarquardtOptim, mode);
 
@@ -2025,6 +2172,18 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
      * Set the stopRegistration flag to true.
      */
     public void setStopRegistration () {stopRegistration=true;}
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Get the source initial affine matrix.
+     */
+    public double[][] getSourceAffineMatrix () {return this.sourceAffineMatrix;}
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Get the target initial affine matrix.
+     */
+    public double[][] getTargetAffineMatrix () {return this.targetAffineMatrix;}
 
     /*------------------------------------------------------------------*/
     /**
@@ -2046,8 +2205,9 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
 
        createSourceImage(bIsReverse);
        createTargetImage();
+       loadPointRoiAsLandmarks();
        setSecondaryPointHandlers();
-
+       
         // Create Source panel
        setLayout(new GridLayout(0, 1));
        final Choice sourceChoice = new Choice();
@@ -2073,6 +2233,7 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
                       cancelSource();
                       targetPh.removePoints();
                       createSourceImage(bIsReverse);
+                      loadPointRoiAsLandmarks();
                       setSecondaryPointHandlers();
                    }
                    else 
@@ -2088,6 +2249,7 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
              }
           }
        );
+       
        sourcePanel.add(sourceLabel);
        sourcePanel.add(sourceChoice);
 
@@ -2114,6 +2276,7 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
                       cancelTarget();
                       sourcePh.removePoints();
                       createTargetImage();
+                      loadPointRoiAsLandmarks();
                       setSecondaryPointHandlers();
                     }
                     else 
@@ -2129,6 +2292,7 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
              }
           }
        );
+       
        targetPanel.add(targetLabel);
        targetPanel.add(targetChoice);
 
@@ -2308,15 +2472,16 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
        source.getThread().start();
        sourceIc  = sourceImp.getWindow().getCanvas();
        if (sourceImp.getStackSize()==1) { 
-          // Create an empy mask
+          // Create an empty mask
           sourceMsk = new bUnwarpJMask(sourceImp.getProcessor(),false);
        } else {
           // Take the mask from the second slice
           sourceImp.setSlice(2);
-          sourceMsk = new bUnwarpJMask(sourceImp.getProcessor(),true);
+          sourceMsk = new bUnwarpJMask(sourceImp.getProcessor(), true);
           sourceImp.setSlice(1);
        }
-       sourcePh  = new bUnwarpJPointHandler(sourceImp, tb, sourceMsk, this);
+       sourcePh  = new bUnwarpJPointHandler(sourceImp, tb, sourceMsk, this);              
+       
        tb.setSource(sourceImp, sourcePh);
     } /* end createSourceImage */
 
@@ -2346,6 +2511,58 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
        tb.setTarget(targetImp, targetPh);
     } /* end createTargetImage */
 
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Load point rois in the source and target images as landmarks.
+     */
+    private void loadPointRoiAsLandmarks()
+    {
+
+       Roi roiSource = sourceImp.getRoi();
+       Roi roiTarget = targetImp.getRoi();
+       
+       if(roiSource instanceof PointRoi && roiTarget instanceof PointRoi)
+       {
+           PointRoi prSource = (PointRoi) roiSource;          
+           int[] xSource = prSource.getXCoordinates();           
+           
+           PointRoi prTarget = (PointRoi) roiTarget;          
+           int[] xTarget = prTarget.getXCoordinates();
+           
+           int numOfPoints = xSource.length;
+           
+           // If the number of points in both images is not the same,
+           // we do nothing.
+           if(numOfPoints != xTarget.length)
+               return;
+           
+           // Otherwise we load the points in order as landmarks.
+           int[] ySource = prSource.getYCoordinates();
+           int[] yTarget = prTarget.getYCoordinates();
+                    
+           // The coordinates from the point rois are relative to the 
+           // bounding box origin.
+           Rectangle recSource = prSource.getBounds();
+           int originXSource = recSource.x;
+           int originYSource = recSource.y;
+           
+           Rectangle recTarget = prTarget.getBounds();
+           int originXTarget = recTarget.x;
+           int originYTarget = recTarget.y;
+           
+           for(int i = 0; i < numOfPoints; i++)
+           {
+               sourcePh.addPoint(xSource[i] + originXSource, ySource[i] + originYSource);
+//               System.out.println(i + ": added point [" + (xSource[i] + originXSource) + ", " + (ySource[i] + originYSource) + "] to source landmarks. ");
+               targetPh.addPoint(xTarget[i] + originXTarget, yTarget[i] + originYTarget);
+//               System.out.println(i + ": added point [" + (xTarget[i] + originXTarget) + ", " + (yTarget[i] + originYTarget) + "] to target landmarks. \n");
+           }
+       }
+        
+    }
+    /* end loadPointRoiAsLandmarks */
+    
     /*------------------------------------------------------------------*/
     /**
      * Permute the pointer for the target and source images.
@@ -2374,6 +2591,30 @@ static class bUnwarpJDialog extends Dialog implements ActionListener
        this.sourcePh = this.targetPh;
        this.targetPh = swapPh;
        setSecondaryPointHandlers();
+       
+       // Swap Affine matrices
+       double[][] swapMatrix = null;
+       
+                 
+       if(this.sourceAffineMatrix != null)
+           swapMatrix = new double[2][3];       
+       for(int i = 0; i < 2; i++)
+           for(int j = 0; j < 3; j++)
+           {
+               if(this.sourceAffineMatrix != null)
+                   swapMatrix[i][j] = this.sourceAffineMatrix [i][j];
+               if(this.targetAffineMatrix != null)
+                   this.sourceAffineMatrix[i][j] = this.targetAffineMatrix[i][j];
+           }
+       
+       if(swapMatrix != null)
+       {
+           if (this.targetAffineMatrix == null) 
+               this.targetAffineMatrix = new double[2][3];
+           for(int i = 0; i < 2; i++)
+               for(int j = 0; j < 3; j++)
+                    this.targetAffineMatrix[i][j] = swapMatrix[i][j];
+       }
 
        // Inform the Toolbar about the change
        tb.setSource(this.sourceImp, this.sourcePh);
@@ -2543,6 +2784,15 @@ static class bUnwarpJFile extends Dialog implements ActionListener
        else if (ae.getActionCommand().equals("Evaluate Image Similarity")) {
            evaluateSimilarity();
        }
+       else if (ae.getActionCommand().equals("Adapt Coefficients")) {
+           adaptCoefficients();
+       }
+       else if (ae.getActionCommand().equals("Load Source Mask")) {
+           loadSourceMask();
+       }
+       else if (ae.getActionCommand().equals("Load Source Initial Affine Matrix")) {
+           loadSourceInitialAffineMatrix();
+       }
        else if (ae.getActionCommand().equals("Cancel")) {
        }
     } /* end actionPerformed */
@@ -2597,6 +2847,9 @@ static class bUnwarpJFile extends Dialog implements ActionListener
        final Button composeRawButton = new Button("Compose Raw Transformations");
        final Button composeRawElasticButton = new Button("Compose Raw and Elastic Transformations");
        final Button evaluateSimilarityButton = new Button("Evaluate Image Similarity");
+       final Button adaptCoeffsButton = new Button("Adapt Coefficients");
+       final Button loadSourceMaskButton = new Button("Load Source Mask");
+       final Button loadSourceInitialAffineMatrixButton = new Button("Load Source Initial Affine Matrix");
        final Button cancelButton = new Button("Cancel");
        
        saveAsButton.addActionListener(this);
@@ -2613,6 +2866,9 @@ static class bUnwarpJFile extends Dialog implements ActionListener
        composeRawButton.addActionListener(this);
        composeRawElasticButton.addActionListener(this);
        evaluateSimilarityButton.addActionListener(this);
+       adaptCoeffsButton.addActionListener(this);
+       loadSourceMaskButton.addActionListener(this);
+       loadSourceInitialAffineMatrixButton.addActionListener(this);
        
        final Label separation1 = new Label("");
        final Label separation2 = new Label("");
@@ -2630,6 +2886,9 @@ static class bUnwarpJFile extends Dialog implements ActionListener
        add(composeRawButton);
        add(composeRawElasticButton);
        add(evaluateSimilarityButton);
+       add(adaptCoeffsButton);
+       add(loadSourceMaskButton);
+       add(loadSourceInitialAffineMatrixButton);
        add(separation2);
        add(cancelButton);
        pack();
@@ -2666,6 +2925,8 @@ static class bUnwarpJFile extends Dialog implements ActionListener
        }
     } /* end loadPoints */
 
+    
+    
     /*------------------------------------------------------------------*/
     /**
      * Load a transformation and apply it to the source image.
@@ -2696,6 +2957,58 @@ static class bUnwarpJFile extends Dialog implements ActionListener
 
     /*------------------------------------------------------------------*/
     /**
+     * Load a source mask image from a file.
+     */
+    private void loadSourceMask () 
+    {    
+        final Frame f = new Frame();
+        final OpenDialog od = new OpenDialog("Load Source Mask", "");
+        //od.setVisible(true);
+        final String path = od.getDirectory();
+        final String filename = od.getFileName();
+
+        if ((path == null) || (filename == null)) 
+               return;
+
+        String fnSourceMask = path+filename;
+        dialog.setSourceMask(fnSourceMask);
+        dialog.grayImage(sourcePh);               
+           
+    }
+    /* end loadSourceMask */
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Load a source intial affine matrix.
+     */
+    private void loadSourceInitialAffineMatrix () 
+    {    
+        final Frame f = new Frame();
+        final OpenDialog od = new OpenDialog("Load Source Initial Affine Matrix", "");
+        //od.setVisible(true);
+        final String path = od.getDirectory();
+        final String filename = od.getFileName();
+
+        if ((path == null) || (filename == null)) 
+               return;
+
+        double[][] affineMatrix = new double[2][3];
+        bUnwarpJMiscTools.loadAffineMatrix(path+filename, affineMatrix);
+        
+        this.dialog.setSourceAffineMatrix(affineMatrix);         
+//        for(int i = 0; i < 2; i++)
+//        {
+//            for(int j = 0; j < 3; j++)
+//            {
+//                System.out.print("A["+i+"]["+j+"] = " + affineMatrix[i][j]+ " ");                
+//            }
+//            System.out.println("");
+//        }
+    }
+    /* end loadSourceInitialAffineMatrix */    
+    
+    /*------------------------------------------------------------------*/
+    /**
      * Load a raw transformation and apply it to the source image.
      */
     private void loadRawTransformation () 
@@ -2719,6 +3032,58 @@ static class bUnwarpJFile extends Dialog implements ActionListener
        // Apply transformation
        dialog.applyRawTransformationToSource(transformation_x, transformation_y);
     }    
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Adapt the transformation coefficients to a new image size
+     */
+    private void adaptCoefficients () 
+    {
+       // We ask the user for the elastic transformation file
+       Frame f = new Frame();
+       FileDialog fd = new FileDialog(f, "Load elastic transformation", FileDialog.LOAD);
+       fd.setVisible(true);
+       String path = fd.getDirectory();
+       String filename = fd.getFile();
+       if ((path == null) || (filename == null)) {
+          return;
+       }
+       String fn_tnf = path+filename;
+
+       int intervals=bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+
+       double [][]cx = new double[intervals+3][intervals+3];
+       double [][]cy = new double[intervals+3][intervals+3];
+
+       bUnwarpJMiscTools.loadTransformation(fn_tnf, cx, cy);
+       
+             
+        // We ask the user for the image factor
+       String sInput = JOptionPane.showInputDialog(null, "Image Factor?", "Adapt Coefficients", JOptionPane.QUESTION_MESSAGE);
+       
+       // Adapt coefficients.
+       int iImageSizeFactor = Integer.parseInt(sInput);
+       
+       for(int i = 0; i < (intervals+3); i++)
+           for(int j = 0; j < (intervals+3); j++)
+           {
+                cx[i][j] *= iImageSizeFactor;
+                cy[i][j] *= iImageSizeFactor;
+           }
+       
+       // Save transformation
+       Frame frameSave = new Frame();
+       FileDialog fdSave = new FileDialog(frameSave, "Saving adapted transformation file", FileDialog.SAVE);
+       fdSave.setVisible(true);
+       String path_save = fdSave.getDirectory();
+       String filename_save = fdSave.getFile();
+       if ((path_save == null) || (filename_save == null))
+          return;
+       
+       String sNewFileName = path_save + filename_save;
+       bUnwarpJMiscTools.saveElasticTransformation(intervals, cx, cy, sNewFileName);
+    }  
+    
     
     /*------------------------------------------------------------------*/
     /**
@@ -2820,7 +3185,7 @@ static class bUnwarpJFile extends Dialog implements ActionListener
            IJ.write(" Warping index could not be evaluated because not a single pixel matched after the deformation!"); 
        
     }
-
+                
     /*------------------------------------------------------------------*/
     /**
      * Compose two transformations represented by elastic b-splines 
@@ -3305,6 +3670,12 @@ static class bUnwarpJFinalAction implements Runnable
     private bUnwarpJMask sourceMsk;
     /** target image mask */
     private bUnwarpJMask targetMsk;
+    
+    // Initial affine matrices
+    /** source initial affine matrix */
+    private double[][] sourceAffineMatrix;
+    /** target initial affine matrix */
+    private double[][] targetAffineMatrix;
 
     // Transformation parameters
     /** minimum scale deformation */
@@ -3388,7 +3759,8 @@ static class bUnwarpJFinalAction implements Runnable
         // Perform the registration    
         final bUnwarpJTransformation warp = new bUnwarpJTransformation(
           sourceImp, targetImp, source, target, sourcePh, targetPh,
-          sourceMsk, targetMsk, min_scale_deformation, max_scale_deformation,
+          sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
+          min_scale_deformation, max_scale_deformation,
           min_scale_image, divWeight, curlWeight, landmarkWeight, imageWeight,
           consistencyWeight, stopThreshold, outputLevel, showMarquardtOptim, accurate_mode,
           dialog.isSaveTransformationSet(), "", "", ip1, ip2, dialog);
@@ -3413,6 +3785,8 @@ static class bUnwarpJFinalAction implements Runnable
      * @param targetPh point handler for the landmarks in the target image
      * @param sourceMsk source image mask
      * @param targetMsk target image mask
+     * @param sourceAffineMatrix source initial affine matrix
+     * @param targetAffineMatrix target initial affine matrix
      * @param min_scale_deformation minimum scale deformation 
      * @param max_scale_deformation maximum scale deformation
      * @param min_scale_image minimum image scale
@@ -3435,6 +3809,8 @@ static class bUnwarpJFinalAction implements Runnable
        final bUnwarpJPointHandler targetPh,
        final bUnwarpJMask sourceMsk,
        final bUnwarpJMask targetMsk,
+       final double[][] sourceAffineMatrix,
+       final double[][] targetAffineMatrix,
        final int min_scale_deformation,
        final int max_scale_deformation,
        final int min_scale_image,
@@ -3456,6 +3832,8 @@ static class bUnwarpJFinalAction implements Runnable
        this.targetPh              = targetPh;
        this.sourceMsk             = sourceMsk;
        this.targetMsk             = targetMsk;
+       this.sourceAffineMatrix    = sourceAffineMatrix;
+       this.targetAffineMatrix    = targetAffineMatrix;
        this.min_scale_deformation = min_scale_deformation;
        this.max_scale_deformation = max_scale_deformation;
        this.min_scale_image       = min_scale_image;
@@ -7091,6 +7469,7 @@ static class bUnwarpJMiscTools
        }
     }
 
+    
     /*------------------------------------------------------------------*/
     /**
      * Load a raw transformation from a file.
@@ -7190,7 +7569,60 @@ static class bUnwarpJMiscTools
           IJ.error("Number format exception" + e);
           return;
         }
-    }    
+    }     
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Load an affine matrix.
+     *
+     * @param filename matrix file name
+     * @param affineMatrix output affine matrix
+     */
+    static public void loadAffineMatrix(String filename,
+       double [][]affineMatrix) 
+    {
+        try
+        {
+            final FileReader fr = new FileReader(filename);
+            final BufferedReader br = new BufferedReader(fr);
+            String line;
+            
+            // Read width
+            line = br.readLine();
+            int lineN = 1;
+            StringTokenizer st = new StringTokenizer(line," ");
+            if (st.countTokens() != 6) 
+            {
+               fr.close();
+               IJ.write("Cannot read affine transformation matrix");
+               return; 
+            }
+            
+            affineMatrix[0][0] = Double.valueOf(st.nextToken()).doubleValue();
+            affineMatrix[0][1] = Double.valueOf(st.nextToken()).doubleValue();
+            affineMatrix[1][0] = Double.valueOf(st.nextToken()).doubleValue();
+            affineMatrix[1][1] = Double.valueOf(st.nextToken()).doubleValue();
+            affineMatrix[0][2] = Double.valueOf(st.nextToken()).doubleValue();
+            affineMatrix[1][2] = Double.valueOf(st.nextToken()).doubleValue();
+
+            fr.close();
+        } 
+        catch (FileNotFoundException e) 
+        {
+            IJ.error("File not found exception" + e);
+            return;
+        } 
+        catch (IOException e) 
+        {
+          IJ.error("IOException exception" + e);
+          return;
+        } 
+        catch (NumberFormatException e) 
+        {
+          IJ.error("Number format exception" + e);
+          return;
+        }
+    }    /* end loadAffineMatrix */
 
     /*------------------------------------------------------------------*/
     /**
@@ -7308,8 +7740,8 @@ static class bUnwarpJMiscTools
      *
      * @param targetImp target image representation
      * @param intervals intervals in the deformation
-     * @param cx1 first transformation coordinates in x-axis
-     * @param cy1 first transformation coordinates in y-axis
+     * @param transformation_x_1 first transformation coordinates in x-axis
+     * @param transformation_y_1 first transformation coordinates in y-axis
      * @param cx2 second transformation x- b-spline coefficients
      * @param cy2 second transformation y- b-spline coefficients
      * @param outputTransformation_x output transformation coordinates in x-axis
@@ -7548,6 +7980,54 @@ static class bUnwarpJMiscTools
     
     /*------------------------------------------------------------------*/
     /**
+     * Save the elastic transformation.
+     *
+     * @param intervals number of intervals in the deformation
+     * @param cx x- deformation coefficients
+     * @param cy y- deformation coefficients
+     * @param filename transformation file name
+     */ 
+    public static void saveElasticTransformation(
+       int intervals,
+       double [][]cx,
+       double [][]cy,
+       String filename) 
+    {       
+
+       // Save the file
+       try {
+          final FileWriter fw = new FileWriter(filename);
+          String aux;
+          fw.write("Intervals="+intervals+"\n\n");
+          fw.write("X Coeffs -----------------------------------\n");
+          for (int i= 0; i<intervals + 3; i++) {
+             for (int j = 0; j < intervals + 3; j++) {
+                aux=""+cx[i][j];
+                    while (aux.length()<21) aux=" "+aux;
+                    fw.write(aux+" ");
+             }
+             fw.write("\n");
+          }
+          fw.write("\n");
+          fw.write("Y Coeffs -----------------------------------\n");
+          for (int i= 0; i<intervals + 3; i++) {
+             for (int j = 0; j < intervals + 3; j++) {
+                aux=""+cy[i][j];
+                    while (aux.length()<21) aux=" "+aux;
+                    fw.write(aux+" ");
+             }
+             fw.write("\n");
+          }
+          fw.close();
+       } catch (IOException e) {
+          IJ.error("IOException exception" + e);
+       } catch (SecurityException e) {
+          IJ.error("Security exception" + e);
+       }
+    }
+    
+    /*------------------------------------------------------------------*/
+    /**
      * Save a raw transformation
      *
      * @param filename raw transformation file name
@@ -7770,8 +8250,8 @@ static class bUnwarpJPointAction extends ImageCanvas implements KeyListener, Mou
     public static final int MOVE_CROSS   = 1;
     public static final int REMOVE_CROSS = 2;
     public static final int MASK         = 3;
-    public static final int INVERTMASK   = 4;
-    public static final int FILE         = 5;
+    public static final int INVERTMASK   = 4;    
+    public static final int FILE         = 5;    
     public static final int STOP         = 7;
     public static final int MAGNIFIER    = 11;
 
@@ -7779,13 +8259,13 @@ static class bUnwarpJPointAction extends ImageCanvas implements KeyListener, Mou
        Private variables
     ....................................................................*/
 
-    private ImagePlus                      mainImp;
-    private ImagePlus                      secondaryImp;
+    private ImagePlus            mainImp;
+    private ImagePlus            secondaryImp;
     private bUnwarpJPointHandler mainPh;
     private bUnwarpJPointHandler secondaryPh;
     private bUnwarpJPointToolbar tb;
     private bUnwarpJDialog       dialog;
-    private long                           mouseDownTime;
+    private long                 mouseDownTime;
 
     /*....................................................................
        Public methods
@@ -8175,7 +8655,7 @@ static class bUnwarpJPointHandler extends Roi
     private int           currentColor   = 0;
 
     // List of crosses
-    /** lsit of points */
+    /** list of points */
     private final Vector  listPoints     = new Vector(0, 16);
     /** current point */
     private int           currentPoint   = -1;
@@ -8316,15 +8796,19 @@ static class bUnwarpJPointHandler extends Roi
     public void draw (final Graphics g)
     {
         // Draw landmarks
-       if (started) {
+       if (started) 
+       {
           final double mag = (double)ic.getMagnification();
           final int dx = (int)(mag / 2.0);
           final int dy = (int)(mag / 2.0);
-          for (int k = 0; (k < numPoints); k++) {
+          for (int k = 0; (k < numPoints); k++) 
+          {
              final Point p = (Point)listPoints.elementAt(k);
              g.setColor(spectrum[((Integer)listColors.elementAt(k)).intValue()]);
-             if (k == currentPoint) {
-                if (WindowManager.getCurrentImage() == imp) {
+             if (k == currentPoint) 
+             {
+                if (WindowManager.getCurrentImage() == imp) 
+                {
                    g.drawLine(ic.screenX(p.x - CROSS_HALFSIZE - 1) + dx,
                       ic.screenY(p.y - 1) + dy,
                       ic.screenX(p.x - 1) + dx,
@@ -8382,9 +8866,10 @@ static class bUnwarpJPointHandler extends Roi
                          ic.screenY(p.y - CROSS_HALFSIZE) + dy,
                          ic.screenX(p.x) + dx,
                          ic.screenY(p.y + CROSS_HALFSIZE) + dy);
-                   }
-                }
-                else {
+                   } 
+                } // end if WindowManager.getCurrentImage() == imp
+                else 
+                {
                    g.drawLine(ic.screenX(p.x - CROSS_HALFSIZE + 1) + dx,
                       ic.screenY(p.y - CROSS_HALFSIZE + 1) + dy,
                       ic.screenX(p.x + CROSS_HALFSIZE - 1) + dx,
@@ -8394,8 +8879,9 @@ static class bUnwarpJPointHandler extends Roi
                       ic.screenX(p.x + CROSS_HALFSIZE - 1) + dx,
                       ic.screenY(p.y - CROSS_HALFSIZE + 1) + dy);
                 }
-             }
-             else {
+             } // end if (k == currentPoint) 
+             else 
+             {
                 g.drawLine(ic.screenX(p.x - CROSS_HALFSIZE) + dx,
                    ic.screenY(p.y) + dy,
                    ic.screenX(p.x + CROSS_HALFSIZE) + dx,
@@ -8406,7 +8892,8 @@ static class bUnwarpJPointHandler extends Roi
                    ic.screenY(p.y + CROSS_HALFSIZE) + dy);
              }
           }
-          if (updateFullWindow) {
+          if (updateFullWindow) 
+          {
              updateFullWindow = false;
              imp.draw();
           }
@@ -8723,7 +9210,7 @@ static class bUnwarpJPointHandler extends Roi
        super(0, 0, imp.getWidth(), imp.getHeight(), imp);
        this.imp = imp;
        this.tb = tb;
-       this.dialog=dialog;
+       this.dialog = dialog;
        pa = new bUnwarpJPointAction(imp, this, tb, dialog);
        final ImageWindow iw = imp.getWindow();
        final ImageCanvas ic = iw.getCanvas();
@@ -8924,7 +9411,8 @@ static class bUnwarpJPointToolbar extends Canvas implements MouseListener
        final int y = e.getY();
        int newTool = 0;
        for (int i = 0; (i < NUM_TOOLS); i++) {
-          if (((i * SIZE) < x) && (x < (i * SIZE + SIZE))) {
+          if (((i * SIZE) < x) && (x < (i * SIZE + SIZE))) 
+          {
              newTool = i;
           }
        }
@@ -8932,11 +9420,13 @@ static class bUnwarpJPointToolbar extends Canvas implements MouseListener
           && ((System.currentTimeMillis() - mouseDownTime) <= 500L)
           && (newTool == bUnwarpJPointAction.REMOVE_CROSS));
        mouseDownTime = System.currentTimeMillis();
-       if (newTool==bUnwarpJPointAction.STOP && !dialog.isFinalActionLaunched())
+       if (newTool == bUnwarpJPointAction.STOP && !dialog.isFinalActionLaunched())
           return;
        if (newTool!=bUnwarpJPointAction.STOP &&  dialog.isFinalActionLaunched())
           return;
+       
        setTool(newTool);
+       
        if (doubleClick) {
           bUnwarpJClearAll clearAllDialog = new bUnwarpJClearAll(IJ.getInstance(),
              sourceImp, targetImp, sourcePh, targetPh);
@@ -8945,6 +9435,7 @@ static class bUnwarpJPointToolbar extends Canvas implements MouseListener
           setTool(bUnwarpJPointAction.ADD_CROSS);
           clearAllDialog.dispose();
        }
+       
        switch (newTool) {
           case bUnwarpJPointAction.FILE:
              bUnwarpJFile fileDialog = new bUnwarpJFile(IJ.getInstance(),
@@ -8953,7 +9444,7 @@ static class bUnwarpJPointToolbar extends Canvas implements MouseListener
              fileDialog.setVisible(true);
              setTool(bUnwarpJPointAction.ADD_CROSS);
              fileDialog.dispose();
-             break;
+             break;                            
           case bUnwarpJPointAction.MASK:
           case bUnwarpJPointAction.INVERTMASK:
               dialog.setClearMask(true);
@@ -9439,7 +9930,10 @@ static class bUnwarpJPointToolbar extends Canvas implements MouseListener
              IJ.showStatus("Remove crosses");
              return;
           case bUnwarpJPointAction.MASK:
-             IJ.showStatus("Draw a mask");
+             IJ.showStatus("Draw an inner mask");
+             return;
+          case bUnwarpJPointAction.INVERTMASK:
+             IJ.showStatus("Draw an outer mask");
              return;
           case bUnwarpJPointAction.STOP:
              IJ.showStatus("Stop registration");
@@ -9598,6 +10092,12 @@ static class bUnwarpJTransformation
     private bUnwarpJMask sourceMsk;
     /** pointer to the target mask */
     private bUnwarpJMask targetMsk;
+    
+    // Initial Affine Matrices
+    /** initial affine matrix for the source image */
+    private double[][] sourceAffineMatrix = null;
+    /** initial affine matrix for the target image */
+    private double[][] targetAffineMatrix = null;
 
     // Image size
     /** source image height */
@@ -9763,20 +10263,42 @@ static class bUnwarpJTransformation
         else                K = 0;
         double [] dxTargetToSource = new double[K];
         double [] dyTargetToSource = new double[K];
-        computeInitialResidues(dxTargetToSource, dyTargetToSource, false);
+//        computeInitialResidues(dxTargetToSource, dyTargetToSource, false);
 
         // Compute the affine transformation FROM THE TARGET TO THE SOURCE coordinates
-        // Notice that this matrix is independent of the scale, but the residues are not
+        // Notice that this matrix is independent of the scale (unless it was loaded from
+        // file), but the residues are not
         double[][] affineMatrix = null;
-        if (landmarkWeight==0) affineMatrix = computeAffineMatrix(false);
-        else 
+        if(this.sourceAffineMatrix != null)
         {
-           affineMatrix = new double[2][3];
-           affineMatrix[0][0] = affineMatrix[1][1]=1;
-           affineMatrix[0][1] = affineMatrix[0][2]=0;
-           affineMatrix[1][0] = affineMatrix[1][2]=0;
+            affineMatrix = this.sourceAffineMatrix;
+            // Scale translations in the matrix.
+            affineMatrix[0][2] *= this.sourceFactorWidth;
+            affineMatrix[1][2] *= this.sourceFactorHeight;
+        }
+        else
+        {
+            if (landmarkWeight==0) affineMatrix = computeAffineMatrix(false);
+            else 
+            {
+               affineMatrix = new double[2][3];
+               affineMatrix[0][0] = affineMatrix[1][1]=1;
+               affineMatrix[0][1] = affineMatrix[0][2]=0;
+               affineMatrix[1][0] = affineMatrix[1][2]=0;
+            }
         }
 
+        
+//        System.out.println("target to source affine matrix:");
+//        for(int i = 0; i < 2; i++)
+//        {
+//            for(int j = 0; j < 3; j++)
+//            {
+//                System.out.print("A["+i+"]["+j+"] = " + affineMatrix[i][j]+ " ");                
+//            }
+//            System.out.println("");
+//        }
+        
         // Incorporate the affine transformation into the spline coefficient
         for (int i= 0; i<intervals + 3; i++) 
         {
@@ -9799,20 +10321,40 @@ static class bUnwarpJTransformation
         else                K2 = 0;
         double [] dxSourceToTarget = new double[K2];
         double [] dySourceToTarget = new double[K2];
-        computeInitialResidues(dxSourceToTarget, dySourceToTarget, true);
+//        computeInitialResidues(dxSourceToTarget, dySourceToTarget, true);
 
         cxSourceToTarget = new double[intervals+3][intervals+3];
         cySourceToTarget = new double[intervals+3][intervals+3];
 
-        if (landmarkWeight==0) affineMatrix = computeAffineMatrix(true);
-        else 
+        if(this.targetAffineMatrix != null)
         {
-           affineMatrix = new double[2][3];
-           affineMatrix[0][0] = affineMatrix[1][1]=1;
-           affineMatrix[0][1] = affineMatrix[0][2]=0;
-           affineMatrix[1][0] = affineMatrix[1][2]=0;
+            affineMatrix = this.targetAffineMatrix;
+            // Scale translations in the matrix.
+            affineMatrix[0][2] *= this.targetFactorWidth;
+            affineMatrix[1][2] *= this.targetFactorHeight;
+        }
+        else
+        {
+            if (landmarkWeight==0) affineMatrix = computeAffineMatrix(true);
+            else 
+            {
+               affineMatrix = new double[2][3];
+               affineMatrix[0][0] = affineMatrix[1][1]=1;
+               affineMatrix[0][1] = affineMatrix[0][2]=0;
+               affineMatrix[1][0] = affineMatrix[1][2]=0;
+            }
         }
 
+//        System.out.println("source to target affine matrix:");
+//        for(int i = 0; i < 2; i++)
+//        {
+//            for(int j = 0; j < 3; j++)
+//            {
+//                System.out.print("A["+i+"]["+j+"] = " + affineMatrix[i][j]+ " ");                
+//            }
+//            System.out.println("");
+//        }
+        
         // Incorporate the affine transformation into the spline coefficient    
         for (int i= 0; i<intervals + 3; i++) 
         {
@@ -9863,8 +10405,8 @@ static class bUnwarpJTransformation
                 final double[][] newcySourceToTarget = new double[intervals+3][intervals+3];
 
                 // Compute the residues before correcting at this scale
-                computeScaleResidues(intervals, cxTargetToSource, cyTargetToSource, dxTargetToSource, dyTargetToSource, false);
-                computeScaleResidues(intervals, cxSourceToTarget, cySourceToTarget, dxSourceToTarget, dySourceToTarget, true);
+//                computeScaleResidues(intervals, cxTargetToSource, cyTargetToSource, dxTargetToSource, dyTargetToSource, false);
+//                computeScaleResidues(intervals, cxSourceToTarget, cySourceToTarget, dxSourceToTarget, dySourceToTarget, true);
 
                 // Compute the coefficients at this scale
                 boolean underconstrained = true;
@@ -10118,6 +10660,8 @@ static class bUnwarpJTransformation
      * @param targetPh point handler for the landmarks in the target image
      * @param sourceMsk source image mask
      * @param targetMsk target image mask
+     * @param sourceAffineMatrix source initial affine matrix
+     * @param targetAffineMatrix source initial affine matrix
      * @param min_scale_deformation minimum scale deformation 
      * @param max_scale_deformation maximum scale deformation
      * @param min_scale_image minimum image scale
@@ -10146,6 +10690,8 @@ static class bUnwarpJTransformation
        final bUnwarpJPointHandler targetPh,
        final bUnwarpJMask sourceMsk,
        final bUnwarpJMask targetMsk,
+       final double[][] sourceAffineMatrix,
+       final double[][] targetAffineMatrix,
        final int min_scale_deformation,
        final int max_scale_deformation,
        final int min_scale_image,
@@ -10173,6 +10719,8 @@ static class bUnwarpJTransformation
        this.targetPh              = targetPh;
        this.sourceMsk             = sourceMsk;
        this.targetMsk             = targetMsk;
+       this.sourceAffineMatrix    = sourceAffineMatrix;
+       this.targetAffineMatrix    = targetAffineMatrix;
        this.min_scale_deformation = min_scale_deformation;
        this.max_scale_deformation = max_scale_deformation;
        this.min_scale_image       = min_scale_image;
@@ -10701,19 +11249,19 @@ static class bUnwarpJTransformation
           case 0:
              for (int i = 0; (i < 2); i++) 
                 for (int j = 0; (j < 3); j++) X[i][j]=0.0;
-              if (adjust_size) 
-              {
-                  // Make both images of the same size
-                 X[0][0] = (double)auxSource.getCurrentWidth () / auxTarget.getCurrentWidth ();
-                 X[1][1] = (double)auxSource.getCurrentHeight() / auxTarget.getCurrentHeight();
-               } 
-              else 
-              {
-                 // Make both images to be centered
-                 X[0][0] = X[1][1] = 1;
-                 X[0][2] = ((double)auxSource.getCurrentWidth () - auxTarget.getCurrentWidth ())/2;
-                 X[1][2] = ((double)auxSource.getCurrentHeight() - auxTarget.getCurrentHeight())/2;
-              }
+                  if (adjust_size) 
+                  {
+                      // Make both images of the same size
+                     X[0][0] = (double)auxSource.getCurrentWidth () / auxTarget.getCurrentWidth ();
+                     X[1][1] = (double)auxSource.getCurrentHeight() / auxTarget.getCurrentHeight();
+                   } 
+                  else 
+                  {
+                     // Make both images to be centered
+                     X[0][0] = X[1][1] = 1;
+                     X[0][2] = ((double)auxSource.getCurrentWidth () - auxTarget.getCurrentWidth ())/2;
+                     X[1][2] = ((double)auxSource.getCurrentHeight() - auxTarget.getCurrentHeight())/2;
+                  }
               break;
           case 1:
              for (int i = 0; (i < 2); i++) {
@@ -12087,8 +12635,10 @@ static class bUnwarpJTransformation
              double tv = (double)(v * intervals) / (double)(auxTargetCurrentHeight - 1) + 1.0F;
 
              // Transform this coordinate to the source image
-             swx.prepareForInterpolation(tu, tv, false); double x=swx.interpolateI();
-             swy.prepareForInterpolation(tu, tv, false); double y=swy.interpolateI();
+             swx.prepareForInterpolation(tu, tv, false); 
+             double x=swx.interpolateI();
+             swy.prepareForInterpolation(tu, tv, false); 
+             double y=swy.interpolateI();
 
              // Substract the result from the residual
              double dx=auxFactorWidth *(double)sourcePoint.x - x;
@@ -12625,35 +13175,7 @@ static class bUnwarpJTransformation
        }
 
        // Save the file
-       try {
-          final FileWriter fw = new FileWriter(filename);
-          String aux;
-          fw.write("Intervals="+intervals+"\n\n");
-          fw.write("X Coeffs -----------------------------------\n");
-          for (int i= 0; i<intervals + 3; i++) {
-             for (int j = 0; j < intervals + 3; j++) {
-                aux=""+cx[i][j];
-                    while (aux.length()<21) aux=" "+aux;
-                    fw.write(aux+" ");
-             }
-             fw.write("\n");
-          }
-          fw.write("\n");
-          fw.write("Y Coeffs -----------------------------------\n");
-          for (int i= 0; i<intervals + 3; i++) {
-             for (int j = 0; j < intervals + 3; j++) {
-                aux=""+cy[i][j];
-                    while (aux.length()<21) aux=" "+aux;
-                    fw.write(aux+" ");
-             }
-             fw.write("\n");
-          }
-          fw.close();
-       } catch (IOException e) {
-          IJ.error("IOException exception" + e);
-       } catch (SecurityException e) {
-          IJ.error("Security exception" + e);
-       }
+       bUnwarpJMiscTools.saveElasticTransformation(intervals, cx, cy, filename);
     }
 
     /*------------------------------------------------------------------*/

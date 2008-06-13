@@ -20,12 +20,14 @@
 /plugins/JRuby_Interpreter.jar
 /plugins/BeanShell_Interpreter.jar
 /plugins/Javascript_.jar
+/plugins/SplineDeformationGenerator_.jar
 /plugins/bUnwarpJ_.jar
 /plugins/register_virtual_stack_slices.jar
 /plugins/registration_3d.jar
 /plugins/IO_.jar
 /plugins/CLI_.jar
 /plugins/Analyze/Grid_.class
+/plugins/Examples/Example_Plot.class
 /plugins/Filters/Preprocessor_Smooth.class
 /plugins/Graphics/Example_Plot.class
 /plugins/Input-Output/HandleExtraFileTypes.class
