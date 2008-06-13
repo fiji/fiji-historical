@@ -735,11 +735,8 @@ public class Fake {
 
 			void action() throws FakeException {
 				compileJavas(nonUpToDates);
-				List files = new ArrayList();
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext())
-					java2classFiles((String)iter.next(),
-						files, cwd, 0);
+				List files =
+					java2classFiles(prerequisites, cwd);
 				makeJar(target, getMainClass(), files, cwd,
 					configPath, getVarBool("VERBOSE"));
 			}
@@ -967,19 +964,46 @@ public class Fake {
 		return count;
 	}
 
-	// adds the .class files for a certain .java file
-	protected static void java2classFiles(String path, List result,
-			File cwd, long newerThan) throws FakeException {
-		if (!path.endsWith(".java")) {
-			result.add(path);
+	/*
+	 * This function inspects a .class file for a given .java file,
+	 * infers the package name and all used classes, and adds to "all"
+	 * the class file names of those classes used that have been found
+	 * in the same class path.
+	 */
+	protected static void java2classFiles(String java, File cwd, Set all) {
+		if (java.endsWith(".java"))
+			java = java.substring(0, java.length() - 5) + ".class";
+		else if (!java.endsWith(".class")) {
+			all.add(java);
 			return;
 		}
+		byte[] buffer = readFile(makePath(cwd, java));
+		ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(buffer);
+		String fullClass = analyzer.getPathForClass() + ".class";
+		if (!java.endsWith(fullClass))
+			throw new RuntimeException("Huh? " + fullClass
+					+ " is not a suffix of " + java);
+		java = java.substring(0, java.length() - fullClass.length());
+		Iterator iter = analyzer.getClassNames();
+		while (iter.hasNext()) {
+			String className = (String)iter.next();
+			String path = java + className + ".class";
+			if (new File(makePath(cwd, path)).exists() &&
+					!all.contains(path)) {
+				all.add(path);
+				java2classFiles(path, cwd, all);
+			}
+		}
+	}
 
-		String stem = path.substring(0, path.length() - 5);
-		if (expandGlob(stem + ".class", result, cwd, newerThan) == 0)
-			throw new FakeException("No class file compiled for '"
-				+ path + "'");
-		expandGlob(stem + "$*.class", result, cwd, newerThan);
+	/* discovers all the .class files for a given set of .java files */
+	protected static List java2classFiles(List javas, File cwd)
+			throws FakeException {
+		Set all = new HashSet();
+		Iterator iter = javas.iterator();
+		while (iter.hasNext())
+			java2classFiles((String)iter.next(), cwd, all);
+		return new ArrayList(all);
 	}
 
 	// this function handles the javac singleton
@@ -1078,11 +1102,7 @@ public class Fake {
 			throw new FakeException("Compile error: " + e);
 		}
 
-		List result = new ArrayList();
-		iter = javas.iterator();
-		while (iter.hasNext())
-			java2classFiles((String)iter.next(), result,
-					cwd, now);
+		List result = java2classFiles(javas, cwd);
 		return result;
 	}
 
@@ -1524,11 +1544,46 @@ public class Fake {
 			endOffset = offset;
 		}
 
+		class ClassNameIterator implements Iterator {
+			int index;
+
+			ClassNameIterator() {
+				index = -1;
+				findNext();
+			}
+
+			void findNext() {
+				while (++index < poolOffsets.length)
+					if (getU1(poolOffsets[index]) == 7)
+						break;
+			}
+
+			public boolean hasNext() {
+				return index < poolOffsets.length;
+			}
+
+			public Object next() {
+				int offset = poolOffsets[index];
+				findNext();
+				return getString(dereferenceOffset(offset + 1));
+			}
+
+			public void remove()
+					throws UnsupportedOperationException {
+				throw new UnsupportedOperationException();
+			}
+		}
+
+		public Iterator getClassNames() {
+			return new ClassNameIterator();
+		}
+
 		public String toString() {
 			String result = "";
-			for (int i = 0; i < poolOffsets.length - 1; i++) {
+			for (int i = 0; i < poolOffsets.length; i++) {
 				int offset = poolOffsets[i];
-				result += "index #" + i + ": " + format(offset);
+				result += "index #" + i + ": "
+					+ format(offset) + "\n";
 				int tag = getU1(offset);
 				if (tag == 5 || tag == 6)
 					i++;
