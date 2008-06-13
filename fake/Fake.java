@@ -293,8 +293,9 @@ public class Fake {
 
 		public String expandVariables(String value,
 				String subkey, String subkey2) {
+			int offset = 0;
 			for (;;) {
-				int dollar = value.indexOf('$');
+				int dollar = value.indexOf('$', offset);
 				if (dollar < 0)
 					return value;
 
@@ -306,10 +307,13 @@ public class Fake {
 				String substitute =
 					getVariable(name.toUpperCase(),
 						subkey, subkey2);
+				if (substitute == null)
+					substitute = "";
 				value = value.substring(0, dollar)
-					+ (substitute == null ? "" : substitute)
+					+ substitute
 					+ (end < value.length() ?
 						value.substring(end) : "");
+				offset = dollar + substitute.length();
 			}
 		}
 
