@@ -55,6 +55,7 @@ public class LevelSet implements PlugInFilter {
 	private int flags = DOES_16|DOES_32|DOES_8G|DOES_STACKS;
 	private static String [] shapeList = {"none"}; // not implemented yet
 	private static String [] preprocessList = {"none", "Gaussian difference"};
+	private static String [] expansionList = {"outside", "inside"};
 	public enum preprocessChoices { none, gaussian };
 	protected ImagePlus imp;
 	protected ImageContainer ic = null;
@@ -71,6 +72,7 @@ public class LevelSet implements PlugInFilter {
 	protected double w_adv, w_curv, w_gray, f_conv; // Active contours
 	protected int fm_maxiter = 100000, ls_maxiter = 100;
 	boolean ask_params = true;
+	boolean insideout = false;
 	
 	// Test values
 	static String testImageFn = "/Users/erwin/Desktop/Dot_Blot.tif";
@@ -78,7 +80,7 @@ public class LevelSet implements PlugInFilter {
 	static int [] poly_ry = { 79, 150, 69 };
 	static int [] rx = { 260 };
 	static int [] ry = { 180 };
-	static boolean test_dialog = false, test_algorithm = false, test_roi = true;
+	static boolean test_dialog = false, test_algorithm = true, test_roi = false;
 	
 	
 	public LevelSet() {
@@ -159,7 +161,7 @@ public class LevelSet implements PlugInFilter {
 		
 		// Create a initial state map out of the roi
 		StateContainer sc_roi = new StateContainer();
-		sc_roi.setROI(roi, ic.getWidth(), ic.getHeight(), 1);
+		sc_roi.setROI(roi, ic.getWidth(), ic.getHeight(), 1, insideout);
 		
 		StateContainer sc_ls = null;
 		
@@ -182,6 +184,10 @@ public class LevelSet implements PlugInFilter {
 			}
 			IJ.log("(" + new Date(System.currentTimeMillis()) + "): Finished Fast Marching");
 			sc_ls = fm.getStateContainer();
+			if ( sc_ls == null ) {
+				// don't continue if something happened during Fast Marching
+				return;
+			}
 		}
 		else {
 			sc_ls = sc_roi;
@@ -230,7 +236,7 @@ public class LevelSet implements PlugInFilter {
 		// TODO interactive selection of gray value range
 		
 		GenericDialog gd = new GenericDialog("Level Set Segmentation");
-		gd.addChoice("Preprocessing (Advection image)", preprocessList, preprocessList[1]);
+		gd.addChoice("Preprocessing (Advection image)", preprocessList, preprocessList[0]);
 		gd.addCheckbox("Use Fast Marching", true);
 		gd.addNumericField("Grey value threshold", FastMarching.getGreyThreshold(), 0);
 		gd.addNumericField("Distance threshold", FastMarching.getDistanceThreshold(), 2);
@@ -242,6 +248,7 @@ public class LevelSet implements PlugInFilter {
 		gd.addNumericField("Grayscale", 1, 0);
 		gd.addMessage("Leve set convergence criterion (be careful!)");
 		gd.addNumericField("Convergence", SparseFieldLevelSet.getConvergenceFactor(), 4);
+		gd.addChoice("Region expands to ", expansionList, expansionList[0]);
 		gd.addMessage("");
 		gd.addMessage("Developed by Erwin Frise.\nBased on code by Arne-Michael Toersel\n");
 		
@@ -270,6 +277,11 @@ public class LevelSet implements PlugInFilter {
 			this.w_curv = gd.getNextNumber();
 			this.w_gray = gd.getNextNumber();
 			this.f_conv = gd.getNextNumber();
+			String expansion = gd.getNextChoice();
+			if ( expansion.contentEquals(expansionList[1]) ) {
+				this.insideout = true;
+				IJ.log("Inverse expansion");
+			}
 		}
 		
 		if ( test_dialog ) {
@@ -301,7 +313,7 @@ public class LevelSet implements PlugInFilter {
 		}		
 		if ( roi != null ) {
 			sc_test = new StateContainer();
-			sc_test.setROI(roi, progress.getWidth(), progress.getHeight(), 0);
+			sc_test.setROI(roi, progress.getWidth(), progress.getHeight(), 0, insideout);
 		}
 		if ( sc_test == null) {
 			IJ.error("sc_test not set");

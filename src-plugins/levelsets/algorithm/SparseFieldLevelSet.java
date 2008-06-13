@@ -108,6 +108,8 @@ public class SparseFieldLevelSet implements StagedAlgorithm
    private boolean needInit = true;
    // Tag to signal whether the level set function has converged
    private boolean convergence = false;
+   // Tag to signal if a problem was encountered which prevents more iterations
+   private boolean invalid = false;
    
    // Mean grey value around seed points - taken from Fast Marching
    private int seed_greyvalue = 0;
@@ -273,6 +275,10 @@ public class SparseFieldLevelSet implements StagedAlgorithm
     */
    public boolean step(int granularity)
    {
+	  if (invalid) {
+		  return false;
+	  }
+	   
       if (needInit)
       {
          init();
@@ -302,6 +308,14 @@ public class SparseFieldLevelSet implements StagedAlgorithm
          cleanup();
       }
       
+      // If the contour goes haywire, total_change (sum of all phi) gets NaN values
+      // No point to continue, abort and tell the user about the fact
+      if ( Double.isNaN(total_change) ) {
+    	  invalid = true;
+    	  IJ.error("Level Sets encountered numerical instability (i.e. the contour probably expanded to infinity) - Aborted");
+    	  return(false);
+      }
+      
       return (!convergence);
    }
    
@@ -313,6 +327,8 @@ public class SparseFieldLevelSet implements StagedAlgorithm
 	  }
 	   
       IJ.log("Change was " + (total_change / (layers[ZERO_LAYER].size())));
+      // Just for debugging: find out details so that we can catch numerical instability
+      // IJ.log("Change splits into total change=" + total_change + ", ZERO level layers" + layers[ZERO_LAYER].size());
       if ( verbose > 0 ) {
     	  IJ.log("Stats: ");
     	  checkConsistency();
@@ -965,8 +981,9 @@ public class SparseFieldLevelSet implements StagedAlgorithm
       }
       IJ.log("From FastMarching: Found pixels " +px_zero+" ZERO, " +px_inside + " INSIDE,"+px_outside + " OUTSIDE");
       if ( px_inside == 0 && px_zero == 0 ) {
-    	  IJ.error("Didn't get any starting shape");
-      }
+       	  invalid = true;
+       	  IJ.error("Level Sets didn't get any starting shape - Aborting");
+       }
       
       // TODO median would be better
       if ( this.seed_greyvalue < 0 ) {

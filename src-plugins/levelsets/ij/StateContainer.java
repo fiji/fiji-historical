@@ -33,6 +33,7 @@ public class StateContainer {
 	protected static int TILE_SIZE = 5;
 	protected int avg_grey = -1;
 	protected int x_size, y_size, z_size;
+	boolean insideout;
 	
 	protected ImageContainer ic = null;
 	
@@ -54,11 +55,13 @@ public class StateContainer {
 	
 	// sets the whole thing as region of interest
 	// we need the image size in this case
-	public void setROI(Roi roi, int x, int y, int z) {
+	public void setROI(Roi roi, int x, int y, int z, boolean insideout) {
 		roi_map = roi;
 		x_size = x;
 		y_size = y;
 		z_size = z == 0 ? 1 : z; // make sure we have at least a z value of 1
+		
+		this.insideout = insideout;
 	}
 		
 	// Assign with the output from FastMarching
@@ -171,13 +174,19 @@ public class StateContainer {
 	
 	
 	protected DeferredObjectArray3D<States> roi2dmap() {
-		
-		
+				
 		if ( roi_map == null ) {
 			return null;
 		}
+		
+		States outside = States.OUTSIDE, inside = States.INSIDE;
+		
+		if ( insideout == true ) {
+			outside = States.INSIDE;
+			inside = States.OUTSIDE;
+		}
 
-		d_map = new DeferredObjectArray3D<States>(x_size, y_size, z_size, TILE_SIZE, States.OUTSIDE);			
+		d_map = new DeferredObjectArray3D<States>(x_size, y_size, z_size, TILE_SIZE, outside);			
 		
 		ByteProcessor mask = (ByteProcessor) roi_map.getMask();
 		Rectangle roi_r = roi_map.getBounds();
@@ -199,7 +208,7 @@ public class StateContainer {
             		   d_map.set(x, y, z, States.ZERO);
             		   px_zero++;
             	   } else {
-            		   d_map.set(x, y, z, States.INSIDE);
+            		   d_map.set(x, y, z, inside);
             		   px_inside++;
             	   }
                }
