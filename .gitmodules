@@ -1,12 +1,12 @@
 [submodule "ImageJA"]
 	path = ImageJA
-	url = git://repo.or.cz/imageja.git
+	url = ssh://mob@repo.or.cz/srv/git/imageja.git
 [submodule "TrakEM2"]
 	path = TrakEM2
-	url = git://repo.or.cz/trakem2.git
+	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
 [submodule "VIB"]
 	path = VIB
-	url = git://pacific.mpi-cbg.de/VIB.git/
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/VIB.git/
 [submodule "java/linux"]
 	path = java/linux
 	url = .
@@ -24,7 +24,7 @@
 	url = .
 [submodule "micromanager1.1"]
 	path = micromanager1.1
-	url = git://pacific.mpi-cbg.de/micromanager1.1/.git
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/micromanager1.1/.git
 [submodule "mpicbg"]
 	path = mpicbg
-	url = git://pacific.mpi-cbg.de/mpicbg.git
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/mpicbg.git
