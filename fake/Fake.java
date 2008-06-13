@@ -265,6 +265,19 @@ public class Fake {
 			value = expandVariables(value, paren < 0 ? null :
 				key.substring(paren + 1, key.length() - 1));
 
+			if (value.indexOf('*') >= 0 ||
+					value.indexOf('?') >= 0) {
+				List files = new ArrayList();
+				if (expandGlob(value, files, cwd) < 1)
+					System.err.println("Warning: "
+						+ "no match for " + value);
+				value = "";
+				Iterator iter = files.iterator();
+				while (iter.hasNext())
+					value += " " +
+						quoteArg((String)iter.next());
+			}
+
 			name = name.toUpperCase() + (paren < 0 ?
 				"" : key.substring(paren));
 			variables.put(name, value);
@@ -791,7 +804,8 @@ public class Fake {
 			void action() throws FakeException {
 				try {
 					String expanded =
-						expandVariables(program);
+						expandVariables(program,
+							target);
 					execute(splitCommandLine(expanded), cwd,
 						getVarBool("VERBOSE", program));
 				} catch (Exception e) {
