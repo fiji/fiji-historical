@@ -1087,13 +1087,17 @@ public class Fake {
 			Iterator iter = files.iterator();
 			while (iter.hasNext()) {
 				String realName = (String)iter.next();
-				byte[] buffer =
-					readFile(makePath(cwd, realName));
-				ByteCodeAnalyzer analyzer =
-					new ByteCodeAnalyzer(buffer);
-				String name = analyzer.getPathForClass();
+				String name = realName;
+				byte[] buffer = readFile(makePath(cwd,
+								realName));
+				if (realName.endsWith(".class")) {
+					ByteCodeAnalyzer analyzer =
+						new ByteCodeAnalyzer(buffer);
+					name = analyzer.getPathForClass()
+						+ ".class";
+				}
 
-				JarEntry entry = new JarEntry(name + ".class");
+				JarEntry entry = new JarEntry(name);
 				jar.putNextEntry(entry);
 				jar.write(buffer, 0, buffer.length);
 				jar.closeEntry();
