@@ -300,7 +300,7 @@ fiji-%.zip: Fiji.app-%
 	zip -9r $@ $<
 
 fiji-%.dmg: Fiji.app
-	sh scripts/mkdmg.sh $@ $<
+	sh scripts/mkdmg.sh $@ $< plugins macros
 
 dmg: fiji-macosx.dmg
 
