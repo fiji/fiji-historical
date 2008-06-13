@@ -60,6 +60,8 @@ public class FastMarching implements StagedAlgorithm
    private boolean halt = false;
    // Flag: Initialization needed? If true - will be flipped afterwards
    private boolean needInit = true;
+   // Tag to signal if a problem was encountered which prevents more iterations
+   private boolean invalid = false;
    
    // Cache for BandElement objects to avoid continuous reallocation
    private BandElementCache elem_cache = null;
@@ -152,7 +154,7 @@ public class FastMarching implements StagedAlgorithm
    /* Initialization - called on first call to step(). Does basically things the
     * constructor would have done.
     */
-   private void init()
+   private boolean init()
    {
       // Initialize all the data structures
       map = new DeferredByteArray3D(source.getWidth(), source.getHeight(), source.getImageCount(), 5, FAR);
@@ -168,9 +170,21 @@ public class FastMarching implements StagedAlgorithm
        */
       this.img = source.deepCopy();
       
+      // First make sure we actually got valid seed points
+      if ( seeds == null ) {
+    	  invalid = true;
+      }
+      else if ( seeds.size() == 0 ) {
+    	  invalid = true;
+      }
+      if ( invalid ) {
+    	  IJ.error("Fast Marching needs seed points but didn't find any! Did you specify an area?");
+    	  return false;
+      }
+      
       /* Add all seed points to the heap. Also determine mean grey value
        * around seed points
-       */ 
+       */       
       for (int i = 0; i< seeds.size(); i++)
       {
          Coordinate seed = seeds.elementAt(i);
@@ -211,6 +225,8 @@ public class FastMarching implements StagedAlgorithm
       IJ.log("Fast Marching done init");
       
       visualize(true);
+      
+      return(true);
    }
    
    
@@ -314,11 +330,18 @@ public class FastMarching implements StagedAlgorithm
    // See StagedAlgorithm interface defintion for javadoc
    public boolean step(int granularity)
    {
-      // If this ist the first call - initialize
+	  // if something weird happened - don't even try to go any further
+	  if (invalid) {
+		  return false;
+	  }
+	   
+	  // If this ist the first call - initialize
       if (needInit)
       {
          needInit = false;
-         init();
+         if ( ! init() ) {
+        	 return false;
+         }
       }
       
       if (heap.isEmpty())
@@ -366,6 +389,11 @@ public class FastMarching implements StagedAlgorithm
    
    
    public StateContainer getStateContainer() {
+	   // If there was a serious problem, return null (we don't have any valid data anyways)
+	   if (invalid) {
+		   return null;
+	   }
+	   
 	   StateContainer sc_fm = new StateContainer();
 	   sc_fm.setFastMarching(map, seed_greyvalue);
 	   return sc_fm;
