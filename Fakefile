@@ -98,6 +98,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/IO_.jar \
 	plugins/CLI_.jar \
 	plugins/Javascript_.jar \
+	plugins/lens_correction.jar \
 	misc/Fiji.jar
 
 all <- jdk fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS run
@@ -144,6 +145,7 @@ plugins/register_virtual_stack_slices.jar <- \
 plugins/registration_3d.jar <- src-plugins/registration3d/*.java
 plugins/IO_.jar <- src-plugins/io/*.java
 plugins/CLI_.jar <- src-plugins/CLI/*.java
+plugins/lens_correction.jar <- src-plugins/lenscorrection/*.java
 
 # Fiji launcher
 
