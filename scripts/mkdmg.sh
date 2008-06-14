@@ -9,13 +9,13 @@
 #
 # The result will be a file called <volname>.dmg
 
-if [ $# != 2 ]; then
- echo "usage: mkdmg.sh volname srcdir"
+if [ $# -lt 2 ]; then
+ echo "usage: mkdmg.sh volname srcdir [<symlinks>]"
  exit 0
 fi
 
-VOL="$1"
-FILES="$2"
+VOL="$1"; shift
+FILES="$1"; shift
 
 case "$VOL" in
 *.dmg)
@@ -28,7 +28,19 @@ case "$VOL" in
 esac
 
 # create temporary disk image and format, ejecting when done
-hdiutil create "$DMG" -srcfolder "$FILES" -fs HFS+ -volname "$VOL" -ov
+hdiutil create "$DMG" -srcfolder "$FILES" -fs HFS+ -format UDRW \
+	-volname "$VOL" -ov
+DISK=`hdid "$DMG" | sed -ne '/Apple_HFS/s|^/dev/\([^ ]*\).*$|\1|p'`
+FOLDER=`hdid "$DMG" | sed -ne 's|^/dev/.*Apple_HFS[ 	]*\([^ ]*\)$|\1|p'`
+(cd "$FOLDER" &&
+ for p in "$@"
+ do
+	ln -s "$FILES"/"$p" .
+ done)
+hdiutil eject $DISK
+
+mv "$DMG" "$DMG.tmp" &&
+hdiutil convert "$DMG.tmp" -format UDZO -o "$DMG"
 DISK=`hdid "$DMG" | sed -ne '/Apple_HFS/s|^/dev/\([^ ]*\).*$|\1|p'`
 hdiutil eject $DISK
 
