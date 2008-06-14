@@ -144,7 +144,7 @@ public class ImageContainer
    }
       
    
-   public void createImagePlus(String title) {
+   public ImagePlus createImagePlus(String title) {
 	   
 	   if ( title != null ) {
 		   this.title = title;
@@ -152,11 +152,11 @@ public class ImageContainer
 	   
 	   if ( ip != null ) {
 		   ip.setTitle(this.title);
-		   return;
+		   return ip;
 	   }
 	   
 	   if ( isStack ) {
-		   ImageStack is = new ImageStack();
+		   ImageStack is = new ImageStack(this.getWidth(), this.getHeight());
 		   for ( int i = 0; i < stack_size; i++ ) {
 			   is.addSlice("", sproc[i]);
 		   }
@@ -166,9 +166,11 @@ public class ImageContainer
 	   } else {
 		   ip = new ImagePlus(this.title, sproc[0]);
 	   }
+	   
+	   return ip;
    }
    
-   public void updateImagePlus(String title) {
+   public ImagePlus updateImagePlus(String title) {
 	   
 	   if ( title != null ) {
 		   this.title = title;
@@ -192,6 +194,8 @@ public class ImageContainer
 			   ip.setProcessor(this.title, sproc[0]);
 		   }
 	   }
+	   
+	   return ip;
    }
 
    /**

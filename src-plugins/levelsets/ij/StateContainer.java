@@ -4,6 +4,7 @@ import ij.IJ;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
 import java.util.Vector;
@@ -16,28 +17,31 @@ import levelsets.algorithm.SparseFieldLevelSet;
 
 /**
  * @author erwin
- *
+ * Manual seeds, FastMarching, SparseField use different state maps 
+ * This class holds and (only if required) converts one state map to another
+ * The purpose is primarily the decoupling of the FastMarching from the SparseField
+ * so that a ROI can directly be used for SparseField and FastMarching can run on its own
+ * as separate plugin. 
+ * This class has also the ability to create a binary image with the segmentation as output.
  */
 public class StateContainer {
 	
-	
+	// Internal representation of the states
 	public enum States { INSIDE, ZERO, OUTSIDE };
 	
-	// Manual seeds, FastMarching, SparseField use different state maps 
-	// This class holds and (only if required) converts one state map to another
-	// The purpose is primarily the decoupling of the FastMarching from the SparseField
-	// so that a ROI can directly be used for SparseField and FastMarching can run on its own
-	// as separate plugin. 
-	// This has also the ability to create a binary image with the segmentation as output.
-	
+	// Tile size default - should implemented not just defaulting but, hey, it works
 	protected static int TILE_SIZE = 5;
+
+	// Internals
 	protected int avg_grey = -1;
 	protected int x_size, y_size, z_size;
-	boolean insideout;
+	// Direction of the expansion, inside if false, outside if true;
+	boolean insideout = false;
+	// ROI don't work in 3D, assume that the ROI is in the current slice of the Z stack
+	// Important: slices start at 1!
+	protected int roi_z;
 	
-	protected ImageContainer ic = null;
-	
-	// it has 3 possible internal representations of the states:
+	// 4 possible internal representations of the states:
 	// DeferredByteArray3D (used by fast marching)
 	DeferredObjectArray3D<States> d_map = null;
 	// Full array containing the state map
@@ -55,14 +59,19 @@ public class StateContainer {
 	
 	// sets the whole thing as region of interest
 	// we need the image size in this case
-	public void setROI(Roi roi, int x, int y, int z, boolean insideout) {
+	public void setROI(Roi roi, int x, int y, int z, int curr_z) {
 		roi_map = roi;
 		x_size = x;
 		y_size = y;
 		z_size = z == 0 ? 1 : z; // make sure we have at least a z value of 1
-		
+		roi_z = curr_z;
+	}
+	
+	// Sets the insideout variable to expand to the inside or outside
+	public void setExpansionToInside( boolean insideout ) {
 		this.insideout = insideout;
 	}
+	
 		
 	// Assign with the output from FastMarching
 	public void setFastMarching(DeferredByteArray3D statemap, int avg_grey) {
@@ -88,6 +97,9 @@ public class StateContainer {
 		}
 		
 		this.avg_grey = avg_grey;
+        x_size = d_map.getXLength();
+        y_size = d_map.getYLength();
+        z_size = d_map.getZLength();
 	}
 	
 	
@@ -111,6 +123,9 @@ public class StateContainer {
            }
         }
 		
+        x_size = state.length;
+        y_size = state[0].length;
+        z_size = state[0][0].length;
 	}
 	
 	// Returns the d_map object -- assumes read only
@@ -138,6 +153,62 @@ public class StateContainer {
 		return roi2points();
 		
 	}
+	
+	
+	public ImageProcessor [] getIPMask() {
+		ByteProcessor [] bp = new ByteProcessor[this.z_size];
+		for ( int i=0; i < this.z_size; i++ ) {
+			bp[i] = new ByteProcessor(this.x_size, this.y_size);
+		}
+		
+		if ( s_map != null ) {
+	        for (int z = 0; z < s_map[0][0].length; z++) {
+	        	byte [] pixels = (byte []) bp[z].getPixels();
+	            for (int y = 0; y < s_map[0].length; y++) {
+	               for (int x = 0; x < s_map.length; x++) {
+	             	  if ( s_map[x][y][z] == States.ZERO ) {
+	             		 pixels[y * x_size + x] = 0;
+	             	  }
+	             	  else if ( s_map[x][y][z] == States.INSIDE ) {
+	             		 pixels[y * x_size + x] = 0;
+	             	  }
+	             	  else {
+	             		 pixels[y * x_size + x] = (byte) 255;
+	             	  }
+	               }
+	            }
+	         }
+			 return bp;
+		}
+		else if ( roi_map != null ) {
+			d_map = roi2dmap();
+		}
+		
+		if ( d_map != null ) {
+	        for (int z = 0; z < d_map.getZLength(); z++) {
+	        	byte [] pixels = (byte []) bp[z].getPixels();
+	            for (int y = 0; y < d_map.getYLength(); y++) {
+	               for (int x = 0; x < d_map.getXLength(); x++) {
+	             	  if ( d_map.get(x, y, z) == States.ZERO ) {
+	             		 pixels[y * x_size + x] = 0;
+	             	  }
+	             	  else if ( d_map.get(x, y, z) == States.INSIDE ) {
+	             		 pixels[y * x_size + x] = 0;
+	             	  }
+	             	  else {
+	             		 pixels[y * x_size + x] = (byte) 255;
+	             	  }
+	               }
+	            }
+	         }
+			 return bp;			
+		}
+		
+		// Converting the c_map to mask is somewhat silly and thus not implemented
+		
+		return null;
+	}
+	
 	
 	// TODO Make more robust so that it works with points too
 	// Simplification but currently only used for SparseField anyway
@@ -201,7 +272,7 @@ public class StateContainer {
 
 		if ( mask == null ) {
 			IJ.log("Rectangle, just parsing borders");
-			int z = 0; // TODO z is not possible with roi
+			int z = this.roi_z - 1; // TODO z is not possible with roi
             for (int y = y_start; y < y_end; y++) {
                for (int x = x_start; x < x_end; x++) {
             	   if ( x == x_start || y == y_start || x == x_end - 1 || y == y_end - 1 ) {
@@ -216,7 +287,7 @@ public class StateContainer {
             // IJ.log("Zero level= " + px_zero + ", Inside = " + px_inside );
 		} else {
 			IJ.log("Shape, parsing shape");
-			int z = 0;
+			int z = this.roi_z - 1;
 			for (int y = 0; y < roi_r.height; y++) {
 				for (int x = 0; x < roi_r.width; x++) {
 					

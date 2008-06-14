@@ -167,6 +167,21 @@ public class SparseFieldLevelSet implements StagedAlgorithm
    }
    
    /**
+    * Returns the state map as StateContainer
+    * @return The StateContainer
+    */
+   public StateContainer getStateContainer()
+   {
+	  if (invalid) {
+		  return null;
+	  }
+	   
+	  StateContainer sc = new StateContainer();
+	  sc.setSparseField(state);
+      return sc;
+   }
+
+   /**
     * Sets the Advection weight.
     * Works only before the initialization (i.e. the first iteration)
     */

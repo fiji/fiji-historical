@@ -131,6 +131,9 @@ public class LevelSet implements PlugInFilter {
 
 	public void run(ImageProcessor ip) {
 		
+		// TODO Would make sense to offer starting points as mask in separate image. 
+		// If no ROI found, have the additional dialog field to select mask image. 
+				
 		Roi roi = imp.getRoi();
         if ( roi==null ) {
         	
@@ -161,9 +164,11 @@ public class LevelSet implements PlugInFilter {
 		
 		// Create a initial state map out of the roi
 		StateContainer sc_roi = new StateContainer();
-		sc_roi.setROI(roi, ic.getWidth(), ic.getHeight(), 1, insideout);
+		sc_roi.setROI(roi, ic.getWidth(), ic.getHeight(), ic.getImageCount(), imp.getCurrentSlice());
+		sc_roi.setExpansionToInside(insideout);
 		
 		StateContainer sc_ls = null;
+		StateContainer sc_final = null;
 		
 		int iter;
 		
@@ -188,6 +193,8 @@ public class LevelSet implements PlugInFilter {
 				// don't continue if something happened during Fast Marching
 				return;
 			}
+			sc_ls.setExpansionToInside(insideout);
+			sc_final = sc_ls;
 		}
 		else {
 			sc_ls = sc_roi;
@@ -212,8 +219,16 @@ public class LevelSet implements PlugInFilter {
 				}
 			}
 			IJ.log("(" + new Date(System.currentTimeMillis()) + "): Finished Level Set");
+			sc_final = ls.getStateContainer();
 		}
-
+		
+		// Convert sc_final into binary image ImageContainer and display
+		if ( sc_final == null ) {
+			return;
+		}
+		ImageContainer result = new ImageContainer(sc_final.getIPMask());
+		ImagePlus result_ip = result.createImagePlus("Segmentation of " + imp.getTitle());
+		result_ip.show();
 	}
 
 	public int setup(String arg, ImagePlus imp) {
@@ -313,7 +328,7 @@ public class LevelSet implements PlugInFilter {
 		}		
 		if ( roi != null ) {
 			sc_test = new StateContainer();
-			sc_test.setROI(roi, progress.getWidth(), progress.getHeight(), 0, insideout);
+			sc_test.setROI(roi, progress.getWidth(), progress.getHeight(), progress.getImageCount(), 1);
 		}
 		if ( sc_test == null) {
 			IJ.error("sc_test not set");
