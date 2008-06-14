@@ -4,7 +4,7 @@ JAVACOPTS=-target 1.5 -source 1.5 \
 
 # common is just in this list to exclude classes within it from being copied
 JARDIRS=common Jython Clojure JRuby BSH bUnwarpJ register_virtual_stack registration3d io fiji CLI Javascript ij SplineDeformationGenerator levelsets
-FINDJARDIRS=$(patsubst %,-name % -o,$(JARDIRS))
+JARDIRSEXCLUDE=$(patsubst %,-e ./%/,$(JARDIRS))
 JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar bUnwarpJ_.jar register_virtual_stack_slices.jar registration_3d.jar IO_.jar CLI_.jar Javascript_.jar SplineDeformationGenerator_.jar level_sets.jar
 
 JAVAS=$(filter-out $(wildcard $(patsubst %,%/*.java,$(JARDIRS))),$(wildcard *.java */*.java))
@@ -19,7 +19,7 @@ all: $(DESTJARS) ../misc/Fiji.jar copyclasses
 # classes) so copy over every class file we find under this directory
 # that isn't in one of the JARDIR subdirectories:
 copyclasses: $(CLASSES)
-	for i in `find . \( $(FINDJARDIRS) -false \) -prune -o \( -type f -a -name '*.class' \) -print`; do \
+	for i in `find . -name '*.class' | grep -v $(JARDIRSEXCLUDE)`; do \
 		mkdir -p `dirname ../plugins/$$i`; \
 		cp -v $$i ../plugins/$$i; \
 	done
