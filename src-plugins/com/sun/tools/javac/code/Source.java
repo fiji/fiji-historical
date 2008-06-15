@@ -163,10 +163,10 @@ public enum Source {
             return RELEASE_4;
         case JDK1_5:
             return RELEASE_5;
-        case JDK1_6:
+	/*case JDK1_6:
             return RELEASE_6;
         case JDK1_7:
-            return RELEASE_7;
+            return RELEASE_7;*/
         default:
             return null;
         }
