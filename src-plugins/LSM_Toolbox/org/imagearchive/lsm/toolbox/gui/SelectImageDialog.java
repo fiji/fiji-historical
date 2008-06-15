@@ -65,6 +65,7 @@ public class SelectImageDialog extends JDialog {
 		initiliazeGUI();
 		fillList(filter);
 	}
+
 	public SelectImageDialog(JFrame parent, MasterModel masterModel,
 			String label, boolean channel) {
 		super(parent, true);
@@ -115,8 +116,11 @@ public class SelectImageDialog extends JDialog {
 		panel.add(cancelButton, constraints);
 		this.getContentPane().add(panel);
 		setTitle("Select...");
-		imageList
-				.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		if (channel)
+			imageList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		else
+			imageList
+					.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		setListeners();
 		centerWindow();
 	}
@@ -128,28 +132,35 @@ public class SelectImageDialog extends JDialog {
 		if (imagesIDs == null)
 			return;
 		for (int i = 0; i < imagesIDs.length; i++) {
-			if (WindowManager.getImage(imagesIDs[i]) != null){
-				FileInfo fi = WindowManager.getImage(imagesIDs[i]).getOriginalFileInfo();
+			if (WindowManager.getImage(imagesIDs[i]) != null) {
+				FileInfo fi = WindowManager.getImage(imagesIDs[i])
+						.getOriginalFileInfo();
 				boolean add = false;
-				if (fi != null
-						&& fi instanceof LsmFileInfo) {
-					LsmFileInfo lsm = (LsmFileInfo)fi;
-					CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) lsm.imageDirectories.get(0)).TIF_CZ_LSMINFO;
-					if (filter.equals("time")) if (cz.DimensionTime>1) add = true;
-					if (filter.equals("z")) if (cz.DimensionZ>1) add = true;
+				if (fi != null && fi instanceof LsmFileInfo) {
+					LsmFileInfo lsm = (LsmFileInfo) fi;
+					CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) lsm.imageDirectories
+							.get(0)).TIF_CZ_LSMINFO;
+					if (filter.equals("time"))
+						if (cz.DimensionTime > 1)
+							add = true;
+					if (filter.equals("z"))
+						if (cz.DimensionZ > 1)
+							add = true;
 					if (filter.equals("lambda"))
-							if ((cz.SpectralScan==1 && cz.channelWavelength != null) && cz.channelWavelength.Channels >= 1) add = true;
-					if (filter.equals("")) add = true;
+						if ((cz.SpectralScan == 1 && cz.channelWavelength != null)
+								&& cz.channelWavelength.Channels >= 1)
+							add = true;
+					if (filter.equals(""))
+						add = true;
 					if (add && !channel & !images.contains(lsm.fileName)) {
 						images.add(lsm.fileName);
-						fileInfos.add(new ListBoxImage(lsm.fileName,lsm,imagesIDs[i]));
+						fileInfos.add(new ListBoxImage(lsm.fileName, lsm,
+								imagesIDs[i]));
 					} else if (add && channel) {
 						images.add(WindowManager.getImage(imagesIDs[i])
 								.getTitle());
 						fileInfos.add(new ListBoxImage(WindowManager.getImage(
-								imagesIDs[i]).getTitle(),
-								lsm,
-								imagesIDs[i]));
+								imagesIDs[i]).getTitle(), lsm, imagesIDs[i]));
 					}
 				}
 			}

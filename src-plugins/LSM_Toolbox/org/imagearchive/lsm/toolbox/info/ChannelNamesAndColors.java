@@ -15,7 +15,7 @@ public class ChannelNamesAndColors {
 
 	public long[] Reserved;
 
-	public long[] Colors;
+	public int[] Colors;
 	
 	public String[] ChannelNames;
 	

@@ -7,6 +7,7 @@ import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
+import ij.io.FileInfo;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import ij.text.TextWindow;
@@ -810,16 +811,24 @@ public class ControlPanelFrame extends JFrame {
 					int[] imageVals = id.getSelected();
 
 					if (imageVals == null & imageVals.length > 0) {
-
 						JOptionPane.showMessageDialog(parent,
 								"No image has been selected", "Error",
 								JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 					for (int i = 0; i < imageVals.length; i++) {
-						IJ.selectWindow(imageVals[i]);
-						IJ.runPlugIn("HyperVolume_Browser", "3rd=z depth="
-								+ masterModel.getCz().DimensionZ + " 4th=t");
+						FileInfo fi = WindowManager.getImage(imageVals[i]).getOriginalFileInfo();
+						if (fi != null && fi instanceof LsmFileInfo) {
+							LsmFileInfo lsm = (LsmFileInfo) fi;
+							CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) lsm.imageDirectories
+									.get(0)).TIF_CZ_LSMINFO;
+							System.err.println("dimz:"+cz.DimensionZ);
+							//if (cz.DimensionZ/imageVals.length)
+							long depth = (long)(cz.DimensionZ/imageVals.length);
+							IJ.selectWindow(imageVals[i]);
+							IJ.runPlugIn("HyperVolume_Browser", "3rd=z depth="
+								+  depth + " 4th=t");
+						}
 					}
 				}
 			}

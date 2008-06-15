@@ -70,7 +70,7 @@ public class InfoFrame extends JFrame {
 		infolabels[13] = "Y zoom factor";
 		infolabels[14] = "Z zoom factor";
 		infolabels[15] = "Plane width";
-		infolabels[16] = "Plane heigth";
+		infolabels[16] = "Plane height";
 		infolabels[17] = "Volume depth";
 		infolabels[18] = "Plane spacing";
 		JPanel infopanel = new JPanel(new GridLayout(19, 2, 3, 3));

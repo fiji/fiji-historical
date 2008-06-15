@@ -125,12 +125,16 @@ public class Reader {
 				// read first image directory
 				ImageDirectory imDir = readImageDirectoy(stream, 8, thumb);
 				lsm.imageDirectories.add(imDir);
+				int i=0;
 				while (imDir.OFFSET_NEXT_DIRECTORY != 0) {
 					imDir = readImageDirectoy(stream,
 							imDir.OFFSET_NEXT_DIRECTORY, thumb);
-					lsm.imageDirectories.add(imDir);
+					lsm.imageDirectories.add(imDir);i++;
 				}
-				// printImDirData(lsm);
+				//printImDirData(lsm);
+				//ImageDirectory id = (ImageDirectory)lsm.imageDirectories.get(0);
+				
+				//System.err.println("_"+(id.TIF_CZ_LSMINFO).toString());
 				imp = open(stream, lsm, verbose, thumb);
 				stream.close();
 				if (showInfoFrames)
@@ -457,30 +461,18 @@ public class Reader {
 			stream.seek((int) channelNamesAndColors.NamesOffset
 					+ (int) position);
 			channelNamesAndColors.ChannelNames = new String[(int) channelCount];
-			long Namesize = channelNamesAndColors.BlockSize
-					- channelNamesAndColors.NamesOffset;
-			byte[] buffer = new byte[(int) Namesize];
-			stream.read(buffer);
-			String allNames = new String(buffer);
-
-			int begindex = 4;
-			int endindex = 5;
+			//long Namesize = channelNamesAndColors.BlockSize- channelNamesAndColors.NamesOffset;
 			for (int j = 0; j < channelCount; j++) {
-				endindex = allNames.indexOf(00, begindex);
-				channelNamesAndColors.ChannelNames[j] = allNames.substring(
-						begindex, endindex);
-				begindex = endindex + 5;
+				long size = ReaderToolkit.swap(stream.readInt());
+				channelNamesAndColors.ChannelNames[j] = ReaderToolkit.readSizedNULLASCII(stream,size);
 			}
-
 			stream.seek((int) channelNamesAndColors.ColorsOffset
 					+ (int) position);
-			channelNamesAndColors.Colors = new long[(int) (channelNamesAndColors.NumberColors)];
+			channelNamesAndColors.Colors = new int[(int) (channelNamesAndColors.NumberColors)];
 
 			for (int j = 0; j < (int) (channelNamesAndColors.NumberColors); j++) {
-				channelNamesAndColors.Colors[j] = ReaderToolkit.swap(stream
-						.readInt());
+				channelNamesAndColors.Colors[j] = ReaderToolkit.swap(stream.readInt());
 			}
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -918,6 +910,9 @@ public class Reader {
 			imps = readStack(stream, lsmFi, cz, thumb);
 			return imps;
 		case 1:
+			imps = readStack(stream, lsmFi, cz, thumb);
+			return imps;
+		case 2:
 			imps = readStack(stream, lsmFi, cz, thumb);
 			return imps;
 		case 3:
