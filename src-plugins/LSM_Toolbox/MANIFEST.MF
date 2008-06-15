@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Created-By: Patrick Pirrotte
+Main-Class: org.imagearchive.lsm.toolbox.gui.AboutDialog
+
+

@@ -22,6 +22,7 @@
 /plugins/JRuby_Interpreter.jar
 /plugins/BeanShell_Interpreter.jar
 /plugins/Javascript_.jar
+/plugins/LSM_Toolbox.jar
 /plugins/SplineDeformationGenerator_.jar
 /plugins/bUnwarpJ_.jar
 /plugins/lens_correction.jar
