@@ -1082,6 +1082,7 @@ public class Fake {
 			arguments.add(classPath);
 		}
 
+		int optionCount = arguments.size();
 		Iterator iter = javas.iterator();
 		while (iter.hasNext()) {
 			String path = (String)iter.next();
@@ -1089,6 +1090,10 @@ public class Fake {
 			if (path.endsWith(".java"))
 				arguments.add(makePath(cwd, path));
 		}
+
+		/* Do nothing if there is nothing to do ;-) */
+		if (optionCount == arguments.size())
+			return javas;
 
 		String[] args = (String[])arguments.toArray(new
 				String[arguments.size()]);
