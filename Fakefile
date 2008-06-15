@@ -78,9 +78,6 @@ JAVA_HOME(win32)=java/win32/jdk1.6.0_03/jre
 JAVA_HOME(win64)=java/win64/jdk1.6.0_04/jre
 JAVA_HOME(macosx)=java/macosx-java3d
 
-# This is needed to compile .java files, as tools.jar contains javac
-toolsPath=$JAVA_HOME/../lib/tools.jar
-
 # the main target
 
 SUBMODULE_TARGETS=ij.jar \
@@ -122,7 +119,6 @@ JDK(macosx)=java/macosx-java3d
 jdk[scripts/checkout-jdk.py $JDK] <-
 
 # From submodules
-CLASSPATH(ImageJA/)=$JAVA_HOME/../lib/tools.jar
 ij.jar <- ImageJA/
 plugins/VIB_.jar <- VIB/
 plugins/TrakEM2_.jar <- TrakEM2/

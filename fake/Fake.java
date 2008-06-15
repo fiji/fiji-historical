@@ -93,13 +93,11 @@ public class Fake {
 			expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
 			expandGlob(fijiHome + "misc/**/*.jar", jars, cwd);
 			expandGlob(fijiHome + "jars/**/*.jar", jars, cwd);
+			expandGlob(fijiHome + "precompiled/javac.jar",
+					jars, cwd);
 			Iterator iter = jars.iterator();
 			while (iter.hasNext())
 				addJar((String)iter.next());
-
-			String javaHome = System.getProperty("java.home");
-			addJar(javaHome + "/lib/tools.jar");
-			addJar(javaHome + "/../lib/tools.jar");
 		} catch (Exception e) {
 			System.err.println("Could not access jython.jar");
 			e.printStackTrace();
