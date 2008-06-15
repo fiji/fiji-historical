@@ -99,12 +99,13 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/LSM_Toolbox.jar \
 	misc/Fiji.jar
 
-all <- jdk fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS run
+all <- jdk fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
 # The "run" rule just executes ./fiji (as long as the file "run" does not exist...)
 # It has items on the right side, because these would be passed to the executable.
 
-run[./fiji] <-
+run[] <- all run-fiji
+run-fiji[./fiji] <-
 DEBUG_ARGS=-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n
 dev[./fiji $DEBUG_ARGS] <-
 
