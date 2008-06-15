@@ -447,6 +447,7 @@ public class Fake {
 		abstract class Rule {
 			protected String target;
 			protected List prerequisites, nonUpToDates;
+			boolean wasInvokedAlready;
 
 			Rule(String target, List prerequisites) {
 				this.target = target;
@@ -487,10 +488,15 @@ public class Fake {
 			}
 
 			void make() throws FakeException {
+				if (wasInvokedAlready)
+					error("Dependency cycle detected!");
+				wasInvokedAlready = true;
 				try {
 					if (getVarBool("DEBUG"))
 						System.err.println("Checking "
 							+ this);
+					makePrerequisites();
+
 					if (upToDate())
 						return;
 					System.err.println("Faking " + this);
@@ -507,6 +513,24 @@ public class Fake {
 					throws FakeException {
 				throw new FakeException(message
 						+ "\n\tin rule " + this);
+			}
+
+			public void makePrerequisites() throws FakeException {
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String prereq = (String)iter.next();
+
+					if (!allRules.containsKey(prereq)) {
+						if (this instanceof All)
+							error("Unknown target: "
+								+ prereq);
+						else
+							continue;
+					}
+
+					Rule rule = (Rule)allRules.get(prereq);
+					rule.make();
+				}
 			}
 
 			public String getLastPrerequisite() {
@@ -631,17 +655,6 @@ public class Fake {
 			}
 
 			public void action() throws FakeException {
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext()) {
-					String prereq = (String)iter.next();
-
-					if (!allRules.containsKey(prereq))
-						error("Unknown target: "
-							+ prereq);
-
-					Rule rule = (Rule)allRules.get(prereq);
-					rule.make();
-				}
 			}
 
 			public boolean upToDate() {
