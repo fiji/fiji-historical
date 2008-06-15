@@ -206,6 +206,7 @@ public class Fake {
 				while (line.endsWith("\\"))
 					try {
 						String next = reader.readLine();
+						lineNumber++;
 						line = line.substring(0,
 							line.length() - 1)
 							+ next;
