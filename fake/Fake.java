@@ -669,10 +669,18 @@ public class Fake {
 				while (iter.hasNext())
 					action((String)iter.next());
 
+				File file = new File(makePath(cwd, source));
 				if (getVarBool("IGNOREMISSINGFAKEFILES") &&
-						!new File(makePath(cwd,
+						!file.exists()) {
+					String precompiled =
+						getVar("PRECOMPILEDDIRECTORY");
+					if (precompiled == null)
+						return;
+					source = precompiled + file.getName();
+					if (!new File(makePath(cwd,
 							source)).exists())
-					return;
+						return;
+				}
 
 				if (target.indexOf('.') >= 0)
 					copyJar(source, target, cwd,
