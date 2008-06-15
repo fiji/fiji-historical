@@ -2,9 +2,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 
 import java.lang.reflect.Method;
 
@@ -14,6 +16,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+
+import java.util.jar.Manifest;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.JarOutputStream;
 
 import java.util.regex.Pattern;
 
@@ -261,6 +268,60 @@ public class Fake {
 		return result;
 	}
 
+	protected static void makeJar(String path, String mainClass, List files)
+			throws FakeException {
+		Manifest manifest = null;
+		if (mainClass != null) {
+			manifest = new Manifest();
+			manifest.getMainAttributes().put("Main-Class",
+					mainClass);
+		}
+
+		try {
+			/*
+			 * Avoid SIGBUS when writing fake.jar: it may be
+			 * in use (mmap()ed), and overwriting that typically
+			 * results in a crash.
+			 */
+			if (new File(path).exists() &&
+					!new File(path).delete() &&
+					!new File(path).renameTo(new File(path
+							+ ".old")))
+				throw new FakeException("Could not remove "
+					+ path + " before building it anew");
+
+			OutputStream out = new FileOutputStream(path);
+			JarOutputStream jar = mainClass == null ?
+				new JarOutputStream(out) :
+				new JarOutputStream(out, manifest);
+
+			Iterator iter = files.iterator();
+			while (iter.hasNext()) {
+				String name = (String)iter.next();
+
+				JarEntry entry = new JarEntry(name);
+				jar.putNextEntry(entry);
+
+				InputStream file = new FileInputStream(name);
+				byte[] buffer = new byte[1<<16];
+				for (;;) {
+					int len = file.read(buffer);
+					if (len < 0)
+						break;
+					jar.write(buffer, 0, len);
+				}
+				file.close();
+				jar.closeEntry();
+			}
+
+			jar.close();
+		} catch (Exception e) {
+			throw new FakeException("Error writing "
+				+ path + ": " + e);
+		}
+	}
+
+
 	// the rule pool
 
 	protected static Map allRules = new HashMap();
@@ -428,7 +489,7 @@ public class Fake {
 
 		void action() throws FakeException {
 			List files = compileJavas(nonUpToDates);
-			error("Not yet implemented");
+			makeJar(target, null, files);
 		}
 	}
 
