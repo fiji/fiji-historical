@@ -16,6 +16,7 @@
 /tmp.ijm
 /fake/Fake*.class
 /fake.jar
+/ij.jar
 /misc/Fiji.jar
 /plugins/Jython_Interpreter.jar
 /plugins/Clojure_Interpreter.jar
@@ -30,6 +31,9 @@
 /plugins/registration_3d.jar
 /plugins/IO_.jar
 /plugins/CLI_.jar
+/plugins/VIB_.jar
+/plugins/TrakEM2_.jar
+/plugins/mpicbg_.jar
 /plugins/Analyze/Grid_.class
 /plugins/Examples/Example_Plot.class
 /plugins/Filters/Preprocessor_Smooth.class
