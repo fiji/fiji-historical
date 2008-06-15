@@ -153,6 +153,12 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.jpg \
 	src-plugins/LSM_Toolbox/**/*.html \
 	src-plugins/LSM_Toolbox/**/*.txt
+MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
+JAVAVERSION(jars/javac.jar)=1.5
+jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
+	src-plugins/com/sun/tools/javac/**/*.properties \
+	src-plugins/com/sun/tools/javac/**/*.JavaCompilerTool \
+	src-plugins/com/sun/source/**/*.java \
 
 # Fiji launcher
 
