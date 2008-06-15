@@ -989,6 +989,11 @@ public class Fake {
 			return;
 		}
 		byte[] buffer = readFile(makePath(cwd, java));
+		if (buffer == null) {
+			System.err.println("Warning: " + java
+					+ " does not exist.  Skipping...");
+			return;
+		}
 		ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(buffer);
 		String fullClass = analyzer.getPathForClass() + ".class";
 		if (!java.endsWith(fullClass))
