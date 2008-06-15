@@ -462,16 +462,16 @@ public class NonLinearTransform{
 	public static void drawGrid(GeneralPath g, double[][] points, int count, int s){
 		for (int i=0; i < count - 1; i++){
 			if ((i+1)%s != 0){
-				g.moveTo(points[i][0], points[i][1]);
-				g.lineTo(points[i+1][0], points[i+1][1]);
+				g.moveTo((float)points[i][0], (float)points[i][1]);
+				g.lineTo((float)points[i+1][0], (float)points[i+1][1]);
 			}
 		}
 	}
 	
 	public static void drawQuiverField(GeneralPath qf, double x1, double y1, double x2, double y2)
 	{
-		qf.moveTo(x1, y1);
-		qf.lineTo(x2, y2);
+		qf.moveTo((float)x1, (float)y1);
+		qf.lineTo((float)x2, (float)y2);
 	}
 	
 	public int getWidth(){
