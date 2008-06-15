@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -54,6 +55,63 @@ public class Fake {
 		variableNames.add("CXXFLAGS");
 		variableNames.add("LDFLAGS");
 		variableNames.add("MAINCLASS");
+
+		discoverJythonAndToolsJar();
+	}
+
+	protected void discoverJythonAndToolsJar() {
+		if (System.getProperty("java.class.path")
+				.indexOf("/jython.jar:") >= 0)
+			return;
+
+		URL url = getClass().getResource("Fake.class");
+		String fijiHome = URLDecoder.decode(url.toString());
+		if (!fijiHome.endsWith("/Fake.class"))
+			throw new RuntimeException("unexpected URL: " + url);
+		fijiHome = fijiHome.substring(0, fijiHome.length() - 10);
+		int slash = fijiHome.lastIndexOf('/', fijiHome.length() - 2);
+		if (fijiHome.startsWith("jar:file:/") &&
+				fijiHome.endsWith(".jar!/"))
+			fijiHome = fijiHome.substring(9, slash + 1);
+		else if (fijiHome.startsWith("file:/"))
+			fijiHome = fijiHome.substring(5, slash + 1);
+		if (getPlatform().startsWith("win") && fijiHome.startsWith("/"))
+			fijiHome = fijiHome.substring(1);
+
+		String pythonHome = fijiHome + "jars/jython2.2.1/jython.jar";
+		System.setProperty("python.home", pythonHome);
+		try {
+			addJar(fijiHome + "/ij.jar");
+
+			List jars = new ArrayList();
+			File cwd = new File(".");
+			expandGlob(fijiHome + "/plugins/**/*.jar", jars, cwd);
+			expandGlob(fijiHome + "/misc/**/*.jar", jars, cwd);
+			expandGlob(fijiHome + "/jars/**/*.jar", jars, cwd);
+			Iterator iter = jars.iterator();
+			while (iter.hasNext())
+				addJar((String)iter.next());
+
+			String javaHome = System.getProperty("java.home");
+			addJar(javaHome + "/lib/tools.jar");
+			addJar(javaHome + "/../lib/tools.jar");
+		} catch (Exception e) {
+			System.err.println("Could not access jython.jar");
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
+
+	protected static boolean addJar(String path) throws IOException {
+		if (!new File(path).exists())
+			return false;
+		getClassLoader(path);
+		String classPath = System.getProperty("java.class.path");
+		if (!classPath.equals(""))
+			classPath += File.pathSeparator;
+		classPath += path;
+		System.setProperty("java.class.path", classPath);
+		return true;
 	}
 
 	public void make(String[] args) {
@@ -1617,7 +1675,9 @@ public class Fake {
 					return result;
 			} catch (Exception e) { }
 			String path = name.replace('.', '/') + ".class";
-			InputStream input = getResourceAsStream(path, true);
+			InputStream input = getResourceAsStream(path, !true);
+			if (input == null)
+				throw new ClassNotFoundException(name);
 			try {
 				byte[] buffer = readStream(input);
 				input.close();
