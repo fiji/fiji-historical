@@ -878,6 +878,8 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
+				if (program.equals(""))
+					return;
 				try {
 					String expanded =
 						expandVariables(program,
