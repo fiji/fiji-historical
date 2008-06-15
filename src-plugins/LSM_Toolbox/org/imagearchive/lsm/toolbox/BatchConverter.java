@@ -1,5 +1,6 @@
 package org.imagearchive.lsm.toolbox;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.process.ByteProcessor;
@@ -10,14 +11,17 @@ import ij.process.MedianCut;
 import ij.process.ShortProcessor;
 
 import java.awt.Image;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 import org.imagearchive.lsm.toolbox.info.CZ_LSMInfo;
 import org.imagearchive.lsm.toolbox.info.ImageDirectory;
 import org.imagearchive.lsm.toolbox.info.LsmFileInfo;
 
 /*******************************************************************************
- * Batch Converter Class - Adapted from Wayne Rasband's Batch Converter plug-in. *
+ * Batch Converter Class - Adapted from Wayne Rasband's Batch Converter plug-in.
  ******************************************************************************/
 
 public class BatchConverter {
@@ -34,33 +38,74 @@ public class BatchConverter {
 		String finalDir = "";
 		File f = new File(file);
 
-		ImagePlus[] impTab = new Reader(masterModel).open(f.getParent(), f
-				.getName(), false, verbose, false);
-
-		if (impTab != null && impTab.length > 0) {
-			LsmFileInfo lsm = (LsmFileInfo) impTab[0].getOriginalFileInfo();
+		ImagePlus imp = new Reader(masterModel).open(f.getParent(),
+				f.getName(), false, verbose, false);
+		if (imp != null && imp.getStackSize() > 0) {
+			LsmFileInfo lsm = (LsmFileInfo) imp.getOriginalFileInfo();
 			CZ_LSMInfo cz = ((ImageDirectory) lsm.imageDirectories.get(0)).TIF_CZ_LSMINFO;
-
-			for (int i = 0; i < impTab.length; i++) {
-				if (sepDir) {
-					finalDir = outputDir + System.getProperty("file.separator")
-							+ f.getName();
-					File fdir = new File(finalDir);
-					if (!fdir.exists())
-						fdir.mkdirs();
-				} else
-					finalDir = outputDir;
-
-				if (impTab[i].getImageStackSize() > 1)
-					for (int j = 1; j <= impTab[i].getImageStackSize(); j++) {
-						String title = lsm.fileName+" - "+cz.channelNamesAndColors.ChannelNames[i]
-								+ " - " + new Integer(j).toString();
-						save(new ImagePlus(title, impTab[i].getImageStack()
-								.getProcessor(j)), finalDir, format, title);
+			if (sepDir) {
+				finalDir = outputDir + System.getProperty("file.separator")
+						+ f.getName();
+				File fdir = new File(finalDir);
+				if (!fdir.exists())
+					fdir.mkdirs();
+			} else
+				finalDir = outputDir;
+			int position = 1;
+			for (int i = 1; i <= cz.DimensionTime; i++)
+				for (int j = 1; j <= cz.DimensionZ; j++)
+					for (int k = 1; k <= cz.DimensionChannels; k++) {
+						// imp.setPosition(k, j, i);
+						// int stackPosition = imp.getCurrentSlice();
+						String title = lsm.fileName + " - "
+								+ cz.channelNamesAndColors.ChannelNames[k - 1]
+								+ " - C" + new Integer(k).toString() + " Z"
+								+ new Integer(j).toString() + " T"
+								+ new Integer(i).toString();
+						save(new ImagePlus(title, imp.getImageStack()
+								.getProcessor(position++)), finalDir, format,
+								title);
 					}
-				else {
-						String title = lsm.fileName+" - "+cz.channelNamesAndColors.ChannelNames[i];
-						save(new ImagePlus(title, impTab[i].getImageStack().getProcessor(1)), finalDir, format, title);
+		}
+	}
+
+	/***************************************************************************
+	 * Provide a tab delimited "csv" file
+	 * Format for each row:
+	 *  LSM_FILE\tOUTPUT_DIR\tFORMAT\tVERBOSE\tCREATE_SEPARATE_DIR
+	 **************************************************************************/
+	public void convertBatchFile(String fileName) {
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(fileName));
+			String row = null;
+			
+			while ((row = br.readLine()) != null) {
+				String[] arr = row.split("\t");
+				String inputFile = arr[0];
+				String outputDir = arr[1];
+				String format = arr[2];
+				if (arr[2] == null) format = "tiff";
+				boolean verbose = false, createSepDir = false;
+				if (!(arr[3].equals("0"))) verbose = true;
+				if (!(arr[4].equals("0"))) createSepDir = true;
+				System.err.println(inputFile+" "+outputDir+" "+format+" "+verbose+createSepDir);
+				IJ.showStatus("Conversion started");
+				IJ.showStatus("Converting "+new File(inputFile).getName());
+				convertFile(inputFile,outputDir,format,verbose,createSepDir);
+					IJ.showStatus("Conversion done");
+			}
+		} catch (IOException e) {
+			IJ.error("Incompatible batch file format");
+			IJ.log("IOException error: " + e.getMessage());
+
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					IJ.log("IOException error trying to close the file: "
+							+ e.getMessage());
 				}
 			}
 		}
@@ -68,7 +113,7 @@ public class BatchConverter {
 
 	/***************************************************************************
 	 * method : process, optional method to add some image processing before
-	 * conversion *
+	 * conversion
 	 **************************************************************************/
 
 	/**
@@ -81,7 +126,7 @@ public class BatchConverter {
 	}
 
 	/***************************************************************************
-	 * method : save, saves the image with an appropriate file name *
+	 * method : save, saves the image with an appropriate file name
 	 **************************************************************************/
 
 	public void save(ImagePlus img, String dir, String format, String fileName) {
@@ -99,7 +144,7 @@ public class BatchConverter {
 	}
 
 	/***************************************************************************
-	 * method : saveAs8bitTiff, image processing for 8-bit Tiff saving *
+	 * method : saveAs8bitTiff, image processing for 8-bit Tiff saving
 	 **************************************************************************/
 
 	void saveAs8bitTiff(ImagePlus img, String path) {

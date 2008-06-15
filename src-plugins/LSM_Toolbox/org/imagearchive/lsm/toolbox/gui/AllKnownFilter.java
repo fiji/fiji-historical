@@ -4,7 +4,7 @@ import java.io.File;
 
 import javax.swing.filechooser.FileFilter;
 
-public class ImageFilter extends FileFilter {
+public class AllKnownFilter extends FileFilter {
 
 	public boolean accept(File f) {
 		if (f.isDirectory()) {
@@ -13,7 +13,7 @@ public class ImageFilter extends FileFilter {
 
 		String extension = getExtension(f);
 		if (extension != null) {
-			if (extension.equals("lsm"))
+			if (extension.equals("lsm") || extension.equals("csv"))
 				return true;
 			else
 				return false;
@@ -24,9 +24,9 @@ public class ImageFilter extends FileFilter {
 	}
 
 	public String getDescription() {
-		return "Show Zeiss LSM images (*.lsm)";
+		return "Show all known files (*.lsm, *.csv)";
 	}
-
+	
 	public static String getExtension(File f) {
 		String ext = null;
 		String s = f.getName();
@@ -37,4 +37,5 @@ public class ImageFilter extends FileFilter {
 		}
 		return ext;
 	}
+
 }

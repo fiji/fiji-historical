@@ -1,5 +1,6 @@
 package org.imagearchive.lsm.toolbox;
 
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -25,6 +26,8 @@ import java.util.Vector;
 
 import javax.swing.JFileChooser;
 
+import org.imagearchive.lsm.toolbox.gui.AllKnownFilter;
+import org.imagearchive.lsm.toolbox.gui.BatchFilter;
 import org.imagearchive.lsm.toolbox.gui.ImageFilter;
 import org.imagearchive.lsm.toolbox.gui.ImagePreview;
 import org.imagearchive.lsm.toolbox.info.CZ_LSMInfo;
@@ -52,17 +55,19 @@ public class Reader {
 	public Reader(MasterModel masterModel) {
 		this.masterModel = masterModel;
 	}
-	
+
 	public Reader() {
 		this.masterModel = new MasterModel();
 	}
-	
-	public ImagePlus[] open(String arg, boolean verbose) {
+
+	public ImagePlus open(String arg, boolean verbose) {
 		File file = null;
-		ImagePlus[] imp = null;
+		ImagePlus imp = null;
 		if (arg.equals("")) {
 			JFileChooser fc = new JFileChooser();
+			fc.addChoosableFileFilter(new BatchFilter());
 			fc.addChoosableFileFilter(new ImageFilter());
+			fc.addChoosableFileFilter(new AllKnownFilter());
 			fc.setAcceptAllFileFilterUsed(false);
 			fc.setAccessory(new ImagePreview(masterModel, fc));
 			fc.setName("Open Zeiss LSM image");
@@ -79,19 +84,17 @@ public class Reader {
 					IJ.error("no file selected");
 					return null;
 				}
+				if (file.getAbsolutePath().endsWith(".csv")) {
+					BatchConverter converter = new BatchConverter(masterModel);
+					converter.convertBatchFile(file.getAbsolutePath());
+					return null;
+				}
 			}
 		} else
 			file = new File(arg);
-
 		if (file != null) {
 			imp = open(file.getParent(), file.getName(), true, verbose, false);
 			OpenDialog.setDefaultDirectory(file.getParent());
-		}
-		if (imp != null) {
-			for (int i = 0; i < imp.length; i++) {
-				imp[i].show();
-				imp[i].updateAndDraw();
-			}
 		}
 		return imp;
 	}
@@ -110,9 +113,9 @@ public class Reader {
 		}
 	}
 
-	public ImagePlus[] open(String directory, String filename,
+	public ImagePlus open(String directory, String filename,
 			boolean showInfoFrames, boolean verbose, boolean thumb) {
-		ImagePlus[] imp = null;
+		ImagePlus imp = null;
 		RandomAccessFile file;
 		LsmFileInfo lsm;
 		try {
@@ -125,16 +128,14 @@ public class Reader {
 				// read first image directory
 				ImageDirectory imDir = readImageDirectoy(stream, 8, thumb);
 				lsm.imageDirectories.add(imDir);
-				int i=0;
+				int i = 0;
 				while (imDir.OFFSET_NEXT_DIRECTORY != 0) {
 					imDir = readImageDirectoy(stream,
 							imDir.OFFSET_NEXT_DIRECTORY, thumb);
-					lsm.imageDirectories.add(imDir);i++;
+					lsm.imageDirectories.add(imDir);
+					i++;
 				}
-				//printImDirData(lsm);
-				//ImageDirectory id = (ImageDirectory)lsm.imageDirectories.get(0);
-				
-				//System.err.println("_"+(id.TIF_CZ_LSMINFO).toString());
+				// printImDirData(lsm);
 				imp = open(stream, lsm, verbose, thumb);
 				stream.close();
 				if (showInfoFrames)
@@ -264,6 +265,9 @@ public class Reader {
 			case 317:
 				imDir.TIF_PREDICTOR = ((tag[8] & MASK2) << 0);
 				break;
+			case 320:
+				imDir.TIF_COLORMAP = readColorMap(stream);
+				break;
 			case 34412:
 				imDir.TIF_CZ_LSMINFO_OFFSET = ((tag[11] & MASK2) << 24)
 						| ((tag[10] & MASK2) << 16) | ((tag[9] & MASK2) << 8)
@@ -299,6 +303,18 @@ public class Reader {
 					imDir.TIF_CZ_LSMINFO_OFFSET, thumb);
 		}
 		return imDir;
+	}
+
+	private byte[][] readColorMap(RandomAccessStream stream) {
+		byte[][] buffer = new byte[3][256];
+		try {
+			for (int i = 0; i < 3; i++)
+				for (int j = 0; j < 256; j++)
+					buffer[i][j] = (byte) ReaderToolkit.swap(stream.readInt());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return buffer;
 	}
 
 	private byte[] readTag(RandomAccessStream stream, int position) {
@@ -404,7 +420,7 @@ public class Reader {
 				cz.channelWavelength = getLambdaStamps(stream,
 						cz.OffsetChannelWavelength);
 			}
-			
+
 			if (cz.OffsetTimeStamps != 0) {
 				cz.timeStamps = getTimeStamps(stream, cz.OffsetTimeStamps);
 				if ((cz.ScanType == 3) || (cz.ScanType == 4)
@@ -461,17 +477,20 @@ public class Reader {
 			stream.seek((int) channelNamesAndColors.NamesOffset
 					+ (int) position);
 			channelNamesAndColors.ChannelNames = new String[(int) channelCount];
-			//long Namesize = channelNamesAndColors.BlockSize- channelNamesAndColors.NamesOffset;
+			// long Namesize = channelNamesAndColors.BlockSize-
+			// channelNamesAndColors.NamesOffset;
 			for (int j = 0; j < channelCount; j++) {
 				long size = ReaderToolkit.swap(stream.readInt());
-				channelNamesAndColors.ChannelNames[j] = ReaderToolkit.readSizedNULLASCII(stream,size);
+				channelNamesAndColors.ChannelNames[j] = ReaderToolkit
+						.readSizedNULLASCII(stream, size);
 			}
 			stream.seek((int) channelNamesAndColors.ColorsOffset
 					+ (int) position);
 			channelNamesAndColors.Colors = new int[(int) (channelNamesAndColors.NumberColors)];
 
 			for (int j = 0; j < (int) (channelNamesAndColors.NumberColors); j++) {
-				channelNamesAndColors.Colors[j] = ReaderToolkit.swap(stream.readInt());
+				channelNamesAndColors.Colors[j] = ReaderToolkit.swap(stream
+						.readInt());
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -600,7 +619,6 @@ public class Reader {
 							recording.lasers = getLaserBlock(stream);
 							tag.entry = 0;
 						}
-
 						if (Track.isTracks(tag.entry)) {
 							recording.tracks = getTrackBlock(stream);
 							tag.entry = 0;
@@ -887,7 +905,7 @@ public class Reader {
 		return sit;
 	}
 
-	public ImagePlus[] open(RandomAccessStream stream, LsmFileInfo lsmFi,
+	public ImagePlus open(RandomAccessStream stream, LsmFileInfo lsmFi,
 			boolean verbose, boolean thumb) {
 		ImageDirectory firstImDir = (ImageDirectory) lsmFi.imageDirectories
 				.get(0);
@@ -904,38 +922,38 @@ public class Reader {
 			return null;
 		} // should not be, first Directory should have a CZ...
 
-		ImagePlus[] imps = null;
+		ImagePlus imp = null;
 		switch (cz.ScanType) {
 		case 0:
-			imps = readStack(stream, lsmFi, cz, thumb);
-			return imps;
+			imp = readStack(stream, lsmFi, cz, thumb);
+			return imp;
 		case 1:
-			imps = readStack(stream, lsmFi, cz, thumb);
-			return imps;
+			imp = readStack(stream, lsmFi, cz, thumb);
+			return imp;
 		case 2:
-			imps = readStack(stream, lsmFi, cz, thumb);
-			return imps;
+			imp = readStack(stream, lsmFi, cz, thumb);
+			return imp;
 		case 3:
-			imps = readStack(stream, lsmFi, cz, thumb);
-			return imps;
+			imp = readStack(stream, lsmFi, cz, thumb);
+			return imp;
 		case 4:
-			imps = readStack(stream, lsmFi, cz, thumb);
-			return imps;
+			imp = readStack(stream, lsmFi, cz, thumb);
+			return imp;
 		case 5:
-			imps = readStack(stream, lsmFi, cz, thumb);
-			return imps;
+			imp = readStack(stream, lsmFi, cz, thumb);
+			return imp;
 		case 6:
-			imps = readStack(stream, lsmFi, cz, thumb);
-			return imps;
+			imp = readStack(stream, lsmFi, cz, thumb);
+			return imp;
 		default:
 			if (verbose)
 				IJ.error("Unsupported LSM scantype: " + cz.ScanType);
 			break;
 		}
-		return imps;
+		return imp;
 	}
 
-	private ImagePlus[] readStack(RandomAccessStream stream, LsmFileInfo lsmFi,
+	private ImagePlus readStack(RandomAccessStream stream, LsmFileInfo lsmFi,
 			CZ_LSMInfo cz, boolean thumb) {
 		ImageDirectory firstImDir = (ImageDirectory) lsmFi.imageDirectories
 				.get(0);
@@ -947,45 +965,39 @@ public class Reader {
 		lsmFi.unit = MasterModel.micrometer;
 		lsmFi.valueUnit = MasterModel.micrometer;
 		lsmFi.nImages = 1;
-
 		lsmFi.intelByteOrder = true;
 
-		ImageStack[] stacks = new ImageStack[(int) cz.DimensionChannels];
-
-		for (int channelCount = 0; channelCount < (int) (cz.DimensionChannels); channelCount++) {
-			int datatype = (int) cz.IntensityDataType;
-			if (datatype == 0)
-				datatype = cz.OffsetChannelDataTypesValues[channelCount];
-			switch (datatype) {
-			case 1:
-				lsmFi.fileType = FileInfo.GRAY8;
-				break;
-			case 2:
-				lsmFi.fileType = FileInfo.GRAY16_UNSIGNED;
-				break;
-			case 5:
-				lsmFi.fileType = FileInfo.GRAY32_FLOAT;
-				break;
-			default:
-				lsmFi.fileType = FileInfo.GRAY8;
-				break;
-			}
-			ColorModel cm = null;
-
-			if (lsmFi.fileType == FileInfo.COLOR8 && lsmFi.lutSize > 0)
-				cm = new IndexColorModel(8, lsmFi.lutSize, lsmFi.reds,
-						lsmFi.greens, lsmFi.blues);
-			else
-				cm = LookUpTable.createGrayscaleColorModel(lsmFi.whiteIsZero);
-
-			if (!thumb)
-				stacks[channelCount] = new ImageStack(
-						(int) firstImDir.TIF_IMAGEWIDTH,
-						(int) firstImDir.TIF_IMAGELENGTH, cm);
-			else
-				stacks[channelCount] = new ImageStack((int) cz.ThumbnailX,
-						(int) cz.ThumbnailY, cm);
+		ImageStack st = null;
+		int datatype = (int) cz.IntensityDataType;
+		if (datatype == 0)
+			datatype = cz.OffsetChannelDataTypesValues[0];
+		switch (datatype) {
+		case 1:
+			lsmFi.fileType = FileInfo.GRAY8;
+			break;
+		case 2:
+			lsmFi.fileType = FileInfo.GRAY16_UNSIGNED;
+			break;
+		case 5:
+			lsmFi.fileType = FileInfo.GRAY32_FLOAT;
+			break;
+		default:
+			lsmFi.fileType = FileInfo.GRAY8;
+			break;
 		}
+		ColorModel cm = null;
+
+		if (lsmFi.fileType == FileInfo.COLOR8 && lsmFi.lutSize > 0)
+			cm = new IndexColorModel(8, lsmFi.lutSize, lsmFi.reds,
+					lsmFi.greens, lsmFi.blues);
+		else
+			cm = LookUpTable.createGrayscaleColorModel(lsmFi.whiteIsZero);
+
+		if (!thumb)
+			st = new ImageStack((int) firstImDir.TIF_IMAGEWIDTH,
+					(int) firstImDir.TIF_IMAGELENGTH, cm);
+		else
+			st = new ImageStack((int) cz.ThumbnailX, (int) cz.ThumbnailY, cm);
 
 		firstImDir = null;
 		ImageReader reader = null;
@@ -1012,7 +1024,7 @@ public class Reader {
 				lsmFi.height = (int) imDir.TIF_IMAGELENGTH;
 				Object pixels;
 				for (int channelCount = 0; channelCount < (int) (cz.DimensionChannels); channelCount++) {
-					int datatype = (int) cz.IntensityDataType;
+					datatype = (int) cz.IntensityDataType;
 					if (datatype == 0)
 						datatype = cz.OffsetChannelDataTypesValues[channelCount];
 					switch (datatype) {
@@ -1045,19 +1057,23 @@ public class Reader {
 							e.printStackTrace();
 						}
 						pixels = reader.readPixels((InputStream) stream);
-						stacks[channelCount].addSlice("", pixels);
+						st.addSlice("", pixels);
 					}
 				}
-			} else if (thumb && imDir.TIF_NEWSUBFILETYPE == 1) { // ONLY IF
-				// THUMBS
+			} else if (thumb && imDir.TIF_NEWSUBFILETYPE == 1) {
+				// ONLY IF THUMBS
 				lsmFi.width = (int) imDir.TIF_IMAGEWIDTH;
 				lsmFi.height = (int) imDir.TIF_IMAGELENGTH;
-
+				lsmFi.fileType = FileInfo.COLOR8;
 				reader = new ImageReader(lsmFi);
 				Object pixels;
+			/*	byte[][] b = imDir.TIF_COLORMAP;
+				lsmFi.reds = b[0];
+				lsmFi.greens = b[1];
+				lsmFi.blues = b[2];*/
 				int channels = (int) (cz.DimensionChannels);
 				channels = 1; // only read the first channel for the thumbs.
-				// speed!
+								// --> speed!
 				for (int channelCount = 0; channelCount < channels; channelCount++) {
 					lsmFi.stripLengths[0] = (int) imDir.TIF_STRIPBYTECOUNTS[channelCount];
 					lsmFi.stripOffsets[0] = (int) imDir.TIF_STRIPOFFSETS[channelCount];
@@ -1069,58 +1085,67 @@ public class Reader {
 							e.printStackTrace();
 						}
 						pixels = reader.readPixels((InputStream) stream);
-						stacks[channelCount].addSlice("", pixels);
+						st.addSlice("", pixels);
 					}
 				}
-				imageCounter = lsmFi.imageDirectories.size(); // break out of
-				// for loop,
-				// speed
+				// break out of for loop, speed
+				// imageCounter = lsmFi.imageDirectories.size();
 			}
 		}
-		ArrayList imps = new ArrayList();
 		IJ.showProgress(1.0);
-		
-		for (int stackCount = 0; stackCount < (int) stacks.length; stackCount++) {
-			if (stacks[stackCount].getSize() > 0) {
-				ImagePlus imp = new ImagePlus(lsmFi.fileName,
-						stacks[stackCount]);
-				imp.setFileInfo(lsmFi);
-
-				Calibration cal = new Calibration();
-				cal.setUnit(lsmFi.unit);
-				cal.pixelDepth = lsmFi.pixelDepth;
-				cal.pixelHeight = lsmFi.pixelHeight;
-				cal.pixelWidth = lsmFi.pixelWidth;
-				imp.setCalibration(cal);
-				imp.setTitle(lsmFi.fileName + " Channel : "
-						+ cz.channelNamesAndColors.ChannelNames[stackCount]);
-				Color[] color = new Color[2];
-				color[0] = new Color(0, 0, 0);
-				int r = (int) (cz.channelNamesAndColors.Colors[stackCount] & 255);
-				int g = (int) ((cz.channelNamesAndColors.Colors[stackCount] >> 8) & 255);
-				int b = (int) ((cz.channelNamesAndColors.Colors[stackCount] >> 16) & 255);
+		ImagePlus imp = new ImagePlus(lsmFi.fileName, st);
+		imp.setDimensions((int) cz.DimensionChannels, (int) cz.DimensionZ,
+				(int) cz.DimensionTime);
+		if (cz.DimensionChannels >= 2
+				&& (imp.getStackSize() % cz.DimensionChannels) == 0) {
+			imp = new CompositeImage(imp, CompositeImage.COLOR);
+		}
+		imp.setFileInfo(lsmFi);
+		Calibration cal = new Calibration();
+		cal.setUnit(lsmFi.unit);
+		cal.pixelDepth = lsmFi.pixelDepth;
+		cal.pixelHeight = lsmFi.pixelHeight;
+		cal.pixelWidth = lsmFi.pixelWidth;
+		imp.setCalibration(cal);
+		Color[] color = new Color[2];
+		color[0] = new Color(0, 0, 0);
+		if (!thumb) {
+			for (int channel = 0; channel < (int) cz.DimensionChannels; channel++) {
+				int r = (int) (cz.channelNamesAndColors.Colors[channel] & 255);
+				int g = (int) ((cz.channelNamesAndColors.Colors[channel] >> 8) & 255);
+				int b = (int) ((cz.channelNamesAndColors.Colors[channel] >> 16) & 255);
 				color[1] = new Color(r, g, b);
 				if (r == 0 && g == 0 && b == 0)
 					color[1] = Color.white;
-				ReaderToolkit.apply_colors(imp, color, 2);
-
-				if (imp.getOriginalFileInfo().fileType == FileInfo.GRAY16_UNSIGNED) {
-					double min = imp.getProcessor().getMin();
-					double max = imp.getProcessor().getMax();
-					imp.getProcessor().setMinAndMax(min, max);
-				}
-
-				imps.add(imp);
+				if (!thumb)
+					ReaderToolkit.applyColors(imp, channel, color, 2);
 			}
 		}
-
-		ImagePlus[] impsArr = new ImagePlus[imps.size()];
-		for (int i = 0; i < imps.size(); i++) {
-			impsArr[i] = (ImagePlus) imps.get(i);
-			impsArr[i].setFileInfo(((LsmFileInfo) ((ImagePlus) imps.get(i))
-					.getOriginalFileInfo()));
+		if (thumb){
+			color[1] = Color.white;
+			ReaderToolkit.applyColors(imp, 1, color, 2);
+			//ReaderToolkit.showLut(imp, 1, lsmFi, true);
 		}
-		return (impsArr);
+		if (imp.getOriginalFileInfo().fileType == FileInfo.GRAY16_UNSIGNED) {
+			double min = imp.getProcessor().getMin();
+			double max = imp.getProcessor().getMax();
+			imp.getProcessor().setMinAndMax(min, max);
+		}
+
+		int stackPosition = 1;
+		for (int i = 1; i <= cz.DimensionTime; i++)
+			for (int j = 1; j <= cz.DimensionZ; j++)
+				for (int k = 1; k <= cz.DimensionChannels; k++) {
+					// imp.setPosition(k, j, i);
+					// int stackPosition = imp.getCurrentSlice();
+					if (stackPosition <= imp.getStackSize()) {
+						String label = cz.channelNamesAndColors.ChannelNames[k - 1];
+						st.setSliceLabel(label, stackPosition++);
+					}
+				}
+		// setInfo(imp, lsmFi);
+		// imp.show();
+		return imp;
 	}
 
 	/** ******************************************************************************************* */

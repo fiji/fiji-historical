@@ -30,8 +30,8 @@ public class ImageDirectory {
 
 	public long TIF_PREDICTOR = 0;
 
-	public long TIF_COLORMAP = 0;
-
+	public byte[][] TIF_COLORMAP;
+	
 	public long TIF_CZ_LSMINFO_OFFSET = 0; //OFFSET
 	
 	public CZ_LSMInfo TIF_CZ_LSMINFO; //STRUCT

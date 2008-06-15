@@ -6,7 +6,7 @@
  * Created on february 2002 Copyright (C) 2002-2008 Patrick Pirrotte
  *
  * ImageJ plugin
- * Version	:      4.0c
+ * Version	:      4.0d
  * Authors  :      Patrick PIRROTTE, Jerome MUTTERER
  * Licence  :	   GPL 
  * 
@@ -60,8 +60,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
 
+import org.imagearchive.lsm.toolbox.BatchConverter;
 import org.imagearchive.lsm.toolbox.MasterModel;
 import org.imagearchive.lsm.toolbox.Reader;
 import org.imagearchive.lsm.toolbox.gui.AboutDialog;
@@ -90,33 +90,33 @@ public class LSM_Toolbox implements PlugIn {
 		IJ.register(LSM_Toolbox.class);
 		IJ.debugMode = MasterModel.debugMode;
 		masterModel = getMasterModel();
+		
 		if (args.equals("about")) {
 			new AboutDialog(new JFrame(), masterModel).setVisible(true);
 			return;
 		}
-		
+		if (IJ.versionLessThan("1.41a"))
+			return;
 		String fileName = "";
 		String macroOptions = Macro.getOptions();
 		if (!args.equals(""))
 			fileName = getPath(args);
 		if (macroOptions != null && (!macroOptions.equals("")))
-			fileName = getPath(macroOptions);
-		if (!fileName.equals("")){
+			fileName = getPath(macroOptions).trim();
+			
+		if (!fileName.equals("") && fileName.endsWith(".lsm")){
 			final String fn = fileName;
 			final Reader reader = new Reader(masterModel);
-			SwingUtilities.invokeLater(new Runnable() {
-				ImageWindow iwc = null;
-				public void run() {
+			ImageWindow iwc = null;
 					try {
 						IJ.showStatus("Loading image");
-						ImagePlus[] imp = reader.open(fn,
+						ImagePlus imp = reader.open(fn,
 								true);
 						IJ.showStatus("Image loaded");
-						if (imp == null)
-							return;
-						for (int i = 0; i < imp.length; i++) {
-							imp[i].show();
-							iwc = imp[i].getWindow();
+						if (imp == null) return;
+						imp.setPosition(1, 1, 1);	
+						imp.show();
+							iwc = imp.getWindow();
 							final LsmFileInfo lsm = (LsmFileInfo) iwc
 									.getImagePlus().getOriginalFileInfo();
 							iwc.addFocusListener(new FocusListener() {
@@ -131,13 +131,14 @@ public class LSM_Toolbox implements PlugIn {
 							});
 							masterModel.setLSMFI(lsm);
 							masterModel.fireLSMFileInfoChanged();
-						}
 					} catch (OutOfMemoryError e) {
 						IJ.outOfMemory("Could not load lsm image.");
 					}
-				}
-
-			});
+		} else
+			if (args.endsWith(".csv")) {
+				BatchConverter converter = new BatchConverter(masterModel);
+				converter.convertBatchFile(args);
+				
 		} else
 			if (args.equals("")) {
 				controlPanel = new ControlPanelFrame(masterModel);

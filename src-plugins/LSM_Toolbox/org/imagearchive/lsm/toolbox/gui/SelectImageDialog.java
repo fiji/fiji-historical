@@ -1,6 +1,5 @@
 package org.imagearchive.lsm.toolbox.gui;
 
-import ij.ImagePlus;
 import ij.WindowManager;
 import ij.io.FileInfo;
 
@@ -57,7 +56,7 @@ public class SelectImageDialog extends JDialog {
 	private boolean channel = false;
 
 	public SelectImageDialog(JFrame parent, MasterModel masterModel,
-			String label, boolean channel, String filter) {
+			String label, boolean channel, byte filter) {
 		super(parent, true);
 		this.masterModel = masterModel;
 		this.label = label;
@@ -73,7 +72,7 @@ public class SelectImageDialog extends JDialog {
 		this.label = label;
 		this.channel = channel;
 		initiliazeGUI();
-		fillList("");
+		fillList(MasterModel.NONE);
 	}
 
 	private void initiliazeGUI() {
@@ -125,7 +124,7 @@ public class SelectImageDialog extends JDialog {
 		centerWindow();
 	}
 
-	private void fillList(String filter) {
+	private void fillList(byte filter) {
 		int[] imagesIDs = WindowManager.getIDList();
 		images = new Vector();
 		fileInfos = new Vector();
@@ -140,27 +139,22 @@ public class SelectImageDialog extends JDialog {
 					LsmFileInfo lsm = (LsmFileInfo) fi;
 					CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) lsm.imageDirectories
 							.get(0)).TIF_CZ_LSMINFO;
-					if (filter.equals("time"))
+					if (filter == MasterModel.TIME)
 						if (cz.DimensionTime > 1)
 							add = true;
-					if (filter.equals("z"))
-						if (cz.DimensionZ > 1)
-							add = true;
-					if (filter.equals("lambda"))
+					if (filter == MasterModel.DEPTH)
+						if (cz.DimensionZ > 1){
+							add = true;}
+					if (filter == MasterModel.CHANNEL)
 						if ((cz.SpectralScan == 1 && cz.channelWavelength != null)
 								&& cz.channelWavelength.Channels >= 1)
 							add = true;
-					if (filter.equals(""))
+					if (filter == MasterModel.NONE)
 						add = true;
-					if (add && !channel & !images.contains(lsm.fileName)) {
+					if (add) {
 						images.add(lsm.fileName);
 						fileInfos.add(new ListBoxImage(lsm.fileName, lsm,
 								imagesIDs[i]));
-					} else if (add && channel) {
-						images.add(WindowManager.getImage(imagesIDs[i])
-								.getTitle());
-						fileInfos.add(new ListBoxImage(WindowManager.getImage(
-								imagesIDs[i]).getTitle(), lsm, imagesIDs[i]));
 					}
 				}
 			}
@@ -191,22 +185,6 @@ public class SelectImageDialog extends JDialog {
 				setVisible(false);
 			}
 		});
-	}
-
-	public Vector getImageGroupIDs(int idBelongingtoGroup) {
-		ImagePlus imp = WindowManager.getImage(idBelongingtoGroup);
-		int[] ids = WindowManager.getIDList();
-		LsmFileInfo fi = (LsmFileInfo) imp.getOriginalFileInfo();
-		Vector v = new Vector();
-		for (int i = 0; i < ids.length; i++) {
-			if (imp.getOriginalFileInfo() instanceof LsmFileInfo) {
-				LsmFileInfo lsmFI = (LsmFileInfo) (WindowManager
-						.getImage(ids[i]).getOriginalFileInfo());
-				if (fi.equals(lsmFI))
-					v.add(new Integer(ids[i]));
-			}
-		}
-		return v;
 	}
 
 	public int showDialog() {

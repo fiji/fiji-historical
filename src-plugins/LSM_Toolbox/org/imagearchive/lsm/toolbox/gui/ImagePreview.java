@@ -3,9 +3,12 @@ package org.imagearchive.lsm.toolbox.gui;
 import ij.ImagePlus;
 import ij.io.RandomAccessStream;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.SystemColor;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -13,100 +16,156 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import javax.swing.ImageIcon;
-import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.imagearchive.lsm.toolbox.MasterModel;
 import org.imagearchive.lsm.toolbox.Reader;
 
-public class ImagePreview extends JComponent implements PropertyChangeListener {
-    ImageIcon thumbnail = null;
+public class ImagePreview extends JPanel implements PropertyChangeListener {
+	ImageIcon thumbnail = null;
 
-    File file = null;
+	ImagePlus imp = null;
 
-    Reader reader;
+	JSlider slider = new JSlider(1, 1, 1);
 
-    public ImagePreview(MasterModel masterModel, JFileChooser fc) {
-        setPreferredSize(new Dimension(138, 50));
-        fc.addPropertyChangeListener(this);
-        reader = new Reader(masterModel);
-    }
+	File file = null;
 
-    public void loadImage() {
-        if (file == null) {
-            thumbnail = null;
-            return;
-        }
-        ImageIcon tmpIcon = null;
-        try {
+	Reader reader;
+	
+	JPanel panel ;
+	
+	Color backgroundcolor = SystemColor.window;
 
-            RandomAccessStream stream = new RandomAccessStream(
-                    new RandomAccessFile(file, "r"));
-            if (reader.isLSMfile(stream)) {
-                ImagePlus imp[] = reader.open(file.getParent(), file.getName(), false, false, true);
-                if (imp != null && imp.length>0)
-                    tmpIcon = new ImageIcon(imp[0].getImage());
-                else {
-                    thumbnail = null;
-                    return;
-                }
-            }
-        } catch (IOException e) {
-            thumbnail = null;
-            return;
-        }
+	public ImagePreview(MasterModel masterModel, JFileChooser fc) {
+		setPreferredSize(new Dimension(138, 50));
+		fc.addPropertyChangeListener(this);
+		reader = new Reader(masterModel);
+		setLayout(new BorderLayout());
+		add(slider, BorderLayout.NORTH);
+		slider.setPaintLabels(true);
+		addSliderListener();
+		backgroundcolor = getBackground();
+	}
 
-        if (tmpIcon != null) {
-            if (tmpIcon.getIconWidth() > 128) {
-                thumbnail = new ImageIcon(tmpIcon.getImage().getScaledInstance(
-                        128, -1, Image.SCALE_DEFAULT));
-            } else {
-                thumbnail = tmpIcon;
-            }
-        }
-    }
+	private void addSliderListener() {
+		slider.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				if (imp != null) {
+					imp.setSlice(slider.getValue());
+					ImageIcon tmpIcon = new ImageIcon(imp.getProcessor()
+							.createImage());
+					if (tmpIcon != null) {
+						if (tmpIcon.getIconWidth() > 128) {
+							thumbnail = new ImageIcon(tmpIcon.getImage()
+									.getScaledInstance(128, -1,
+											Image.SCALE_DEFAULT));
+						} else {
+							thumbnail = tmpIcon;
+						}
+					}
+					repaint();
+				}
+			}
+		});
+	}
 
-    public void propertyChange(PropertyChangeEvent e) {
-        boolean update = false;
-        String prop = e.getPropertyName();
+	public void loadImage() {
+		if (file == null) {
+			thumbnail = null;
+			imp = null;
+			return;
+		}
+		ImageIcon tmpIcon = null;
+		try {
 
-        // If the directory changed, don't show an image.
-        if (JFileChooser.DIRECTORY_CHANGED_PROPERTY.equals(prop)) {
-            file = null;
-            update = true;
+			RandomAccessStream stream = new RandomAccessStream(
+					new RandomAccessFile(file, "r"));
+			if (reader.isLSMfile(stream)) {
+				ImagePlus imp = reader.open(file.getParent(), file.getName(),
+						false, false, true);
+				if (imp != null) {
+					slider.setValue(1);
+					slider.setMaximum(imp.getNSlices());
+					
+					this.imp = imp;
+					if (imp.getNSlices()==1){
+						slider.setVisible(false);
+					} else {
+						slider.setLabelTable(slider.createStandardLabels(imp.getNSlices()-1));
+						slider.setVisible(true);
+					}
+					tmpIcon = new ImageIcon(imp.getImage());
+				} else {
+					thumbnail = null;
+					imp = null;
+					return;
+				}
+			}
+		} catch (IOException e) {
+			thumbnail = null;
+			imp = null;
+			return;
+		}
 
-            // If a file became selected, find out which one.
-        } else if (JFileChooser.SELECTED_FILE_CHANGED_PROPERTY.equals(prop)) {
-            file = (File) e.getNewValue();
-            update = true;
-        }
+		if (tmpIcon != null) {
+			if (tmpIcon.getIconWidth() > 128) {
+				thumbnail = new ImageIcon(tmpIcon.getImage().getScaledInstance(
+						128, -1, Image.SCALE_DEFAULT));
+			} else {
+				thumbnail = tmpIcon;
+			}
+		}
+	}
 
-        // Update the preview accordingly.
-        if (update) {
-            thumbnail = null;
-            if (isShowing()) {
-                loadImage();
-                repaint();
-            }
-        }
-    }
+	public void propertyChange(PropertyChangeEvent e) {
+		boolean update = false;
+		String prop = e.getPropertyName();
 
-    protected void paintComponent(Graphics g) {
-        if (thumbnail == null) {
-            loadImage();
-        }
-        if (thumbnail != null) {
-            int x = getWidth() / 2 - thumbnail.getIconWidth() / 2;
-            int y = getHeight() / 2 - thumbnail.getIconHeight() / 2;
+		// If the directory changed, don't show an image.
+		if (JFileChooser.DIRECTORY_CHANGED_PROPERTY.equals(prop)) {
+			file = null;
+			update = true;
 
-            if (y < 0) {
-                y = 0;
-            }
+			// If a file became selected, find out which one.
+		} else if (JFileChooser.SELECTED_FILE_CHANGED_PROPERTY.equals(prop)) {
+			file = (File) e.getNewValue();
+			update = true;
+		}
 
-            if (x < 5) {
-                x = 5;
-            }
-            thumbnail.paintIcon(this, g, x, y);
-        }
-    }
+		// Update the preview accordingly.
+		if (update) {
+			thumbnail = null;
+			if (isShowing()) {
+				loadImage();
+				repaint();
+			}
+		}
+	}
+
+	protected void paintComponent(Graphics g) {
+		if (thumbnail == null) {
+			loadImage();
+		}
+		if (thumbnail != null) {
+			int x = getWidth() / 2 - thumbnail.getIconWidth() / 2;
+			int y = getHeight() / 2 - thumbnail.getIconHeight() / 2
+					+ slider.getHeight();
+
+			if (y < 0) {
+				y = 0;
+			}
+
+			if (x < 5) {
+				x = 5;
+			}
+
+			g.setColor(backgroundcolor);
+			g.fillRect(slider.getX(), slider.getY(), getWidth(), getHeight());
+			thumbnail.paintIcon(this, g, x, y);
+		}
+	}
 }

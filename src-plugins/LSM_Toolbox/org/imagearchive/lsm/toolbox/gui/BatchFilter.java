@@ -4,7 +4,7 @@ import java.io.File;
 
 import javax.swing.filechooser.FileFilter;
 
-public class ImageFilter extends FileFilter {
+public class BatchFilter extends FileFilter {
 
 	public boolean accept(File f) {
 		if (f.isDirectory()) {
@@ -13,7 +13,7 @@ public class ImageFilter extends FileFilter {
 
 		String extension = getExtension(f);
 		if (extension != null) {
-			if (extension.equals("lsm"))
+			if (extension.equals("csv"))
 				return true;
 			else
 				return false;
@@ -24,7 +24,7 @@ public class ImageFilter extends FileFilter {
 	}
 
 	public String getDescription() {
-		return "Show Zeiss LSM images (*.lsm)";
+		return "Show batch files (*.csv)";
 	}
 
 	public static String getExtension(File f) {

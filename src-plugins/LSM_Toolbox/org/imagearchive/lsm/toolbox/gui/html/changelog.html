@@ -2,12 +2,26 @@
 <h1>Release History:</h1>
 <pre>
   
+  2008/04/23 (v4.0d):
+   - minor bugfixes
+   - a bug caused a race condition resulting in macros behaving erratically has been fixed
+   - image preview: the thumbnail is shown in grayscale
+   - image preview: a slider helps browsing through thumbnail stacks
+   - Added Magic_Montage, a bunch of useful macros by Jérôme Mutterer. They are installed automagically
+     into the ImageJ toolbar via the Toolbox user interface
+   - 8bit and 12bit compressed and uncompressed images work
+   - batch conversion interface: added a reset button to empty the file list 
+           
   2008/03/07 (v4.0c):
    - minor bugfixes
-   - fixed the binding to HyperVolumeBrowser
+   - images are opened as hyperstacks
+   - fixed the binding to HyperVolumeBrowser and Image5D
+   - fixed the stamping of images
    - added support for linescan (scantype 2)
    - cleaned up the way some internal strings are read (thanks to Peter H. Li)
-  					
+   - added batch file support via tab delimited [TAB] csv file. In each row
+     intput_file[TAB]output_dir[TAB]file_format(tiff|jpeg|gif|...)[TAB]verbose(0|1)[TAB]create_sepDir(0|1)
+        					
   2006/10/16 (v4.0b):
    - added Drag and Drop support to the ControlPanel. Simply drag and drop an lsm image from your filemanager onto the ControlPanel to open it.
    - fixed an Image5D bug, preventing the correct conversion of stacks into image5d

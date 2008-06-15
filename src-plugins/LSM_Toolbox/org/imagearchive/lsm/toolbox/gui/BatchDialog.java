@@ -63,6 +63,8 @@ public class BatchDialog extends JDialog {
 
 	private JButton outputButton;
 
+	private JButton resetButton;
+	
 	private JComboBox formatCombo;
 	
 	private JCheckBox verboseCB;
@@ -82,9 +84,9 @@ public class BatchDialog extends JDialog {
 	}
 
 	public void initComponents() {
-		okButton = new JButton(new ImageIcon(getClass().getResource(
+		okButton = new JButton("Run batch",new ImageIcon(getClass().getResource(
 				"images/ok.png")));
-		cancelButton = new JButton(new ImageIcon(getClass().getResource(
+		cancelButton = new JButton("Cancel",new ImageIcon(getClass().getResource(
 				"images/cancel.png")));
 		sourceLabel = new JLabel("Select source folder");
 		outputLabel = new JLabel("Select output folder");
@@ -93,6 +95,7 @@ public class BatchDialog extends JDialog {
 		outputTF = new JTextField();
 		sourceButton = new JButton("Browse");
 		outputButton = new JButton("Browse");
+		resetButton = new JButton("Reset list");
 		formatLabel = new JLabel("Save as type:");
 		formatCombo = new JComboBox(masterModel.supportedBatchTypes);
 		verboseCB = new JCheckBox("Verbose (popups on error!)");
@@ -141,6 +144,7 @@ public class BatchDialog extends JDialog {
 		mainPanel = (JPanel) GUIMaker.addComponentToGrid(verboseCB, mainPanel, 0, 8,
 				3,1, GridBagConstraints.HORIZONTAL,GridBagConstraints.CENTER, 0.125d, 0.5d);
 		
+		buttonsPanel.add(resetButton);
 		buttonsPanel.add(okButton);
 		buttonsPanel.add(cancelButton);
 		verboseCB.setSelected(true);
@@ -208,6 +212,11 @@ public class BatchDialog extends JDialog {
 					File file = fc.getSelectedFile();
 						outputTF.setText(file.getAbsolutePath());
 				}
+			}
+		});
+		resetButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			((LsmImageTableModel)sourceTable.getModel()).removeAllFiles();
 			}
 		});
 		
