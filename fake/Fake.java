@@ -1180,6 +1180,7 @@ public class Fake {
 				new JarOutputStream(out, manifest);
 
 			addPluginsConfigToJar(jar, configPath);
+			String lastBase = null;
 			Iterator iter = files.iterator();
 			while (iter.hasNext()) {
 				String realName = (String)iter.next();
@@ -1191,7 +1192,17 @@ public class Fake {
 						new ByteCodeAnalyzer(buffer);
 					name = analyzer.getPathForClass()
 						+ ".class";
+					if (realName.endsWith(name))
+						lastBase = realName.substring(0,
+							realName.length()
+							- name.length());
+					else
+						lastBase = null;
 				}
+				else if (lastBase != null &&
+						realName.startsWith(lastBase))
+					name = realName
+						.substring(lastBase.length());
 
 				JarEntry entry = new JarEntry(name);
 				jar.putNextEntry(entry);
