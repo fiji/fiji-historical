@@ -448,7 +448,8 @@ public class Fake {
 		abstract class Rule {
 			protected String target;
 			protected List prerequisites, nonUpToDates;
-			boolean wasInvokedAlready;
+			boolean wasAlreadyInvoked;
+			boolean wasAlreadyChecked;
 
 			Rule(String target, List prerequisites) {
 				this.target = target;
@@ -489,9 +490,12 @@ public class Fake {
 			}
 
 			void make() throws FakeException {
-				if (wasInvokedAlready)
+				if (wasAlreadyChecked)
+					return;
+				wasAlreadyChecked = true;
+				if (wasAlreadyInvoked)
 					error("Dependency cycle detected!");
-				wasInvokedAlready = true;
+				wasAlreadyInvoked = true;
 				try {
 					if (getVarBool("DEBUG"))
 						System.err.println("Checking "
@@ -508,6 +512,7 @@ public class Fake {
 					new File(target).delete();
 					error(e.getMessage());
 				}
+				wasAlreadyInvoked = false;
 			}
 
 			protected void error(String message)
