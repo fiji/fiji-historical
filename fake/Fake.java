@@ -66,6 +66,8 @@ public class Fake {
 
 		URL url = getClass().getResource("Fake.class");
 		String fijiHome = URLDecoder.decode(url.toString());
+		if (getPlatform().startsWith("win"))
+			fijiHome = fijiHome.replace('\\', '/');
 		if (!fijiHome.endsWith("/Fake.class"))
 			throw new RuntimeException("unexpected URL: " + url);
 		fijiHome = fijiHome.substring(0, fijiHome.length() - 10);
@@ -81,13 +83,13 @@ public class Fake {
 		String pythonHome = fijiHome + "jars/jython2.2.1/jython.jar";
 		System.setProperty("python.home", pythonHome);
 		try {
-			addJar(fijiHome + "/ij.jar");
+			addJar(fijiHome + "ij.jar");
 
 			List jars = new ArrayList();
 			File cwd = new File(".");
-			expandGlob(fijiHome + "/plugins/**/*.jar", jars, cwd);
-			expandGlob(fijiHome + "/misc/**/*.jar", jars, cwd);
-			expandGlob(fijiHome + "/jars/**/*.jar", jars, cwd);
+			expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
+			expandGlob(fijiHome + "misc/**/*.jar", jars, cwd);
+			expandGlob(fijiHome + "jars/**/*.jar", jars, cwd);
 			Iterator iter = jars.iterator();
 			while (iter.hasNext())
 				addJar((String)iter.next());
@@ -1155,12 +1157,14 @@ public class Fake {
 			 * in use (mmap()ed), and overwriting that typically
 			 * results in a crash.
 			 */
+			String origPath = null;
 			if (new File(path).exists() &&
 					!new File(path).delete() &&
 					!new File(path).renameTo(new File(path
-							+ ".old")))
-				throw new FakeException("Could not remove "
-					+ path + " before building it anew");
+							+ ".old"))) {
+				origPath = path;
+				path += ".new";
+			}
 
 			OutputStream out = new FileOutputStream(path);
 			JarOutputStream jar = manifest == null ?
@@ -1188,6 +1192,12 @@ public class Fake {
 			}
 
 			jar.close();
+			if (origPath != null)
+				throw new FakeException("Could not remove "
+					+ origPath
+					+ " before building it anew\n"
+					+ "Stored it as " + path
+					+ " instead.");
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new FakeException("Error writing "
