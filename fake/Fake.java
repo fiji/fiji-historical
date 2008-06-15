@@ -55,15 +55,12 @@ public class Fake {
 		variableNames.add("CXXFLAGS");
 		variableNames.add("LDFLAGS");
 		variableNames.add("MAINCLASS");
-
-		discoverJythonAndToolsJar();
+		fijiHome = discoverFijiHome();
 	}
 
-	protected void discoverJythonAndToolsJar() {
-		if (System.getProperty("java.class.path")
-				.indexOf("/jython.jar:") >= 0)
-			return;
+	protected static String fijiHome;
 
+	protected String discoverFijiHome() {
 		URL url = getClass().getResource("Fake.class");
 		String fijiHome = URLDecoder.decode(url.toString());
 		if (getPlatform().startsWith("win"))
@@ -83,38 +80,41 @@ public class Fake {
 			fijiHome = fijiHome.substring(0,
 					fijiHome.length() - 12);
 
-		String pythonHome = fijiHome + "jars/jython2.2.1/jython.jar";
-		System.setProperty("python.home", pythonHome);
-		try {
-			addJar(fijiHome + "ij.jar");
-
-			List jars = new ArrayList();
-			File cwd = new File(".");
-			expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
-			expandGlob(fijiHome + "misc/**/*.jar", jars, cwd);
-			expandGlob(fijiHome + "jars/**/*.jar", jars, cwd);
-			expandGlob(fijiHome + "precompiled/javac.jar",
-					jars, cwd);
-			Iterator iter = jars.iterator();
-			while (iter.hasNext())
-				addJar((String)iter.next());
-		} catch (Exception e) {
-			System.err.println("Could not access jython.jar");
-			e.printStackTrace();
-			System.exit(1);
-		}
+		return fijiHome;
 	}
 
-	protected static boolean addJar(String path) throws IOException {
-		if (!new File(path).exists())
-			return false;
-		getClassLoader(path);
-		String classPath = System.getProperty("java.class.path");
-		if (!classPath.equals(""))
-			classPath += File.pathSeparator;
-		classPath += path;
-		System.setProperty("java.class.path", classPath);
-		return true;
+	protected static void discoverJython() throws IOException {
+		String pythonHome = fijiHome + "jars/jython2.2.1/jython.jar";
+		System.setProperty("python.home", pythonHome);
+		getClassLoader(pythonHome);
+	}
+
+	protected static void discoverJavac() throws IOException {
+		getClassLoader(new File(fijiHome + "jars/javac.jar").exists() ?
+			"jars/javac.jar" : "precompiled/javac.jar");
+	}
+
+	protected static List discoverJars() throws FakeException {
+		List jars = new ArrayList();
+		if (new File(fijiHome + "ij.jar").exists())
+			jars.add(fijiHome + "ij.jar");
+
+		File cwd = new File(".");
+		expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
+		expandGlob(fijiHome + "misc/**/*.jar", jars, cwd);
+		expandGlob(fijiHome + "jars/**/*.jar", jars, cwd);
+
+		return jars;
+	}
+
+	protected static String discoverClassPath() throws FakeException {
+		Iterator iter = discoverJars().iterator();
+		String classPath = "";
+		while (iter.hasNext())
+			classPath += (classPath.equals("") ?
+					"" : File.pathSeparator)
+				+ iter.next();
+		return classPath;
 	}
 
 	public void make(String[] args) {
@@ -1048,6 +1048,7 @@ public class Fake {
 			boolean verbose) throws FakeException {
 		try {
 			if (javac == null) {
+				discoverJavac();
 				ClassLoader loader = getClassLoader(toolsPath);
 				String className = "com.sun.tools.javac.Main";
 				Class main = loader.loadClass(className);
@@ -1097,7 +1098,7 @@ public class Fake {
 			arguments.add("-deprecation");
 			arguments.add("-Xlint:unchecked");
 		}
-		String classPath = System.getProperty("java.class.path");
+		String classPath = discoverClassPath();
 		if (extraClassPath != null && !extraClassPath.equals("")) {
 			StringTokenizer tokenizer =
 				new StringTokenizer(extraClassPath,
@@ -1390,6 +1391,7 @@ public class Fake {
 
 	protected static boolean executePython(String[] args) throws Exception {
 		if (jython == null) try {
+			discoverJython();
 			ClassLoader loader = getClassLoader();
 			String className = "org.python.util.jython";
 			Class main = loader.loadClass(className);
