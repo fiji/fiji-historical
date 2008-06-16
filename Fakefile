@@ -186,7 +186,7 @@ JAVA_LIB_PATH(macosx)=
 # C and C++ programs.
 CXXFLAGS=-DJAVA_HOME='"$JAVA_HOME"' \
 	-DJAVA_LIB_PATH='"$JAVA_LIB_PATH"' \
-	-Iincludes/
+	-Iincludes
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
 CXXFLAGS(win32)=$CXXFLAGS $WINOPTS
 CXXFLAGS(win64)=$CXXFLAGS $WINOPTS
