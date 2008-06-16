@@ -1417,8 +1417,7 @@ public class Fake {
 		String classPath = discoverClassPath();
 		if (extraClassPath != null && !extraClassPath.equals("")) {
 			StringTokenizer tokenizer =
-				new StringTokenizer(extraClassPath,
-						File.pathSeparator);
+				new StringTokenizer(extraClassPath, ":");
 			while (tokenizer.hasMoreElements())
 				classPath += File.pathSeparator
 					+ makePath(cwd, tokenizer.nextToken());
