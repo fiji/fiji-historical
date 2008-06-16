@@ -100,7 +100,12 @@ public class Fake {
 			jars.add(fijiHome + "ij.jar");
 
 		File cwd = new File(".");
-		expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
+		/*
+		 * Since View5D contains an ImageCanvas (d'oh!) which would
+		 * be picked up instead of ImageJ's, we cannot blindly
+		 * include all plugin's jars...
+		 */
+		// expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
 		expandGlob(fijiHome + "misc/**/*.jar", jars, cwd);
 		expandGlob(fijiHome + "jars/**/*.jar", jars, cwd);
 
