@@ -122,6 +122,7 @@ jdk[scripts/checkout-jdk.py $JDK] <-
 # From submodules
 ij.jar <- ImageJA/
 plugins/VIB_.jar <- VIB/
+CLASSPATH(plugins/TrakEM2_.jar)=plugins/ij.jar
 plugins/TrakEM2_.jar <- TrakEM2/
 plugins/mpicbg_.jar <- mpicbg/
 
