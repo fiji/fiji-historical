@@ -1225,6 +1225,10 @@ public class Fake {
 				String name = realName;
 				byte[] buffer = readFile(makePath(cwd,
 								realName));
+				if (buffer == null)
+					throw new FakeException("File "
+						+ realName + " does not exist,"
+						+ " could not make " + path);
 				if (realName.endsWith(".class")) {
 					ByteCodeAnalyzer analyzer =
 						new ByteCodeAnalyzer(buffer);
