@@ -97,6 +97,14 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Javascript_.jar \
 	plugins/lens_correction.jar \
 	plugins/LSM_Toolbox.jar \
+	\
+	plugins/Analyze/Grid_.class \
+	plugins/Filters/Preprocessor_Smooth.class \
+	plugins/Input-Output/HandleExtraFileTypes.class \
+	plugins/Stacks/Stack_Reverser.class \
+	plugins/Examples/Example_Plot.class \
+	plugins/Utilities/Command_Launcher.class \
+	\
 	misc/Fiji.jar
 
 all <- jdk fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
@@ -151,6 +159,10 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.jpg \
 	src-plugins/LSM_Toolbox/**/*.html \
 	src-plugins/LSM_Toolbox/**/*.txt
+
+CLASSPATH(plugins/Filters/Preprocessor_Smooth.class)=plugins/TrakEM2_.jar
+plugins/**/*.class <- src-plugins/**/*.java
+
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 JAVAVERSION(jars/javac.jar)=1.5
 jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
