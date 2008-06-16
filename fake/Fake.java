@@ -17,6 +17,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -270,6 +271,25 @@ public class Fake {
 
 		public Rule addRule(String target, String prerequisites)
 				throws FakeException {
+			Rule rule = null;
+
+			if (target.indexOf('*') >= 0) {
+				GlobFilter filter = new GlobFilter(target);
+				Iterator iter = new ArrayList(allPrerequisites)
+					.iterator();
+				List targets = new ArrayList();
+				while (iter.hasNext()) {
+					target = (String)iter.next();
+					if (allRules.containsKey(target))
+						continue;
+					if (!filter.accept(null, target))
+						continue;
+					rule = addRule(target,
+						filter.replace(prerequisites));
+				}
+				return rule;
+			}
+
 			List list = new ArrayList();
 			StringTokenizer tokenizer = new
 				StringTokenizer(expandVariables(prerequisites,
@@ -952,11 +972,23 @@ public class Fake {
 	static class GlobFilter implements FilenameFilter {
 		Pattern pattern;
 		long newerThan;
+		String glob;
+		String lastMatch;
+
+		GlobFilter(String glob) {
+			this(glob, 0);
+		}
 
 		GlobFilter(String glob, long newerThan) {
-			String regex = "^" + glob.replace(".", "\\.")
-				.replace("^", "\\^").replace("$", "\\$")
-				.replace("?", ".").replace("*", ".*") + "$";
+			this.glob = glob;
+			String regex = "^"
+				+ glob.replace(".", "\\.")
+				.replace("^", "\\^")
+				.replace("$", "\\$")
+				.replace("?", "[^/]")
+				.replace("*", "[^/]*")
+				.replace("[^/]*[^/]*", ".*")
+				+ "$";
 			pattern = Pattern.compile(regex);
 			this.newerThan = newerThan;
 		}
@@ -965,7 +997,55 @@ public class Fake {
 			if (newerThan > 0 && newerThan > new File(dir, name)
 					.lastModified())
 				return false;
-			return pattern.matcher(name).matches();
+			if (pattern.matcher(name).matches()) {
+				lastMatch = name;
+				return true;
+			}
+			lastMatch = null;
+			return false;
+		}
+
+		int firstWildcardIndex = -1, suffixLength;
+		String wildcardPattern;
+
+		private void initReplace() throws FakeException {
+			if (firstWildcardIndex >= 0)
+				return;
+			int first = glob.indexOf('*');
+			int first2 = glob.indexOf('?');
+			if (first < 0 && first2 < 0)
+				throw new FakeException("Expected glob: "
+					+ glob);
+			int last = glob.lastIndexOf('*');
+			int last2 = glob.lastIndexOf('?');
+			firstWildcardIndex = first < 0 ||
+				(first2 >= 0 && first > first2) ?
+				first2 : first;
+			int lastWildcardIndex = last < 0 || last < last2 ?
+				last2 : last;
+			wildcardPattern = glob.substring(firstWildcardIndex,
+				lastWildcardIndex + 1);
+			suffixLength = glob.length() - lastWildcardIndex - 1;
+		}
+
+		public String replace(String name) throws FakeException {
+			initReplace();
+			int index = name.indexOf(wildcardPattern);
+			if (index < 0)
+				return name;
+			return name.substring(0, index)
+				+ lastMatch.substring(firstWildcardIndex,
+					lastMatch.length() - suffixLength)
+				+ name.substring(index
+					+ wildcardPattern.length());
+		}
+
+		public List replace(List names) throws FakeException {
+			List result = new ArrayList();
+			Iterator iter = names.iterator();
+			while (iter.hasNext())
+				result.add(replace((String)iter.next()));
+			return result;
 		}
 	}
 
