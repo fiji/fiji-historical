@@ -157,6 +157,7 @@ public class Fake {
 		protected Map allRules = new HashMap();
 		protected Set allPrerequisites = new HashSet();
 		protected Set allPlatforms;
+		protected Rule allRule;
 
 		public Parser() throws FakeException {
 			this(null);
@@ -187,6 +188,18 @@ public class Fake {
 			}
 
 			setVariable("platform", getPlatform());
+
+			addSpecialRule(new Special("show-rules") {
+				void action() {
+					List list = new
+						ArrayList(allRules.keySet());
+					Collections.sort(list);
+					Iterator iter = list.iterator();
+					while (iter.hasNext())
+					System.out.println(allRules
+						.get(iter.next()));
+				}
+			});
 		}
 
 		public Rule parseRules(List targets) throws FakeException {
@@ -270,10 +283,8 @@ public class Fake {
 						+ token + "'");
 			}
 
-			Rule rule = null;
-
-			if (allRules.isEmpty())
-				rule = new All(target, list);
+			if (allRule == null)
+				rule = allRule = new All(target, list);
 			else if (new File(prerequisites).isDirectory())
 				rule = new SubFake(target, list);
 			else if (target.endsWith(".jar")) {
@@ -311,6 +322,10 @@ public class Fake {
 				allPrerequisites.add(iter.next());
 
 			return rule;
+		}
+
+		protected void addSpecialRule(Special rule) {
+			allRules.put(rule.target, rule);
 		}
 
 		protected void error(String message) throws FakeException {
@@ -551,7 +566,8 @@ public class Fake {
 
 			public String toString() {
 				String result = "";
-				if (getVarBool("VERBOSE")) {
+				if (getVarBool("VERBOSE") &&
+						!(this instanceof Special)) {
 					String type = getClass().getName();
 					int dollar = type.lastIndexOf('$');
 					if (dollar >= 0)
@@ -669,6 +685,16 @@ public class Fake {
 			}
 
 			public boolean upToDate() {
+				return false;
+			}
+		}
+
+		abstract class Special extends Rule {
+			Special(String target) {
+				super(target, new ArrayList());
+			}
+
+			boolean upToDate() {
 				return false;
 			}
 		}
