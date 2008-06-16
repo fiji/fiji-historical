@@ -193,6 +193,8 @@ CXXFLAGS(win64)=$CXXFLAGS $WINOPTS
 MACOPTS=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
 	-DMACOSX -mmacosx-version-min=10.4 -arch ppc -arch i386
 CXXFLAGS(macosx)=$CXXFLAGS $MACOPTS
+
+LDFLAGS(win32)=$LDFLAGS $WINOPTS
 LDFLAGS(macosx)=$LDFLAGS $MACOPTS
 
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
