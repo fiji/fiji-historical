@@ -12,12 +12,25 @@ Linux)
 MINGW*|CYGWIN*) platform=win32; exe=.exe;;
 esac
 
-test "a$*" != afake.jar &&
+strip_variables () {
+	while test $# -ge 1
+	do
+		case "$1" in
+		*=*) ;;
+		*) echo "$1";
+		esac
+		shift
+	done
+}
+
+targets=$(strip_variables "$@")
+
+test "a$targets" != afake.jar &&
 test ! -f "$CWD"/fake.jar -o "$CWD"/fake/Fake.java -nt "$CWD"/fake.jar && {
 	sh "$0" fake.jar || exit
 }
 
-test "a$*" != afake.jar -a "a$*" != afiji &&
+test "a$targets" != afake.jar -a "a$targets" != afiji &&
 test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
 	sh "$0" fiji || exit
 }
