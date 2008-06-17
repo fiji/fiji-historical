@@ -206,6 +206,10 @@ fiji <- fiji.cxx
 fiji-tiger-pita <- fiji-tiger-pita.cxx
 fiji-tiger <- fiji.cxx
 
+# Portable application/.app
+
+app[scripts/make-app.py] <- all
+
 # Fake itself
 
 MAINCLASS(fake.jar)=Fake
