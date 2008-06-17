@@ -209,6 +209,7 @@ fiji-tiger <- fiji.cxx
 # Portable application/.app
 
 app[scripts/make-app.py] <- all
+dmg[scripts/make-dmg.py] <- app
 
 # Fake itself
 
