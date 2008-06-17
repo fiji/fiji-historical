@@ -9,11 +9,18 @@ import sys
 
 # Jython does not support removedirs and symlink.
 # Warning: this implementation is not space-safe!
-def removedirs(dir):
-	os.system('rm -rf ' + dir)
-def symlink(src, dest):
-	os.system('ln -s ' + src + " " + dest)
-	
+if 'removedirs' in dir(os):
+	def removedirs(dir):
+		os.removedirs(dir)
+else:
+	def removedirs(dir):
+		os.system('rm -rf ' + dir)
+if 'symlink' in dir(os):
+	def symlink(src, dest):
+		os.symlink(src, dest)
+else:
+	def symlink(src, dest):
+		os.system('ln -s ' + src + " " + dest)
 def make_macosx_app():
 	print 'Making app'
 	if os.path.isdir('Fiji.app'):

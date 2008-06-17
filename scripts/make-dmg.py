@@ -2,28 +2,39 @@
 
 import os
 import re
-from java.lang import Runtime
-from java.io import BufferedReader, InputStreamReader
 
 dmg='fiji-macosx.dmg'
 app='Fiji.app'
 
-def symlink(src, dest):
-	os.system('ln -s ' + src + ' ' + dest)
+if 'symlink' in dir(os):
+	def symlink(src, dest):
+		os.symlink(src, dest)
+else:
+	def symlink(src, dest):
+		os.system('ln -s ' + src + ' ' + dest)
+try:
+	from java.lang import Runtime
+	from java.io import BufferedReader, InputStreamReader
+
+	def execute(cmd):
+		runtime = Runtime.getRuntime()
+		#p = runtime.exec(cmd)
+		p.outputStream.close()
+		result=""
+		reader=BufferedReader(InputStreamReader(p.inputStream))
+		while True:
+			line=reader.readLine()
+			if line == None:
+				break
+			result+=line + "\n"
+		return result
+except:
+	def execute(cmd):
+		proc = os.popen(cmd)
+		return "\n".join(proc.readlines())
 def hdiutil(cmd):
 	print cmd
 	os.system('hdiutil ' + cmd)
-def execute(cmd):
-	proc = Runtime.getRuntime().exec(cmd)
-	proc.outputStream.close()
-	result=""
-	reader=BufferedReader(InputStreamReader(proc.inputStream))
-	while True:
-		line=reader.readLine()
-		if line == None:
-			break
-		result+=line + "\n"
-	return result
 def get_disk_id(dmg):
 	match=re.match('.*/dev/([^ ]*)[^/]*Apple_HFS.*', execute('hdid ' + dmg),
 		re.MULTILINE | re.DOTALL)
