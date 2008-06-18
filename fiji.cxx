@@ -24,7 +24,7 @@ static void set_path_to_JVM(void);
 static int get_fiji_bundle_variable(const char *key, string &value);
 #endif
 
-#ifdef MINGW32
+#ifdef WIN32
 #include <process.h>
 #define PATH_SEP ";"
 #else
@@ -34,13 +34,9 @@ static int get_fiji_bundle_variable(const char *key, string &value);
 static const char *relative_java_home = JAVA_HOME;
 static const char *library_path = JAVA_LIB_PATH;
 
-// FIXME: these may need to change on Windows
-#include <sys/types.h>
-#include <dirent.h>
-
 /* Dynamic library loading stuff */
 
-#ifdef MINGW32
+#ifdef WIN32
 #include <windows.h>
 #define RTLD_LAZY 0
 static char *dlerror_value;
@@ -66,7 +62,10 @@ static void *dlopen(const char *name, int flags)
 
 static char *dlerror(void)
 {
-	return dlerror_value;
+	/* We need to reset the error */
+	char *result = dlerror_value;
+	dlerror_value = NULL;
+	return result;
 }
 
 static void *dlsym(void *handle, const char *name)
@@ -181,6 +180,7 @@ const char *fiji_dir;
 char **main_argv;
 int main_argc;
 const char *main_class;
+bool run_precompiled = false;
 
 static char *get_fiji_dir(const char *argv0)
 {
@@ -193,6 +193,14 @@ static char *get_fiji_dir(const char *argv0)
 		slash = backslash;
 #endif
 
+	if (slash && slash - argv0 >= 11 && !strncmp(argv0
+				+ (slash - argv0) - 11, "precompiled", 11)) {
+		if (slash - argv0 == 11)
+			slash = NULL;
+		else
+			slash -= 12;
+		run_precompiled = true;
+	}
 	if (slash)
 		snprintf(buffer, slash - argv0 + 1, argv0);
 	else
@@ -232,7 +240,7 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 		if (!error)
 			error = "(unknown error)";
 		cerr << "Could not load Java library '" <<
-			buffer << "': " << error << endl;
+			buffer.str() << "': " << error << endl;
 		return 1;
 	}
 	dlerror(); /* Clear any existing error */
@@ -248,6 +256,64 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 
 	return JNI_CreateJavaVM(vm, env, args);
 }
+
+#ifdef WIN32
+struct entry {
+	char d_name[PATH_MAX];
+	int d_namlen;
+} entry;
+
+struct dir {
+	string pattern;
+	HANDLE handle;
+	WIN32_FIND_DATA find_data;
+	int done;
+	struct entry entry;
+};
+
+struct dir *open_dir(const char *path)
+{
+	struct dir *result = new dir();
+	if (!result)
+		return result;
+	result->pattern = path;
+	result->pattern += "/*";
+	result->handle = FindFirstFile(result->pattern.c_str(),
+			&(result->find_data));
+	if (result->handle == INVALID_HANDLE_VALUE) {
+		free(result);
+		return NULL;
+	}
+	result->done = 0;
+	return result;
+}
+
+struct entry *read_dir(struct dir *dir)
+{
+	if (dir->done)
+		return NULL;
+	strcpy(dir->entry.d_name, dir->find_data.cFileName);
+	dir->entry.d_namlen = strlen(dir->entry.d_name);
+	if (FindNextFile(dir->handle, &dir->find_data) == 0)
+		dir->done = 1;
+	return &dir->entry;
+}
+
+int close_dir(struct dir *dir)
+{
+	FindClose(dir->handle);
+	delete dir;
+	return 0;
+}
+
+#define DIR struct dir
+#define dirent entry
+#define opendir open_dir
+#define readdir read_dir
+#define closedir close_dir
+#else
+#include <dirent.h>
+#endif
 
 static int headless;
 
@@ -479,6 +545,15 @@ static void show_commandline(struct options& options)
 	cerr << endl;
 }
 
+bool file_exists(string path)
+{
+	ifstream test(path.c_str());
+	if (!test.is_open())
+		return false;
+	test.close();
+	return true;
+}
+
 /* the maximal size of the heap on 32-bit systems, in megabyte */
 #define MAX_32BIT_HEAP 1920
 
@@ -491,7 +566,7 @@ static int start_ij(void)
 	static string class_path, ext_option, jvm_options;
 	stringstream plugin_path;
 	int dashdash = 0, jdb = 0;
-	bool allow_multiple = false;
+	bool allow_multiple = false, skip_build_classpath = false;
 
 	size_t memory_size = 0;
 
@@ -559,6 +634,18 @@ static int start_ij(void)
 				ext_option += PATH_SEP;
 			ext_option += main_argv[i] + 4;
 		}
+		else if (!strcmp(main_argv[i], "--fake")) {
+			skip_build_classpath = true;
+			headless = 1;
+			class_path += fiji_dir;
+			if (run_precompiled || !file_exists(string(fiji_dir)
+						+ "/fake.jar"))
+				class_path += "/precompiled";
+			class_path += "/fake.jar" PATH_SEP;
+			main_class = "Fake";
+		}
+		else if (!strncmp(main_argv[i], "--fiji-dir=", 11))
+			fiji_dir = main_argv[i] + 11;
 		else
 			main_argv[count++] = main_argv[i];
 	main_argc = count;
@@ -586,19 +673,22 @@ static int start_ij(void)
 	add_option(options, "-Dpython.cachedir.skip=false", 0);
 
 	class_path = "-Djava.class.path=" + class_path;
-	if (headless)
-		class_path += string(fiji_dir) + "/misc/headless.jar"
-			+ PATH_SEP;
-	class_path += fiji_dir;
-	class_path += "/misc/Fiji.jar";
-	class_path += PATH_SEP;
-	class_path += fiji_dir;
-	class_path += "/ij.jar";
+	if (!skip_build_classpath) {
+		if (headless)
+			class_path += string(fiji_dir) + "/misc/headless.jar"
+				+ PATH_SEP;
+		class_path += fiji_dir;
+		class_path += "/misc/Fiji.jar";
+		class_path += PATH_SEP;
+		class_path += fiji_dir;
+		class_path += "/ij.jar";
 
-	if (build_classpath(class_path, string(fiji_dir) + "/plugins", 0))
-		return 1;
-	if (build_classpath(class_path, string(fiji_dir) + "/jars", 0))
-		return 1;
+		if (build_classpath(class_path,
+					string(fiji_dir) + "/plugins", 0))
+			return 1;
+		if (build_classpath(class_path, string(fiji_dir) + "/jars", 0))
+			return 1;
+	}
 	add_option(options, class_path, 0);
 
 	if (plugin_path.str() == "")
