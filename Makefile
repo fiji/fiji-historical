@@ -16,8 +16,8 @@ fake.jar: fake/Fake.java
 check: check-class-versions check-precompiled check-submodules
 
 check-class-versions:
-	./fiji --headless \
-		--main-class=fiji.CheckClassVersions plugins/ jars/ misc/
+	./fiji --headless --main-class=fiji.CheckClassVersions \
+		plugins/ jars/ misc/ precompiled/
 
 PRECOMPILED=$(patsubst %,precompiled/fiji-%,$(patsubst win%,win%.exe,$(ARCHS)))
 check-precompiled:

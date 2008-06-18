@@ -3,7 +3,7 @@ JAVACOPTS=-target 1.5 -source 1.5 \
 	-classpath .:../ij.jar:../plugins/TrakEM2_.jar$(JARS3RDPARTY)
 
 # common is just in this list to exclude classes within it from being copied
-JARDIRS=common Jython Clojure JRuby BSH bUnwarpJ register_virtual_stack registration3d io fiji CLI Javascript ij SplineDeformationGenerator levelsets
+JARDIRS=common Jython Clojure JRuby BSH bUnwarpJ register_virtual_stack registration3d io fiji CLI Javascript ij SplineDeformationGenerator levelsets lenscorrection
 JARDIRSEXCLUDE=$(patsubst %,-e ./%/,$(JARDIRS))
 JARS=Jython_Interpreter.jar Clojure_Interpreter.jar JRuby_Interpreter.jar BeanShell_Interpreter.jar bUnwarpJ_.jar register_virtual_stack_slices.jar registration_3d.jar IO_.jar CLI_.jar Javascript_.jar SplineDeformationGenerator_.jar level_sets.jar
 
