@@ -1215,9 +1215,13 @@ public class Fake {
 			if (!result.equals(new Integer(0)))
 				throw new FakeException("Compile error");
 			return;
+		} catch (FakeException e) {
+			/* was compile error */
+			throw e;
 		} catch (Exception e) {
 			System.err.println("Could not find javac " + e
-				+ " (tools path = " + toolsPath + ")");
+				+ " (tools path = " + toolsPath + "), "
+				+ "falling back to system javac");
 		}
 
 		// fall back to calling javac
