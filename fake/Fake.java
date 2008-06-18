@@ -201,6 +201,29 @@ public class Fake {
 						.get(iter.next()));
 				}
 			});
+
+			addSpecialRule(new Special("clean") {
+				void action() { clean(false); }
+			});
+
+			addSpecialRule(new Special("clean-dry-run") {
+				void action() { clean(true); }
+			});
+		}
+
+		protected void clean(boolean dry_run) {
+			Iterator iter = allRules.keySet().iterator();
+			while (iter.hasNext()) {
+				Rule rule = (Rule)allRules.get(iter.next());
+				File file = new File(rule.target);
+				if (file.exists() && !file.isDirectory()) {
+					if (dry_run)
+						System.err.println("rm "
+							+ rule.target);
+					else
+						file.delete();
+				}
+			}
 		}
 
 		public Rule parseRules(List targets) throws FakeException {
