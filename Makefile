@@ -1,8 +1,11 @@
 all: run
 
-run: fiji.cxx fake.jar
-	./fiji --fake -- || \
-	(java -classpath fake.jar Fake fiji && ./fiji --fake --)
+run: fiji
+	./fiji --fake -- run
+
+fiji: fiji.cxx fake.jar
+	./fiji --fake -- fiji || \
+	java -classpath fake.jar Fake fiji
 
 fake.jar: fake/Fake.java
 	./fiji --fake fake.jar || \
