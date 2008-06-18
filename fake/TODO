@@ -6,3 +6,5 @@
 - add globbing for conditional variables
 - fix javac (java.lang.reflect.InvocationTargetException is missing)
 - verify (and add a test) that changed .config files triggers recompiling jars
+- "clean" target: remove .class files, too
+- "clean" target: use the command line to determine which rules to clean for
