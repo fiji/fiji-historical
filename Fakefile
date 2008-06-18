@@ -97,6 +97,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Javascript_.jar \
 	plugins/lens_correction.jar \
 	plugins/LSM_Toolbox.jar \
+	plugins/SplineDeformationGenerator_.jar \
 	plugins/level_sets.jar \
 	\
 	plugins/Analyze/Grid_.class \
