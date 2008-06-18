@@ -397,9 +397,11 @@ public class Fake {
 					System.err.println("Warning: "
 						+ "no match for " + value);
 				value = "";
+				String separator = key.equals("CLASSPATH") ?
+					File.pathSeparator : " ";
 				Iterator iter = files.iterator();
 				while (iter.hasNext())
-					value += " " +
+					value += separator +
 						quoteArg((String)iter.next());
 			}
 
