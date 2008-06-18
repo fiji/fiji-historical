@@ -97,6 +97,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Javascript_.jar \
 	plugins/lens_correction.jar \
 	plugins/LSM_Toolbox.jar \
+	plugins/level_sets.jar \
 	\
 	plugins/Analyze/Grid_.class \
 	plugins/Filters/Preprocessor_Smooth.class \
@@ -159,6 +160,8 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.jpg \
 	src-plugins/LSM_Toolbox/**/*.html \
 	src-plugins/LSM_Toolbox/**/*.txt
+plugins/level_sets.jar <- src-plugins/levelsets/**/*.java
+
 plugins/*_.jar <- src-plugins/*/**/*.java
 
 CLASSPATH(plugins/Filters/Preprocessor_Smooth.class)=plugins/TrakEM2_.jar
