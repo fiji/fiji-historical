@@ -101,7 +101,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/level_sets.jar \
 	\
 	plugins/Analyze/Grid_.class \
-	plugins/Filters/Preprocessor_Smooth.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
 	plugins/Examples/Example_Plot.class \
@@ -165,7 +164,6 @@ plugins/level_sets.jar <- src-plugins/levelsets/**/*.java
 
 plugins/*_.jar <- src-plugins/*/**/*.java
 
-CLASSPATH(plugins/Filters/Preprocessor_Smooth.class)=plugins/TrakEM2_.jar
 plugins/**/*.class <- src-plugins/**/*.java
 
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
