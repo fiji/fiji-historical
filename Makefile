@@ -5,6 +5,7 @@ run: fiji.cxx fake.jar
 	(java -classpath fake.jar Fake fiji && ./fiji --fake --)
 
 fake.jar: fake/Fake.java
+	./fiji --fake fake.jar || \
 	(cd fake && \
 	 javac Fake.java && \
 	 jar cvf ../fake.jar Fake*.class)
