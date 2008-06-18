@@ -146,13 +146,11 @@ plugins/JRuby_Interpreter.jar <- src-plugins/JRuby/*.java $COMMON
 plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java $COMMON
 plugins/Javascript_.jar <- src-plugins/Javascript/*.java $COMMON
 
-plugins/bUnwarpJ_.jar <- src-plugins/bUnwarpJ/*.java
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar
 plugins/register_virtual_stack_slices.jar <- \
 	src-plugins/register_virtual_stack/*.java
 plugins/registration_3d.jar <- src-plugins/registration3d/*.java
 plugins/IO_.jar <- src-plugins/io/*.java
-plugins/CLI_.jar <- src-plugins/CLI/*.java
 CLASSPATH(plugins/lens_correction.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar
 plugins/lens_correction.jar <- src-plugins/lenscorrection/*.java
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
@@ -161,6 +159,7 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.jpg \
 	src-plugins/LSM_Toolbox/**/*.html \
 	src-plugins/LSM_Toolbox/**/*.txt
+plugins/*_.jar <- src-plugins/*/**/*.java
 
 CLASSPATH(plugins/Filters/Preprocessor_Smooth.class)=plugins/TrakEM2_.jar
 plugins/**/*.class <- src-plugins/**/*.java
