@@ -611,6 +611,10 @@ public class Fake {
 			}
 
 			public String toString() {
+				return toString(getVarBool("VERBOSE") ? 0 : 60);
+			}
+
+			public String toString(int maxCharacters) {
 				String result = "";
 				if (getVarBool("VERBOSE") &&
 						!(this instanceof Special)) {
@@ -624,6 +628,11 @@ public class Fake {
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext())
 					result += " " + iter.next();
+				if (maxCharacters > 0 && result.length()
+						> maxCharacters)
+					result = result.substring(0,
+						Math.max(0, maxCharacters - 3))
+						+ "...";
 				return result;
 			}
 
