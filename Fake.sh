@@ -4,7 +4,11 @@ CWD="$(dirname "$0")"
 
 case "$(uname -s)" in
 Darwin) platform=macosx; exe=;;
-Linux) platform=linux; exe=;;
+Linux)
+	 case "$(uname -m)" in
+		x86_64) platform=linux-amd64;;
+		*) platform=linux;;
+	esac; exe=;;
 MINGW*|CYGWIN*) platform=win32; exe=.exe;;
 esac
 
