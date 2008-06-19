@@ -1157,4 +1157,27 @@ public class Reader {
 		public long size = 0;
 	}
 
+	public CZ_LSMInfo readCz(File f) {
+		RandomAccessFile file;
+		LsmFileInfo lsm;
+		try {
+			file = new RandomAccessFile(f, "r");
+			RandomAccessStream stream = new RandomAccessStream(file);
+			lsm = new LsmFileInfo(masterModel);
+			lsm.fileName = f.getName();
+			lsm.directory = f.getParent();
+			if (isLSMfile(stream)) {
+				ImageDirectory imDir = readImageDirectoy(stream, 8, false);
+				file.close();
+				return imDir.TIF_CZ_LSMINFO;
+			} else {
+				IJ.error("Not an LSM file.");
+				file.close();
+				return null;
+			}
+		} catch (IOException e) {
+			IJ.error("IOException when trying to read "+f);
+			return null;
+		}
+	}
 }
