@@ -188,7 +188,7 @@ CXXFLAGS=-DJAVA_HOME='"$JAVA_HOME"' \
 	-DJAVA_LIB_PATH='"$JAVA_LIB_PATH"' \
 	-I$JAVA_HOME/../include
 CXXFLAGS(linux)=$CXXFLAGS -I$JAVA_HOME/../include/linux
-CXXFLAGS(linux64)=$CXXFLAGS -I$JAVA_HOME/../include/linux-amd64
+CXXFLAGS(linux64)=$CXXFLAGS -I$JAVA_HOME/../include/linux
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
 CXXFLAGS(win32)=$CXXFLAGS -I$JAVA_HOME/../include/win32 $WINOPTS
 CXXFLAGS(win64)=$CXXFLAGS -I$JAVA_HOME/../include/win64 $WINOPTS
