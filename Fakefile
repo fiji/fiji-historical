@@ -52,8 +52,8 @@
 
 # These variables are special, as they will be interpreted by "fake".
 
-# Be verbose
-verbose=true
+# Do not be verbose
+verbose=false
 
 # Usually not necessary
 debug=false
