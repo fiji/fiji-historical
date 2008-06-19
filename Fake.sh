@@ -1,6 +1,10 @@
 #!/bin/sh
 
 CWD="$(dirname "$0")"
+
+test "a$@" != afake.jar -a "$CWD"/fake/Fake.java -nt "$CWD"/fake.jar &&
+sh "$0" fake.jar
+
 test -f "$CWD"/fiji &&
 exec "$CWD"/fiji --fake "$@"
 
