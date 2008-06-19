@@ -203,11 +203,11 @@ public class Fake {
 			});
 
 			addSpecialRule(new Special("clean") {
-				void action() { clean(false); }
+				void action() { cleanAll(false); }
 			});
 
 			addSpecialRule(new Special("clean-dry-run") {
-				void action() { clean(true); }
+				void action() { cleanAll(true); }
 			});
 		}
 
@@ -223,18 +223,11 @@ public class Fake {
 			}
 		}
 
-		protected void clean(boolean dry_run) {
+		protected void cleanAll(boolean dry_run) {
 			Iterator iter = allRules.keySet().iterator();
 			while (iter.hasNext()) {
 				Rule rule = (Rule)allRules.get(iter.next());
-				File file = new File(rule.target);
-				if (file.exists() && !file.isDirectory()) {
-					if (dry_run)
-						System.err.println("rm "
-							+ rule.target);
-					else
-						file.delete();
-				}
+				rule.clean(dry_run);
 			}
 		}
 
@@ -615,6 +608,21 @@ public class Fake {
 				wasAlreadyInvoked = false;
 			}
 
+			protected void clean(boolean dry_run) {
+				clean(target, dry_run);
+			}
+
+			protected void clean(String path, boolean dry_run) {
+				File file = new File(path);
+				if (file.exists() && !file.isDirectory()) {
+					if (dry_run)
+						System.out.println("rm "
+							+ path);
+					else
+						file.delete();
+				}
+			}
+
 			protected void error(String message)
 					throws FakeException {
 				throw new FakeException(message
@@ -897,6 +905,22 @@ public class Fake {
 
 			String getMainClass() {
 				return getVariable("MAINCLASS", target);
+			}
+
+			protected void clean(boolean dry_run) {
+				super.clean(dry_run);
+				Iterator iter;
+				try {
+					iter = java2classFiles(prerequisites,
+							cwd).iterator();
+				} catch (FakeException e) {
+					System.err.println("Warning: could not "
+						+ "find required .class files: "
+						+ this);
+					return;
+				}
+				while (iter.hasNext())
+					clean((String)iter.next(), dry_run);
 			}
 		}
 
