@@ -12,7 +12,7 @@ test "a$@" != afake.jar &&
 test ! -f "$CWD"/fake.jar -o "$CWD"/fake/Fake.java -nt "$CWD"/fake.jar &&
 sh "$0" fake.jar
 
-test "a$@" != afake.jar -a "a$@" != "fiji" &&
+test "a$@" != afake.jar -a "a$@" != afiji &&
 test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe &&
 sh "$0" fiji
 
