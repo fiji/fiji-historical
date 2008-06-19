@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.ByteArrayInputStream;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 import java.net.MalformedURLException;
@@ -1554,6 +1555,10 @@ public class Fake {
 
 	private static String quotables = " \"\'";
 	public static String quoteArg(String arg) {
+		return quoteArg(arg, quotables);
+	}
+
+	public static String quoteArg(String arg, String quotables) {
 		for (int j = 0; j < arg.length(); j++) {
 			char c = arg.charAt(j);
 			if (quotables.indexOf(c) >= 0) {
@@ -1576,22 +1581,34 @@ public class Fake {
 	}
 
 
-	protected static Method jython;
+	protected static Constructor jythonCreate;
+	protected static Method jythonExec, jythonExecfile;
 
 	protected static boolean executePython(String[] args) throws Exception {
-		if (jython == null) try {
+		if (jythonExecfile == null) try {
 			discoverJython();
 			ClassLoader loader = getClassLoader();
-			String className = "org.python.util.jython";
+			String className = "org.python.util.PythonInterpreter";
 			Class main = loader.loadClass(className);
-			Class[] argsType = new Class[] { args.getClass() };
-			jython = main.getMethod("main", argsType);
+			Class[] argsType = new Class[] { };
+			jythonCreate = main.getConstructor(argsType);
+			argsType = new Class[] { args[0].getClass() };
+			jythonExec = main.getMethod("exec", argsType);
+			argsType = new Class[] { args[0].getClass() };
+			jythonExecfile = main.getMethod("execfile", argsType);
 		} catch (Exception e) {
 			return false;
 		}
 
-		/* exits with -1 if there was an error */
-		jython.invoke(null, new Object[] { args });
+		Object instance = jythonCreate.newInstance(new Object[] { });
+		String init = "import sys\n" +
+			"sys.argv = [";
+		for (int i = 0; i < args.length; i++)
+			init += (i > 0 ? ", " : "")
+				+ "\"" + quoteArg(args[i], "\"") + "\"";
+		init += "]\n";
+		jythonExec.invoke(instance, new Object[] { init });
+		jythonExecfile.invoke(instance, new Object[] { args[0] });
 		return true;
 	}
 
