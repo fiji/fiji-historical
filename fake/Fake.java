@@ -845,7 +845,7 @@ public class Fake {
 			String configPath;
 
 			CompileJar(String target, List prerequisites) {
-				super(target, prerequisites);
+				super(target, uniq(prerequisites));
 				configPath = getPluginsConfig();
 			}
 
@@ -1989,6 +1989,20 @@ public class Fake {
 		System.arraycopy(buffer, 0, newBuffer, 0,
 				Math.min(newLength, buffer.length));
 		return newBuffer;
+	}
+
+	public static List uniq(List list) {
+		Set set = new HashSet();
+		List result = new ArrayList();
+		Iterator iter = list.iterator();
+		while (iter.hasNext()) {
+			Object key = iter.next();
+			if (set.contains(key))
+				continue;
+			result.add(key);
+			set.add(key);
+		}
+		return result;
 	}
 
 
