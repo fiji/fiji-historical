@@ -520,6 +520,15 @@ public class Fake {
 			Rule(String target, List prerequisites) {
 				this.target = target;
 				this.prerequisites = prerequisites;
+				try {
+					String name = "TARGET(" + target + ")";
+					if (!variables.containsKey(name))
+						setVariable(name, target);
+					name = "PRE(" + target + ")";
+					if (!variables.containsKey(name))
+						setVariable(name,
+							join(prerequisites));
+				} catch (FakeException e) { /* ignore */ }
 			}
 
 			abstract void action() throws FakeException;
@@ -2002,6 +2011,18 @@ public class Fake {
 			result.add(key);
 			set.add(key);
 		}
+		return result;
+	}
+
+	public static String join(List list) {
+		return join(list, " ");
+	}
+
+	public static String join(List list, String separator) {
+		Iterator iter = list.iterator();
+		String result = iter.hasNext() ? iter.next().toString() : "";
+		while (iter.hasNext())
+			result += separator + iter.next();
 		return result;
 	}
 
