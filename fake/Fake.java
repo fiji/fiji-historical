@@ -392,14 +392,23 @@ public class Fake {
 
 			if (value.indexOf('*') >= 0 ||
 					value.indexOf('?') >= 0) {
-				List files = new ArrayList();
-				if (expandGlob(value, files, cwd) < 1)
-					System.err.println("Warning: "
-						+ "no match for " + value);
-				value = "";
 				String separator = key.equals("CLASSPATH") ||
 					key.startsWith("CLASSPATH(") ?
-					File.pathSeparator : " ";
+					":" : " ";
+				List files = new ArrayList();
+				StringTokenizer tokenizer = new
+					StringTokenizer(value.replace('\t',
+							' '), separator);
+				while (tokenizer.hasMoreTokens()) {
+					String token = tokenizer.nextToken();
+					if (expandGlob(token, files, cwd) < 1)
+						System.err.println("Warning: "
+							+ "no match for "
+							+ token);
+				}
+				value = "";
+				if (separator.equals(":"))
+					separator = File.separator;
 				Iterator iter = files.iterator();
 				while (iter.hasNext())
 					value += separator +
