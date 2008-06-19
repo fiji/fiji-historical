@@ -85,9 +85,10 @@ public class Fake {
 	}
 
 	protected static void discoverJython() throws IOException {
-		String pythonHome = fijiHome + "jars/jython2.2.1/jython.jar";
+		String pythonHome = fijiHome + "jars/jython2.2.1";
 		System.setProperty("python.home", pythonHome);
-		getClassLoader(pythonHome);
+		System.setProperty("python.cachedir.skip", "false");
+		getClassLoader(pythonHome + "/jython.jar");
 	}
 
 	protected static void discoverJavac() throws IOException {
