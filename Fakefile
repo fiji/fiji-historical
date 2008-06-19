@@ -130,9 +130,10 @@ jdk[scripts/checkout-jdk.py $JDK] <-
 
 # From submodules
 ij.jar <- ImageJA/
-plugins/VIB_.jar <- VIB/
+CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar
+plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
 CLASSPATH(plugins/TrakEM2_.jar)=plugins/ij.jar
-plugins/TrakEM2_.jar <- TrakEM2/
+plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar TrakEM2/
 plugins/mpicbg_.jar <- mpicbg/
 
 # From source
