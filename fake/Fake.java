@@ -338,9 +338,13 @@ public class Fake {
 						+ token + "'");
 			}
 
+			String lastPrereq = list.size() == 0 ? null :
+				(String)list.get(list.size() - 1);
+
 			if (allRule == null)
 				rule = allRule = new All(target, list);
-			else if (new File(prerequisites).isDirectory())
+			else if (lastPrereq != null &&
+					new File(lastPrereq).isDirectory())
 				rule = new SubFake(target, list);
 			else if (target.endsWith(".jar")) {
 				if (prerequisites.endsWith(".jar"))
