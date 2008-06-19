@@ -194,15 +194,11 @@ public class Fake {
 			setVariable("platform", getPlatform());
 
 			addSpecialRule(new Special("show-rules") {
-				void action() {
-					List list = new
-						ArrayList(allRules.keySet());
-					Collections.sort(list);
-					Iterator iter = list.iterator();
-					while (iter.hasNext())
-					System.out.println(allRules
-						.get(iter.next()));
-				}
+				void action() { showMap(allRules, false); }
+			});
+
+			addSpecialRule(new Special("show-vars") {
+				void action() { showMap(variables, true); }
 			});
 
 			addSpecialRule(new Special("clean") {
@@ -212,6 +208,18 @@ public class Fake {
 			addSpecialRule(new Special("clean-dry-run") {
 				void action() { clean(true); }
 			});
+		}
+
+		protected void showMap(Map map, boolean showKeys) {
+			List list = new ArrayList(map.keySet());
+			Collections.sort(list);
+			Iterator iter = list.iterator();
+			while (iter.hasNext()) {
+				Object key = iter.next();
+				System.out.println((showKeys ?
+						key.toString() + " = " : "")
+					+ map.get(key));
+			}
 		}
 
 		protected void clean(boolean dry_run) {
