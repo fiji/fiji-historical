@@ -91,8 +91,10 @@ public class Fake {
 	}
 
 	protected static void discoverJavac() throws IOException {
-		getClassLoader(new File(fijiHome + "jars/javac.jar").exists() ?
-			"jars/javac.jar" : "precompiled/javac.jar");
+		String path = fijiHome + "jars/javac.jar";
+		if (!new File(path).exists())
+			path = fijiHome + "precompiled/javac.jar";
+		getClassLoader(path);
 	}
 
 	protected static List discoverJars() throws FakeException {
