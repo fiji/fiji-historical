@@ -8,3 +8,5 @@
 - verify (and add a test) that changed .config files triggers recompiling jars
 - "clean" target: remove .class files, too
 - "clean" target: use the command line to determine which rules to clean for
+- "clean": clean recursively if a "SubFake" exists.
+- check for unknown prerequisites (either a rule exists, or a file)
