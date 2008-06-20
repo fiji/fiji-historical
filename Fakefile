@@ -108,7 +108,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	\
 	misc/Fiji.jar
 
-all <- jdk fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
+all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
 # The "run" rule just executes ./fiji (as long as the file "run" does not exist...)
 # It has items on the right side, because these would be passed to the executable.
@@ -186,12 +186,10 @@ JAVA_LIB_PATH(macosx)=
 # C and C++ programs.
 CXXFLAGS=-DJAVA_HOME='"$JAVA_HOME"' \
 	-DJAVA_LIB_PATH='"$JAVA_LIB_PATH"' \
-	-I$JAVA_HOME/../include
-CXXFLAGS(linux)=$CXXFLAGS -I$JAVA_HOME/../include/linux
-CXXFLAGS(linux64)=$CXXFLAGS -I$JAVA_HOME/../include/linux
+	-Iincludes/
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
-CXXFLAGS(win32)=$CXXFLAGS -I$JAVA_HOME/../include/win32 $WINOPTS
-CXXFLAGS(win64)=$CXXFLAGS -I$JAVA_HOME/../include/win64 $WINOPTS
+CXXFLAGS(win32)=$CXXFLAGS $WINOPTS
+CXXFLAGS(win64)=$CXXFLAGS $WINOPTS
 MACOPTS=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
 	-DMACOSX -mmacosx-version-min=10.4 -arch ppc -arch i386
 CXXFLAGS(macosx)=$CXXFLAGS $MACOPTS
