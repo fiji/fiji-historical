@@ -205,7 +205,6 @@ LIBS(macosx)=-framework CoreFoundation -framework JavaVM
 
 fiji <- fiji.cxx
 
-fiji-tiger-pita <- fiji-tiger-pita.cxx
 fiji-tiger <- fiji.cxx
 
 # Portable application/.app

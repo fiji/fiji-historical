@@ -32,7 +32,6 @@ def make_macosx_app():
 	shutil.copy('Info.plist', 'Fiji.app/Contents/')
 	shutil.copy('fiji', macos + 'fiji-macosx')
 	shutil.copy('precompiled/fiji-tiger', macos)
-	shutil.copy('precompiled/fiji-tiger-pita', macos)
 	for d in ['java', 'plugins', 'macros', 'ij.jar', 'jars', 'misc']:
 		symlink('../../' + d, macos + d)
 	symlink('Contents/Resources', 'Fiji.app/images')

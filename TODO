@@ -1,7 +1,6 @@
 A loose TODO list for Fiji
 ==========================
 
-- merge fiji-tiger-pita into fiji-macosx
 - Albert said that plugins.config-added plugins are not added alphabetically
 - add a plugin finder (a la Google suggest) to the Control Panel, and make
   it wider by default
