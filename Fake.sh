@@ -33,7 +33,7 @@ test -f "$CWD"/fake.jar &&
 java -classpath "$CWD"/fake.jar Fake "$@"
 
 test -f "$CWD"/precompiled/fake.jar &&
-java -classpath "$CWD"/Ãprecompiled/fake.jar Fake "$@"
+java -classpath "$CWD"/precompiled/fake.jar Fake "$@"
 
-javac "$CWD"/fake/Fake.java &&
+javac -source 1.3 -target 1.3 "$CWD"/fake/Fake.java &&
 java -classpath "$CWD"/fake Fake "$@"
