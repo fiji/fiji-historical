@@ -922,9 +922,16 @@ public class Fake {
 
 			protected void clean(boolean dry_run) {
 				super.clean(dry_run);
-				Iterator iter;
+				List javas = new ArrayList();
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String path = (String)iter.next();
+					if (path.endsWith(".java"))
+						javas.add(path);
+				}
+
 				try {
-					iter = java2classFiles(prerequisites,
+					iter = java2classFiles(javas,
 							cwd).iterator();
 				} catch (FakeException e) {
 					System.err.println("Warning: could not "
