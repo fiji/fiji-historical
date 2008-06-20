@@ -22,10 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * Adapted for Fiji, so that it compiles on Windows, Linux and MacOSX.
+ */
 
 #ifndef _JAVASOFT_JNI_MD_H_
 #define _JAVASOFT_JNI_MD_H_
 
+#ifdef WIN32
 #define JNIEXPORT __declspec(dllexport)
 #define JNIIMPORT __declspec(dllimport)
 #define JNICALL __stdcall
@@ -33,5 +37,16 @@
 typedef long jint;
 typedef __int64 jlong;
 typedef signed char jbyte;
+#else
+#define JNIEXPORT
+#define JNIIMPORT
+#define JNICALL
+
+#include <stdint.h>
+
+typedef int8_t jbyte;
+typedef int32_t jint;
+typedef int64_t jlong;
+#endif
 
 #endif /* !_JAVASOFT_JNI_MD_H_ */
