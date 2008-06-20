@@ -13,12 +13,14 @@ MINGW*|CYGWIN*) platform=win32; exe=.exe;;
 esac
 
 test "a$*" != afake.jar &&
-test ! -f "$CWD"/fake.jar -o "$CWD"/fake/Fake.java -nt "$CWD"/fake.jar &&
-sh "$0" fake.jar
+test ! -f "$CWD"/fake.jar -o "$CWD"/fake/Fake.java -nt "$CWD"/fake.jar && {
+	sh "$0" fake.jar || exit
+}
 
 test "a$*" != afake.jar -a "a$*" != afiji &&
-test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe &&
-sh "$0" fiji
+test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
+	sh "$0" fiji || exit
+}
 
 test -f "$CWD"/fiji$exe -a -f "$CWD"/fake.jar &&
 exec "$CWD"/fiji$exe --fake "$@"
