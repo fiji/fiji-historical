@@ -131,13 +131,26 @@ public class Fake {
 		try {
 			Parser parser = new Parser();
 
+			// filter out variable definitions
+			int firstArg = 0;
+			while (firstArg < args.length &&
+					args[firstArg].indexOf('=') >= 0)
+				firstArg++;
+
 			List list = null;
-			if (args.length > 0) {
+			if (args.length > firstArg) {
 				list = new ArrayList();
-				for (int i = 0; i < args.length; i++)
+				for (int i = firstArg; i < args.length; i++)
 					list.add(args[i]);
 			}
 			Parser.Rule all = parser.parseRules(list);
+
+			for (int i = 0; i < firstArg; i++) {
+				int equal = args[i].indexOf('=');
+				parser.setVariable(args[i].substring(0, equal),
+						args[i].substring(equal + 1));
+			}
+
 			all.make();
 		}
 		catch (FakeException e) {
