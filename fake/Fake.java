@@ -222,6 +222,10 @@ public class Fake {
 			addSpecialRule(new Special("clean-dry-run") {
 				void action() { cleanAll(true); }
 			});
+
+			addSpecialRule(new Special("check") {
+				void action() { check(); }
+			});
 		}
 
 		protected void showMap(Map map, boolean showKeys) {
@@ -243,6 +247,41 @@ public class Fake {
 				rule.clean(dry_run);
 			}
 		}
+
+		protected void check() {
+			List list = new ArrayList(allRules.keySet());
+			Collections.sort(list);
+			Iterator iter = list.iterator();
+			while (iter.hasNext()) {
+				Rule rule = (Rule)allRules.get(iter.next());
+				if (rule instanceof All)
+					continue;
+				if (rule instanceof Special)
+					continue;
+				if (rule instanceof SubFake) {
+					System.out.println("Subfake '"
+						+ rule.getLastPrerequisite()
+						+ "' would make '"
+						+ rule.target + "'");
+					continue;
+				}
+				if (rule.upToDate())
+					continue;
+				if (rule instanceof ExecuteProgram) {
+					String program =
+						((ExecuteProgram)rule).program;
+					if (program.equals(""))
+						continue;
+					System.out.println("Program '" + program
+						+ "' would maybe make '"
+						+ rule.target + "'");
+					continue;
+				}
+				System.out.println("'" + rule.target
+						+ "' is not up-to-date");
+			}
+		}
+
 
 		public Rule parseRules(List targets) throws FakeException {
 			Rule result = null;
