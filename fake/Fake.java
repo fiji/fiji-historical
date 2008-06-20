@@ -1667,7 +1667,8 @@ public class Fake {
 		boolean tryFake = new File(fakeFile).exists();
 		if (ignoreMissingFakefiles && !tryFake &&
 				!(new File(directory + "/Makefile").exists())) {
-			System.err.println("Ignore " + directory);
+			if (verbose)
+				System.err.println("Ignore " + directory);
 			return;
 		}
 		System.err.println((tryFake ? "F" : "M") + "aking in "
