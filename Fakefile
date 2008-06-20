@@ -209,7 +209,8 @@ fiji-tiger <- fiji.cxx
 
 # Portable application/.app
 
-app[scripts/make-app.py] <- all
+MACOSX_TIGER_LAUNCHER(macosx)=fiji-tiger
+app[scripts/make-app.py] <- all $MACOSX_TIGER_LAUNCHER
 dmg[scripts/make-dmg.py] <- app
 
 # Fake itself
