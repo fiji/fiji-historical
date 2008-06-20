@@ -20,10 +20,11 @@ test "a$*" != afake.jar -a "a$*" != afiji &&
 test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe &&
 sh "$0" fiji
 
-test -f "$CWD"/fiji$exe &&
+test -f "$CWD"/fiji$exe -a -f "$CWD"/fake.jar &&
 exec "$CWD"/fiji$exe --fake "$@"
 
-test -f "$CWD"/precompiled/fiji-$platform$exe &&
+test -f "$CWD"/precompiled/fiji-$platform$exe \
+	-a -f "$CWD"/precompiled/fake.jar &&
 exec "$CWD"/precompiled/fiji-$platform$exe --fake -- "$@"
 
 test -f "$CWD"/fake.jar &&
