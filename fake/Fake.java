@@ -990,6 +990,25 @@ public class Fake {
 
 			void action() throws FakeException {
 				compileJavas(prerequisites);
+
+				// copy class files, if necessary
+				int slash = target.lastIndexOf('/') + 1;
+				String destPrefix = target.substring(0, slash);
+
+				String prefix = getLastPrerequisite();
+				slash = prefix.lastIndexOf('/') + 1;
+				prefix = prefix.substring(0, slash);
+
+				Iterator iter = java2classFiles(prerequisites,
+						cwd).iterator();
+				while (iter.hasNext()) {
+					String source = (String)iter.next();
+					if (!source.startsWith(prefix))
+						continue;
+					int slash2 = source.lastIndexOf('/');
+					copyFile(source, destPrefix +
+						source.substring(slash), cwd);
+				}
 			}
 		}
 
@@ -1543,11 +1562,16 @@ public class Fake {
 
 	public static void copyFile(String source, String target, File cwd)
 			throws FakeException {
+		if (target.equals(source))
+			return;
 		try {
 			if (!target.startsWith("/"))
 				target = cwd + "/" + target;
 			if (!source.startsWith("/"))
 				source = cwd + "/" + source;
+			File parent = new File(target).getParentFile();
+			if (!parent.exists())
+				parent.mkdirs();
 			OutputStream out = new FileOutputStream(target);
 			InputStream in = new FileInputStream(source);
 			byte[] buffer = new byte[1<<16];
