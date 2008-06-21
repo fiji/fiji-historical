@@ -18,7 +18,7 @@ try:
 
 	def execute(cmd):
 		runtime = Runtime.getRuntime()
-		#p = runtime.exec(cmd)
+		p = runtime.exec(cmd)
 		p.outputStream.close()
 		result=""
 		reader=BufferedReader(InputStreamReader(p.inputStream))
