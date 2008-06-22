@@ -1,6 +1,8 @@
 A loose TODO list for Fiji
 ==========================
 
+- teach ImageJA to use getTitle() when quitting, instead of hard-coding it
+- use the headless.jar trick to compile MacAdapter.source in ImageJA
 - Albert said that plugins.config-added plugins are not added alphabetically
 - add a plugin finder (a la Google suggest) to the Control Panel, and make
   it wider by default
