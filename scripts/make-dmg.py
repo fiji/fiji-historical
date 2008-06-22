@@ -11,7 +11,7 @@ if 'symlink' in dir(os):
 		os.symlink(src, dest)
 else:
 	def symlink(src, dest):
-		os.system('ln -s ' + src + ' ' + dest)
+		os.system("ln -s '" + src + "' '" + dest + "'")
 try:
 	from java.lang import Runtime
 	from java.io import BufferedReader, InputStreamReader
