@@ -21,6 +21,13 @@ if 'symlink' in dir(os):
 else:
 	def symlink(src, dest):
 		os.system('ln -s ' + src + " " + dest)
+if 'chmod' in dir(os):
+	def chmod(path, mode):
+		os.chmod(path, mode)
+else:
+	def chmod(path, mode):
+		os.system('chmod ' + ('%o' % mode) + ' ' + path)
+
 def make_macosx_app():
 	print 'Making app'
 	if os.path.isdir('Fiji.app'):
@@ -31,7 +38,9 @@ def make_macosx_app():
 	os.makedirs(resources)
 	shutil.copy('Info.plist', 'Fiji.app/Contents/')
 	shutil.copy('fiji', macos + 'fiji-macosx')
-	shutil.copy('precompiled/fiji-tiger', macos)
+	chmod(macos + 'fiji-macosx', 0755)
+	shutil.copy('fiji-tiger', macos)
+	chmod(macos + 'fiji-tiger', 0755)
 	for d in ['java', 'plugins', 'macros', 'ij.jar', 'jars', 'misc']:
 		symlink('../../' + d, macos + d)
 	symlink('Contents/Resources', 'Fiji.app/images')
