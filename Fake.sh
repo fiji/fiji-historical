@@ -6,7 +6,7 @@ case "$(uname -s)" in
 Darwin) platform=macosx; exe=;;
 Linux)
 	 case "$(uname -m)" in
-		x86_64) platform=linux-amd64;;
+		x86_64) platform=linux64;;
 		*) platform=linux;;
 	esac; exe=;;
 MINGW*|CYGWIN*) platform=win32; exe=.exe;;

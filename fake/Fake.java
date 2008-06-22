@@ -1022,9 +1022,16 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
-				List out = new ArrayList();
+				try {
+					action(prerequisites.iterator());
+				} catch (IOException e) {
+					fallBackToPrecompiled(e.getMessage());
+				}
+			}
 
-				Iterator iter = prerequisites.iterator();
+			void action(Iterator iter)
+					throws IOException, FakeException {
+				List out = new ArrayList();
 				while (iter.hasNext()) {
 					String path = (String)iter.next();
 					if (path.endsWith(".c")) {
@@ -1046,35 +1053,31 @@ public class Fake {
 				arguments.addAll(splitCommandLine(value));
 			}
 
-			String compileCXX(String path) throws FakeException {
+			String compileCXX(String path)
+					throws IOException, FakeException {
 				linkCPlusPlus = true;
+				return compile(path, "g++", "CXXFLAGS");
+			}
+
+			String compileC(String path)
+					throws IOException, FakeException {
+				return compile(path, "gcc", "CFLAGS");
+			}
+
+			String compile(String path, String compiler,
+					String flags)
+					throws IOException, FakeException {
 				List arguments = new ArrayList();
-				arguments.add("g++");
+				arguments.add(compiler);
 				arguments.add("-c");
-				addFlags("CXXFLAGS", path, arguments);
+				addFlags(flags, path, arguments);
 				arguments.add(path);
 				try {
 					execute(arguments, path,
 						getVarBool("VERBOSE", path));
 					return path.substring(0,
 						path.length() - 4) + ".o";
-				} catch(Exception e) {
-					return error("compile", path, e);
-				}
-			}
-
-			String compileC(String path) throws FakeException {
-				List arguments = new ArrayList();
-				arguments.add("gcc");
-				arguments.add("-c");
-				addFlags("CFLAGS", path, arguments);
-				arguments.add(path);
-				try {
-					execute(arguments, path,
-						getVarBool("VERBOSE", path));
-					return path.substring(0,
-						path.length() - 2) + ".o";
-				} catch(Exception e) {
+				} catch(FakeException e) {
 					return error("compile", path, e);
 				}
 			}
@@ -1082,11 +1085,7 @@ public class Fake {
 			void link(String target, List objects)
 					throws FakeException {
 				File file = new File(target);
-				if (file.exists() && !file.delete() &&
-						!file.renameTo(new File(target
-							+ ".old")))
-					error("Could not move " + target
-						+ "out of the way before link");
+				moveFileOutOfTheWay(file);
 				List arguments = new ArrayList();
 				arguments.add(linkCPlusPlus ? "g++" : "gcc");
 				arguments.add("-o");
@@ -1100,6 +1099,30 @@ public class Fake {
 				} catch(Exception e) {
 					error("link", target, e);
 				}
+			}
+
+			void fallBackToPrecompiled(String reason)
+					throws FakeException {
+				String precompiled =
+					getVar("PRECOMPILEDDIRECTORY");
+				if (precompiled == null)
+					error(reason);
+				System.err.println("Falling back to copying "
+					+ target + " from " + precompiled);
+				File file = new File(makePath(cwd, target));
+				if (!precompiled.endsWith("/"))
+					precompiled += "/";
+				String source =
+					precompiled + file.getName();
+				if (!new File(source).exists())
+					source += "-" + getPlatform();
+				moveFileOutOfTheWay(makePath(cwd, target));
+				copyFile(source, target, cwd);
+				if (!getPlatform().startsWith("win")) try {
+					/* avoid Java6-ism */
+					Runtime.getRuntime().exec(new String[]
+						{ "chmod", "0755", target});
+				} catch (Exception e) { /* ignore */ }
 			}
 
 			String error(String action, String file, Exception e)
@@ -1485,10 +1508,7 @@ public class Fake {
 			 * results in a crash.
 			 */
 			String origPath = null;
-			if (new File(path).exists() &&
-					!new File(path).delete() &&
-					!new File(path).renameTo(new File(path
-							+ ".old"))) {
+			if (moveFileOutOfTheWay(path)) {
 				origPath = path;
 				path += ".new";
 			}
@@ -1614,24 +1634,24 @@ public class Fake {
 
 	// the parameter "file" is only used to set the cwd
 	protected static void execute(List arguments, String file,
-			boolean verbose) throws Exception {
+			boolean verbose) throws IOException, FakeException {
 		execute(arguments, new File(file).getParentFile(), verbose);
 	}
 
 	protected static void execute(String[] args, String file,
-			boolean verbose) throws Exception {
+			boolean verbose) throws IOException, FakeException {
 		execute(args, new File(file).getParentFile(), verbose);
 	}
 
 	protected static void execute(List arguments, File dir, boolean verbose)
-			throws Exception {
+			throws IOException, FakeException {
 		String[] args = new String[arguments.size()];
 		arguments.toArray(args);
 		execute(args, dir, verbose);
 	}
 
 	protected static void execute(String[] args, File dir, boolean verbose)
-			throws Exception {
+			throws IOException, FakeException {
 		if (verbose) {
 			String output = "Executing:";
 			for (int i = 0; i < args.length; i++)
@@ -1658,7 +1678,12 @@ public class Fake {
 		Process proc = Runtime.getRuntime().exec(args, null, dir);
 		new StreamDumper(proc.getErrorStream(), System.err).start();
 		new StreamDumper(proc.getInputStream(), System.out).start();
-		proc.waitFor();
+		try {
+			proc.waitFor();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			throw new FakeException(e.getMessage());
+		}
 		int exitValue = proc.exitValue();
 		if (exitValue != 0)
 			throw new FakeException("Failed: " + exitValue);
@@ -1695,7 +1720,7 @@ public class Fake {
 	protected static Constructor jythonCreate;
 	protected static Method jythonExec, jythonExecfile;
 
-	protected static boolean executePython(String[] args) throws Exception {
+	protected static boolean executePython(String[] args) {
 		if (jythonExecfile == null) try {
 			discoverJython();
 			ClassLoader loader = getClassLoader();
@@ -1711,15 +1736,21 @@ public class Fake {
 			return false;
 		}
 
-		Object instance = jythonCreate.newInstance(new Object[] { });
-		String init = "import sys\n" +
-			"sys.argv = [";
-		for (int i = 0; i < args.length; i++)
-			init += (i > 0 ? ", " : "")
-				+ "\"" + quoteArg(args[i], "\"") + "\"";
-		init += "]\n";
-		jythonExec.invoke(instance, new Object[] { init });
-		jythonExecfile.invoke(instance, new Object[] { args[0] });
+		try {
+			Object instance =
+				jythonCreate.newInstance(new Object[] { });
+			String init = "import sys\n" +
+				"sys.argv = [";
+			for (int i = 0; i < args.length; i++)
+				init += (i > 0 ? ", " : "")
+					+ "\"" + quoteArg(args[i], "\"") + "\"";
+			init += "]\n";
+			jythonExec.invoke(instance, new Object[] { init });
+			jythonExecfile.invoke(instance,
+					new Object[] { args[0] });
+		} catch (Exception e) {
+			return false;
+		}
 		return true;
 	}
 
@@ -2175,6 +2206,20 @@ public class Fake {
 		return result;
 	}
 
+	static boolean moveFileOutOfTheWay(String file) throws FakeException {
+		return moveFileOutOfTheWay(new File(file));
+	}
+
+	static boolean moveFileOutOfTheWay(File file) throws FakeException {
+		if (!file.exists())
+			return false;
+		if (file.delete())
+			return false;
+		if (file.renameTo(new File(file.getPath() + ".old")))
+			return true;
+		throw new FakeException("Could not move " + file
+				+ " out of the way");
+	}
 
 
 	// our very own exception
