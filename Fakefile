@@ -1,7 +1,5 @@
 # TODO: micromanager
 # TODO: precompiled/*
-# TODO: tiger stuff
-# TODO: fallback to copying from precompiled/ when submodule was not checked out
 
 # This is a configuration file for Fiji mAKE ("fake")
 #
