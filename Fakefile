@@ -134,6 +134,7 @@ CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar
 plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
 CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar
 plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar TrakEM2/
+CLASSPATH(plugins/mpicbg_.jar)=jars/imagescience.jar
 plugins/mpicbg_.jar <- mpicbg/
 
 # From source
