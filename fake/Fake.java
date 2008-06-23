@@ -605,7 +605,7 @@ public class Fake {
 
 			boolean upToDate() {
 				// this implements the mtime check
-				File file = new File(cwd, target);
+				File file = new File(makePath(cwd, target));
 				if (!file.exists()) {
 					nonUpToDates = prerequisites;
 					return false;
@@ -616,7 +616,8 @@ public class Fake {
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
 					String prereq = (String)iter.next();
-					if (new File(prereq).lastModified()
+					String path = makePath(cwd, prereq);
+					if (new File(path).lastModified()
 							> targetModifiedTime)
 						nonUpToDates.add(prereq);
 				}
