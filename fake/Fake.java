@@ -945,7 +945,7 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
-				compileJavas(nonUpToDates);
+				compileJavas(prerequisites);
 				List files =
 					java2classFiles(prerequisites, cwd);
 				makeJar(target, getMainClass(), files, cwd,
