@@ -137,7 +137,7 @@ plugins/mpicbg_.jar <- mpicbg/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.3
-misc/Fiji.jar <- src-plugins/fiji/*.java
+misc/Fiji.jar <- src-plugins/fiji/*.java src-plugins/ij/**/*.java
 
 # These classes are common
 COMMON=src-plugins/common/**/*.java
