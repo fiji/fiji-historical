@@ -173,6 +173,7 @@ jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
 	src-plugins/com/sun/tools/javac/**/*.properties \
 	src-plugins/com/sun/tools/javac/**/*.JavaCompilerTool \
 	src-plugins/com/sun/source/**/*.java \
+	src-plugins/javax/**/*.java
 
 # Fiji launcher
 
