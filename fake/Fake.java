@@ -371,7 +371,8 @@ public class Fake {
 						continue;
 					if (!filter.accept(null, target))
 						continue;
-					rule = addRule(target + program,
+					rule = addRule(target
+						+ filter.replace(program),
 						filter.replace(prerequisites));
 				}
 				return rule;
