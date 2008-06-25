@@ -3,35 +3,11 @@
 import os
 import re
 
+from compat import symlink, execute
+
 dmg='fiji-macosx.dmg'
 app='Fiji.app'
 
-if 'symlink' in dir(os):
-	def symlink(src, dest):
-		os.symlink(src, dest)
-else:
-	def symlink(src, dest):
-		os.system("ln -s '" + src + "' '" + dest + "'")
-try:
-	from java.lang import Runtime
-	from java.io import BufferedReader, InputStreamReader
-
-	def execute(cmd):
-		runtime = Runtime.getRuntime()
-		p = runtime.exec(cmd)
-		p.outputStream.close()
-		result=""
-		reader=BufferedReader(InputStreamReader(p.inputStream))
-		while True:
-			line=reader.readLine()
-			if line == None:
-				break
-			result+=line + "\n"
-		return result
-except:
-	def execute(cmd):
-		proc = os.popen(cmd)
-		return "\n".join(proc.readlines())
 def hdiutil(cmd):
 	print cmd
 	os.system('hdiutil ' + cmd)
