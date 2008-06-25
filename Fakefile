@@ -201,6 +201,7 @@ LDFLAGS(macosx)=$LDFLAGS $MACOPTS
 # and only on MacOSX
 MACOSX_64BIT_ARCHS(macosx)=-arch ppc64 -arch x86_64
 CXXFLAGS(fiji)=$CXXFLAGS $MACOSX_64BIT_ARCHS
+LDFLAGS(fiji)=$CXXFLAGS $MACOSX_64BIT_ARCHS
 
 LIBS(linux)=-ldl
 LIBS(linux64)=-ldl
