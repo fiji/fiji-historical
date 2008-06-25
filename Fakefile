@@ -211,6 +211,27 @@ fiji <- fiji.cxx
 
 fiji-tiger <- fiji.cxx
 
+# Precompiled stuff
+
+LAUNCHER=precompiled/fiji-$PLATFORM
+LAUNCHER(macosx)=$LAUNCHER precompiled/fiji-tiger
+precompile-fiji[] <- $LAUNCHER
+
+precompiled/fiji-tiger[scripts/copy-file.py $PRE $TARGET] <- fiji-tiger
+# this rule only matches precompiled/fiji-$PLATFORM
+precompiled/fiji-*[scripts/copy-file.py $PRE $TARGET] <- fiji
+
+precompile-fake[] <- precompiled/fake.jar
+precompiled/*[scripts/copy-file.py $PRE $TARGET] <- *
+
+precompile-submodules[] <- precompiled/ij.jar precompiled/TrakEM2_.jar \
+	precompiled/VIB_.jar precompiled/mpicbg_.jar
+
+precompiled/ij.jar[scripts/copy-file.py $PRE $TARGET] <- ij.jar
+precompiled/*[scripts/copy-file.py $PRE $TARGET] <- plugins/*
+
+precompile[] <- precompile-fiji precompile-fake precompile-submodules
+
 # Portable application/.app
 
 all-apps[] <- app-macosx app-linux app-linux64 app-win32 app-win64
