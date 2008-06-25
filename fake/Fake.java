@@ -355,6 +355,12 @@ public class Fake {
 			Rule rule = null;
 
 			if (target.indexOf('*') >= 0) {
+				int bracket = target.indexOf('[');
+				String program = "";
+				if (bracket >= 0) {
+					program = target.substring(bracket);
+					target = target.substring(0, bracket);
+				}
 				GlobFilter filter = new GlobFilter(target);
 				Iterator iter = new ArrayList(allPrerequisites)
 					.iterator();
@@ -365,7 +371,7 @@ public class Fake {
 						continue;
 					if (!filter.accept(null, target))
 						continue;
-					rule = addRule(target,
+					rule = addRule(target + program,
 						filter.replace(prerequisites));
 				}
 				return rule;
