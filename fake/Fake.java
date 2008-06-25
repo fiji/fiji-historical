@@ -1754,6 +1754,9 @@ public class Fake {
 					+ "\"" + quoteArg(args[i], "\"") + "\"";
 			init += "]\n";
 			jythonExec.invoke(instance, new Object[] { init });
+			String sysPath = "sys.path.insert(0, '"
+				+ new File(args[0]).getParent() + "')";
+			jythonExec.invoke(instance, new Object[] { sysPath });
 			jythonExecfile.invoke(instance,
 					new Object[] { args[0] });
 		} catch (InvocationTargetException e) {
