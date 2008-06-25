@@ -201,6 +201,7 @@ LDFLAGS(macosx)=$LDFLAGS $MACOPTS
 # and only on MacOSX
 MACOSX_64BIT_ARCHS(macosx)=-arch ppc64 -arch x86_64
 CXXFLAGS(fiji)=$CXXFLAGS $MACOSX_64BIT_ARCHS
+LDFLAGS(fiji)=$CXXFLAGS $MACOSX_64BIT_ARCHS
 
 LIBS(linux)=-ldl
 LIBS(linux64)=-ldl
@@ -210,11 +211,49 @@ fiji <- fiji.cxx
 
 fiji-tiger <- fiji.cxx
 
+# Precompiled stuff
+
+LAUNCHER=precompiled/fiji-$PLATFORM
+LAUNCHER(macosx)=$LAUNCHER precompiled/fiji-tiger
+precompile-fiji[] <- $LAUNCHER
+
+precompiled/fiji-tiger[scripts/copy-file.py $PRE $TARGET] <- fiji-tiger
+# this rule only matches precompiled/fiji-$PLATFORM
+precompiled/fiji-*[scripts/copy-file.py $PRE $TARGET] <- fiji
+
+precompile-fake[] <- precompiled/fake.jar
+precompiled/*[scripts/copy-file.py $PRE $TARGET] <- *
+
+precompile-submodules[] <- precompiled/ij.jar precompiled/TrakEM2_.jar \
+	precompiled/VIB_.jar precompiled/mpicbg_.jar
+
+precompiled/ij.jar[scripts/copy-file.py $PRE $TARGET] <- ij.jar
+precompiled/*[scripts/copy-file.py $PRE $TARGET] <- plugins/*
+
+precompile[] <- precompile-fiji precompile-fake precompile-submodules
+
 # Portable application/.app
 
+all-apps[] <- app-macosx app-linux app-linux64 app-win32 app-win64
 MACOSX_TIGER_LAUNCHER(macosx)=fiji-tiger
-app[scripts/make-app.py] <- all $MACOSX_TIGER_LAUNCHER
-dmg[scripts/make-dmg.py] <- app
+app-*[scripts/make-app.py * $PLATFORM] <- all $MACOSX_TIGER_LAUNCHER
+
+app-all[scripts/make-app.py all $PLATFORM] <- all
+app-nojre[scripts/make-app.py nojre $PLATFORM] <- all
+
+all-dmgs[] <- fiji-macosx.dmg
+fiji-*.dmg[scripts/make-dmg.py] <- app-*
+dmg[] <- fiji-macosx.dmg
+
+all-tars[] <- fiji-linux.tar.bz2 fiji-linux64.tar.bz2 \
+	fiji-all.tar.bz2 fiji-nojre.tar.bz2
+fiji-*.tar.bz2[scripts/make-tar.py $TARGET Fiji.app] <- app-*
+tar[] <- fiji-$PLATFORM.tar.bz2
+
+all-zips[] <- fiji-linux.zip fiji-linux64.zip fiji-win32.zip fiji-win64.zip \
+	fiji-all.zip fiji-nojre.zip
+fiji-*.zip[scripts/make-zip.py $TARGET Fiji.app] <- app-*
+zip[] <- fiji-$PLATFORM.zip
 
 # Fake itself
 
