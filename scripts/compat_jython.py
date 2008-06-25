@@ -22,10 +22,23 @@ if 'chmod' in dir(os):
 else:
 	def chmod(path, mode):
 		os.system('chmod ' + ('%o' % mode) + ' ' + path)
+try:
+	from java.lang import Runtime
+	from java.io import BufferedReader, InputStreamReader
 
-if os.name == 'java':
-	from compat_jython import execute
-else:
+	def execute(cmd):
+		runtime = Runtime.getRuntime()
+		p = runtime.exec(cmd)
+		p.outputStream.close()
+		result=""
+		reader=BufferedReader(InputStreamReader(p.inputStream))
+		while True:
+			line=reader.readLine()
+			if line == None:
+				break
+			result+=line + "\n"
+		return result
+except:
 	def execute(cmd):
 		proc = os.popen(cmd)
 		return "\n".join(proc.readlines())
