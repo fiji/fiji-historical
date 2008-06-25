@@ -5,7 +5,10 @@
 /jvm.cfg
 *.swp
 /IJ_Prefs.txt
-/Fiji.app*
+/Fiji.app
+/fiji-*.dmg
+/fiji-*.zip
+/fiji-*.tar.bz2
 *~
 /MMConfig_demo.cfg
 /MMStartup.bsh
