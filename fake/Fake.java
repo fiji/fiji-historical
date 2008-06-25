@@ -11,6 +11,7 @@ import java.io.PrintStream;
 import java.io.ByteArrayInputStream;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.net.MalformedURLException;
@@ -1720,7 +1721,8 @@ public class Fake {
 	protected static Constructor jythonCreate;
 	protected static Method jythonExec, jythonExecfile;
 
-	protected static boolean executePython(String[] args) {
+	protected static boolean executePython(String[] args)
+			throws FakeException {
 		if (jythonExecfile == null) try {
 			discoverJython();
 			ClassLoader loader = getClassLoader();
@@ -1748,6 +1750,9 @@ public class Fake {
 			jythonExec.invoke(instance, new Object[] { init });
 			jythonExecfile.invoke(instance,
 					new Object[] { args[0] });
+		} catch (InvocationTargetException e) {
+			e.getTargetException().printStackTrace();
+			throw new FakeException("Jython failed");
 		} catch (Exception e) {
 			return false;
 		}
