@@ -19,7 +19,6 @@ A loose TODO list for Fiji
 - add current BioFormats.
 - maybe make a live CD from detaolb or some such
 - maybe change the path of IJ_Prefs.txt also on other platforms than Win32?
-- make absolute path from argv0 in get_fiji_dir().
 - in ImageJA: add Experts- and Simplified views to the GenericDialog.
 - in ImageJA: is there a way to have a FileField in GenericDialog?
 - in ImageJA: add isCanceled() method to SaveDialog.

@@ -11,6 +11,7 @@ import java.io.PrintStream;
 import java.io.ByteArrayInputStream;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.net.MalformedURLException;
@@ -354,6 +355,12 @@ public class Fake {
 			Rule rule = null;
 
 			if (target.indexOf('*') >= 0) {
+				int bracket = target.indexOf('[');
+				String program = "";
+				if (bracket >= 0) {
+					program = target.substring(bracket);
+					target = target.substring(0, bracket);
+				}
 				GlobFilter filter = new GlobFilter(target);
 				Iterator iter = new ArrayList(allPrerequisites)
 					.iterator();
@@ -364,7 +371,8 @@ public class Fake {
 						continue;
 					if (!filter.accept(null, target))
 						continue;
-					rule = addRule(target,
+					rule = addRule(target
+						+ filter.replace(program),
 						filter.replace(prerequisites));
 				}
 				return rule;
@@ -1720,7 +1728,8 @@ public class Fake {
 	protected static Constructor jythonCreate;
 	protected static Method jythonExec, jythonExecfile;
 
-	protected static boolean executePython(String[] args) {
+	protected static boolean executePython(String[] args)
+			throws FakeException {
 		if (jythonExecfile == null) try {
 			discoverJython();
 			ClassLoader loader = getClassLoader();
@@ -1746,8 +1755,14 @@ public class Fake {
 					+ "\"" + quoteArg(args[i], "\"") + "\"";
 			init += "]\n";
 			jythonExec.invoke(instance, new Object[] { init });
+			String sysPath = "sys.path.insert(0, '"
+				+ new File(args[0]).getParent() + "')";
+			jythonExec.invoke(instance, new Object[] { sysPath });
 			jythonExecfile.invoke(instance,
 					new Object[] { args[0] });
+		} catch (InvocationTargetException e) {
+			e.getTargetException().printStackTrace();
+			throw new FakeException("Jython failed");
 		} catch (Exception e) {
 			return false;
 		}

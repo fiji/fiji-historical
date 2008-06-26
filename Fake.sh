@@ -39,6 +39,8 @@ test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
 test -f "$CWD"/fiji$exe -a -f "$CWD"/fake.jar &&
 (test ! -z "$can_overwrite_in_use_files" ||
  test "a$targets" != afake.jar -a "a$targets" != afiji ) &&
+test ! -f "$CWD"/precompiled/fake.jar -o \
+	"$CWD"/fake.jar -nt "$CWD"/precompiled/fake.jar &&
 exec "$CWD"/fiji$exe --fake "$@"
 
 test -f "$CWD"/precompiled/fiji-$platform$exe \
