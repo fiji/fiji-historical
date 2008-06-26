@@ -242,17 +242,17 @@ app-all[scripts/make-app.py all $PLATFORM] <- all
 app-nojre[scripts/make-app.py nojre $PLATFORM] <- all
 
 all-dmgs[] <- fiji-macosx.dmg
-fiji-*.dmg[scripts/make-dmg.py] <- app-*
+fiji-*.dmg[scripts/make-dmg.py] <- app-* Fiji.app
 dmg[] <- fiji-macosx.dmg
 
 all-tars[] <- fiji-linux.tar.bz2 fiji-linux64.tar.bz2 \
 	fiji-all.tar.bz2 fiji-nojre.tar.bz2
-fiji-*.tar.bz2[scripts/make-tar.py $TARGET Fiji.app] <- app-*
+fiji-*.tar.bz2[scripts/make-tar.py $TARGET Fiji.app] <- app-* Fiji.app
 tar[] <- fiji-$PLATFORM.tar.bz2
 
 all-zips[] <- fiji-linux.zip fiji-linux64.zip fiji-win32.zip fiji-win64.zip \
 	fiji-all.zip fiji-nojre.zip
-fiji-*.zip[scripts/make-zip.py $TARGET Fiji.app] <- app-*
+fiji-*.zip[scripts/make-zip.py $TARGET Fiji.app] <- app-* Fiji.app
 zip[] <- fiji-$PLATFORM.zip
 
 # Fake itself
