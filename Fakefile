@@ -1,5 +1,4 @@
 # TODO: micromanager
-# TODO: precompiled/*
 
 # This is a configuration file for Fiji mAKE ("fake")
 #
