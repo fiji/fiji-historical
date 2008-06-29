@@ -506,12 +506,19 @@ public class Fake {
 
 				int end = dollar + 1;
 				while (end < value.length() &&
-						isAlnum(value.charAt(end)))
+						isVarChar(value.charAt(end)))
 					end++;
 				String name = value.substring(dollar + 1, end);
-				String substitute =
-					getVariable(name.toUpperCase(),
+				int paren = name.indexOf('(');
+				String substitute;
+				if (paren < 0)
+					substitute =
+						getVariable(name.toUpperCase(),
 						subkey, subkey2);
+				else
+					substitute = (String)variables.get(
+					name.substring(0, paren).toUpperCase()
+					+ name.substring(paren));
 				if (substitute == null)
 					substitute = "";
 				value = value.substring(0, dollar)
@@ -522,9 +529,10 @@ public class Fake {
 			}
 		}
 
-		public boolean isAlnum(char c) {
+		public boolean isVarChar(char c) {
 			return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-				|| (c >= '0' && c <= '9') || c == '_';
+				|| (c >= '0' && c <= '9') || c == '_'
+				|| c == '(' || c == ')';
 		}
 
 		public void checkVariableNames() throws FakeException {
