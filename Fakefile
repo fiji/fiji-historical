@@ -211,8 +211,9 @@ fiji-tiger <- fiji.cxx
 
 # Cross-compiling (works only on Linux64 so far)
 
-all-cross[] <- cross-win32 cross-tiger
+all-cross[] <- cross-win32 cross-win64 cross-tiger
 
+cross-win64[scripts/cross-compiler.py win64 $CXXFLAGS(win64)] <- fiji.cxx
 cross-tiger[scripts/chrooted-cross-compiler.sh tiger \
 	$CXXFLAGS(macosx) $LIBS(macosx)] <- fiji.cxx
 cross-*[scripts/chrooted-cross-compiler.sh * $CXXFLAGS(*)] <- fiji.cxx
