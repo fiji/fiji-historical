@@ -1243,11 +1243,11 @@ public class Fake {
 			int index = name.indexOf(wildcardPattern);
 			if (index < 0)
 				return name;
-			return name.substring(0, index)
+			return replace(name.substring(0, index)
 				+ lastMatch.substring(firstWildcardIndex,
 					lastMatch.length() - suffixLength)
 				+ name.substring(index
-					+ wildcardPattern.length());
+					+ wildcardPattern.length()));
 		}
 
 		public List replace(List names) throws FakeException {
