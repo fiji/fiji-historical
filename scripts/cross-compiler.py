@@ -14,12 +14,13 @@ if sys.argv[1] != 'win64':
 
 cxx = 'root-x86_64-pc-linux/bin/x86_64-pc-mingw32-g++'
 strip = 'root-x86_64-pc-linux/bin/x86_64-pc-mingw32-strip'
+target = 'precompiled/fiji-win64.exe'
 
 if not os.path.exists(cxx):
 	print "You need to install the mingw64 cross compiler into", cxx
 	sys.exit(1)
 
 quoted_args = ' '.join(sys.argv[2:]).replace("'", '"').replace('"', '\"')
-print(cxx + ' -o fiji-win64.exe ' + quoted_args + ' fiji.cxx')
-print execute(cxx + ' -o fiji-win64.exe ' + quoted_args + ' fiji.cxx')
-print execute(strip + ' fiji-win64.exe')
+print(cxx + ' -o ' + target + ' ' + quoted_args + ' fiji.cxx')
+print execute(cxx + ' -o ' + target + ' ' + quoted_args + ' fiji.cxx')
+print execute(strip + ' ' + target)

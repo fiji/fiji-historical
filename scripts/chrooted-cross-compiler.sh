@@ -81,4 +81,4 @@ dchroot "$CXX -o \"$TARGET\" $QUOTED_ARGS $SOURCE"
 
 test -z "$STRIP" || dchroot "$STRIP \"$TARGET\""
 
-cp $CHROOT/$CHROOT_HOME/"$TARGET" ./
+cp $CHROOT/$CHROOT_HOME/"$TARGET" ./precompiled/
