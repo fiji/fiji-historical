@@ -396,6 +396,19 @@ public class Fake {
 
 			if (allRule == null)
 				rule = allRule = new All(target, list);
+			else if (target.endsWith("]")) {
+				int paren = target.indexOf('[');
+
+				if (paren < 0)
+					throw new FakeException("Invalid rule");
+
+				String program = target.substring(paren + 1,
+					target.length() - 1);
+				target = target.substring(0, paren).trim();
+
+				rule = new ExecuteProgram(target, list,
+					program);
+			}
 			else if (lastPrereq != null &&
 					new File(lastPrereq).isDirectory())
 				rule = new SubFake(target, list);
@@ -410,20 +423,6 @@ public class Fake {
 				rule = new CompileCProgram(target, list);
 			else if (target.endsWith(".class"))
 				rule = new CompileClass(target, list);
-			else if (target.endsWith("]")) {
-				int paren = target.indexOf('[');
-
-				if (paren < 0)
-					throw new FakeException("Invalid rule");
-
-				String program = target.substring(paren + 1,
-					target.length() - 1);
-				target = target.substring(0, paren).trim();
-
-				rule = new ExecuteProgram(target, list,
-					program);
-			}
-
 			if (rule == null)
 				throw new FakeException("Unrecognized rule");
 
