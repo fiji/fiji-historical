@@ -32,11 +32,19 @@ try:
 		p.outputStream.close()
 		result=""
 		reader=BufferedReader(InputStreamReader(p.inputStream))
+		errorReader=BufferedReader(InputStreamReader(p.errorStream))
 		while True:
+			if p.errorStream.available() > 0:
+				print errorReader.readLine()
 			line=reader.readLine()
 			if line == None:
 				break
 			result+=line + "\n"
+		while True:
+			line = errorReader.readLine()
+			if line == None:
+				break
+			print line
 		return result
 except:
 	def execute(cmd):
