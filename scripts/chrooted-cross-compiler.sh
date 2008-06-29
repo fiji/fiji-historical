@@ -45,4 +45,40 @@ dchroot sudo apt-get install gcc libcurl3-openssl-dev make \
 	git checkout -b fiji origin/fiji
  fi)
 
+test -f $CHROOT/opt/mac/bin/i686-apple-darwin8-g++ \
+	-a -f $CHROOT/usr/local/bin/i386-mingw32-g++ ||
 dchroot "cd IMCROSS && sudo make fiji"
+
+SOURCE=fiji.cxx
+STRIP=
+PLATFORM="$1"; shift
+case "$PLATFORM" in
+win32)
+	CXX=/usr/local/bin/i386-mingw32-g++
+	STRIP=/usr/local/bin/i386-mingw32-strip
+	TARGET=fiji-win32.exe
+;;
+tiger)
+	CXX=/opt/mac/bin/i686-apple-darwin8-g++
+	TARGET=fiji-tiger
+;;
+*)
+	echo "Unknown platform: $PLATFORM!" >&2
+	exit 1
+;;
+esac
+
+test "a$1" = "a-o" && {
+	TARGET="$2"
+	shift; shift
+}
+
+QUOTED_ARGS="$(echo "$*" | sed 's/"/\\"/g')"
+
+cp -R $SOURCE includes $CHROOT/$CHROOT_HOME/
+
+dchroot "$CXX -o \"$TARGET\" $QUOTED_ARGS $SOURCE"
+
+test -z "$STRIP" || dchroot "$STRIP \"$TARGET\""
+
+cp $CHROOT/$CHROOT_HOME/"$TARGET" ./

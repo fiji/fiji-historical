@@ -183,9 +183,8 @@ JAVA_LIB_PATH(macosx)=
 
 # The variables CFLAGS, CXXFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
-CXXFLAGS=-DJAVA_HOME='"$JAVA_HOME"' \
-	-DJAVA_LIB_PATH='"$JAVA_LIB_PATH"' \
-	-Iincludes
+CXXFLAGS(*)=-Iincludes \
+	-DJAVA_HOME='"$JAVA_HOME"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
 CXXFLAGS(win32)=$CXXFLAGS $WINOPTS
 CXXFLAGS(win64)=$CXXFLAGS $WINOPTS
@@ -209,6 +208,14 @@ LIBS(macosx)=-framework CoreFoundation -framework JavaVM
 fiji <- fiji.cxx
 
 fiji-tiger <- fiji.cxx
+
+# Cross-compiling (works only on Linux64 so far)
+
+all-cross[] <- cross-win32 cross-tiger
+
+cross-tiger[scripts/chrooted-cross-compiler.sh tiger \
+	$CXXFLAGS(macosx) $LIBS(macosx)] <- fiji.cxx
+cross-*[scripts/chrooted-cross-compiler.sh * $CXXFLAGS(*)] <- fiji.cxx
 
 # Precompiled stuff
 
