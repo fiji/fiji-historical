@@ -450,10 +450,63 @@ public class Fake {
 
 		protected Map variables = new HashMap();
 
+		public int getVariableNameEnd(String value, int offset) {
+			int end = offset;
+			while (end < value.length() &&
+					isVarChar(value.charAt(end)))
+				end++;
+			return end;
+		}
+
+		/*
+		 * This handles
+		 *
+		 * 	$SOMETHING(*) = $SOME $THINK $ELSE
+		 *
+		 * by searching for all available subkeys of $SOME, $THING
+		 * and $ELSE, and setting $SOMETHING(subkey) for all of them.
+		 */
+		public void setVariableWildcard(String key, String value)
+				throws FakeException {
+			/* get all variable names */
+			int offset = 0;
+			Set variableNames = new HashSet();
+			for (;;) {
+				int dollar = value.indexOf('$', offset);
+				if (dollar < 0)
+					break;
+				offset = getVariableNameEnd(value, dollar + 1);
+				variableNames.add(value.substring(dollar + 1,
+							offset).toUpperCase());
+			}
+			key = key.toUpperCase();
+			Set subkeys = new HashSet();
+			Iterator iter = variables.keySet().iterator();
+			while (iter.hasNext()) {
+				String var = (String)iter.next();
+				int paren = var.indexOf('(');
+				if (paren < 0)
+					continue;
+				String name = var.substring(0, paren);
+				if (!variableNames.contains(name))
+					continue;
+				subkeys.add(var.substring(paren));
+			}
+			/* 3rd loop to avoid concurrent modification */
+			iter = subkeys.iterator();
+			while (iter.hasNext())
+				setVariable(key + iter.next(), value);
+		}
+
 		public void setVariable(String key, String value)
 				throws FakeException {
 			int paren = key.indexOf('(');
 			String name = paren < 0 ? key : key.substring(0, paren);
+
+			if (key.charAt(paren + 1) == '*') {
+				setVariableWildcard(name, value);
+				return;
+			}
 
 			value = expandVariables(value, paren < 0 ? null :
 				key.substring(paren + 1, key.length() - 1));
@@ -504,10 +557,7 @@ public class Fake {
 				if (dollar < 0)
 					return value;
 
-				int end = dollar + 1;
-				while (end < value.length() &&
-						isVarChar(value.charAt(end)))
-					end++;
+				int end = getVariableNameEnd(value, dollar + 1);
 				String name = value.substring(dollar + 1, end);
 				int paren = name.indexOf('(');
 				String substitute;
