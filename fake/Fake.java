@@ -204,6 +204,12 @@ public class Fake {
 				allPlatforms.add("win32");
 				allPlatforms.add("win64");
 				allPlatforms.add("macosx");
+				Iterator iter = allPlatforms.iterator();
+				while (iter.hasNext()) {
+					String platform = (String)iter.next();
+					setVariable("platform(" + platform
+						+ ")", platform);
+				}
 			}
 
 			setVariable("platform", getPlatform());
