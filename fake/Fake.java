@@ -1146,6 +1146,8 @@ public class Fake {
 					throws IOException, FakeException {
 				List arguments = new ArrayList();
 				arguments.add(compiler);
+				if (getVarBool("DEBUG"))
+					arguments.add("-g");
 				arguments.add("-c");
 				addFlags(flags, path, arguments);
 				arguments.add(path);
