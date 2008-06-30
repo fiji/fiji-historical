@@ -9,28 +9,6 @@ fiji:
 fake.jar:
 	sh Fake.sh fake.jar
 
-check: check-class-versions check-precompiled check-submodules
-
-check-class-versions:
-	./fiji --headless --main-class=fiji.CheckClassVersions \
-		plugins/ jars/ misc/ precompiled/
-
-PRECOMPILED=$(patsubst %,precompiled/fiji-%,$(patsubst win%,win%.exe,$(ARCHS)))
-check-precompiled:
-	./scripts/check-generated-content.sh fiji.cxx $(PRECOMPILED)
-
-check-submodules:
-	count=0; \
-	for s in $(SUBMODULE_TARGETS_IN_FIJI); do \
-		BASENAME="$$(basename "$$s")"; \
-		ORIGINAL_TARGET="$$(echo " $(SUBMODULE_TARGETS) " | \
-			sed "s/.* \([^ ]*\)\/$$BASENAME .*/\1/")"; \
-		./scripts/check-generated-content.sh \
-			$$(basename $$ORIGINAL_TARGET) $$s || \
-			count=$$(($$count+1)); \
-	done && \
-	test $$count = 0
-
 # MicroManager
 mm:
 	test -f micromanager1.1/build.sh || \

@@ -221,7 +221,9 @@ cross-*[scripts/chrooted-cross-compiler.sh * $CXXFLAGS(*)] <- fiji.cxx
 
 # Precompiled stuff
 
-LAUNCHER=precompiled/fiji-$PLATFORM
+LAUNCHER(*)=precompiled/fiji-$PLATFORM
+LAUNCHER(win32)=precompiled/fiji-win32.exe
+LAUNCHER(win64)=precompiled/fiji-win64.exe
 LAUNCHER(macosx)=$LAUNCHER precompiled/fiji-tiger
 precompile-fiji[] <- $LAUNCHER
 
@@ -262,6 +264,22 @@ all-zips[] <- fiji-linux.zip fiji-linux64.zip fiji-win32.zip fiji-win64.zip \
 	fiji-all.zip fiji-nojre.zip
 fiji-*.zip[scripts/make-zip.py $TARGET Fiji.app] <- app-* Fiji.app
 zip[] <- fiji-$PLATFORM.zip
+
+# Checks
+
+check[] <- check-class-versions check-launchers check-submodules
+
+check-class-versions[./fiji --headless --main-class=fiji.CheckClassVersions \
+	plugins/ jars/ misc/ precompiled/] <- misc/Fiji.jar
+
+LAUNCHERS=$LAUNCHER(linux) $LAUNCHER(linux64) \
+	$LAUNCHER(win32) $LAUNCHER(win64) $LAUNCHER(macosx)
+check-launchers[./scripts/up-to-date-check.py fiji.cxx $LAUNCHERS] <-
+
+check-submodules[] <- check-ij check-VIB check-TrakEM2 check-mpicbg
+
+check-ij[./scripts/up-to-date-check.py ImageJA precompiled/ij.jar] <-
+check-*[./scripts/up-to-date-check.py * precompiled/*_.jar] <-
 
 # Fake itself
 
