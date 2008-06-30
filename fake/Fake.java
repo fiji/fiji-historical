@@ -790,6 +790,11 @@ public class Fake {
 						type = type.substring(dollar + 1);
 					result += "(" + type + ") ";
 				}
+				if (getVarBool("DEBUG") && (this
+						instanceof ExecuteProgram))
+					target += "[" +
+						((ExecuteProgram)this).program
+						+ "]";
 				result += target + " <-";
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext())
