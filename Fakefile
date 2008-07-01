@@ -126,7 +126,7 @@ JDK(macosx)=java/macosx-java3d
 jdk[scripts/checkout-jdk.py $JDK] <-
 
 # From submodules
-ij.jar <- ImageJA/
+ij.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar
 plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
 CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar
