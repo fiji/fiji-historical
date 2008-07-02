@@ -1278,12 +1278,14 @@ public class Fake {
 			return false;
 		}
 
+		boolean wildcardContainsStarStar;
 		int firstWildcardIndex = -1, suffixLength;
 		String wildcardPattern;
 
 		private void initReplace() throws FakeException {
 			if (firstWildcardIndex >= 0)
 				return;
+			wildcardContainsStarStar = glob.indexOf("**") >= 0;
 			int first = glob.indexOf('*');
 			int first2 = glob.indexOf('?');
 			if (first < 0 && first2 < 0)
@@ -1304,6 +1306,11 @@ public class Fake {
 		public String replace(String name) throws FakeException {
 			initReplace();
 			int index = name.indexOf(wildcardPattern);
+			while (!wildcardContainsStarStar && index >= 0 &&
+					name.substring(index).startsWith("**"))
+				index = name.indexOf(wildcardPattern,
+					name.substring(index).startsWith("**/*")
+					? index + 4 : index + 2);
 			if (index < 0)
 				return name;
 			return replace(name.substring(0, index)
