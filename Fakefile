@@ -98,6 +98,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/level_sets.jar \
 	\
 	plugins/Analyze/Grid_.class \
+	plugins/Annotation/Time_Stamper.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
 	plugins/Examples/Example_Plot.class \
