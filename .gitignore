@@ -39,6 +39,7 @@
 /plugins/TrakEM2_.jar
 /plugins/mpicbg_.jar
 /plugins/Analyze/Grid_.class
+/plugins/Annotation/Arrow_.class
 /plugins/Annotation/Time_Stamper.class
 /plugins/Examples/Example_Plot.class
 /plugins/Filters/Preprocessor_Smooth.class
