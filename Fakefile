@@ -99,6 +99,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	\
 	plugins/Analyze/Grid_.class \
 	plugins/Annotation/Arrow_.class \
+	plugins/Annotation/Copy_Pixel_Size.class \
 	plugins/Annotation/Time_Stamper.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
