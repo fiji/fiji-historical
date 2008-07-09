@@ -42,6 +42,7 @@
 /plugins/Analyze/Grid_.class
 /plugins/Annotation/Arrow_.class
 /plugins/Annotation/Copy_Pixel_Size.class
+/plugins/Annotation/Slice_Labeler.class
 /plugins/Annotation/Time_Stamper.class
 /plugins/Examples/Example_Plot.class
 /plugins/Filters/Preprocessor_Smooth.class
