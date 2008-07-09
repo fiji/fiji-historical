@@ -108,6 +108,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Colour/RGB_Measure_Plus.class \
 	plugins/Colour/RGB_Profiler.class \
 	plugins/Examples/Example_Plot.class \
+	plugins/Filters/Rolling_Ball_Background.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
 	plugins/Utilities/Command_Launcher.class \
