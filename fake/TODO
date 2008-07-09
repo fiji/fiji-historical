@@ -9,3 +9,4 @@
 - "clean" target: use the command line to determine which rules to clean for
 - "clean": clean recursively if a "SubFake" exists.
 - check for unknown prerequisites (either a rule exists, or a file)
+- call javac in a proper way, so that .class files are not created in src-plugins/
