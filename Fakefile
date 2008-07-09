@@ -104,6 +104,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Annotation/Time_Stamper.class \
 	plugins/Colour/Align_RGB_planes.class \
 	plugins/Colour/Colour_Deconvolution.class \
+	plugins/Colour/RGB_Gray_Merge.class \
 	plugins/Examples/Example_Plot.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \

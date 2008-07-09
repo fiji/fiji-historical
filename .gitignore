@@ -46,6 +46,7 @@
 /plugins/Annotation/Time_Stamper.class
 /plugins/Colour/Align_RGB_planes.class
 /plugins/Colour/Colour_Deconvolution.class
+/plugins/Colour/RGB_Gray_Merge.class
 /plugins/Examples/Example_Plot.class
 /plugins/Filters/Preprocessor_Smooth.class
 /plugins/Graphics/Example_Plot.class
