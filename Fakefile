@@ -98,6 +98,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/level_sets.jar \
 	\
 	plugins/Analyze/Grid_.class \
+	plugins/Analyze/Object_Counter3D.class \
 	plugins/Annotation/Arrow_.class \
 	plugins/Annotation/Copy_Pixel_Size.class \
 	plugins/Annotation/Slice_Labeler.class \
