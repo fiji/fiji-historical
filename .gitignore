@@ -55,6 +55,7 @@
 /plugins/Filters/Preprocessor_Smooth.class
 /plugins/Filters/Rolling_Ball_Background.class
 /plugins/Filters/RollingBall.class
+/plugins/Filters/Sigma_Filter_Plus.class
 /plugins/Graphics/Example_Plot.class
 /plugins/Input-Output/HandleExtraFileTypes.class
 /plugins/Stacks/Stack_Reverser.class

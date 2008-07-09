@@ -111,6 +111,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Filters/Anisotropic_Diffusion_2D.class \
 	plugins/Filters/Kalman_Stack_Filter.class \
 	plugins/Filters/Rolling_Ball_Background.class \
+	plugins/Filters/Sigma_Filter_Plus.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
 	plugins/Utilities/Command_Launcher.class \
