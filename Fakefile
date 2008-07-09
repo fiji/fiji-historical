@@ -105,6 +105,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Colour/Align_RGB_planes.class \
 	plugins/Colour/Colour_Deconvolution.class \
 	plugins/Colour/RGB_Gray_Merge.class \
+	plugins/Colour/RGB_Measure_Plus.class \
 	plugins/Examples/Example_Plot.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
