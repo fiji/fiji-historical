@@ -75,10 +75,15 @@ def add_plugin(plugin):
 		f.close()
 		execute('git add Fakefile')
 
-	execute("git add src-plugins/" + plugin)
+	file = 'src-plugins/' + plugin
+	if execute('git ls-files ' + file) == '':
+		action = 'Added'
+	else:
+		action = 'Modified'
+	execute('git add ' + file)
 	f = open('.msg', 'w')
 	name = plugin[0:len(plugin) - 5].replace('/', '>').replace('_', ' ')
-	f.write('Added the plugin "' + name + '"')
+	f.write(action + ' the plugin "' + name + '"')
 	f.close() 
 	execute('git commit -s -F .msg')
 	os.remove('.msg')
