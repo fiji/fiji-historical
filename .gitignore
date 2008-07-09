@@ -44,6 +44,7 @@
 /plugins/Annotation/Copy_Pixel_Size.class
 /plugins/Annotation/Slice_Labeler.class
 /plugins/Annotation/Time_Stamper.class
+/plugins/Colour/Align_RGB_planes.class
 /plugins/Examples/Example_Plot.class
 /plugins/Filters/Preprocessor_Smooth.class
 /plugins/Graphics/Example_Plot.class

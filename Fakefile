@@ -102,9 +102,10 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Annotation/Copy_Pixel_Size.class \
 	plugins/Annotation/Slice_Labeler.class \
 	plugins/Annotation/Time_Stamper.class \
+	plugins/Colour/Align_RGB_planes.class \
+	plugins/Examples/Example_Plot.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
-	plugins/Examples/Example_Plot.class \
 	plugins/Utilities/Command_Launcher.class \
 	\
 	misc/Fiji.jar
