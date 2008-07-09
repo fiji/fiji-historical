@@ -51,6 +51,7 @@
 /plugins/Colour/RGB_Profiler.class
 /plugins/Examples/Example_Plot.class
 /plugins/Filters/Anisotropic_Diffusion_2D.class
+/plugins/Filters/Kalman_Stack_Filter.class
 /plugins/Filters/Preprocessor_Smooth.class
 /plugins/Filters/Rolling_Ball_Background.class
 /plugins/Filters/RollingBall.class
