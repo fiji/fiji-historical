@@ -624,6 +624,25 @@ bool file_exists(string path)
 	return true;
 }
 
+bool handle_one_option(int &i, const char *option, string &arg)
+{
+	if (!strcmp(main_argv[i], option)) {
+		if (++i >= main_argc || !main_argv[i]) {
+			cerr << "Option " << option << " needs an argument!"
+				<< endl;
+			exit(1);
+		}
+		arg = main_argv[i];
+		return true;
+	}
+	int len = strlen(option);
+	if (!strncmp(main_argv[i], option, len) && main_argv[i][len] == '=') {
+		arg = main_argv[i] + len + 1;
+		return true;
+	}
+	return false;
+}
+
 /* the maximal size of the heap on 32-bit systems, in megabyte */
 #define MAX_32BIT_HEAP 1920
 
@@ -633,10 +652,11 @@ static int start_ij(void)
 	struct options options;
 	JavaVMInitArgs args;
 	JNIEnv *env;
-	static string class_path, ext_option, jvm_options;
+	string class_path, ext_option, jvm_options, arg;
 	stringstream plugin_path;
-	int dashdash = 0, jdb = 0;
+	int dashdash = 0;
 	bool allow_multiple = false, skip_build_classpath = false;
+	bool jdb = false, add_class_path_option = false;
 
 	size_t memory_size = 0;
 
@@ -672,18 +692,18 @@ static int start_ij(void)
 			options.debug++;
 		else if (!strcmp(main_argv[i], "--system"))
 			options.use_system_jvm++;
-		else if (!strcmp(main_argv[i], "--jdb"))
-			jdb = 1;
+		else if (!strcmp(main_argv[i], "--jdb")) {
+			add_class_path_option = true;
+			jdb = true;
+		}
 		else if (!strcmp(main_argv[i], "--allow-multiple"))
 			allow_multiple = true;
-		else if (!strncmp(main_argv[i], "--plugins=", 10))
-			plugin_path << "-Dplugins.dir=" << (main_argv[i] + 10);
-		else if (!strncmp(main_argv[i], "--heap=", 7))
-			memory_size = parse_memory(main_argv[i] + 7);
-		else if (!strncmp(main_argv[i], "--mem=", 6))
-			memory_size = parse_memory(main_argv[i] + 6);
-		else if (!strncmp(main_argv[i], "--memory=", 9))
-			memory_size = parse_memory(main_argv[i] + 9);
+		else if (handle_one_option(i, "--plugins", arg))
+			plugin_path << "-Dplugins.dir=" << arg;
+		else if (handle_one_option(i, "--heap", arg) ||
+				handle_one_option(i, "--mem", arg) ||
+				handle_one_option(i, "--memory", arg))
+			memory_size = parse_memory(arg.c_str());
 		else if (!strcmp(main_argv[i], "--headless")) {
 			headless = 1;
 			/* handle "--headless script.ijm" gracefully */
@@ -694,16 +714,20 @@ static int start_ij(void)
 			main_class = "org.python.util.jython";
 		else if (!strcmp(main_argv[i], "--jruby"))
 			main_class = "org.jruby.Main";
-		else if (!strncmp(main_argv[i], "--main-class=", 13))
-			main_class = main_argv[i] + 13;
-		else if (!strncmp(main_argv[i], "--class-path=", 13)) {
-			class_path += main_argv[i] + 13;
-			class_path += PATH_SEP;
+		else if (handle_one_option(i, "--main-class", arg)) {
+			class_path += "." PATH_SEP;
+			main_class = strdup(arg.c_str());
 		}
-		else if (!strncmp(main_argv[i], "--ext=", 4)) {
+		else if (handle_one_option(i, "--class-path", arg) ||
+				handle_one_option(i, "--classpath", arg) ||
+				handle_one_option(i, "-classpath", arg) ||
+				handle_one_option(i, "--cp", arg) ||
+				handle_one_option(i, "-cp", arg))
+			class_path += arg + PATH_SEP;
+		else if (handle_one_option(i, "--ext", arg)) {
 			if (ext_option != "")
 				ext_option += PATH_SEP;
-			ext_option += main_argv[i] + 4;
+			ext_option += arg;
 		}
 		else if (!strcmp(main_argv[i], "--fake")) {
 			skip_build_classpath = true;
@@ -715,10 +739,33 @@ static int start_ij(void)
 			class_path += "/fake.jar" PATH_SEP;
 			main_class = "Fake";
 		}
-		else if (!strncmp(main_argv[i], "--fiji-dir=", 11))
-			fiji_dir = main_argv[i] + 11;
-		else
-			main_argv[count++] = main_argv[i];
+		else if (!strcmp(main_argv[i], "--javac")) {
+			add_class_path_option = true;
+			headless = 1;
+			class_path += fiji_dir;
+			if (run_precompiled || !file_exists(string(fiji_dir)
+						+ "/jars/javac.jar"))
+				class_path += "/precompiled";
+			else
+				class_path += "/jars";
+			class_path += "/javac.jar" PATH_SEP;
+			main_class = "com.sun.tools.javac.Main";
+		}
+		else if (handle_one_option(i, "--fiji-dir", arg))
+			fiji_dir = strdup(arg.c_str());
+		else {
+			int len = strlen(main_argv[i]);
+			if (len > 6 && !strcmp(main_argv[i]
+						+ len - 6, ".class")) {
+				class_path += "." PATH_SEP;
+				string dotted = main_argv[i];
+				replace(dotted.begin(), dotted.end(), '/', '.');
+				dotted = dotted.substr(0, len - 6);
+				main_class = strdup(dotted.c_str());
+			}
+			else
+				main_argv[count++] = main_argv[i];
+		}
 	main_argc = count;
 
 	if (!headless &&
@@ -815,9 +862,12 @@ static int start_ij(void)
 			main_class = "ij.ImageJ";
 	}
 
-	if (jdb) {
+	if (add_class_path_option) {
 		add_option(options, "-classpath", 1);
 		add_option(options, class_path.substr(18).c_str(), 1);
+	}
+
+	if (jdb) {
 		add_option(options, main_class, 1);
 		main_class = "com.sun.tools.example.debug.tty.TTY";
 	}
