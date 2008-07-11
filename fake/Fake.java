@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import java.util.jar.Attributes.Name;
 import java.util.jar.Manifest;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -184,7 +183,7 @@ public class Fake {
 
 		public Parser(String path) throws FakeException {
 			if (path == null || path.equals(""))
-				path = this.path;
+				path = Parser.path;
 			try {
 				InputStream stream = new FileInputStream(path);
 				InputStreamReader input =
@@ -370,7 +369,6 @@ public class Fake {
 				GlobFilter filter = new GlobFilter(target);
 				Iterator iter = new ArrayList(allPrerequisites)
 					.iterator();
-				List targets = new ArrayList();
 				while (iter.hasNext()) {
 					target = (String)iter.next();
 					if (allRules.containsKey(target))
@@ -1527,7 +1525,6 @@ public class Fake {
 
 		String[] args = (String[])arguments.toArray(new
 				String[arguments.size()]);
-		long now = System.currentTimeMillis();
 
 		if (verbose) {
 			String output = "Compiling .java files: javac";
@@ -2317,6 +2314,7 @@ public class Fake {
 	// our very own exception
 
 	static class FakeException extends Exception {
+		public static final long serialVersionUID = 1;
 		public FakeException(String message) {
 			super(message);
 		}
