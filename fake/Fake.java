@@ -1370,6 +1370,7 @@ public class Fake {
 			count += expandGlob(parentPath + remainder, list,
 						cwd, newerThan);
 			remainder = "**/" + remainder;
+			pattern = "*";
 		}
 
 		String[] names = parentDirectory.list(new GlobFilter(pattern,
@@ -1377,7 +1378,7 @@ public class Fake {
 
 		for (int i = 0; i < names.length; i++) {
 			String path = parentPath + names[i];
-			if (starstar && path.startsWith("."))
+			if (starstar && names[i].startsWith("."))
 				continue;
 			if (nextSlash < 0) {
 				list.add(path);
