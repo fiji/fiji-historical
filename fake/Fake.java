@@ -1084,7 +1084,7 @@ public class Fake {
 						continue;
 					int slash2 = source.lastIndexOf('/');
 					copyFile(source, destPrefix +
-						source.substring(slash), cwd);
+						source.substring(slash2), cwd);
 				}
 			}
 		}
