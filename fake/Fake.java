@@ -72,7 +72,7 @@ public class Fake {
 			throw new RuntimeException("unexpected URL: " + url);
 		fijiHome = fijiHome.substring(0, fijiHome.length() - 10);
 		int slash = fijiHome.lastIndexOf('/', fijiHome.length() - 2);
-		if (fijiHome.startsWith("jar:file:/") &&
+		if (fijiHome.startsWith("jar:file:") &&
 				fijiHome.endsWith(".jar!/"))
 			fijiHome = fijiHome.substring(9, slash + 1);
 		else if (fijiHome.startsWith("file:/"))
