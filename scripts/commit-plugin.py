@@ -14,6 +14,10 @@ if len(sys.argv) < 2:
 
 list = list()
 for file in sys.argv[1:]:
+	if file.startswith('-a'):
+		addonly = 1
+		print 'Will not commit anything.'
+		continue
 	if not file.startswith('src-plugins/'):
 		print 'Will not add plugin outside src-plugins:', file
 		continue
@@ -109,14 +113,15 @@ def add_plugin(plugin):
 	else:
 		action = 'Modified'
 	execute('git add ' + file)
-	f = open('.msg', 'w')
-	if plugin.endswith('.java'):
-		plugin = plugin[0:len(plugin) - 5]
-	name = plugin.replace('/', '>').replace('_', ' ')
-	f.write(action + ' the plugin "' + name + '"')
-	f.close() 
-	execute('git commit -s -F .msg')
-	os.remove('.msg')
+	if not addonly:
+		f = open('.msg', 'w')
+		if plugin.endswith('.java'):
+			plugin = plugin[0:len(plugin) - 5]
+		name = plugin.replace('/', '>').replace('_', ' ')
+		f.write(action + ' the plugin "' + name + '"')
+		f.close() 
+		execute('git commit -s -F .msg')
+		os.remove('.msg')
 
 for plugin in list:
 	print 'Adding', plugin
