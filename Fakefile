@@ -116,6 +116,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
 	plugins/Utilities/Command_Launcher.class \
+	plugins/Analyze/Manual_Tracking.class \
 	\
 	misc/Fiji.jar
 
