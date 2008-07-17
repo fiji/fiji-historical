@@ -13,6 +13,7 @@ if len(sys.argv) < 2:
 	sys.exit(1)
 
 list = list()
+addonly = 0
 for file in sys.argv[1:]:
 	if file.startswith('-a'):
 		addonly = 1
