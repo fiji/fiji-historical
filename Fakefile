@@ -97,6 +97,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/SplineDeformationGenerator_.jar \
 	plugins/level_sets.jar \
 	plugins/Gran_Filter.jar \
+	plugins/ParticleTracker_.jar \
 	\
 	plugins/Analyze/Grid_.class \
 	plugins/Analyze/Object_Counter3D.class \
