@@ -236,7 +236,9 @@ class AnimatedGifEncoder2 {
    
 */
 
-public void setoptions(){
+String name;
+
+public boolean setoptions(){
 
 
     String[] GCTtype = {"Do not use","Load from Current Image", "Load from another Image RGB or 8 Bit",
@@ -265,7 +267,7 @@ public void setoptions(){
    	int[] wList = WindowManager.getIDList();
 	if (wList==null) {
 	    IJ.error("No windows are open.");
-	    return;
+	    return false;
 	}
   
 	String[] titles = new String[wList.length];
@@ -277,13 +279,15 @@ public void setoptions(){
 		titles[i] = "";
 	}
 
-	GenericDialog gd = new GenericDialog("Options for Animation", IJ.getInstance());
+	GenericDialog gd = new GenericDialog("Animated Gif Writer");
+	gd.addStringField("Name:", name, 12);
+
 	String defaultItem;
 	if (title1.equals(""))
 	    defaultItem = titles[0];
 	else
 	    defaultItem = title1;
-	gd.addChoice("Set Global Lookup Table Options", GCTtype,GCTtype[gctType]);
+	gd.addChoice("Set_Global_Lookup_Table_Options", GCTtype,GCTtype[gctType]);
 	gd.addChoice("Optional Image for Global Color Lookup Table", titles, defaultItem);
 	gd.addChoice("Image Disposal Code", DisposalType,DisposalType[disposalType]);
 	gd.addNumericField("Set delay in milliseconds", (double)setdelay, 0);
@@ -296,7 +300,8 @@ public void setoptions(){
 	gd.addNumericField("Index in Color Table",(double)cindex,0);		
 	gd.showDialog();
 	if (gd.wasCanceled())
-	    return;
+	    return false;
+	name = gd.getNextString();
 	gctType = gd.getNextChoiceIndex();    
 	int index1 = gd.getNextChoiceIndex();
 	title1 = titles[index1];
@@ -361,18 +366,18 @@ public void setoptions(){
         	ImagePlus img = WindowManager.getImage(wList[index1]);
         	if(img == null){
 	    		IJ.error("No window selected for generating color table");
-	    		return;
+			return false;
 			}
         	 int type = img.getType();
    		 if (!((type == 0) ||( type == 3)||(type ==4))){
-	    		IJ.error("Incorrect window type selected for generating color table (RGB or 8bit only).");
-	    		return;
+			IJ.error("Incorrect window type selected for generating color table (RGB or 8bit only).");
+			return false;
 			}
      		 if(gctType == 3){
      		 	if(type ==  4) extractGCTrgb(img);
      		 	else {
-	    			IJ.error("RGB image only for this mode of generating color table.");
-	    			return;
+				IJ.error("RGB image only for this mode of generating color table.");
+				return false;
 				}
 		 }
         	 if(gctType ==2){
@@ -380,6 +385,7 @@ public void setoptions(){
         		else loadGCT8bit(img);
         	}
       }
+	return true;
   }
   
 /********************************************************
@@ -973,24 +979,18 @@ public void run(String arg) {
 		if (dotIndex>=0)
 			name = name.substring(0, dotIndex);
 
-		GenericDialog gd = new GenericDialog("Animated Gif Writer", IJ.getInstance());
-		boolean options = false;
-		gd.addStringField("Name:", name, 12);
-		gd.addCheckbox("Check for options",false);
-		
-		gd.showDialog();
-		if (gd.wasCanceled())
+	        AnimatedGifEncoder2 fr = new AnimatedGifEncoder2();
+		fr.name = name;
+	        if (!fr.setoptions())
 			return;
-		
-		name = gd.getNextString();
-		options =gd.getNextBoolean();
+		name = fr.name;
 		
 		
 				
 		IJ.register(Gif_Stack_Writer.class);
 
 		
-		SaveDialog sd = new SaveDialog("Save as "+type, name+"."+type, "."+type);
+		SaveDialog sd = new SaveDialog("Filename", name+"."+type, "."+type);
 		String file = sd.getFileName();
 		if (file == null) return;
 		String directory = sd.getDirectory();
@@ -999,8 +999,6 @@ public void run(String arg) {
 		ImagePlus tmp = new ImagePlus();
 		int nSlices = stack.getSize();
 		//String path = directory+name;
-	        AnimatedGifEncoder2 fr = new AnimatedGifEncoder2();
-	        if(options)fr.setoptions();
 	        fr.start(directory+file);
 		
  		for (int i=1; i<=nSlices; i++) {
