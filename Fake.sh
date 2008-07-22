@@ -2,7 +2,6 @@
 
 CWD="$(dirname "$0")"
 
-can_overwrite_in_use_files=t
 case "$(uname -s)" in
 Darwin) platform=macosx; exe=;;
 Linux)
@@ -10,7 +9,7 @@ Linux)
 		x86_64) platform=linux64;;
 		*) platform=linux;;
 	esac; exe=;;
-MINGW*|CYGWIN*) platform=win32; exe=.exe; can_overwrite_in_use_files=;;
+MINGW*|CYGWIN*) platform=win32; exe=.exe;;
 esac
 
 strip_variables () {
@@ -37,8 +36,7 @@ test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
 }
 
 test -f "$CWD"/fiji$exe -a -f "$CWD"/fake.jar &&
-(test ! -z "$can_overwrite_in_use_files" ||
- test "a$targets" != afake.jar -a "a$targets" != afiji ) &&
+test "a$targets" != afake.jar -a "a$targets" != afiji &&
 test ! -f "$CWD"/precompiled/fake.jar -o \
 	"$CWD"/fake.jar -nt "$CWD"/precompiled/fake.jar &&
 exec "$CWD"/fiji$exe --fake "$@"
