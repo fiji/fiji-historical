@@ -62,6 +62,10 @@ tiger)
 	CXX=/opt/mac/bin/i686-apple-darwin8-g++
 	TARGET=fiji-tiger
 ;;
+linux)
+	CXX=/usr/bin/g++
+	TARGET=fiji-linux
+;;
 *)
 	echo "Unknown platform: $PLATFORM!" >&2
 	exit 1
