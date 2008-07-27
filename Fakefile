@@ -105,7 +105,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	\
 	misc/Fiji.jar
 
-all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
+all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
 
 # The "run" rule just executes ./fiji (as long as the file "run" does not exist...)
 # It has items on the right side, because these would be passed to the executable.
@@ -173,6 +173,26 @@ jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
 	src-plugins/com/sun/tools/javac/**/*.JavaCompilerTool \
 	src-plugins/com/sun/source/**/*.java \
 	src-plugins/javax/**/*.java
+
+# Third party plugins
+
+# TODO: move Color_Histogram, Color_Inspector, Image_5D, Analyze_Reader_Writer,
+# Interactive_3D_Surface_Plot, M_I_P, View5D_, Volume_Viewer, and ij-ImageIO_
+# into src-plugins, compile loci_tools (bio-formats) as submodule
+THIRD_PARTY_PLUGINS=plugins/Color_Histogram.jar \
+	plugins/Color_Inspector_3D.jar \
+	plugins/Image_5D.jar \
+	plugins/Analyze_Reader_Writer.jar \
+	plugins/Interactive_3D_Surface_Plot.jar \
+	plugins/M_I_P.jar \
+	plugins/TransformJ_.jar \
+	plugins/View5D_.jar \
+	plugins/Volume_Viewer.jar \
+	plugins/ij-ImageIO_.jar \
+	plugins/loci_tools.jar \
+
+third-party-plugins[] <- $THIRD_PARTY_PLUGINS
+plugins/*.jar <- staged-plugins/*.jar
 
 # Fiji launcher
 
