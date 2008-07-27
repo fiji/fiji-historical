@@ -13,7 +13,16 @@ if len(sys.argv) < 2:
 	sys.exit(1)
 
 list = list()
+third_parties = dict()
 for file in sys.argv[1:]:
+	if file.startswith('staged-plugins/'):
+		if file.endswith('.jar'):
+			file = file[15:]
+			list.append(file)
+			third_parties[file] = file
+		else:
+			print 'Will not add non-jar staged plugin'
+		continue
 	if not file.startswith('src-plugins/'):
 		print 'Will not add plugin outside src-plugins:', file
 		continue
@@ -43,6 +52,7 @@ f.close()
 faked_plugins = dict()
 last_plugin_line = -1
 last_jar_plugin_line = -1
+last_3rd_party_plugin_line = -1
 for i in range(0, len(fakefile)):
 	if fakefile[i].startswith('PLUGIN_TARGETS='):
 		while i < len(fakefile) and fakefile[i] != "\n":
@@ -53,7 +63,12 @@ for i in range(0, len(fakefile)):
 				last_jar_plugin_line = i
 				faked_plugins[fakefile[i]] = i
 			i += 1
-		break
+	elif fakefile[i].startswith('THIRD_PARTY_PLUGINS='):
+		while i < len(fakefile) and fakefile[i] != "\n":
+			if fakefile[i].endswith(".jar \\\n"):
+				last_3rd_party_plugin_line = i
+				faked_plugins[fakefile[i]] = i
+			i += 1
 
 # remove all .class files in the given directory
 
@@ -70,6 +85,8 @@ def remove_class_files(dir):
 def add_plugin(plugin):
 	if plugin.endswith('.java'):
 		target = 'plugins/' + plugin[0:len(plugin) - 5] + '.class'
+	elif plugin in third_parties:
+		target = 'plugins/' + plugin
 	else:
 		if plugin.endswith('/'):
 			plugin = plugin[0:len(plugin) - 1]
@@ -86,15 +103,27 @@ def add_plugin(plugin):
 
 	plugin_line = "\t" + target + " \\\n"
 	global last_plugin_line, last_jar_plugin_line, faked_plugins
+	global last_3rd_party_plugin_line
 	if not plugin_line in faked_plugins:
 		if plugin.endswith('.java'):
 			if last_jar_plugin_line > last_plugin_line:
 				last_jar_plugin_line += 1
+			if last_3rd_party_plugin_line > last_plugin_line:
+				last_3rd_party_plugin_line += 1
 			last_plugin_line += 1
 			fakefile.insert(last_plugin_line, plugin_line)
+		elif plugin in third_parties:
+			if last_plugin_line > last_3rd_party_plugin_line:
+				last_plugin_line += 1
+			if last_jar_plugin_line > last_3rd_party_plugin_line:
+				last_jar_plugin_line += 1
+			last_3rd_party_plugin_line += 1
+			fakefile.insert(last_3rd_party_plugin_line, plugin_line)
 		else:
 			if last_plugin_line > last_jar_plugin_line:
 				last_plugin_line += 1
+			if last_3rd_party_plugin_line > last_jar_plugin_line:
+				last_3rd_party_plugin_line += 1
 			last_jar_plugin_line += 1
 			fakefile.insert(last_jar_plugin_line, plugin_line)
 
@@ -103,7 +132,12 @@ def add_plugin(plugin):
 		f.close()
 		execute('git add Fakefile')
 
-	file = 'src-plugins/' + plugin
+	if plugin in third_parties:
+		file = 'staged-plugins/' + plugin
+		third_party = 'third-party '
+	else:
+		file = 'src-plugins/' + plugin
+		third_party = ''
 	if execute('git ls-files ' + file) == '':
 		action = 'Added'
 	else:
@@ -112,8 +146,11 @@ def add_plugin(plugin):
 	f = open('.msg', 'w')
 	if plugin.endswith('.java'):
 		plugin = plugin[0:len(plugin) - 5]
+	elif plugin.endswith('.jar'):
+		plugin = plugin[0:len(plugin) - 4]
+	# TODO: add .config
 	name = plugin.replace('/', '>').replace('_', ' ')
-	f.write(action + ' the plugin "' + name + '"')
+	f.write(action + ' the ' + third_party + 'plugin "' + name + '"')
 	f.close() 
 	execute('git commit -s -F .msg')
 	os.remove('.msg')
