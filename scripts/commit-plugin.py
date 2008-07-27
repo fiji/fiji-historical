@@ -148,7 +148,9 @@ def add_plugin(plugin):
 		plugin = plugin[0:len(plugin) - 5]
 	elif plugin.endswith('.jar'):
 		plugin = plugin[0:len(plugin) - 4]
-	# TODO: add .config
+	configfile = 'staged-plugins/' + plugin + '.config'
+	if os.path.exists(configfile):
+		execute('git add ' + configfile)
 	name = plugin.replace('/', '>').replace('_', ' ')
 	f.write(action + ' the ' + third_party + 'plugin "' + name + '"')
 	f.close() 
