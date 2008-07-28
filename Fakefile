@@ -77,10 +77,11 @@ JAVA_HOME(macosx)=java/macosx-java3d
 
 # the main target
 
-SUBMODULE_TARGETS=ij.jar \
+SUBMODULE_TARGETS=\
+	ij.jar \
 	plugins/VIB_.jar \
 	plugins/TrakEM2_.jar \
-	plugins/mpicbg_.jar
+	plugins/mpicbg_.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -256,8 +257,11 @@ precompiled/fiji-*[scripts/copy-file.py $PRE $TARGET] <- fiji
 precompile-fake[] <- precompiled/fake.jar
 precompiled/*[scripts/copy-file.py $PRE $TARGET] <- *
 
-precompile-submodules[] <- precompiled/ij.jar precompiled/TrakEM2_.jar \
-	precompiled/VIB_.jar precompiled/mpicbg_.jar
+precompile-submodules[] <- \
+	precompiled/ij.jar \
+	precompiled/TrakEM2_.jar \
+	precompiled/VIB_.jar \
+	precompiled/mpicbg_.jar \
 
 precompiled/ij.jar[scripts/copy-file.py $PRE $TARGET] <- ij.jar
 precompiled/*[scripts/copy-file.py $PRE $TARGET] <- plugins/*
