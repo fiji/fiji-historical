@@ -98,7 +98,9 @@ if not ignore_line in ignored:
 # add to Fakefile if not yet there
 
 write_fakefile = False
-precompile_line = "\tprecompiled/" + target + " \\\n"
+slash = target.rfind('/')
+precompiled_target = 'precompiled/' + target[slash + 1:]
+precompile_line = "\t" + precompiled_target + " \\\n"
 if not precompile_line in precompileds.keys():
 	fakefile.insert(last_precompiled_line + 1, precompile_line)
 	write_fakefile = True
@@ -118,11 +120,11 @@ if write_fakefile:
 
 # precompile
 
-print execute('./fiji --fake precompiled/' + target)
+print execute('./fiji --fake ' + precompiled_target)
 
 # git add submodule & precompiled
 
-execute('git add precompiled/' + target + ' ' + submodule[:-1])
+execute('git add ' + precompiled_target + ' ' + submodule[:-1])
 
 # commit it
 
