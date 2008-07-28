@@ -30,9 +30,9 @@ try:
 		runtime = Runtime.getRuntime()
 		p = runtime.exec(cmd)
 		p.outputStream.close()
-		result=""
-		reader=BufferedReader(InputStreamReader(p.inputStream))
-		errorReader=BufferedReader(InputStreamReader(p.errorStream))
+		result = ""
+		reader = BufferedReader(InputStreamReader(p.inputStream))
+		errorReader = BufferedReader(InputStreamReader(p.errorStream))
 		while True:
 			if p.errorStream.available() > 0:
 				print errorReader.readLine()
@@ -45,6 +45,10 @@ try:
 			if line == None:
 				break
 			print line
+		p.waitFor()
+		if p.exitValue() != 0:
+			print result
+			raise RuntimeError, 'execution failure'
 		return result
 except:
 	def execute(cmd):
