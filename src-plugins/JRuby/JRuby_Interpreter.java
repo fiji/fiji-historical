@@ -58,12 +58,4 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 			"require imagej_functions_path\n";
 		return s;
 	}
-
-	protected void windowClosing() {
-		/* FIXME: I'm not sure yet how to interrupt what
-		   the JRuby instance is doing, but this should
-		   work if it's waiting for input: */
-		if( rubyRuntime != null )
-			rubyRuntime.evalScriptlet("exit");
-	}
 }
