@@ -263,6 +263,7 @@ static const char *make_absolute_path(const char *path)
 			last_elem = NULL;
 		}
 
+#ifndef WIN32
 		if (!lstat(buf, &st) && S_ISLNK(st.st_mode)) {
 			len = readlink(buf, next_buf, PATH_MAX);
 			if (len < 0) {
@@ -274,6 +275,7 @@ static const char *make_absolute_path(const char *path)
 			buf_index = 1 - buf_index;
 			next_buf = bufs[buf_index];
 		} else
+#endif
 			break;
 	}
 
@@ -319,8 +321,13 @@ static string find_in_path(const char *path)
 		if (!is_absolute_path(orig_p))
 			continue;
 		snprintf(buffer, sizeof(buffer), "%.*s/%s", len, orig_p, path);
+#ifdef WIN32
+#define S_IX S_IXUSR
+#else
+#define S_IX (S_IXUSR | S_IXGRP | S_IXOTH)
+#endif
 		if (!stat(buffer, &st) && S_ISREG(st.st_mode) &&
-				(st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)))
+				(st.st_mode & S_IX))
 			return make_absolute_path(buffer);
 	}
 }
@@ -736,6 +743,61 @@ bool handle_one_option(int &i, const char *option, string &arg)
 	return false;
 }
 
+static void /* no-return */ usage(void)
+{
+	cerr << "Usage: " << main_argv[0] << " [<Java options>.. --] "
+		"[<ImageJ options>..] [<files>..]" << endl
+		<< endl
+		<< "Java options are passed to the Java Runtime, ImageJ" << endl
+		<< "options to ImageJ (or Jython, JRuby, ...)." << endl
+		<< endl
+		<< "In addition, the following options are supported by Fiji:"
+			<< endl
+		<< "General options:" << endl
+		<< "--help, -h" << endl
+		<< "\tshow this help" << endl
+		<< "--dry-run" << endl
+		<< "\tshow the command line, but do not run anything" << endl
+		<< "--system" << endl
+		<< "\tdo not try to run bundled Java" << endl
+		<< "--headless" << endl
+		<< "\trun in text mode" << endl
+		<< "--fiji-dir <path>" << endl
+		<< "\tset the fiji directory to <path> (used to find" << endl
+		<< "\t jars/, plugins/ and macros/)" << endl
+		<< "--heap, --mem, --memory <amount>" << endl
+		<< "\tset Java's heap size to <amount> (e.g. 512M)" << endl
+		<< "--class-path, --classpath, -classpath, --cp, -cp <path>"
+			<< endl
+		<< "\tappend <path> to the class path" << endl
+		<< "--ext <path>" << endl
+		<< "\tset Java's extension directory to <path>" << endl
+		<< endl
+		<< "Options for ImageJ:" << endl
+		<< "--allow-multiple" << endl
+		<< "\tdo not reuse existing ImageJ instance" << endl
+		<< "--plugins <dir>" << endl
+		<< "\tuse <dir> to discover plugins" << endl
+		<< endl
+		<< "Options to run programs other than ImageJ:" << endl
+		<< "--jdb" << endl
+		<< "\tstart in JDB, the Java debugger" << endl
+		<< "--jython" << endl
+		<< "\tstart Jython instead of ImageJ (this is the" << endl
+		<< "\tdefault when called with a file ending in .py)" << endl
+		<< "--jruby" << endl
+		<< "\tstart JRuby instead of ImageJ (this is the" << endl
+		<< "\tdefault when called with a file ending in .rb)" << endl
+		<< "--main-class <class name>" << endl
+		<< "\tstart the given class instead of ImageJ" << endl
+		<< "--fake" << endl
+		<< "\tstart Fake instead of ImageJ" << endl
+		<< "--javac" << endl
+		<< "\tstart JavaC, the Java Compiler, instead of ImagJ" << endl
+		<< endl;
+	exit(1);
+}
+
 /* the maximal size of the heap on 32-bit systems, in megabyte */
 #define MAX_32BIT_HEAP 1920
 
@@ -846,6 +908,9 @@ static int start_ij(void)
 		}
 		else if (handle_one_option(i, "--fiji-dir", arg))
 			fiji_dir = strdup(arg.c_str());
+		else if (!strcmp("--help", main_argv[i]) ||
+				!strcmp("-h", main_argv[i]))
+			usage();
 		else {
 			int len = strlen(main_argv[i]);
 			if (len > 6 && !strcmp(main_argv[i]
@@ -967,6 +1032,13 @@ static int start_ij(void)
 
 	if (allow_multiple && !strcmp(main_class, "ij.ImageJ"))
 		add_option(options, "-port0", 1);
+
+	if (!strcmp(main_class, "ij.ImageJ")) {
+		stringstream icon_option;
+		icon_option << "-icon=" << fiji_dir << "/images/icon.png";
+		add_option(options, icon_option, 1);
+		add_option(options, "-title=Fiji", 1);
+	}
 
 	/* handle "--headless script.ijm" gracefully */
 	if (headless && !strcmp(main_class, "ij.ImageJ")) {

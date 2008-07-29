@@ -66,3 +66,14 @@
 /plugins/Gran_Filter.jar
 /plugins/ParticleTracker_.jar
 /plugins/cell_counter.jar
+/plugins/Analyze_Reader_Writer.jar
+/plugins/Color_Histogram.jar
+/plugins/Color_Inspector_3D.jar
+/plugins/Image_5D.jar
+/plugins/Interactive_3D_Surface_Plot.jar
+/plugins/M_I_P.jar
+/plugins/TransformJ_.jar
+/plugins/View5D_.jar
+/plugins/Volume_Viewer.jar
+/plugins/ij-ImageIO_.jar
+/plugins/loci_tools.jar

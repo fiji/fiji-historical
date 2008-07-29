@@ -35,6 +35,8 @@ import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 
+import java.util.zip.ZipException;
+
 import java.util.regex.Pattern;
 
 public class Fake {
@@ -893,9 +895,17 @@ public class Fake {
 					}
 					byte[] buf = readStream(in);
 					in.closeEntry();
-					out.putNextEntry(entry);
-					out.write(buf);
-					out.closeEntry();
+					try {
+						out.putNextEntry(entry);
+						out.write(buf);
+						out.closeEntry();
+					} catch (ZipException e) {
+						String msg = e.getMessage();
+						if (!msg.startsWith("duplicat"))
+							throw e;
+						System.err.println("ignoring "
+							+ msg);
+					}
 				}
 				in.close();
 				out.close();
