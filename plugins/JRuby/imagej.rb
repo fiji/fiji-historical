@@ -391,8 +391,8 @@ alias_to_lower_camel_case "set_min_max"
 # 
 # To get a quick summary of how we're doing, run:
 # 
-# : echo Implemented: `egrep '^#  .*:.*:' new-imagej-macro-functions.rb | wc -l`
-# : echo Missing: `egrep '^# \+.*:.*:' new-imagej-macro-functions.rb | wc -l`
+# : echo Implemented: `egrep '^#  .*:.*:' imagej.rb | wc -l`
+# : echo Missing: `egrep '^# \+.*:.*:' imagej.rb | wc -l`
 # 
 # -----------------------------------------------------------------------
 # +RUN=300:"run":RUN
