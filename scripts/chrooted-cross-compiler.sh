@@ -6,7 +6,7 @@ CHROOT_HOME=/home/$USER
 
 test -d $CHROOT || {
 	mkdir $CHROOT &&
-	sudo apt-get install dchroot debootstrap &&
+	sudo apt-get install -q -y --force-yes dchroot debootstrap &&
 	sudo debootstrap --arch i386 $NAME \
 		./$CHROOT/ http://archive.ubuntu.com/ubuntu &&
 	for i in passwd shadow group sudoers hosts
@@ -25,9 +25,9 @@ test -d $CHROOT || {
 }
 
 test -f $CHROOT/usr/bin/wget ||
-dchroot sudo apt-get install gcc libcurl3-openssl-dev make \
+dchroot "sudo apt-get install -q -y --force-yes gcc libcurl3-openssl-dev make \
 	libexpat-dev perl-modules tk8.4 g++ pax patch \
-	autoconf automake libtool bison flex unzip make wget || {
+	autoconf automake libtool bison flex unzip make wget" || {
 	echo "Could not install packages"
 	exit 1
 }
