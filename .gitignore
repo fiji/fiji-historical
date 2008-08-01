@@ -14,6 +14,7 @@
 /MMStartup.bsh
 /mmgr_dal_*
 /CoreLog.txt
+/chroot-*-i386
 /root-x86_64-pc-linux
 /jars/javac.jar
 /jars/jython2.2.1/cachedir
