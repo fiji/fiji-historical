@@ -31,4 +31,6 @@
 [submodule "clojure"]
 	path = clojure
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/clojure/
-
+[submodule "bio-formats"]
+	path = bio-formats
+	url = git://pacific.mpi-cbg.de/bio-formats
