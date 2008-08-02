@@ -82,8 +82,10 @@ elif len(sys.argv) == 3:
 
 # push submodule
 
-print 'Making sure that the submodule is pushed:', \
-	execute('git --git-dir=' + submodule + '.git push origin HEAD')
+url = execute('git --git-dir=' + submodule + '.git config remote.origin.url')
+if not url.startswith('git://'):
+	print 'Making sure that the submodule is pushed:', \
+		execute('git --git-dir=' + submodule + '.git push origin HEAD')
 
 # add to .gitignore if not yet there
 
