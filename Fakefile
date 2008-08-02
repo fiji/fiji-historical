@@ -186,7 +186,6 @@ jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
 THIRD_PARTY_PLUGINS= \
 	plugins/TransformJ_.jar \
 	plugins/ij-ImageIO_.jar \
-	plugins/loci_tools.jar \
 
 third-party-plugins[] <- $THIRD_PARTY_PLUGINS
 plugins/*.jar <- staged-plugins/*.jar
