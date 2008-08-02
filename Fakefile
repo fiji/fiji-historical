@@ -83,6 +83,7 @@ SUBMODULE_TARGETS=\
 	plugins/TrakEM2_.jar \
 	plugins/mpicbg_.jar \
 	jars/clojure.jar \
+	plugins/loci_tools.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -145,6 +146,8 @@ plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar TrakEM2/
 CLASSPATH(plugins/mpicbg_.jar)=jars/imagescience.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/clojure.jar <- clojure/
+SUBFAKESCRIPT(bio-formats/)=../scripts/build-bio-formats.sh
+plugins/loci_tools.jar <- bio-formats/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.3
@@ -182,7 +185,7 @@ jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
 
 # Third party plugins
 
-# TODO: compile loci_tools (bio-formats) and ij-ImageIO_ as submodule
+# TODO: compile ij-ImageIO_ as submodule
 THIRD_PARTY_PLUGINS= \
 	plugins/TransformJ_.jar \
 	plugins/ij-ImageIO_.jar \
@@ -264,6 +267,7 @@ precompile-submodules[] <- \
 	precompiled/VIB_.jar \
 	precompiled/mpicbg_.jar \
 	precompiled/clojure.jar \
+	precompiled/loci_tools.jar \
 
 precompiled/ij.jar <- ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
