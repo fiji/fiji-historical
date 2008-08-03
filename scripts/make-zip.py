@@ -29,7 +29,7 @@ if os.name == 'java':
 					print file
 				entry = ZipEntry(file)
 				zip.putNextEntry(entry)
-				f = open(file, "r")
+				f = open(file, "rb")
 				zip.write(f.read())
 				f.close()
 				zip.closeEntry()
