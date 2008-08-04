@@ -209,7 +209,7 @@ CXXFLAGS(*)=-Iincludes \
 	-DJAVA_HOME='"$JAVA_HOME"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
 CXXFLAGS(win32)=$CXXFLAGS $WINOPTS
-CXXFLAGS(win64)=$CXXFLAGS $WINOPTS
+CXXFLAGS(win64)=$CXXFLAGS $WINOPTS -mconsole
 MACOPTS=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
 	-DMACOSX -mmacosx-version-min=10.4 -arch ppc -arch i386
 CXXFLAGS(macosx)=$CXXFLAGS $MACOPTS
