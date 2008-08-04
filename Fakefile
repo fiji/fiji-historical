@@ -263,8 +263,8 @@ precompile-submodules[] <- \
 	precompiled/VIB_.jar \
 	precompiled/mpicbg_.jar \
 
-precompiled/ij.jar[scripts/copy-file.py $PRE $TARGET] <- ij.jar
-precompiled/*[scripts/copy-file.py $PRE $TARGET] <- plugins/*
+precompiled/ij.jar <- ij.jar
+precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules
 
