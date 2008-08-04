@@ -952,6 +952,8 @@ static void /* no-return */ usage(void)
 		<< "\tstart JavaC, the Java Compiler, instead of ImagJ" << endl
 		<< "--retrotranslator" << endl
 		<< "\tuse Retrotranslator to support Java < 1.6" << endl
+		<< "--jgit" << endl
+		<< "\tstart JGit, instead of ImagJ" << endl
 		<< endl;
 	exit(1);
 }
@@ -1080,10 +1082,13 @@ static int start_ij(void)
 		else if (!strcmp(main_argv[i], "--retrotranslator") ||
 				!strcmp(main_argv[i], "--retro"))
 			retrotranslator = true;
+		else if (!strcmp(main_argv[i], "--jgit"))
+			main_class = "org.spearce.jgit.pgm.Main";
 		else if (handle_one_option(i, "--fiji-dir", arg))
 			fiji_dir = strdup(arg.c_str());
-		else if (!strcmp("--help", main_argv[i]) ||
-				!strcmp("-h", main_argv[i]))
+		else if ((dashdash < 0 || i < dashdash) &&
+				(!strcmp("--help", main_argv[i]) ||
+				 !strcmp("-h", main_argv[i])))
 			usage();
 		else
 			main_argv[count++] = main_argv[i];
