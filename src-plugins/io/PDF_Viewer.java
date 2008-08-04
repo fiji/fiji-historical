@@ -27,44 +27,109 @@ import ij.process.ColorProcessor;
 import org.jpedal.PdfDecoder;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 
 
-public class PDF_Viewer implements PlugIn {
+
+/* Open one or all pages of a PDF file as an image or a stack of images.
+ *
+ * When the run method is called with a null parameter, then two dialogs pop up:
+ *  - to choose the file to open
+ *  - to set the parameters: a page or zero for all pages,
+ *                           and the scale at which to generate the images
+ *
+ * Call the static method 'open' directly from your plugin.
+ *
+ */
+public class PDF_Viewer extends ImagePlus implements PlugIn {
 
 	int scaling = 1; // 1 is 100%
 	int page = 0;
 	
-	public void run(String argh) {
-		
-		// select a file
-		OpenDialog od = new OpenDialog("Select PDF file.", null);
-		// check that any PDF file was selected
-		String file_name = od.getFileName();
-		if (null == file_name) {
-			return;
-		} else if (file_name.lastIndexOf(".pdf") != file_name.length() - 4) {
-			IJ.showMessage("Not a PDF file!");
-			return;
+	public void run(String arg) {
+		String path = getPath(arg);
+		if (null == path) return;
+		int scale = 1,
+		    page = 0; // zero means all pages
+		if (null == arg || 0 == arg.trim().length()) {
+			// user-opened from menus. Ask for params
+			GenericDialog gd = new GenericDialog("Options");
+			final String[] scales = new String[]{"100","200","300","400","500","600","700", "800","900","1000"};
+			gd.addChoice("Scale: ", scales, scales[0]);
+			gd.addNumericField("Page (0 for all): ", 0, 0);
+			gd.showDialog();
+			if (gd.wasCanceled()) return;
+
+			scale = gd.getNextChoiceIndex() + 1;
+			page = (int)gd.getNextNumber();
+			if (page < 0) page = 0;
 		}
-		String dir_name = od.getDirectory();
-		// ask for scale
-		GenericDialog gd = new GenericDialog("Scale");
-		final String[] scales = new String[]{"100","200","300","400","500","600","700", "800","900","1000"};
-		gd.addChoice("Scale: ", scales, scales[0]);
-		gd.addNumericField("Page (0 for all): ", 0, 0);
-		gd.showDialog();
-		if (gd.wasCanceled()) return;
+		ImagePlus imp = open(path, page, scale);
+		if (null == imp) return;
 
-		scaling = gd.getNextChoiceIndex() + 1;
-		page = (int)gd.getNextNumber();
-		if (page < 0) page = 0;
+		// Integrate data into this ImagePlus
+		if (null != imp.getStack()) {
+			this.setStack(imp.getTitle(), imp.getStack());
+		} else {
+			this.setTitle(imp.getTitle());
+		}
+		Object obinfo = imp.getProperty("Info");
+		if (null != obinfo) this.setProperty("Info", obinfo);
+		this.setFileInfo(imp.getOriginalFileInfo());
 
+
+		if (null == arg || 0 == arg.trim().length()) this.show(); // was opened by direct call to the plugin
+					      // not via HandleExtraFileTypes which would
+					      // have given a non-null arg.
+	}
+
+	/** Accepts URLs as well. */
+	private String getPath(String arg) {
+		if (null != arg) {
+			if (0 == arg.indexOf("http://")
+			 || new File(arg).exists()) return arg;
+		}
+		// else, ask:
+		OpenDialog od = new OpenDialog("Choose a PDF file", null);
+		String dir = od.getDirectory();
+		if (null == dir) return null; // dialog was canceled
+		String filename = od.getFileName();
+		if (!filename.toLowerCase().endsWith(".pdf")) {
+			IJ.log("Not a PDF file: " + arg);
+			return null;
+		}
+		dir = dir.replace('\\', '/'); // Windows safe
+		if (!dir.endsWith("/")) dir += "/";
+		return dir + filename;
+	}
+
+	/** Opens URLs as well. */
+	private InputStream openPath(String path) throws Exception {
+		if (0 == path.indexOf("http://"))
+			return new java.net.URL(path).openStream();
+		return new FileInputStream(path);
+	}
+
+	/**
+	 * @param path The .pdf file path.
+	 * @param page ranges from 0 (all pages) to any index (starting at 1) of a page.
+	 * @param scale ranges from 1 (100%) to infinite, according to your RAM capabilities. */
+	static public ImagePlus open(final String path, int page, int scale) {
+		if (page < 0) {
+			IJ.log("Can't open negative page number " + page);
+			return null;
+		}
+		if (scale < 1) {
+			IJ.log("Can't use a scale smaller than 1 (100%).");
+			return null;
+		}
 		// open the PDF
 		try {
 			PdfDecoder decoder = new PdfDecoder();
 			decoder.setDefaultDisplayFont("SansSerif");
-			decoder.setPageParameters(scaling, 1);
-			decoder.openPdfFile(dir_name + File.separator + file_name);
+			decoder.setPageParameters(scale, 1);
+			decoder.openPdfFile(path);
 			String msg = decoder.getPageFailureMessage();
 			if (null != msg && !msg.equals("")) {
 				IJ.log(msg);
@@ -72,15 +137,12 @@ public class PDF_Viewer implements PlugIn {
 			int n_pages = decoder.getPageCount();
 			if (0 == n_pages) {
 				IJ.log("PDF file has zero pages.");
-				System.gc();
-				return;
+				return null;
 			}
 			if (page > n_pages) {
-				IJ.showMessage("There are only " + n_pages);
-				System.gc();
-				return;
+				IJ.log("Can't open page " + page + ": There are only " + n_pages);
+				return null;
 			}
-
 			if (0 == page) {
 				// get first page
 				BufferedImage bi_first = decoder.getPageAsImage(1);
@@ -91,9 +153,8 @@ public class PDF_Viewer implements PlugIn {
 					IJ.log(msg);
 				}
 				if (null == bi_first) {
-					IJ.showMessage("Can't read first page.");
-					System.gc();
-					return;
+					IJ.log("PDF Viewer: Can't read first page.");
+					return null;
 				}
 				ImageStack stack = new ImageStack(width, height);
 				stack.addSlice("1", new ColorProcessor(bi_first));
@@ -113,18 +174,15 @@ public class PDF_Viewer implements PlugIn {
 					stack.addSlice(Integer.toString(i+1), cp);
 					bi.flush();
 				}
-				// show stack
-				ImagePlus img = new ImagePlus(file_name, stack);
-				img.show();
+				return new ImagePlus(new File(path).getName(), stack);
 			} else {
 				BufferedImage bi = decoder.getPageAsImage(page);
-				new ImagePlus(file_name, bi).show();
+				return new ImagePlus(new File(path).getName(), bi);
 			}
-
 		} catch (Exception e) {
 			IJ.log("Error: " + e);
 			e.printStackTrace();
 		}
-		
+		return null;
 	}
 }
