@@ -1,3 +1,21 @@
+/**
+ * Gaussian downsampling of an image with ImageJ on-board tools.
+ *
+ * Motivation:
+ * Sound downsampling of an image requires the elimination of image frequencies
+ * higher than half the sampling frequency in the result image (see the
+ * Nyquist-Shannon sampling theorem).  The exclusive tool for this is Gaussian
+ * convolution.
+ *
+ * This script calculates the required Gaussian kernel for a given target size,
+ * smoothes the image and resamples it.
+ *
+ * Furthermore, you can define the "intrinsic" Gaussian kernel of the source and
+ * target images.  An optimal sampler is identified by sigma=0.5.  If your
+ * source image was blurred already, you may set a higher source sigma for a
+ * sharper result.  Setting target sigma to values smaller than 0.5 makes the
+ * result appear sharper and therefore eventually aliased.
+ */
 var imp = WindowManager.getCurrentImage();
 var width = 0;
 var height = 0;
