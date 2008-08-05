@@ -238,6 +238,11 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("io.Open_DF3", path);
 		}
 
+		// Albert Cardona: open one or more pages of a PDF file as images
+		if (name.endsWith(".pdf")) {
+			return tryPlugIn("io.PDF_Viewer", path);
+		}
+
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type
 		// and then call appropriate plugin using the above as models
