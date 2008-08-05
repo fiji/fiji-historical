@@ -217,6 +217,9 @@ struct JNINativeInterface_ {
     void *reserved2;
 
     void *reserved3;
+#if defined(MACOSX) && defined(__ppc__)
+    void* cfm_vectors[225];
+#endif
     jint (JNICALL *GetVersion)(JNIEnv *env);
 
     jclass (JNICALL *DefineClass)
@@ -760,6 +763,10 @@ struct JNINativeInterface_ {
        (JNIEnv* env, jobject buf);
     jlong (JNICALL *GetDirectBufferCapacity)
        (JNIEnv* env, jobject buf);
+
+#if defined(MACOSX) && defined(__ppc__)
+    void* real_functions[228];
+#endif
 
     /* New JNI 1.6 Features */
 
