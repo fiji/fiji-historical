@@ -9,8 +9,8 @@ Package: fiji
 Section: graphics
 Architecture: any
 Depends: libc6, libstdc++6
-Replaces: imageja (< 0.9.1), imageja-doc (< 0.9.1), fiji-plugins (< 0.9.1), trakem2 (< 0.9.1)
-Conflicts: imageja (< 0.9.1), imageja-doc (< 0.9.1), fiji-plugins (< 0.9.1), trakem2 (< 0.9.1)
+Replaces: imageja (<< 0.9.1), imageja-doc (<< 0.9.1), fiji-plugins (<< 0.9.1), trakem2 (<< 0.9.1)
+Conflicts: imageja (<< 0.9.1), imageja-doc (<< 0.9.1), fiji-plugins (<< 0.9.1), trakem2 (<< 0.9.1)
 Description: The Fiji image processing suite (based on ImageJ)
  Fiji is a project aiming at simplifying:
     * the installation of ImageJ
