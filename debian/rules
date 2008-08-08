@@ -13,6 +13,19 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
+DEB_BUILD_ARCH := $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+
+ifeq ($(DEB_BUILD_ARCH),i386)
+JRE_PREFIX := linux/jdk1.6.0_06/
+else
+ifeq ($(DEB_BUILD_ARCH),amd64)
+JRE_PREFIX := linux-amd64/jdk1.6.0_04/
+else
+JRE_PREFIX := linux/unknown/
+endif
+endif
+
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
@@ -74,14 +87,27 @@ install-arch-stamp : build-arch-stamp
 	cp -rv jars $(DESTDIR)/usr/lib/fiji/
 	cp -rv macros $(DESTDIR)/usr/lib/fiji/
 	cp -rv images $(DESTDIR)/usr/lib/fiji/
-	install -d $(DESTDIR)/usr/lib/fiji/java/linux/
-	cp -rv java/linux/* $(DESTDIR)/usr/lib/fiji/java/linux/
+	install -d $(DESTDIR)/usr/lib/fiji/java/$(JRE_PREFIX)
+	cp -rv java/$(JRE_PREFIX)jre $(DESTDIR)/usr/lib/fiji/java/$(JRE_PREFIX)
 	install -d $(DESTDIR)/usr/share/doc/fiji/
 	install -m 644 ij.jar $(DESTDIR)/usr/lib/fiji/
 	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/fiji/
 	install -m 644 NOTES $(DESTDIR)/usr/share/doc/fiji/
 	install -m 644 README $(DESTDIR)/usr/share/doc/fiji/
 	install -m 644 TODO $(DESTDIR)/usr/share/doc/fiji/
+	#install -d $(DESTDIR)/usr/share/icons/hicolor/16x16/apps
+	#install -d $(DESTDIR)/usr/share/icons/hicolor/22x22/apps
+	#install -d $(DESTDIR)/usr/share/icons/hicolor/32x32/apps
+	#install -d $(DESTDIR)/usr/share/icons/hicolor/48x48/apps
+	#install -d $(DESTDIR)/usr/share/icons/hicolor/scalable/apps
+	#install -m 644 images/gnome/16x16/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/16x16/apps/
+	#install -m 644 images/gnome/22x22/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/22x22/apps/
+	#install -m 644 images/gnome/32x32/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/32x32/apps/
+	#install -m 644 images/gnome/48x48/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/48x48/apps/
+	#install -m 644 images/gnome/scalable/apps/fiji.svg $(DESTDIR)/usr/share/icons/hicolor/scalable/apps/
+	install -d $(DESTDIR)/usr/share/pixmaps/
+	install -m 644 images/fiji-icon-16x16.xpm $(DESTDIR)/usr/share/pixmaps/
+	install -m 644 images/fiji-icon-32x32.xpm $(DESTDIR)/usr/share/pixmaps/
 	dh_install -s
 	touch install-arch-stamp
 
@@ -91,7 +117,7 @@ install-arch-stamp : build-arch-stamp
 	dh_installchangelogs -p$*
 	dh_installdocs -p$*
 	dh_installexamples -p$*
-#	dh_installmenu -p$*
+	dh_installmenu -p$*
 #	dh_installdebconf	 -p$*
 #	dh_installlogrotate	 -p$*
 #	dh_installemacsen -p$*f
@@ -124,7 +150,7 @@ binary-indep : $(INDEP_STAMPS)
 	dh_installchangelogs -p$*
 	dh_installdocs -p$*
 	dh_installexamples -p$*
-#	dh_installmenu -p$*
+	dh_installmenu -p$*
 #	dh_installdebconf	 -p$*
 #	dh_installlogrotate	 -p$*
 #	dh_installemacsen -p$*
