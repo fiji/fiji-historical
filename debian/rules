@@ -133,9 +133,9 @@ install-arch-stamp : build-arch-stamp
 	dh_compress  -p$*
 	dh_fixperms -p$*
 #	dh_perl -p$*
-	dh_makeshlibs -p$*
+#	dh_makeshlibs -p$*
 	dh_installdeb -p$*
-	dh_shlibdeps -p$*
+#	dh_shlibdeps -p$*
 	dh_gencontrol -p$*
 	dh_md5sums -p$*
 	dh_builddeb -p$*
@@ -166,9 +166,9 @@ binary-indep : $(INDEP_STAMPS)
 	dh_compress  -p$*
 	dh_fixperms -p$*
 #	dh_perl -p$*
-	dh_makeshlibs -p$*
+#	dh_makeshlibs -p$*
 	dh_installdeb -p$*
-	dh_shlibdeps -p$*
+#	dh_shlibdeps -p$*
 	dh_gencontrol -p$*
 	dh_md5sums -p$*
 	dh_builddeb -p$*
