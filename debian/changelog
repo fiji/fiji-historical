@@ -1,6 +1,18 @@
+fiji (0.9.1-Dresden-rc3) unstable; urgency=low
+
+  * This is a package of the Dresden-rc3 release.  In this version
+    I have abandoned the careful approach of the previous packages
+    and this is just a monolithic package with everything you
+    need for Fiji.  This is more in the spirit of the Fiji project,
+    but would create a lot of problems if it were to be included
+    in Debian / Ubuntu in the future.  For the moment it's more
+    important that we can just get a .deb out there for the release.
+
+ -- Mark Longair <mhl@pobox.com>  Mon, 08 Aug 2008 10:25:00 +0200
+
 fiji (0.9.0-4) unstable; urgency=low
 
-  * Fixed more packaging versions
+  * Fixed more packaging problems
 
  -- Mark Longair <mhl@pobox.com>  Mon, 30 Apr 2008 10:25:00 +0200
 

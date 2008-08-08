@@ -16,9 +16,9 @@
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
-INDEP_STAMPS=imageja-packindep-stamp imageja-doc-packindep-stamp fiji-plugins-packindep-stamp fiji-packindep-stamp trakem2-packindep-stamp
+INDEP_STAMPS=
 
-ARCH_STAMPS=
+ARCH_STAMPS=fiji-packarch-stamp
 
 configure : configure-stamp
 
@@ -31,17 +31,12 @@ build : build-arch build-indep
 build-arch : build-arch-stamp
 
 build-arch-stamp : configure-stamp
+	sh Fake.sh
 	touch $@
 
 build-indep : build-indep-stamp
 
 build-indep-stamp : configure-stamp
-	$(MAKE) build-fiji
-	$(MAKE) build-imageja
-	$(MAKE) build-fiji-plugins
-	$(MAKE) build-imageja-doc
-	$(MAKE) build-trakem2
-	$(MAKE) add-all-configs
 	touch $@
 
 clean :
@@ -49,7 +44,8 @@ clean :
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp install-arch-stamp install-indep-stamp
 	rm -f $(INDEP_STAMPS) $(ARCH_STAMPS)
-	$(MAKE) clean
+	sh Fake.sh clean
+	rm -f fjij fiji.o
 	dh_clean
 
 install : install-indep-stamp install-arch-stamp
@@ -59,19 +55,33 @@ install-indep-stamp : build-indep-stamp
 	dh_testroot
 	dh_clean -k -i
 	dh_installdirs -i
-	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja install-imageja
-	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji-plugins install-fiji-plugins
-	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja-doc install-imageja-doc
-	$(MAKE) DESTDIR=$(CURDIR)/debian/trakem2 install-trakem2
-	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji install-fiji
+	# $(MAKE) DESTDIR=$(CURDIR)/debian/fiji install-fiji
 	dh_install -i
 	touch install-indep-stamp
+
+DESTDIR=$(CURDIR)/debian/fiji
 
 install-arch-stamp : build-arch-stamp
 	dh_testdir
 	dh_testroot
 	dh_clean -k -s
 	dh_installdirs -s
+	install -d $(DESTDIR)/usr/bin/
+	install -m 755 fiji $(DESTDIR)/usr/bin/fiji.binary
+	install -m 755 debian/simple-launcher $(DESTDIR)/usr/bin/fiji
+	install -d $(DESTDIR)/usr/lib/fiji/
+	cp -rv plugins $(DESTDIR)/usr/lib/fiji/
+	cp -rv jars $(DESTDIR)/usr/lib/fiji/
+	cp -rv macros $(DESTDIR)/usr/lib/fiji/
+	cp -rv images $(DESTDIR)/usr/lib/fiji/
+	install -d $(DESTDIR)/usr/lib/fiji/java/linux/
+	cp -rv java/linux/* $(DESTDIR)/usr/lib/fiji/java/linux/
+	install -d $(DESTDIR)/usr/share/doc/fiji/
+	install -m 644 ij.jar $(DESTDIR)/usr/lib/fiji/
+	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/fiji/
+	install -m 644 NOTES $(DESTDIR)/usr/share/doc/fiji/
+	install -m 644 README $(DESTDIR)/usr/share/doc/fiji/
+	install -m 644 TODO $(DESTDIR)/usr/share/doc/fiji/
 	dh_install -s
 	touch install-arch-stamp
 
