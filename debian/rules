@@ -1,0 +1,146 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+#
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+#
+# Modified to make a template file for a multi-binary package with separated
+# build-arch and build-indep targets  by Bill Allombert 2001
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+INDEP_STAMPS=imageja-packindep-stamp imageja-doc-packindep-stamp fiji-plugins-packindep-stamp fiji-packindep-stamp trakem2-packindep-stamp
+
+ARCH_STAMPS=
+
+configure : configure-stamp
+
+configure-stamp :
+	dh_testdir
+	touch configure-stamp
+
+build : build-arch build-indep
+
+build-arch : build-arch-stamp
+
+build-arch-stamp : configure-stamp
+	touch $@
+
+build-indep : build-indep-stamp
+
+build-indep-stamp : configure-stamp
+	$(MAKE) build-fiji
+	$(MAKE) build-imageja
+	$(MAKE) build-fiji-plugins
+	$(MAKE) build-imageja-doc
+	$(MAKE) build-trakem2
+	$(MAKE) add-all-configs
+	touch $@
+
+clean :
+	dh_testdir
+	dh_testroot
+	rm -f build-arch-stamp build-indep-stamp configure-stamp install-arch-stamp install-indep-stamp
+	rm -f $(INDEP_STAMPS) $(ARCH_STAMPS)
+	$(MAKE) clean
+	dh_clean
+
+install : install-indep-stamp install-arch-stamp
+
+install-indep-stamp : build-indep-stamp
+	dh_testdir
+	dh_testroot
+	dh_clean -k -i
+	dh_installdirs -i
+	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja install-imageja
+	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji-plugins install-fiji-plugins
+	$(MAKE) DESTDIR=$(CURDIR)/debian/imageja-doc install-imageja-doc
+	$(MAKE) DESTDIR=$(CURDIR)/debian/trakem2 install-trakem2
+	$(MAKE) DESTDIR=$(CURDIR)/debian/fiji install-fiji
+	dh_install -i
+	touch install-indep-stamp
+
+install-arch-stamp : build-arch-stamp
+	dh_testdir
+	dh_testroot
+	dh_clean -k -s
+	dh_installdirs -s
+	dh_install -s
+	touch install-arch-stamp
+
+%-packindep-stamp : build-indep-stamp install-indep-stamp
+	dh_testdir -p$*
+	dh_testroot -p$*
+	dh_installchangelogs -p$*
+	dh_installdocs -p$*
+	dh_installexamples -p$*
+#	dh_installmenu -p$*
+#	dh_installdebconf	 -p$*
+#	dh_installlogrotate	 -p$*
+#	dh_installemacsen -p$*f
+#	dh_installpam -p$*
+#	dh_installmime -p$*
+#	dh_python -p$*
+#	dh_installinit -p$*
+#	dh_installcron -p$*
+#	dh_installinfo -p$*
+	dh_installman -p$*
+	dh_link -p$*
+	dh_strip -p$*
+	dh_compress  -p$*
+	dh_fixperms -p$*
+#	dh_perl -p$*
+	dh_makeshlibs -p$*
+	dh_installdeb -p$*
+	dh_shlibdeps -p$*
+	dh_gencontrol -p$*
+	dh_md5sums -p$*
+	dh_builddeb -p$*
+	touch $@
+
+# Build architecture independant packages using the common target.
+binary-indep : $(INDEP_STAMPS)
+
+%-packarch-stamp : build-arch-stamp install-arch-stamp
+	dh_testdir -p$*
+	dh_testroot -p$*
+	dh_installchangelogs -p$*
+	dh_installdocs -p$*
+	dh_installexamples -p$*
+#	dh_installmenu -p$*
+#	dh_installdebconf	 -p$*
+#	dh_installlogrotate	 -p$*
+#	dh_installemacsen -p$*
+#	dh_installpam -p$*
+#	dh_installmime -p$*
+#	dh_python -p$*
+#	dh_installinit -p$*
+#	dh_installcron -p$*
+#	dh_installinfo -p$*
+	dh_installman -p$*
+	dh_link -p$*
+	dh_strip -p$*
+	dh_compress  -p$*
+	dh_fixperms -p$*
+#	dh_perl -p$*
+	dh_makeshlibs -p$*
+	dh_installdeb -p$*
+	dh_shlibdeps -p$*
+	dh_gencontrol -p$*
+	dh_md5sums -p$*
+	dh_builddeb -p$*
+	touch $@
+
+# Build architecture dependant packages using the common target.
+binary-arch : $(ARCH_STAMPS)
+
+binary : binary-arch binary-indep
+
+.PHONY : build clean binary-indep binary-arch binary install install-indep install-arch configure
