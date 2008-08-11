@@ -80,9 +80,9 @@ install-arch-stamp : build-arch-stamp
 	dh_clean -k -s
 	dh_installdirs -s
 	install -d $(DESTDIR)/usr/bin/
-	install -m 755 fiji $(DESTDIR)/usr/bin/fiji.binary
-	install -m 755 debian/simple-launcher $(DESTDIR)/usr/bin/fiji
 	install -d $(DESTDIR)/usr/lib/fiji/
+	install -m 755 fiji $(DESTDIR)/usr/lib/fiji/
+	install -m 755 debian/simple-launcher $(DESTDIR)/usr/bin/fiji
 	cp -rv plugins $(DESTDIR)/usr/lib/fiji/
 	cp -rv jars $(DESTDIR)/usr/lib/fiji/
 	cp -rv macros $(DESTDIR)/usr/lib/fiji/
