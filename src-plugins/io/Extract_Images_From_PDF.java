@@ -24,6 +24,7 @@ public class Extract_Images_From_PDF implements PlugIn {
 	public void run(String arg) {
 
 		final String path = PDF_Viewer.getPath(arg);
+		if (null == path) return;
 		PdfDecoder decoder = null;
 
 		try {
