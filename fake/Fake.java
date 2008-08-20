@@ -942,6 +942,10 @@ public class Fake {
 				}
 				return result;
 			}
+
+			List getAntAction() throws FakeException {
+				return null;
+			}
 		}
 
 		class All extends Rule {
@@ -955,6 +959,8 @@ public class Fake {
 			public boolean upToDate() {
 				return false;
 			}
+
+			List getAntAction() { return new ArrayList(); }
 		}
 
 		abstract class Special extends Rule {
@@ -1099,6 +1105,17 @@ public class Fake {
 				}
 				while (iter.hasNext())
 					clean((String)iter.next(), dry_run);
+			}
+
+			List getAntAction() throws FakeException {
+				if (!upToDate())
+					compileJavas(prerequisites);
+				return makeAntJarTarget(prerequisites, cwd,
+					target, getPluginsConfig(),
+					getVar("CLASSPATH"),
+					getMainClass(),
+					getVar("JAVAVERSION"),
+					getVarBool("DEBUG"));
 			}
 		}
 
@@ -1720,6 +1737,120 @@ public class Fake {
 			throw new FakeException("Error writing "
 				+ path + ": " + e);
 		}
+	}
+
+	static void addAntCreateLeadingDirectories(String file,
+			List result, Set dirs) {
+		int slash = file.lastIndexOf('/');
+
+		if (slash < 0)
+			return;
+
+		String dir = file.substring(0, slash);
+		if (!dirs.contains(dir)) {
+			result.add("<mkdir dir=\"" + dir + "\"/>");
+			dirs.add(dir);
+		}
+	}
+
+	static void addAntCopy(String src, String dest, List result, Set dirs) {
+		addAntCreateLeadingDirectories(dest, result, dirs);
+		result.add("<copy file=\"" + src + "\" tofile=\"" +
+				dest + "\"/>");
+	}
+
+	static List makeAntJarTarget(List files, File cwd, String target,
+			String config, String extraClassPath,
+			String mainClass, String javaVersion, boolean debug)
+			throws FakeException {
+		List result = new ArrayList();
+		Set dirs = new HashSet();
+		String build = "${build}/build." + target;
+
+		String classPath = discoverClassPath();
+		if (extraClassPath != null)
+			classPath = extraClassPath + ":" + classPath;
+
+		addAntCreateLeadingDirectories(build + "/.", result, dirs);
+
+		// make javac rule
+		String javas = "", prefix = "";
+		Iterator iter = files.iterator();
+		while (iter.hasNext()) {
+			String prereq = (String)iter.next();
+			if (!prereq.endsWith(".java"))
+				continue;
+			javas += prefix + prereq;
+			prefix = ",";
+		}
+
+		String optimize = (debug ?  "debug" : "optimize") + "=\"on\"";
+		if (javaVersion == null)
+			javaVersion = "";
+		else
+			javaVersion = " source=\"" + javaVersion +
+				"\" target=\"" + javaVersion + "\"";
+		if (!javas.equals(""))
+			result.add("<javac " + optimize + javaVersion +
+					" classpath=\"" + classPath +
+					"\" srcdir=\".\" includes=\"" + javas +
+					"\" destdir=\"" + build + "\"/>");
+
+		// make copy rules and jar rule
+		List list = new ArrayList();
+		String lastBase = null;
+		iter = java2classFiles(files, cwd).iterator();
+		while (iter.hasNext()) {
+			String realName = (String)iter.next();
+			String name = realName;
+			byte[] buffer = readFile(makePath(cwd, realName));
+			if (buffer == null)
+				throw new FakeException("File "
+					+ realName + " does not exist.");
+			if (realName.endsWith(".class")) {
+				ByteCodeAnalyzer analyzer =
+					new ByteCodeAnalyzer(buffer);
+				name = analyzer.getPathForClass() + ".class";
+				if (realName.endsWith(name))
+					lastBase = realName.substring(0,
+						realName.length()
+						- name.length());
+				else
+					lastBase = null;
+			}
+			else {
+				if (lastBase != null &&
+						realName.startsWith(lastBase)) {
+					int len = lastBase.length();
+					name = realName.substring(len);
+				}
+				addAntCopy(realName, build + "/" + name,
+					result, dirs);
+			}
+			list.add(name);
+		}
+
+		if (config != null) {
+			addAntCopy(config, build + "/plugins.config", result,
+				dirs);
+			list.add("plugins.config");
+		}
+
+		String jar = "<jar destfile=\"" + target +
+			"\" basedir=\"" + build + "\" " +
+			"includes=\"" + join(list, ",") + "\"";
+		if (mainClass == null)
+			result.add(jar + "/>");
+		else {
+			result.add(jar + ">");
+			result.add("\t<manifest>");
+			result.add("\t\t<attribute name=\"Main-Class\" value=\""
+				+ mainClass + "\"/>");
+			result.add("\t</manifest>");
+			result.add("</jar>");
+		}
+
+		return result;
 	}
 
 	static byte[] readFile(String fileName) {
@@ -2392,6 +2523,7 @@ public class Fake {
 		}
 		out.println("<project name=\"Fiji\" default=\""
 			+ parser.allRule.target + "\" basedir=\".\">");
+		out.println("\t<property name=\"build\" location=\"build\"/>");
 
 		List list = new ArrayList(parser.allRules.keySet());
 		Collections.sort(list);
@@ -2411,11 +2543,18 @@ public class Fake {
 		String depends = join(rule.getPrerequisitesWithRules(), ",");
 		out.println("\t<target name=\"" + rule.target + "\" depends=\""
 			 + depends + "\">");
-		if (rule instanceof Parser.All)
-			; /* do nothing */
-		else
+		List antAction = null;
+		try {
+			antAction = rule.getAntAction();
+		} catch (FakeException e) { }
+		if (antAction == null)
 			System.err.println("Warning: ignore action for target "
 				 + rule);
+		else {
+			Iterator iter = antAction.iterator();
+			while (iter.hasNext())
+				out.println("\t\t" + iter.next());
+		}
 		out.println("\t</target>");
 	}
 
