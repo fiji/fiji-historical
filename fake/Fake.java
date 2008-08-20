@@ -344,9 +344,6 @@ public class Fake {
 				String list = line.substring(arrow + 2).trim();
 				try {
 					Rule rule = addRule(target, list);
-
-					if (result == null)
-						result = rule;
 				} catch (Exception e) {
 					error(e.getMessage());
 				}
@@ -354,6 +351,7 @@ public class Fake {
 
 			lineNumber = -1;
 
+			result = allRule;
 			if (result == null)
 				error("Could not find default rule");
 
