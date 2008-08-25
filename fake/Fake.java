@@ -1295,6 +1295,11 @@ public class Fake {
 						+ program + "'\n" + e);
 				}
 			}
+
+			List getAntAction() throws FakeException {
+				return makeAntExecTarget(
+					expandVariables(program, target), cwd);
+			}
 		}
 	}
 
@@ -1852,6 +1857,34 @@ public class Fake {
 
 		return result;
 	}
+
+	static List makeAntExecTarget(String cmd, File cwd) {
+		List result = new ArrayList();
+		if (cmd.equals(""))
+			return result;
+		int space = cmd.indexOf(' ');
+		String argv0 = space < 0 ?  cmd : cmd.substring(0, space);
+
+		String exec = "<exec dir=\"" + cwd +
+			"\" executable=\"" + argv0 + "\"";
+		if (space < 0)
+			result.add(exec + "/>");
+		else {
+			result.add(exec + ">");
+			cmd = cmd.substring(space + 1);
+			int quote = cmd.indexOf('"');
+			while (quote >= 0) {
+				cmd = cmd.substring(0, quote) + "&quot;" +
+					cmd.substring(quote + 1);
+				quote = cmd.indexOf('"', quote + 6);
+			}
+			result.add("\t<arg line=\"" + cmd + "\"/>");
+			result.add("</exec>");
+		}
+
+		return result;
+	}
+
 
 	static byte[] readFile(String fileName) {
 		try {
