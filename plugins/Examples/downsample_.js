@@ -92,8 +92,8 @@ if ( imp )
 			else
 				s = targetSigma * imp.getHeight() / height;
 
-			IJ.run( "Gaussian Blur...", "sigma=" + Math.sqrt( s * s - sourceSigma * sourceSigma ) );
-			IJ.run( "Scale...", "x=- y=- width=" + width + " height=" + height + " title=-" );
+			IJ.run( "Gaussian Blur...", "sigma=" + Math.sqrt( s * s - sourceSigma * sourceSigma ) + " stack" );
+			IJ.run( "Scale...", "x=- y=- width=" + width + " height=" + height + " process title=-" );
 			IJ.run( "Canvas Size...", "width=" + width + " height=" + height + " position=Center" );
 		}
 		else
