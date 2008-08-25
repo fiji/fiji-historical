@@ -1060,6 +1060,12 @@ public class Fake {
 
 				return jarUpToDate(source, target);
 			}
+
+			List getAntAction() throws FakeException {
+				return makeAntCopyJarTarget(target,
+					getLastPrerequisite(), cwd,
+					getPluginsConfig());
+			}
 		}
 
 		class CompileJar extends Rule {
@@ -1855,6 +1861,28 @@ public class Fake {
 				+ mainClass + "\"/>");
 			result.add("\t</manifest>");
 			result.add("</jar>");
+		}
+
+		return result;
+	}
+
+	static List makeAntCopyJarTarget(String target, String source,
+			File cwd, String config) {
+		Set dirs = new HashSet();
+		List result = new ArrayList();
+		if (config == null)
+			addAntCopy(source, target, result, dirs);
+		else {
+			String build = "${build}/build." + target;
+			result.add("<delete dir=\"" + build + "\"/>");
+			addAntCreateLeadingDirectories(build + "/.",
+					result, dirs);
+			result.add("<unjar src=\"" + source + "\" dest=\"" +
+				build + "\"/>");
+			addAntCopy(config, build + "/plugins.config",
+				result, dirs);
+			result.add("<jar destfile=\"" + target + "\" basedir=\""
+				+ build + "\"/>");
 		}
 
 		return result;
