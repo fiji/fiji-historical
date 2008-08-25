@@ -971,6 +971,8 @@ public class Fake {
 			boolean upToDate() {
 				return false;
 			}
+
+			List getAntAction() { return new ArrayList(); }
 		}
 
 		class SubFake extends Rule {
