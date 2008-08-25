@@ -2539,13 +2539,80 @@ public class Fake {
 		out.close();
 	}
 
+	void antSubFakeTarget(PrintStream out, String target, String subdir,
+			String baseName, String mode, List deps) {
+		String name = mode + "." + target;
+		if (mode.equals("precompiled")) {
+			out.println("\t<condition property=\"" + name + "\">");
+			out.println("\t\t<and>");
+			out.println("\t\t\t<isfalse value=\"${fake." + target +
+				"}\"/>");
+			out.println("\t\t\t<isfalse value=\"${make." + target +
+				"}\"/>");
+			out.println("\t\t</and>");
+			out.println("\t</condition>");
+		} else if (mode.equals("make")) {
+			out.println("\t<condition property=\"" + name + "\">");
+			out.println("\t\t<and>");
+			out.println("\t\t\t<isfalse value=\"${fake." + target +
+				"}\"/>");
+			out.println("\t\t\t<available file=\"" + subdir +
+					"Makefile\"/>");
+			out.println("\t\t</and>");
+			out.println("\t</condition>");
+		} else if (mode.equals("fake"))
+			out.println("\t<available property=\"" + name +
+				"\" file=\"" + subdir + "Fakefile\"/>");
+		// TODO: make dependent on fiji launcher for mode "fake"
+		out.println("\t<target name=\"" + name + "\" if=\"" + name +
+			"\">");
+		Set dirs = new HashSet();
+		List tasks = new ArrayList();
+		if (mode.equals("fake")) {
+			tasks.add("<exec dir=\"" + subdir +
+				"\" executable=\"${basedir}/fiji\">");
+			tasks.add("\t<arg line=\"--fake\"/>");
+			tasks.add("</exec>");
+		} else if (mode.equals("make"))
+			tasks.add("<exec dir=\"" + subdir +
+				"\" executable=\"make\"/>");
+
+		addAntCopy(subdir + baseName, target, tasks, dirs);
+		Iterator iter = tasks.iterator();
+		while (iter.hasNext())
+			out.println("\t\t" + iter.next());
+		out.println("\t</target>");
+		deps.add(name);
+	}
+
+	void antSubFakeTargets(PrintStream out, Parser.Rule rule, List deps) {
+		String target = rule.target;
+		String subdir = rule.getLastPrerequisite();
+
+		String baseName = target;
+		int slash = baseName.indexOf('/');
+		if (slash >= 0)
+			baseName = baseName.substring(slash + 1);
+
+		antSubFakeTarget(out, target, subdir, baseName, "fake", deps);
+		antSubFakeTarget(out, target, subdir, baseName, "make", deps);
+		antSubFakeTarget(out, target, "precompiled/", baseName,
+			"precompiled", deps);
+	}
+
 	void printAntTarget(PrintStream out, Parser.Rule rule) {
-		String depends = join(rule.getPrerequisitesWithRules(), ",");
+		List antAction = null;
+		List dependencies = rule.getPrerequisitesWithRules();
+		if (rule instanceof Parser.SubFake) {
+			antSubFakeTargets(out, rule, dependencies);
+			antAction = new ArrayList();
+		}
+		String depends = join(dependencies, ",");
 		out.println("\t<target name=\"" + rule.target + "\" depends=\""
 			 + depends + "\">");
-		List antAction = null;
 		try {
-			antAction = rule.getAntAction();
+			if (antAction == null)
+				antAction = rule.getAntAction();
 		} catch (FakeException e) { }
 		if (antAction == null)
 			System.err.println("Warning: ignore action for target "
