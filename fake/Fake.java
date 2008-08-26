@@ -1226,8 +1226,7 @@ public class Fake {
 				addFlags(flags, path, arguments);
 				arguments.add(path);
 				try {
-					execute(arguments, path,
-						getVarBool("VERBOSE", path));
+					execute(arguments, path);
 					return path.substring(0,
 						path.length() - 4) + ".o";
 				} catch(FakeException e) {
@@ -1247,8 +1246,7 @@ public class Fake {
 				arguments.addAll(objects);
 				addFlags("LIBS", target, arguments);
 				try {
-					execute(arguments, target,
-						getVarBool("VERBOSE", path));
+					execute(arguments, target);
 				} catch(Exception e) {
 					error("link", target, e);
 				}
@@ -1282,6 +1280,41 @@ public class Fake {
 					throws FakeException {
 				throw new FakeException("Could not " + action
 					+ " " + file + ": " + e);
+			}
+
+			/* if not null, collect ant tasks instead */
+			private List forAnt;
+
+			void execute(List arguments, String path)
+					throws IOException, FakeException {
+				if (forAnt == null) {
+					Fake.execute(arguments, path,
+						getVarBool("VERBOSE", path));
+					return;
+				}
+
+				String cmd = "<exec dir=\".\" executable=\"" +
+					arguments.get(0) + "\"";
+				int size = arguments.size();
+				if (size > 1) {
+					forAnt.add(cmd + ">");
+					for (int i = 1; i < size; i++) {
+						String arg = (String)
+							arguments.get(i);
+						forAnt.add("\t<arg value=\"" +
+							xmlQuoteQuotes(arg) +
+							"\"/>");
+					}
+					forAnt.add("</exec>");
+				} else
+					forAnt.add(cmd + "/>");
+			}
+
+			List getAntAction() throws FakeException {
+				forAnt = new ArrayList();
+				action();
+				// TODO: fall back to precompiled/
+				return forAnt;
 			}
 		}
 
@@ -1913,6 +1946,16 @@ public class Fake {
 		return result;
 	}
 
+	static String xmlQuoteQuotes(String string) {
+		int quote = string.indexOf('"');
+		while (quote >= 0) {
+			string = string.substring(0, quote) + "&quot;" +
+				string.substring(quote + 1);
+			quote = string.indexOf('"', quote + 6);
+		}
+		return string;
+	}
+
 	static List makeAntExecTarget(String cmd, File cwd) {
 		List result = new ArrayList();
 		if (cmd.equals(""))
@@ -1926,13 +1969,7 @@ public class Fake {
 			result.add(exec + "/>");
 		else {
 			result.add(exec + ">");
-			cmd = cmd.substring(space + 1);
-			int quote = cmd.indexOf('"');
-			while (quote >= 0) {
-				cmd = cmd.substring(0, quote) + "&quot;" +
-					cmd.substring(quote + 1);
-				quote = cmd.indexOf('"', quote + 6);
-			}
+			cmd = xmlQuoteQuotes(cmd.substring(space + 1));
 			result.add("\t<arg line=\"" + cmd + "\"/>");
 			result.add("</exec>");
 		}
