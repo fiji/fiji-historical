@@ -1154,6 +1154,13 @@ public class Fake {
 						source.substring(slash2), cwd);
 				}
 			}
+
+			List getAntAction() throws FakeException {
+				return makeAntCompileClassTarget(target,
+					prerequisites, getVar("CLASSPATH"),
+					getVar("JAVAVERSION"),
+					getVarBool("DEBUG"));
+			}
 		}
 
 		class CompileCProgram extends Rule {
@@ -1772,6 +1779,26 @@ public class Fake {
 				dest + "\"/>");
 	}
 
+	static void addAntJavac(String javas, String build,
+			String extraClassPath, String javaVersion,
+			boolean debug, List result) throws FakeException {
+		String classPath = discoverClassPath();
+		if (extraClassPath != null)
+			classPath = extraClassPath + ":" + classPath;
+
+		String optimize = (debug ?  "debug" : "optimize") + "=\"on\"";
+		if (javaVersion == null)
+			javaVersion = "";
+		else
+			javaVersion = " source=\"" + javaVersion +
+				"\" target=\"" + javaVersion + "\"";
+		if (!javas.equals(""))
+			result.add("<javac " + optimize + javaVersion +
+					" classpath=\"" + classPath +
+					"\" srcdir=\".\" includes=\"" + javas +
+					"\" destdir=\"" + build + "\"/>");
+	}
+
 	static List makeAntJarTarget(List files, File cwd, String target,
 			String config, String extraClassPath,
 			String mainClass, String javaVersion, boolean debug)
@@ -1779,10 +1806,6 @@ public class Fake {
 		List result = new ArrayList();
 		Set dirs = new HashSet();
 		String build = "${build}/build." + target;
-
-		String classPath = discoverClassPath();
-		if (extraClassPath != null)
-			classPath = extraClassPath + ":" + classPath;
 
 		addAntCreateLeadingDirectories(build + "/.", result, dirs);
 
@@ -1797,17 +1820,8 @@ public class Fake {
 			prefix = ",";
 		}
 
-		String optimize = (debug ?  "debug" : "optimize") + "=\"on\"";
-		if (javaVersion == null)
-			javaVersion = "";
-		else
-			javaVersion = " source=\"" + javaVersion +
-				"\" target=\"" + javaVersion + "\"";
-		if (!javas.equals(""))
-			result.add("<javac " + optimize + javaVersion +
-					" classpath=\"" + classPath +
-					"\" srcdir=\".\" includes=\"" + javas +
-					"\" destdir=\"" + build + "\"/>");
+		addAntJavac(javas, build, extraClassPath, javaVersion, debug,
+				result);
 
 		// make copy rules and jar rule
 		List list = new ArrayList();
@@ -1885,6 +1899,17 @@ public class Fake {
 				+ build + "\"/>");
 		}
 
+		return result;
+	}
+
+	static List makeAntCompileClassTarget(String target, List prerequisites,
+			String classPath, String javaVersion, boolean debug)
+			throws FakeException {
+		Set dirs = new HashSet();
+		List result = new ArrayList();
+		addAntCreateLeadingDirectories(target, result, dirs);
+		addAntJavac(join(prerequisites, ","), "plugins/",
+				classPath, javaVersion, debug, result);
 		return result;
 	}
 
