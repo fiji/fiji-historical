@@ -54,12 +54,14 @@ public class NonLinearTransform{
 		private double[][] beta = null;
 		private double[] normMean = null;
 		private double[] normVar = null;
+		private double[][][] transField = null;
 		private int dimension = 0;
 		private int length = 0;
 		private int width = 0;
 		private int height = 0;
+		private boolean precalculated = false;
 	
-		NonLinearTransform(double[][] b, double[] nm, double[] nv, int d, int w, int h){
+		public NonLinearTransform(double[][] b, double[] nm, double[] nv, int d, int w, int h){
 				beta = b;
 				normMean = nm;
 				normVar = nv;
@@ -69,7 +71,7 @@ public class NonLinearTransform{
 				height = h;
 		}
 		
-		NonLinearTransform(int d, int w, int h){
+		public NonLinearTransform(int d, int w, int h){
 				dimension = d;
 				length = (dimension + 1)*(dimension + 2)/2;	
 		
@@ -86,8 +88,65 @@ public class NonLinearTransform{
 				height = h;
 		}
 	
-		NonLinearTransform(){};
+		public NonLinearTransform(){};
+
+		public NonLinearTransform(String filename){
+				this.load(filename);
+		}
+
+		public NonLinearTransform(double[][] coeffMatrix, int w, int h){
+				length = coeffMatrix.length;
+				beta = new double[length][2];
+				normMean = new double[length];
+				normVar = new double[length];
+				width = w;
+				height = h;
+				dimension = (int)(-1.5 + Math.sqrt(0.25 + 2*length));
+
+				for(int i=0; i<length; i++){
+						beta[i][0] = coeffMatrix[0][i];
+						beta[i][1] = coeffMatrix[1][i];
+						normMean[i] = coeffMatrix[2][i];
+						normVar[i] = coeffMatrix[3][i];
+				}
+		}
 		
+		void precalculateTransfom(){
+				transField = new double[width][height][2];
+				
+				for (int x=0; x<width; x++){
+						for (int y=0; y<height; y++){
+								double[] position = {x,y};
+								double[] featureVector = kernelExpand(position);
+								double[] newPosition = multiply(beta, featureVector);
+				
+								if ((newPosition[0] < 0) || (newPosition[0] >= width) ||
+										(newPosition[1] < 0) || (newPosition[1] >= height))
+										{
+												transField[x][y][0] = -1;
+												transField[x][y][1] = -1;
+												continue;
+										}
+				
+								transField[x][y][0] = newPosition[0];
+								transField[x][y][1] = newPosition[1];
+						}
+				}
+				precalculated = true;
+		}
+
+		public double[][] getCoefficients(){
+				double[][] coeffMatrix = new double[4][length];
+
+				for(int i=0; i<length; i++){
+						coeffMatrix[0][i] = beta[i][0];
+						coeffMatrix[1][i] = beta[i][1];
+						coeffMatrix[2][i] = normMean[i];
+						coeffMatrix[3][i] = normVar[i];
+
+				}
+				return coeffMatrix;
+		}
 
 		public void setBeta(double[][] b){
 				beta = b;
@@ -226,32 +285,24 @@ public class NonLinearTransform{
 				catch(FileNotFoundException e){System.out.println("File not found!");}
 		}
 	
-		public ImageProcessor transform(ImageProcessor ip, ImageProcessor mask){
-				ImageProcessor newIp = ip.duplicate();
-				newIp.max(0.0);
+		public ImageProcessor[] transform(ImageProcessor ip){
+				if (!precalculated)
+						this.precalculateTransfom();
+
+				ImageProcessor newIp = ip.createProcessor(ip.getWidth(), ip.getHeight());
+				if (ip instanceof ColorProcessor) ip.max(0); 
+				ImageProcessor maskIp = new ByteProcessor(ip.getWidth(),ip.getHeight());
 		
-				ImageProcessor maskIp = ip.duplicate();
-				maskIp.max(0.0);
-		
-				for (int x=0; x<ip.getWidth(); x++){
-						for (int y=0; y<ip.getHeight(); y++){
-								double[] position = {x,y};
-								double[] featureVector = kernelExpand(position);
-								double[] newPosition = multiply(beta, featureVector);
-				
-								if ((newPosition[0] < 0) || (newPosition[0] >= ip.getWidth()) ||
-										(newPosition[1] < 0) || (newPosition[1] >= ip.getHeight()))
-										{
-												maskIp.set(x, y, 255);
-												continue;
-										}
-				
-								//newIp.set((int)newPosition[0], (int)newPosition[1], ip.get(x,y));
-								newIp.set(x, y, (int) ip.getInterpolatedPixel((int)newPosition[0],(int)newPosition[1]));
+				for (int x=0; x < width; x++){
+						for (int y=0; y < height; y++){
+								if (transField[x][y][0] == -1){
+										continue;
+								}
+								newIp.set(x, y, (int) ip.getInterpolatedPixel((int)transField[x][y][0],(int)transField[x][y][1]));
+								maskIp.set(x,y,255);
 						}
 				}
-				mask = maskIp;
-				return newIp;
+				return new ImageProcessor[]{newIp, maskIp};
 		}
 	
 		private double[] multiply(double beta[][], double featureVector[]){
@@ -331,6 +382,8 @@ public class NonLinearTransform{
 		
 		}
 	
+		//this function uses the parameters already stored
+		//in this object to normalize the positions given.
 		public double[][] kernelExpandMatrix(double positions[][]){
 	
 		

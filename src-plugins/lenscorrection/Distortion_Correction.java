@@ -120,7 +120,7 @@ public class Distortion_Correction implements PlugIn{
 	gd.addNumericField("lambda ", 0.00000001, 13);
 	gd.addChoice("first image", names, names[0]);
 	gd.addCheckbox("apply correction to images", true);
-	gd.addCheckbox("visualize results", true);
+	gd.addCheckbox("visualize results", false);
 	String[] options = {"save", "load"};
 	gd.addChoice("What to do? ", options, "save");
 	gd.addStringField("file name: ", "distCorr.txt");
@@ -443,8 +443,8 @@ public class Distortion_Correction implements PlugIn{
 				IJ.log("Correcting image " + names[i]);
 				ImagePlus imps = new Opener().openImage(source_dir + names[i]);
 				imps.setProcessor(imps.getTitle(), imps.getProcessor().convertToShort(false));
-				//mask = imps.getProcessor().duplicate();
-				//imps.setProcessor(imps.getTitle(), nlt.transform(imps.getProcessor(), mask));
+				ImageProcessor[] transErg = nlt.transform(imps.getProcessor());
+				imps.setProcessor(imps.getTitle(),transErg[0]);
 				new File(target_dir + names[i]).deleteOnExit();
 				new FileSaver(imps).saveAsTiff(target_dir + names[i]);
 			    }
