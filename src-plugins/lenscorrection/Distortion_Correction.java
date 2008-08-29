@@ -640,7 +640,7 @@ public class Distortion_Correction implements PlugIn{
 	    xcorr += ((data1b[i]-mean1) / L2_1) * ((data2b[i]-mean2) / L2_2);
 	}
 		
-	System.out.println("XcorrVal: " + xcorr);
+	//System.out.println("XcorrVal: " + xcorr);
 	return xcorr;
     }
 
