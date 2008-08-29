@@ -65,7 +65,7 @@ public class PDF_Viewer extends ImagePlus implements PlugIn {
 			page = (int)gd.getNextNumber();
 			if (page < 0) page = 0;
 		}
-		ImagePlus imp = open(path, page, scale);
+		ImagePlus imp = this.open(path, page, scale);
 		if (null == imp) return;
 
 		// Integrate data into this ImagePlus
@@ -85,7 +85,7 @@ public class PDF_Viewer extends ImagePlus implements PlugIn {
 	}
 
 	/** Accepts URLs as well. */
-	private String getPath(String arg) {
+	static String getPath(String arg) {
 		if (null != arg) {
 			if (0 == arg.indexOf("http://")
 			 || new File(arg).exists()) return arg;
@@ -104,15 +104,8 @@ public class PDF_Viewer extends ImagePlus implements PlugIn {
 		return dir + filename;
 	}
 
-	/** Opens URLs as well. */
-	private InputStream openPath(String path) throws Exception {
-		if (0 == path.indexOf("http://"))
-			return new java.net.URL(path).openStream();
-		return new FileInputStream(path);
-	}
-
 	/**
-	 * @param path The .pdf file path.
+	 * @param path The .pdf file path or http URL.
 	 * @param page ranges from 0 (all pages) to any index (starting at 1) of a page.
 	 * @param scale ranges from 1 (100%) to infinite, according to your RAM capabilities. */
 	static public ImagePlus open(final String path, int page, int scale) {
@@ -125,11 +118,13 @@ public class PDF_Viewer extends ImagePlus implements PlugIn {
 			return null;
 		}
 		// open the PDF
+		PdfDecoder decoder = null;
 		try {
-			PdfDecoder decoder = new PdfDecoder();
+			decoder = new PdfDecoder();
 			decoder.setDefaultDisplayFont("SansSerif");
 			decoder.setPageParameters(scale, 1);
-			decoder.openPdfFile(path);
+			if (path.startsWith("http://")) decoder.openPdfFileFromURL(path);
+			else decoder.openPdfFile(path);
 			String msg = decoder.getPageFailureMessage();
 			if (null != msg && !msg.equals("")) {
 				IJ.log(msg);
@@ -144,6 +139,7 @@ public class PDF_Viewer extends ImagePlus implements PlugIn {
 				return null;
 			}
 			if (0 == page) {
+				// Open all pages
 				// get first page
 				BufferedImage bi_first = decoder.getPageAsImage(1);
 				int width = bi_first.getWidth();
@@ -176,12 +172,19 @@ public class PDF_Viewer extends ImagePlus implements PlugIn {
 				}
 				return new ImagePlus(new File(path).getName(), stack);
 			} else {
+				// Open only the give page
 				BufferedImage bi = decoder.getPageAsImage(page);
 				return new ImagePlus(new File(path).getName(), bi);
 			}
 		} catch (Exception e) {
 			IJ.log("Error: " + e);
 			e.printStackTrace();
+		} finally {
+			if (null != decoder) {
+				// release all memory
+				decoder.flushObjectValues(true);
+				decoder.closePdfFile();
+			}
 		}
 		return null;
 	}

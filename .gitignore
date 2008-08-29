@@ -59,4 +59,4 @@
 /plugins/Volume_Viewer.jar
 /plugins/ij-ImageIO_.jar
 /plugins/loci_tools.jar
-/plugins/Non_Modal_Test.jar
+*-stamp
