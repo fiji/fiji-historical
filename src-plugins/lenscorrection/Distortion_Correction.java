@@ -445,7 +445,8 @@ public class Distortion_Correction implements PlugIn{
 				imps.setProcessor(imps.getTitle(), imps.getProcessor().convertToShort(false));
 				ImageProcessor[] transErg = nlt.transform(imps.getProcessor());
 				imps.setProcessor(imps.getTitle(),transErg[0]);
-				new File(target_dir + names[i]).deleteOnExit();
+				if (!applyCorrection)
+						new File(target_dir + names[i]).deleteOnExit();
 				new FileSaver(imps).saveAsTiff(target_dir + names[i]);
 			    }
 			}
