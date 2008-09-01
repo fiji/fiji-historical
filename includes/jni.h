@@ -1899,6 +1899,9 @@ struct JNIInvokeInterface_ {
     void *reserved1;
     void *reserved2;
 
+#if defined(MACOSX) && defined(__ppc__)
+    void* cfm_vectors[4];
+#endif
     jint (JNICALL *DestroyJavaVM)(JavaVM *vm);
 
     jint (JNICALL *AttachCurrentThread)(JavaVM *vm, void **penv, void *args);
