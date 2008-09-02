@@ -104,7 +104,7 @@ public class Open_MRC_Leginon extends ImagePlus implements PlugIn {
 	}
 
 	private final int readIntLittleEndian(byte[] buf, int start) {
-		return (buf[start]) + (buf[start+1]<<8) + (buf[start+2]<<12) + (buf[start+3]<<24);
+		return (buf[start]) + (buf[start+1]<<8) + (buf[start+2]<<16) + (buf[start+3]<<24);
 	}
 
 	/** Copied and modified from ij.io.ImportDialog. @param imageType must be a static field from FileInfo class. */
