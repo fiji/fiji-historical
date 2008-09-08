@@ -46,7 +46,7 @@
  * http://bigwww.epfl.ch/thevenaz/UnwarpJ/
  */
 
-import bUnwarpJ.*;
+import bunwarpj.*;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -166,8 +166,7 @@ public class bUnwarpJ_ implements PlugIn
 		// Min and max scale deformation level
 		this.min_scale_deformation = dialog.getNextChoiceIndex();
 		this.max_scale_deformation = dialog.getNextChoiceIndex();
-		System.out.println("Min = " + min_scale_deformation + " Max = " + max_scale_deformation);
-		  
+				  
 		// Weights
 		this.divWeight  			= dialog.getNextNumber();
 		this.curlWeight 			= dialog.getNextNumber();
@@ -473,7 +472,7 @@ public class bUnwarpJ_ implements PlugIn
 
     /*------------------------------------------------------------------*/
     /**
-     * Method to write the syntaxis of the program in the command line.
+     * Method to write the syntax of the program in the command line.
      */
     private static void dumpSyntax () 
     {
@@ -745,7 +744,7 @@ public class bUnwarpJ_ implements PlugIn
 
     /*------------------------------------------------------------------*/
     /**
-     * Method to transform an image given an elastic deformation.
+     * Method to transform an image given an raw deformation.
      *
      * @param args program arguments
      */
@@ -1196,7 +1195,318 @@ public class bUnwarpJ_ implements PlugIn
        bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw_out, targetImp.getWidth(), 
                targetImp.getHeight(), outputTransformation_x, outputTransformation_y);       
        
-    } /* end method composeRawElasticTransformationsMacro */
+    } /* end method composeRawElasticTransformationsCommandLine */
     
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to transform the source image given an elastic deformation.
+     * To be called by the macro language instruction "call":
+     * <a href="http://rsb.info.nih.gov/ij/developer/macro/functions.html#call">
+     * http://rsb.info.nih.gov/ij/developer/macro/functions.html#call</a> 
+     * <p>
+     * It calls the main command line method with the following option:<br>
+     * 	-elastic_transform        		: TRANSFORM A SOURCE IMAGE WITH A GIVEN ELASTIC DEFORMATION<br>
+     * 		     target_image       	: In any image format<br>
+     *           source_image       	: In any image format<br>
+     *           transformation_file 	: As saved by bUnwarpJ in elastic format<br>
+     *           Output image 		    : Output result in TIFF<br>
+     *           
+     * @param targetImageName target image file name (with path)
+     * @param sourceImageName source image file name (with path)
+     * @param transformationFileName transformation file name (with path)
+     * @param outputFileName output file name (with path)
+     */
+    public static void elasticTransformImageMacro(
+    		String targetImageName,
+    		String sourceImageName,
+    		String transformationFileName,
+    		String outputFileName) 
+    {
+    	String[] args = {"bUnwarpJ_", targetImageName, sourceImageName, transformationFileName, outputFileName};
+    	elasticTransformImageCommandLine(args);
+    }
+    /* end elasticTransformImageMacro */
 
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to transform the source image given an raw deformation.
+     * To be called by the macro language instruction "call":
+     * <a href="http://rsb.info.nih.gov/ij/developer/macro/functions.html#call">
+     * http://rsb.info.nih.gov/ij/developer/macro/functions.html#call</a> 
+     * <p>
+     * It calls the main command line method with the following option:<br>
+     * 	-raw_transform              : TRANSFORM A SOURCE IMAGE WITH A GIVEN RAW DEFORMATION<br>
+     *          target_image        : In any image format<br>
+     *          source_image        : In any image format<br>
+     *          transformation_file : As saved by bUnwarpJ in raw format<br>
+     *          Output image        : Output result in TIFF<br>
+     *          
+     * @param targetImageName target image file name (with path)
+     * @param sourceImageName source image file name (with path)
+     * @param transformationFileName transformation file name (with path)
+     * @param outputFileName output file name (with path)
+     */
+    public static void rawTransformImageMacro(
+    		String targetImageName,
+    		String sourceImageName,
+    		String transformationFileName,
+    		String outputFileName) 
+    {
+    	String[] args = {"bUnwarpJ_", targetImageName, sourceImageName, transformationFileName, outputFileName};
+    	rawTransformImageCommandLine(args);
+    }
+    /* end rawTransformImageMacro */    
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to compare two opposite elastic transformations by warping index.
+     * To be called by the macro language instruction "call":
+     * <a href="http://rsb.info.nih.gov/ij/developer/macro/functions.html#call">
+     * http://rsb.info.nih.gov/ij/developer/macro/functions.html#call</a> 
+     * <p>
+     * It calls the main command line method with the following option:<br>
+     * 	-compare_elastic                   : COMPARE 2 OPPOSITE ELASTIC DEFORMATIONS (BY WARPING INDEX)<br>
+     *          target_image               : In any image format<br>
+     *          source_image               : In any image format<br>
+     *          target_transformation_file : As saved by bUnwarpJ<br>
+     *          source_transformation_file : As saved by bUnwarpJ<br>
+     *          
+     * @param targetImageName target image file name (with path)
+     * @param sourceImageName source image file name (with path)
+     * @param targetTransfFileName target transformation file name (with path)
+     * @param sourceTransfFileName source transformation file name (with path)
+     */
+    public static void compareElasticTransformationsMacro(
+    		String targetImageName,
+    		String sourceImageName,
+    		String targetTransfFileName,
+    		String sourceTransfFileName) 
+    {
+    	String[] args = {"bUnwarpJ_", targetImageName, sourceImageName, targetTransfFileName, sourceTransfFileName};
+    	compareElasticTransformationsCommandLine(args);
+    }
+    /* end compareElasticTransformationsMacro */ 
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to compare an elastic and a raw transformations by warping index.
+     * To be called by the macro language instruction "call":
+     * <a href="http://rsb.info.nih.gov/ij/developer/macro/functions.html#call">
+     * http://rsb.info.nih.gov/ij/developer/macro/functions.html#call</a> 
+     * <p>
+     * It calls the main command line method with the following option:<br>
+     * 	-compare_elastic_raw                : COMPARE AN ELASTIC DEFORMATION WITH A RAW DEFORMATION (BY WARPING INDEX)<br>
+     *          target_image               : In any image format<br>
+     *          source_image               : In any image format<br>
+     *          target_transformation_file : As saved by bUnwarpJ<br>
+     *          source_transformation_file : As saved by bUnwarpJ<br>
+     *          
+     * @param targetImageName target image file name (with path)
+     * @param sourceImageName source image file name (with path)
+     * @param targetTransfFileName target transformation file name (with path)
+     * @param sourceTransfFileName source transformation file name (with path)
+     */
+    public static void compareElasticRawTransformationsMacro(
+    		String targetImageName,
+    		String sourceImageName,
+    		String targetTransfFileName,
+    		String sourceTransfFileName) 
+    {
+    	String[] args = {"bUnwarpJ_", targetImageName, sourceImageName, targetTransfFileName, sourceTransfFileName};
+    	compareElasticRawTransformationsCommandLine(args);
+    }
+    /* end compareElasticRawTransformationsMacro */ 
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to compare two raw transformations by warping index.
+     * To be called by the macro language instruction "call":
+     * <a href="http://rsb.info.nih.gov/ij/developer/macro/functions.html#call">
+     * http://rsb.info.nih.gov/ij/developer/macro/functions.html#call</a> 
+     * <p>
+     * It calls the main command line method with the following option:<br>
+     * 	-compare_raw                       : COMPARE 2 ELASTIC DEFORMATIONS (BY WARPING INDEX)<br>
+     *          target_image               : In any image format<br>
+     *          source_image               : In any image format<br>
+     *          Raw Transformation File 1  : As saved by bUnwarpJ in raw format<br>
+     *          Raw Transformation File 2  : As saved by bUnwarpJ in raw format<br>
+     *          
+     * @param targetImageName target image file name (with path)
+     * @param sourceImageName source image file name (with path)
+     * @param targetTransfFileName target transformation file name (with path)
+     * @param sourceTransfFileName source transformation file name (with path)
+     */
+    public static void compareRawTransformationsMacro(
+    		String targetImageName,
+    		String sourceImageName,
+    		String targetTransfFileName,
+    		String sourceTransfFileName) 
+    {
+    	String[] args = {"bUnwarpJ_", targetImageName, sourceImageName, targetTransfFileName, sourceTransfFileName};
+    	compareRawTransformationsCommandLine(args);
+    }
+    /* end compareRawTransformationsMacro */     
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to convert an elastic deformation into raw format.
+     * To be called by the macro language instruction "call":
+     * <a href="http://rsb.info.nih.gov/ij/developer/macro/functions.html#call">
+     * http://rsb.info.nih.gov/ij/developer/macro/functions.html#call</a> 
+     * <p>
+     * It calls the main command line method with the following option:<br>
+     * 	-convert_to_raw        					  : CONVERT AN ELASTIC DEFORMATION INTO RAW FORMAT<br>
+     *          target_image   					  : In any image format<br>
+     *          source_image   				 	  : In any image format<br>
+     *          Input Elastic Transformation File : As saved by bUnwarpJ in elastic format<br>
+     *          Output Raw Transformation File    : As saved by bUnwarpJ in raw format<br>
+     *          
+     * @param targetImageName target image file name (with path)
+     * @param sourceImageName source image file name (with path)
+     * @param inputElasticTransfFileName input transformation file name (with path)
+     * @param outputRawTransfFileName output transformation file name (with path)
+     */
+    public static void convertToRawTransformationMacro(
+    		String targetImageName,
+    		String sourceImageName,
+    		String inputElasticTransfFileName,
+    		String outputRawTransfFileName) 
+    {
+    	String[] args = {"bUnwarpJ_", targetImageName, sourceImageName, inputElasticTransfFileName, outputRawTransfFileName};
+    	convertToRawTransformationCommandLine(args);
+    }
+    /* end convertToRawTransformationsMacro */ 
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to compose two elastic transformations.
+     * To be called by the macro language instruction "call":
+     * <a href="http://rsb.info.nih.gov/ij/developer/macro/functions.html#call">
+     * http://rsb.info.nih.gov/ij/developer/macro/functions.html#call</a> 
+     * <p>
+     * It calls the main command line method with the following option:<br>
+     * 	-compose_elastic                          : COMPOSE TWO ELASTIC DEFORMATIONS<br>
+     *          target_image                      : In any image format<br>
+     *          source_image                      : In any image format<br>
+     *          Elastic Transformation File 1     : As saved by bUnwarpJ in elastic format<br>
+     *          Elastic Transformation File 2     : As saved by bUnwarpJ in elastic format<br>
+     *          Output Raw Transformation File    : As saved by bUnwarpJ in raw format<br>
+     *          
+     * @param targetImageName target image file name (with path)
+     * @param sourceImageName source image file name (with path)
+     * @param inputElasticTransfFileName1 first input transformation file name (with path)
+     * @param inputElasticTransfFileName2 second input transformation file name (with path)
+     * @param outputRawTransfFileName output transformation file name (with path)
+     */
+    public static void composeElasticTransformationsMacro(
+    		String targetImageName,
+    		String sourceImageName,
+    		String inputElasticTransfFileName1,
+    		String inputElasticTransfFileName2,
+    		String outputRawTransfFileName) 
+    {
+    	String[] args = {"bUnwarpJ_", targetImageName, sourceImageName, inputElasticTransfFileName1, inputElasticTransfFileName2, outputRawTransfFileName};
+    	composeElasticTransformationsCommandLine(args);
+    }
+    /* end composeElasticTransformationsMacro */     
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to compose two raw transformations.
+     * To be called by the macro language instruction "call":
+     * <a href="http://rsb.info.nih.gov/ij/developer/macro/functions.html#call">
+     * http://rsb.info.nih.gov/ij/developer/macro/functions.html#call</a> 
+     * <p>
+     * It calls the main command line method with the following option:<br>
+     * 	-compose_raw                              : COMPOSE TWO RAW DEFORMATIONS<br>
+     *          target_image                      : In any image format<br>
+     *          source_image                      : In any image format<br>
+     *          Raw Transformation File 1         : As saved by bUnwarpJ in raw format<br>
+     *          Raw Transformation File 2         : As saved by bUnwarpJ in raw format<br>
+     *          Output Raw Transformation File    : As saved by bUnwarpJ in raw format<br>
+     *          
+     * @param targetImageName target image file name (with path)
+     * @param sourceImageName source image file name (with path)
+     * @param inputRawTransfFileName1 first input transformation file name (with path)
+     * @param inputRawTransfFileName2 second input transformation file name (with path)
+     * @param outputRawTransfFileName output transformation file name (with path)
+     */
+    public static void composeRawTransformationsMacro(
+    		String targetImageName,
+    		String sourceImageName,
+    		String inputRawTransfFileName1,
+    		String inputRawTransfFileName2,
+    		String outputRawTransfFileName) 
+    {
+    	String[] args = {"bUnwarpJ_", targetImageName, sourceImageName, inputRawTransfFileName1, inputRawTransfFileName2, outputRawTransfFileName};
+    	composeRawTransformationsCommandLine(args);
+    }
+    /* end composeRawTransformationsMacro */    
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to compose a raw transformation with an elastic transformation.
+     * To be called by the macro language instruction "call":
+     * <a href="http://rsb.info.nih.gov/ij/developer/macro/functions.html#call">
+     * http://rsb.info.nih.gov/ij/developer/macro/functions.html#call</a> 
+     * <p>
+     * It calls the main command line method with the following option:<br>
+     * 	-compose_raw_elastic                      : COMPOSE A RAW DEFORMATION WITH AN ELASTIC DEFORMATION<br>
+     *          target_image                      : In any image format<br>
+     *          source_image                      : In any image format<br>
+     *          Raw Transformation File           : As saved by bUnwarpJ in raw format<br>
+     *          Elastic Transformation File       : As saved by bUnwarpJ in elastic format<br>
+     *          Output Raw Transformation File    : As saved by bUnwarpJ in raw format<br>
+     *          
+     * @param targetImageName target image file name (with path)
+     * @param sourceImageName source image file name (with path)
+     * @param inputRawTransfFileName input raw transformation file name (with path)
+     * @param inputElasticTransfFileName input elastic transformation file name (with path)
+     * @param outputRawTransfFileName output transformation file name (with path)
+     */
+    public static void composeRawElasticTransformationsMacro(
+    		String targetImageName,
+    		String sourceImageName,
+    		String inputRawTransfFileName,
+    		String inputElasticTransfFileName,
+    		String outputRawTransfFileName) 
+    {
+    	String[] args = {"bUnwarpJ_", targetImageName, sourceImageName, inputRawTransfFileName, inputElasticTransfFileName, outputRawTransfFileName};
+    	composeRawElasticTransformationsCommandLine(args);
+    }
+    /* end composeRawElasticTransformationsMacro */     
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Method to adapt an elastic transformation given a new image size.
+     * To be called by the macro language instruction "call":
+     * <a href="http://rsb.info.nih.gov/ij/developer/macro/functions.html#call">
+     * http://rsb.info.nih.gov/ij/developer/macro/functions.html#call</a>     
+     * <p>
+     * It calls the main command line method with the following option:<br>
+     * 	-adapt_transform                           : ADAPT AN ELASTIC DEFORMATION GIVEN A NEW IMAGE SIZE<br>
+     *          target_image                       : In any image format<br>
+     *          source_image                       : In any image format<br>
+     *          Input Elastic Transformation File  : As saved by bUnwarpJ in elastic format<br>
+     *          Output Elastic Transformation File : As saved by bUnwarpJ in elastic format<br>
+     *          Image Size Factor                  : Integer (2, 4, 8...)<br>
+     *          
+     * @param targetImageName target image file name (with path)
+     * @param sourceImageName source image file name (with path)
+     * @param inputElasticTransfFileName input elastic transformation file name (with path)
+     * @param outputElasticTransfFileName output elastic transformation file name (with path)
+     * @param sizeFactor integer size factor (between old and new image)
+     */
+    public static void adaptCoefficientsMacro(
+    		String targetImageName,
+    		String sourceImageName,
+    		String inputElasticTransfFileName,
+    		String outputElasticTransfFileName,
+    		String sizeFactor) 
+    {
+    	String[] args = {"bUnwarpJ_", targetImageName, sourceImageName, inputElasticTransfFileName, outputElasticTransfFileName, sizeFactor};
+    	adaptCoefficientsCommandLine(args);
+    }
+    /* end adaptCoefficientsMacro */     
+    
 } /* end class bUnwarpJ_ */
