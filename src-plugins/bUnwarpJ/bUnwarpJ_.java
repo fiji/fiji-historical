@@ -22,7 +22,7 @@
 
 /**
  * ====================================================================
- *  Version: August 28th, 2008
+ *  Version: September 11th, 2008
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -75,8 +75,8 @@ import java.util.StringTokenizer;
  * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 08/13/2008
- * @author Ignacio Arganda-Carreras
+ * @version 2.0 09/11/2008
+ * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  * @author Jan Kybic
  */
 public class bUnwarpJ_ implements PlugIn
@@ -91,33 +91,34 @@ public class bUnwarpJ_ implements PlugIn
     private ImagePlus targetImp;
     
     /** minimum scale deformation */
-    private int min_scale_deformation = 0;
+    private static int min_scale_deformation = 0;
     /** maximum scale deformation */
-    private int max_scale_deformation = 2;
+    private static int max_scale_deformation = 2;
     /** algorithm mode (fast or accurate) */
-    private int mode = 1;
+    private static int mode = 1;
     
     // Transformation parameters
     /** divergency weight */
-    private double  divWeight                  = 0;
+    private static double  divWeight                  = 0;
     /** curl weight */
-    private double  curlWeight                 = 0;
+    private static double  curlWeight                 = 0;
     /** landmarks weight */
-    private double  landmarkWeight             = 0;
+    private static double  landmarkWeight             = 0;
     /** image similarity weight */
-    private double  imageWeight                = 1;
+    private static double  imageWeight                = 1;
     /** consistency weight */
-    private double  consistencyWeight          = 10;
+    private static double  consistencyWeight          = 10;
     /** flag for rich output (verbose option) */
-    private boolean richOutput                 = false;
+    private static boolean richOutput                 = false;
     /** flag for save transformation option */
-    private boolean saveTransformation         = false;
+    private static boolean saveTransformation         = false;
+    
     /** minimum image scale */
     private int     min_scale_image            = 0;
     /** maximum depth for the image pyramid */
     private int     imagePyramidDepth          = 3;
     /** stopping threshold */
-    private double  stopThreshold              = 1e-2;
+    private static double  stopThreshold      = 1e-2;
 
 	
     /*....................................................................
@@ -140,13 +141,16 @@ public class bUnwarpJ_ implements PlugIn
     		return;
     	}
 	
-    	final bUnwarpJDialog dialog = new bUnwarpJDialog(IJ.getInstance(), imageList);
+    	final bUnwarpJDialog dialog = new bUnwarpJDialog(IJ.getInstance(), imageList, this.mode,
+    			this.min_scale_deformation, this.max_scale_deformation, this.divWeight, 
+    			this.curlWeight, this.landmarkWeight, this.imageWeight, this.consistencyWeight, 
+    			this.stopThreshold, this.richOutput, this.saveTransformation);
 	 	dialog.showDialog();
 	 	
 	 	// If canceled
 	 	if (dialog.wasCanceled())
 	 	{
-     		dialog.dispose();
+	 		dialog.dispose();
     		dialog.restoreAll();
     		return;
     	}
@@ -184,7 +188,7 @@ public class bUnwarpJ_ implements PlugIn
 
         int outputLevel = 1;
 
-        boolean showMarquardtOptim=false;
+        boolean showMarquardtOptim = false;
 
         if (richOutput)
         {

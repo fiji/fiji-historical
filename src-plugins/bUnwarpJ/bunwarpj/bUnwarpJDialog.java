@@ -108,12 +108,13 @@ public class bUnwarpJDialog extends GenericDialog
     private int sourceChoiceIndex = 0;
     /** index of the target choice */
     private int targetChoiceIndex = 1;
+    
     /** minimum scale deformation */
     private int min_scale_deformation = 0;
     /** maximum scale deformation */
     private int max_scale_deformation = 2;
-    /** mode */
-    private int mode = 1;
+    /** mode ("Accurate" by default) */
+    private static int mode = 1;
 
     // Transformation parameters
     /** divergency weight */
@@ -135,13 +136,18 @@ public class bUnwarpJDialog extends GenericDialog
     /** maximum depth for the image pyramid */
     private int     imagePyramidDepth          = 3;
     /** stopping threshold */
-    private double  stopThreshold              = 1e-2;
+    private double  stopThreshold      = 1e-2;
     
     /** consistency flag */
     private boolean bIsReverse = true;
     
     /** macro flag */
     private boolean bMacro = false;
+    
+    /** region of interest of the source image before calling the plugin */
+    private Roi previousSourceRoi;
+    /** region of interest of the target image before calling the plugin */
+    private Roi previousTargetRoi;
 
     /*....................................................................
        Public methods
@@ -153,16 +159,50 @@ public class bUnwarpJDialog extends GenericDialog
      *
      * @param parentWindow pointer to the parent window
      * @param imageList list of images from ImageJ
+     * @param mode default registration mode (0 = Fast, 1 = Accurate)
+     * @param min_scale_deformation default minimum scale deformation value
+     * @param max_scale_deformation default maximum scale deformation value
+     * @param divWeight default divergency weight
+     * @param curlWeight default curl weight
+     * @param landmarkWeight default landmarks weight
+     * @param imageWeight default image similarity weight
+     * @param consistencyWeight default consistency weight
+     * @param stopThreshold default stopping threshold
+     * @param richOutput default verbose flag
+     * @param saveTransformation default save transformations flag
      */
     public bUnwarpJDialog (
        final Frame parentWindow,
-       final ImagePlus[] imageList)
+       final ImagePlus[] imageList,
+       final int mode,
+       final int min_scale_deformation,
+       final int max_scale_deformation,
+       final double divWeight,
+       final double curlWeight,
+       final double landmarkWeight,
+       final double imageWeight,
+       final double consistencyWeight,
+       final double stopThreshold,
+       final boolean richOutput,
+       final boolean saveTransformation)
     {
        super("bUnwarpJ", null);
        setModal(false);
        
-       this.imageList = imageList;
-            
+       this.imageList 				= imageList;
+       this.mode					= mode;
+       this.min_scale_deformation 	= min_scale_deformation;
+       this.max_scale_deformation 	= max_scale_deformation;
+       this.divWeight 			   	= divWeight;
+       this.curlWeight 			   	= curlWeight;
+       this.landmarkWeight        	= landmarkWeight;
+       this.imageWeight           	= imageWeight;
+       this.consistencyWeight     	= consistencyWeight;
+       this.stopThreshold         	= stopThreshold;
+       this.richOutput 			   	= richOutput;
+       this.saveTransformation		= saveTransformation;
+       
+       
        // We create a list of image titles to be used as source or target images
        String[] titles = new String[imageList.length];
        for ( int i = 0; i < titles.length; ++i )
@@ -301,6 +341,8 @@ public class bUnwarpJDialog extends GenericDialog
                   sourceChoiceIndex = newChoiceIndex;
                   cancelSource();
                   targetPh.removePoints();
+                  // Restore previous target roi
+                  targetImp.setRoi(this.previousTargetRoi);
                   createSourceImage(bIsReverse);
                   loadPointRoiAsLandmarks();
                   setSecondaryPointHandlers();
@@ -329,6 +371,8 @@ public class bUnwarpJDialog extends GenericDialog
                   targetChoiceIndex = newChoiceIndex;
                   cancelTarget();
                   sourcePh.removePoints();
+                  // Restore previous source roi
+                  sourceImp.setRoi(this.previousSourceRoi);
                   createTargetImage();
                   loadPointRoiAsLandmarks();
                   setSecondaryPointHandlers();
@@ -553,12 +597,14 @@ public class bUnwarpJDialog extends GenericDialog
      */
     public void restoreAll ()
     {
-       cancelSource();
-       cancelTarget();
-       tb.restorePreviousToolbar();
-       Toolbar.getInstance().repaint();
-       bUnwarpJProgressBar.resetProgressBar();
-       Runtime.getRuntime().gc();
+    	ungrayImage(sourcePh.getPointAction());
+        ungrayImage(targetPh.getPointAction());
+        cancelSource();
+        cancelTarget();
+        tb.restorePreviousToolbar();
+        Toolbar.getInstance().repaint();
+        bUnwarpJProgressBar.resetProgressBar();
+        Runtime.getRuntime().gc();
     } /* end restoreAll */
 
     /*------------------------------------------------------------------*/
@@ -590,7 +636,7 @@ public class bUnwarpJDialog extends GenericDialog
     /**
      * Ungray image.
      *
-     * @param pa
+     * @param pa point action pointer
      */
     public void ungrayImage(final bUnwarpJPointAction pa)
     {
@@ -650,6 +696,8 @@ public class bUnwarpJDialog extends GenericDialog
        sourcePh  = null;
        sourceIc  = null;
        sourceImp.killRoi();
+       // Restore previous roi
+       sourceImp.setRoi(this.previousSourceRoi);
 
        sourceImp = null;
        source    = null;
@@ -667,6 +715,8 @@ public class bUnwarpJDialog extends GenericDialog
        targetPh  = null;
        targetIc  = null;
        targetImp.killRoi();
+       // Restore previous roi
+       targetImp.setRoi(this.previousTargetRoi);
 
        targetImp = null;
        target    = null;
@@ -680,7 +730,7 @@ public class bUnwarpJDialog extends GenericDialog
      */
     private void computeImagePyramidDepth ()
     {
-       imagePyramidDepth=max_scale_deformation-min_scale_deformation+1;
+       imagePyramidDepth = max_scale_deformation - min_scale_deformation + 1;
     }
 
 
@@ -715,7 +765,9 @@ public class bUnwarpJDialog extends GenericDialog
 		source.setPyramidDepth(imagePyramidDepth+min_scale_image);
 		source.getThread().start();
 		sourceIc  = sourceImp.getWindow().getCanvas();
-		if (sourceImp.getStackSize()==1) {
+		// If it is an stack, the second slice is considered a mask
+		if (sourceImp.getStackSize() == 1) 
+		{
 			// Create an empty mask
 			sourceMsk = new bUnwarpJMask(sourceImp.getProcessor(),false);
 		} else {
@@ -756,13 +808,14 @@ public class bUnwarpJDialog extends GenericDialog
 		target.setPyramidDepth(imagePyramidDepth+min_scale_image);
 		target.getThread().start();
 		targetIc  = targetImp.getWindow().getCanvas();
+		// If it is an stack, the second slice is considered a mask
 		if (targetImp.getStackSize()==1) {
 			// Create an empty mask
-			targetMsk = new bUnwarpJMask(targetImp.getProcessor(),false);
+			targetMsk = new bUnwarpJMask(targetImp.getProcessor(), false);
 		} else {
 			// Take the mask from the second slice
 			targetImp.setSlice(2);
-			targetMsk = new bUnwarpJMask(targetImp.getProcessor(),true);
+			targetMsk = new bUnwarpJMask(targetImp.getProcessor(), true);
 			targetImp.setSlice(1);
 		}
 		targetPh  = new bUnwarpJPointHandler(targetImp, tb, targetMsk, this);
@@ -777,8 +830,8 @@ public class bUnwarpJDialog extends GenericDialog
     private void loadPointRoiAsLandmarks()
     {
 
-       Roi roiSource = sourceImp.getRoi();
-       Roi roiTarget = targetImp.getRoi();
+       Roi roiSource = this.previousSourceRoi =  sourceImp.getRoi();
+       Roi roiTarget = this.previousTargetRoi = targetImp.getRoi();
 
        if(roiSource instanceof PointRoi && roiTarget instanceof PointRoi)
        {
@@ -900,7 +953,7 @@ public class bUnwarpJDialog extends GenericDialog
 
     /*------------------------------------------------------------------*/
     /**
-     * Relaunch the threads for the image models of the source and target.
+     * Re-launch the threads for the image models of the source and target.
      *
      * @param bIsReverse boolean variable to indicate the use of consistency
      */
@@ -918,12 +971,12 @@ public class bUnwarpJDialog extends GenericDialog
        // Now restart the threads
        source    =
           new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse);
-       source.setPyramidDepth(imagePyramidDepth+min_scale_image);
+       source.setPyramidDepth(imagePyramidDepth + min_scale_image);
        source.getThread().start();
 
        target =
           new bUnwarpJImageModel(targetImp.getProcessor(), true);
-       target.setPyramidDepth(imagePyramidDepth+min_scale_image);
+       target.setPyramidDepth(imagePyramidDepth + min_scale_image);
        target.getThread().start();
     }
 

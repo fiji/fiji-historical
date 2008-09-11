@@ -170,8 +170,6 @@ public class bUnwarpJFinalAction implements Runnable
 
         warp.doRegistration();
 
-        dialog.ungrayImage(sourcePh.getPointAction());
-        dialog.ungrayImage(targetPh.getPointAction());
         dialog.restoreAll();
         dialog.freeMemory();
     }
