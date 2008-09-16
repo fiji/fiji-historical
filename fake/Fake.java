@@ -1282,39 +1282,14 @@ public class Fake {
 					+ " " + file + ": " + e);
 			}
 
-			/* if not null, collect ant tasks instead */
-			private List forAnt;
-
 			void execute(List arguments, String path)
 					throws IOException, FakeException {
-				if (forAnt == null) {
-					Fake.execute(arguments, path,
-						getVarBool("VERBOSE", path));
-					return;
-				}
-
-				String cmd = "<exec dir=\".\" executable=\"" +
-					arguments.get(0) + "\"";
-				int size = arguments.size();
-				if (size > 1) {
-					forAnt.add(cmd + ">");
-					for (int i = 1; i < size; i++) {
-						String arg = (String)
-							arguments.get(i);
-						forAnt.add("\t<arg value=\"" +
-							xmlQuoteQuotes(arg) +
-							"\"/>");
-					}
-					forAnt.add("</exec>");
-				} else
-					forAnt.add(cmd + "/>");
+				Fake.execute(arguments, path,
+					getVarBool("VERBOSE", path));
 			}
 
 			List getAntAction() throws FakeException {
-				forAnt = new ArrayList();
-				action();
-				// TODO: fall back to precompiled/
-				return forAnt;
+				return new ArrayList(); // empty target
 			}
 		}
 
