@@ -246,6 +246,8 @@ public class Fake {
 
 			addSpecialRule(new Special("build.xml") {
 				void action() throws FakeException {
+					/* force all paths to be relative */
+					fijiHome = "";
 					makeAntFile(Parser.this);
 				}
 			});
