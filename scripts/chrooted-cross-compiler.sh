@@ -51,12 +51,18 @@ dchroot "cd IMCROSS && sudo make fiji"
 
 SOURCE=fiji.cxx
 STRIP=
+RESOURCE=
 PLATFORM="$1"; shift
 case "$PLATFORM" in
 win32)
 	CXX=/usr/local/bin/i386-mingw32-g++
 	STRIP=/usr/local/bin/i386-mingw32-strip
 	TARGET=fiji-win32.exe
+
+	echo "101 ICON fiji.ico" > $CHROOT/$CHROOT_HOME/tmp.rc
+	cp images/fiji.ico $CHROOT/$CHROOT_HOME
+	dchroot "/usr/local/bin/i386-mingw32-windres -i tmp.rc -o tmp.o"
+	RESOURCE=tmp.o
 ;;
 tiger)
 	CXX=/opt/mac/bin/i686-apple-darwin8-g++
@@ -81,7 +87,7 @@ QUOTED_ARGS="$(echo "$*" | sed 's/"/\\"/g')"
 
 cp -R $SOURCE includes $CHROOT/$CHROOT_HOME/
 
-dchroot "$CXX -o \"$TARGET\" $QUOTED_ARGS $SOURCE"
+dchroot "$CXX -o \"$TARGET\" $QUOTED_ARGS $SOURCE $RESOURCE"
 
 test -z "$STRIP" || dchroot "$STRIP \"$TARGET\""
 
