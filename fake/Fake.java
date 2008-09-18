@@ -1264,16 +1264,32 @@ public class Fake {
 
 		GlobFilter(String glob, long newerThan) {
 			this.glob = glob;
-			String regex = "^"
-				+ glob.replace(".", "\\.")
-				.replace("^", "\\^")
-				.replace("$", "\\$")
-				.replace("?", "[^/]")
-				.replace("*", "[^/]*")
-				.replace("[^/]*[^/]*", ".*")
-				+ "$";
+			String regex = "^" + replaceSpecials(glob) + "$";
 			pattern = Pattern.compile(regex);
 			this.newerThan = newerThan;
+		}
+
+		String replaceSpecials(String glob) {
+			StringBuffer result = new StringBuffer();
+			char[] array = glob.toCharArray();
+			int len = array.length;
+			for (int i = 0; i < len; i++) {
+				char c = array[i];
+				if (".^$".indexOf(c) >= 0)
+					result.append("\\" + c);
+				else if (c == '?')
+					result.append("[^/]");
+				else if (c == '*') {
+					if (i + 1 >= len || array[i + 1] != '*')
+						result.append("[^/]*");
+					else {
+						result.append(".*");
+						i++;
+					}
+				} else
+					result.append(c);
+			}
+			return result.toString();
 		}
 
 		public boolean accept(File dir, String name) {
