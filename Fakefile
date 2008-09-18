@@ -211,18 +211,19 @@ CXXFLAGS(*)=-Iincludes \
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
 CXXFLAGS(win32)=$CXXFLAGS $WINOPTS
 CXXFLAGS(win64)=$CXXFLAGS $WINOPTS -mconsole
-MACOPTS=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
-	-DMACOSX -mmacosx-version-min=10.4 -arch ppc -arch i386
-CXXFLAGS(macosx)=$CXXFLAGS $MACOPTS
+
+# Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
+# and only on MacOSX
+MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
+	-DMACOSX -arch ppc
+MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386
+MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch ppc64 -arch x86_64
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
 LDFLAGS(macosx)=$LDFLAGS $MACOPTS
 
-# Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
-# and only on MacOSX
-MACOSX_64BIT_ARCHS(macosx)=-arch ppc64 -arch x86_64
-CXXFLAGS(fiji)=$CXXFLAGS $MACOSX_64BIT_ARCHS
-LDFLAGS(fiji)=$CXXFLAGS $MACOSX_64BIT_ARCHS
+CXXFLAGS(fiji)=$CXXFLAGS $MACOPTS
+LDFLAGS(fiji)=$CXXFLAGS $MACOPTS
 
 LIBS(linux)=-ldl
 LIBS(linux64)=-ldl
@@ -230,7 +231,13 @@ LIBS(macosx)=-framework CoreFoundation -framework JavaVM
 
 fiji <- fiji.cxx
 
+CXXFLAGS(fiji-tiger)=$CXXFLAGS $MACOPTS(osx10.4)
+LDFLAGS(fiji-tiger)=$LDFLAGS $MACOPTS(osx10.4)
 fiji-tiger <- fiji.cxx
+
+CXXFLAGS(fiji-panther)=$CXXFLAGS $MACOPTS(osx10.3)
+LDFLAGS(fiji-panther)=$LDFLAGS $MACOPTS(osx10.3)
+fiji-panther <- fiji.cxx
 
 # Cross-compiling (works only on Linux64 so far)
 
