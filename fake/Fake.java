@@ -207,6 +207,12 @@ public class Fake {
 				allPlatforms.add("win32");
 				allPlatforms.add("win64");
 				allPlatforms.add("macosx");
+				allPlatforms.add("osx10.1");
+				allPlatforms.add("osx10.2");
+				allPlatforms.add("osx10.3");
+				allPlatforms.add("osx10.4");
+				allPlatforms.add("osx10.5");
+				allPlatforms.add("osx10.6");
 				Iterator iter = allPlatforms.iterator();
 				while (iter.hasNext()) {
 					String platform = (String)iter.next();
@@ -628,6 +634,14 @@ public class Fake {
 			if (subkey2 != null && res == null)
 				res = (String)variables.get(key
 						+ "(" + subkey2 + ")");
+			if (res == null && getPlatform().equals("macosx")) {
+				String version =
+					System.getProperty("os.version");
+				for (int i = 1; version.compareTo("10." + i
+						+ ".Z") > 0 && res == null; i++)
+					res = (String)variables.get(key
+						+ "(osx10." + i + ")");
+			}
 			if (res == null)
 				res = (String)variables.get(key
 						+ "(" + getPlatform() + ")");
