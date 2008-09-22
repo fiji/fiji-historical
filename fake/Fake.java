@@ -635,10 +635,18 @@ public class Fake {
 			if (res == null && getPlatform().equals("macosx")) {
 				String version =
 					System.getProperty("os.version");
-				for (int i = 1; version.compareTo("10." + i
-						+ ".Z") > 0 && res == null; i++)
+				int i = 0;
+				if (version.startsWith("10.")) {
+					int dot = version.indexOf('.', 3);
+					if (dot > 0) {
+						version = version.substring(3,
+							dot);
+						i = Integer.parseInt(version);
+					}
+				}
+				while (i > 0 && res == null)
 					res = (String)variables.get(key
-						+ "(osx10." + i + ")");
+						+ "(osx10." + (i--) + ")");
 			}
 			if (res == null)
 				res = (String)variables.get(key
