@@ -295,10 +295,11 @@ public class Distortion_Correction implements PlugIn{
 			
 	    Vector<PointMatch> tmpInliers = new Vector<PointMatch>();
 	    //			RigidModel2D m = RigidModel2D.estimateBestModel(candidates.get(i), tmpInliers, sp.min_epsilon, sp.max_epsilon, sp.min_inlier_ratio);
-	    RigidModel2D m = new RigidModel2D();
+	    RigidModel2D m = null;
 	    try
 		{
-		    m.filterRansac(
+		    m = Model.filterRansac(
+					   RigidModel2D.class,
 					   candidates.get( i ),
 					   tmpInliers,
 					   1000,
@@ -778,10 +779,11 @@ public class Distortion_Correction implements PlugIn{
 	
 			    Vector<PointMatch> tmpInliers = new Vector<PointMatch>();
 			    //RigidModel2D m = RigidModel2D.estimateBestModel(candidates.get(i), tmpInliers, sp.min_epsilon, sp.max_epsilon, sp.min_inlier_ratio);
-			    RigidModel2D m = new RigidModel2D();
+			    RigidModel2D m = null;
 			    try
 				{
-				    m.filterRansac(
+				    m = Model.filterRansac(
+							   RigidModel2D.class,
 							   candidates[i],
 							   tmpInliers,
 							   1000,
