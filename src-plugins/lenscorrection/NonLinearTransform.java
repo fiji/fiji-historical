@@ -38,6 +38,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.io.FileSaver;
 
 import java.awt.Color;
 import java.awt.geom.GeneralPath;
@@ -113,6 +114,7 @@ public class NonLinearTransform{
 		
 		void precalculateTransfom(){
 				transField = new double[width][height][2];
+				//double minX = width, minY = height, maxX = 0, maxY = 0;
 				
 				for (int x=0; x<width; x++){
 						for (int y=0; y<height; y++){
@@ -130,8 +132,15 @@ public class NonLinearTransform{
 				
 								transField[x][y][0] = newPosition[0];
 								transField[x][y][1] = newPosition[1];
+
+								//minX = Math.min(minX, x);
+								//minY = Math.min(minY, y);
+								//maxX = Math.max(maxX, x);
+								//maxY = Math.max(maxY, y);
+								
 						}
 				}
+
 				precalculated = true;
 		}
 
@@ -409,6 +418,7 @@ public class NonLinearTransform{
 				setBeta(invBeta.getArray());
 		}
 	
+    //FIXME this takes way too much memory 
 		public void visualize(){
 		
 				int density = Math.max(width,height)/32;
@@ -432,14 +442,15 @@ public class NonLinearTransform{
 		
 				float minM = 1000, maxM = 0;
 				float minArc = 5, maxArc = -6;
-				int countVert = 0, countHor = 0, countHorWhole = 0;;
+				int countVert = 0, countHor = 0, countHorWhole = 0;
+				
 				for (int i=0; i < width; i++){
 						countHor = 0;
 						for (int j=0; j < height; j++){
 								double[] position = {(double) i,(double) j};
 								double[] posExpanded = kernelExpand(position);
 								double[] newPosition = multiply(beta, posExpanded);
-				
+
 								orig[i*j][0] = position[0];
 								orig[i*j][1] = position[1];
 				
@@ -508,6 +519,9 @@ public class NonLinearTransform{
 				gridImgTrans.show();
 				gridImgTrans.getCanvas().setDisplayList(gridTrans, Color.green, null );
 				gridImgTrans.updateAndDraw();
+
+				//new FileSaver(quiverImg.getCanvas().imp).saveAsTiff("QuiverCanvas.tif");
+				new FileSaver(quiverImg).saveAsTiff("QuiverImPs.tif");
 		
 				System.out.println("FINISHED");
 		}

@@ -63,6 +63,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.awt.Color;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.BufferedWriter;
+import java.io.*;
 
 import org.jfree.chart.*;
 import org.jfree.chart.plot.PlotOrientation;
@@ -140,6 +142,9 @@ public class Distortion_Correction implements PlugIn{
 		
 	ImagePlus imgTmp = new Opener().openImage(source_dir + names[0]);
 	int imageWidth=imgTmp.getWidth(), imageHeight=imgTmp.getHeight();
+  //imgTmp was just needed to get width and height
+  //of the images
+  imgTmp.flush();
 		
 	Vector<Vector<PointMatch>> inliers = null;
 		
@@ -165,7 +170,7 @@ public class Distortion_Correction implements PlugIn{
 	    for (int i=0; i < inliersTmp.length; i++){
 		// if vector at inliersTmp[i] contains only one null element,
 		// its size is still 1
-		if (inliersTmp[i].size() > 10){
+		  if (inliersTmp[i].size() > 10){
 		    wholeCount += inliersTmp[i].size();
 		}
 		//if I do not do this then the models have not the 
@@ -232,23 +237,24 @@ public class Distortion_Correction implements PlugIn{
 	IJ.showStatus("Evaluating Distortion Correction");
 	double[][] original = new double[numberOfImages][2];
 	double[][] corrected = new double[numberOfImages][2];
-		
-	for (int i=firstImageIndex; i < numberOfImages; i++){
+	
+	
+ 	for (int i=firstImageIndex; i < numberOfImages; i++){
 	    original[i] = evaluateCorrectionXcorr(i, source_dir);
 	    corrected[i] = evaluateCorrectionXcorr(i, target_dir);
 	}
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
         DefaultCategoryDataset datasetGain = new DefaultCategoryDataset();
         DefaultCategoryDataset datasetGrad = new DefaultCategoryDataset();
-        
+
         for (int i=0; i < (original.length); i++){
-	    dataset.setValue(Math.abs(original[i][0]), "before", "image" + i);
-	    dataset.setValue(Math.abs(corrected[i][0]), "after", "image" + i);
-	    datasetGrad.setValue(Math.abs(original[i][1]), "before", "image" + i);
-	    datasetGrad.setValue(Math.abs(corrected[i][1]), "after", "image" + i);
-        	
-	    datasetGain.setValue(Math.abs(corrected[i][0]) - Math.abs(original[i][0]), "gray","image" + i);
-	    datasetGain.setValue(Math.abs(corrected[i][1]) - Math.abs(original[i][1]), "grad","image" + i);
+						dataset.setValue(Math.abs(original[i][0]), "before", "image" + i);
+						dataset.setValue(Math.abs(corrected[i][0]), "after", "image" + i);
+						datasetGrad.setValue(Math.abs(original[i][1]), "before", "image" + i);
+						datasetGrad.setValue(Math.abs(corrected[i][1]), "after", "image" + i);
+						
+						datasetGain.setValue(Math.abs(corrected[i][0]) - Math.abs(original[i][0]), "gray","image" + i);
+						datasetGain.setValue(Math.abs(corrected[i][1]) - Math.abs(original[i][1]), "grad","image" + i);
         }
         
   
@@ -271,7 +277,43 @@ public class Distortion_Correction implements PlugIn{
         impGain.show();
         
 	visualizePoints(inliers);
-    }
+    
+
+	//write xcorr data to file
+	String original0 = "", original1 = "", corrected0 = "", corrected1 = "", gain0 = "", gain1 = "";
+	for (int i=0; i < (original.length); i++){
+			original0 =  original0 + Double.toString(original[i][0]) + "; ";
+			original1 =  original1 + Double.toString(original[i][1]) + "; ";
+			corrected0 =  corrected0 + Double.toString(corrected[i][0]) + "; ";
+			corrected1 =  corrected1 + Double.toString(corrected[i][1]) + "; ";
+			gain0 = gain0 + Double.toString(Math.abs(corrected[i][0]) - Math.abs(original[i][0])) + "; ";
+			gain1 = gain1 + Double.toString(Math.abs(corrected[i][1]) - Math.abs(original[i][1])) + "; ";
+	}
+
+	try{
+			BufferedWriter out = new BufferedWriter(new FileWriter(source_dir + "xcorrData.log"));
+					
+			out.write(original0);
+			out.newLine();
+			out.newLine();
+			out.write(original1);
+			out.newLine();
+			out.newLine();
+			out.write(corrected0);
+			out.newLine();
+			out.newLine();
+			out.write(corrected1);
+			out.newLine();
+			out.newLine();
+			out.write(gain0);
+			out.newLine();
+			out.newLine();
+			out.write(gain1);
+			out.newLine();
+			out.close();
+	}
+	catch (Exception e){System.err.println("Error: " + e.getMessage());};
+		}
 	
 	
     void extractSIFTPoints(int index, Vector<Feature>[]  siftFeatures, 
