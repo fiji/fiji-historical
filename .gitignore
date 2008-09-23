@@ -62,4 +62,8 @@
 /plugins/ij-ImageIO_.jar
 /plugins/loci_tools.jar
 *-stamp
-ba5d36b49ed0102cd93d05bd6d4736fd184746c5:.gitignore
+/.classpath
+/.project
+/Fiji.launch
+/Fake.launch
+/build/

@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 import java.util.jar.Manifest;
 import java.util.jar.JarEntry;
@@ -257,6 +258,21 @@ public class Fake {
 					makeAntFile(Parser.this);
 				}
 			});
+			addSpecialRule(new Special("eclipse") {
+				void action() throws FakeException {
+					eclipse();
+				}
+			});
+			addSpecialRule(new Special(".classpath") {
+				void action() throws FakeException {
+					eclipse();
+				}
+			});
+			addSpecialRule(new Special(".project") {
+				void action() throws FakeException {
+					eclipse();
+				}
+			});
 		}
 
 		protected void showMap(Map map, boolean showKeys) {
@@ -310,6 +326,16 @@ public class Fake {
 				}
 				System.out.println("'" + rule.target
 						+ "' is not up-to-date");
+			}
+		}
+
+		protected void eclipse() throws FakeException {
+			/* force all paths to be relative */
+			fijiHome = "";
+			try {
+				makeEclipseProject(Parser.this);
+			} catch (FileNotFoundException e) {
+				throw new FakeException(e);
 			}
 		}
 
@@ -1006,11 +1032,9 @@ public class Fake {
 				File file = new File(makePath(cwd, source));
 				if (getVarBool("IGNOREMISSINGFAKEFILES") &&
 						!file.exists()) {
-					String precompiled =
-						getVar("PRECOMPILEDDIRECTORY");
-					if (precompiled == null)
+					source = getPrecompiled();
+					if (source == null)
 						return;
-					source = precompiled + file.getName();
 					if (!new File(makePath(cwd,
 							source)).exists())
 						return;
@@ -1028,6 +1052,15 @@ public class Fake {
 						directory),
 					getVarPath("TOOLSPATH", directory),
 					getVarPath("CLASSPATH", directory));
+			}
+
+			String getPrecompiled() {
+				String precompiled =
+					getVar("PRECOMPILEDDIRECTORY");
+				if (precompiled == null)
+					return null;
+				File file = makePath(cwd, source);
+				return precompiled + file.getName();
 			}
 
 			String getVarPath(String variable, String subkey) {
@@ -1556,6 +1589,116 @@ public class Fake {
 		while (iter.hasNext())
 			java2classFiles((String)iter.next(), cwd, result, all);
 		return result;
+	}
+
+	static Map java2classFiles2(List files, File cwd) throws FakeException {
+		Map map = new TreeMap();
+		List currentList = null;
+		String lastBase = "";
+		Iterator iter = java2classFiles(files, cwd).iterator();
+		while (iter.hasNext()) {
+			String realName = (String)iter.next();
+			String name = realName;
+			byte[] buffer = readFile(makePath(cwd, realName));
+			if (buffer == null)
+				throw new FakeException("File "
+					+ realName + " does not exist.");
+			if (realName.endsWith(".class")) {
+				ByteCodeAnalyzer analyzer =
+					new ByteCodeAnalyzer(buffer);
+				name = analyzer.getPathForClass() + ".class";
+				String base;
+				if (realName.endsWith(name))
+					base = realName.substring(0,
+						realName.length()
+						- name.length());
+				else
+					base = "";
+				if (!base.equals(lastBase)) {
+					currentList = null;
+					lastBase = base;
+				}
+			}
+			else {
+				if (realName.startsWith(lastBase)) {
+					int len = lastBase.length();
+					name = realName.substring(len);
+				}
+			}
+			if (currentList == null) {
+				currentList = (List)map.get(lastBase);
+				if (currentList == null) {
+					currentList = new ArrayList();
+					map.put(lastBase, currentList);
+				}
+			}
+			currentList.add(name);
+		}
+		return map;
+	}
+
+	static Map java2prefixMap(List files, File cwd,
+			boolean javasOnly, Map map)
+			throws FakeException {
+		List currentList = null;
+		String lastBase = "";
+		Iterator iter = files.iterator();
+		while (iter.hasNext()) {
+			String realName = (String)iter.next();
+			if (realName.endsWith("/")) {
+				lastBase = realName;
+				continue;
+			}
+			String name = realName;
+			boolean endsWithJava = realName.endsWith(".java");
+			if (endsWithJava)
+				realName = realName.substring(0,
+						name.length() - 4) + "class";
+			else if (javasOnly)
+				continue;
+			if (realName.endsWith(".class")) {
+				byte[] buffer =
+					readFile(makePath(cwd, realName));
+				if (realName.endsWith("package-info.class") &&
+						buffer == null)
+					continue;
+				if (buffer == null)
+					throw new FakeException("File "
+						+ realName + " does not exist.");
+				ByteCodeAnalyzer analyzer =
+					new ByteCodeAnalyzer(buffer);
+				name = analyzer.getPathForClass() + ".class";
+				String base;
+				if (realName.endsWith(name))
+					base = realName.substring(0,
+						realName.length()
+						- name.length());
+				else
+					base = "";
+				if (!base.equals(lastBase)) {
+					currentList = null;
+					lastBase = base;
+				}
+				if (endsWithJava)
+					name = name.substring(0,
+						name.length() - 5) + "java";
+			}
+			else {
+				if (realName.startsWith(lastBase)) {
+					int len = lastBase.length();
+					name = realName.substring(len);
+				}
+			}
+			if (currentList == null) {
+				currentList = (List)map.get(lastBase);
+				if (currentList == null) {
+					currentList = new ArrayList();
+					map.put(lastBase, currentList);
+				}
+			}
+			currentList.add(name);
+		}
+		return map;
 	}
 
 	// this function handles the javac singleton
@@ -2607,6 +2750,19 @@ public class Fake {
 		return result;
 	}
 
+	public static List split(String list, String separator) {
+		List result = new ArrayList();
+		for (;;) {
+			int i = list.indexOf(separator);
+			if (i < 0)
+				break;
+			result.add(list.substring(0, i));
+			list = list.substring(i + separator.length());
+		}
+		result.add(list);
+		return result;
+	}
+
 	static boolean moveFileOutOfTheWay(String file) throws FakeException {
 		return moveFileOutOfTheWay(new File(file));
 	}
@@ -2736,6 +2892,157 @@ public class Fake {
 		out.println("\t</target>");
 	}
 
+	// Eclipse stuff
+
+	void makeEclipseProject(Parser parser)
+			throws FakeException, FileNotFoundException {
+		Map map = new TreeMap();
+		String classPath = discoverClassPath();
+		List list = new ArrayList(parser.allRules.keySet());
+		Iterator iter = list.iterator();
+		while (iter.hasNext()) {
+			String name = (String)iter.next();
+			Parser.Rule rule =
+				(Parser.Rule)parser.allRules.get(name);
+			if (rule instanceof Parser.CompileJar) {
+				rule.compileJavas(rule.prerequisites);
+				java2prefixMap(rule.prerequisites, parser.cwd,
+					true, map);
+			}
+			else if (rule instanceof Parser.SubFake) {
+				String precompiled =
+					((Parser.SubFake)rule).getPrecompiled();
+				if (precompiled != null)
+					classPath += ":" + precompiled;
+			}
+		}
+
+		File outFile = new File(parser.cwd, ".classpath");
+		outFile.getParentFile().mkdirs();
+
+		PrintStream out = new PrintStream(outFile);
+		out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		out.println("<classpath>");
+		iter = map.keySet().iterator();
+		int i = 1;
+		while (iter.hasNext()) {
+			String prefix = (String)iter.next();
+			List javas = (List)map.get(prefix);
+			out.println("\t<classpathentry including=\""
+				+ join(javas, "|")
+				+ "\" output=\"build/" + (i++) + "/" + prefix
+				+ "\" kind=\"src\" path=\"" + prefix + "\"/>");
+		}
+		out.println("\t<classpathentry kind=\"var\" "
+			+ "path=\"JRE_LIB\" sourcepath=\"JRE_SRC\"/>");
+		iter = split(classPath, ":").iterator();
+		while (iter.hasNext()) {
+			String path = (String)iter.next();
+			if (path.equals("") || path.equals("null") ||
+					path.equals("ij.jar") ||
+					path.equals("misc/headless.jar") ||
+					path.equals("misc/Fiji.jar") ||
+					path.equals("jars/javac.jar"))
+				continue;
+			out.println("\t<classpathentry kind=\"lib\" path=\""
+				+ path + "\"/>");
+		}
+		out.println("\t<classpathentry kind=\"output\" "
+			+ "path=\"build\"/>");
+		out.println("</classpath>");
+		out.close();
+
+		outFile = new File(parser.cwd, "Fake.launch");
+		outFile.getParentFile().mkdirs();
+		out = new PrintStream(outFile);
+		out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		out.println("<launchConfiguration type=\"org.eclipse.ui."
+			+ "externaltools."
+			+ "ProgramBuilderLaunchConfigurationType\">");
+		out.println("<booleanAttribute key=\"org.eclipse.debug.ui."
+			+ "ATTR_LAUNCH_IN_BACKGROUND\" value=\"false\"/>");
+		out.println("<stringAttribute key=\"org.eclipse.ui."
+			+ "externaltools.ATTR_LOCATION\" "
+			+ "value=\"${system_property:java.home}/bin/java\"/>");
+		out.println("<stringAttribute key=\"org.eclipse.ui."
+			+ "externaltools.ATTR_RUN_BUILD_KINDS\" "
+			+ "value=\"full,incremental,\"/>");
+		out.println("<stringAttribute key=\"org.eclipse.ui."
+			+ "externaltools.ATTR_TOOL_ARGUMENTS\" "
+			+ "value=\"-classpath precompiled/fake.jar Fake\"/>");
+		out.println("<booleanAttribute key=\"org.eclipse.ui."
+			+ "externaltools.ATTR_TRIGGERS_CONFIGURED\" "
+			+ "value=\"true\"/>");
+		out.println("<stringAttribute key=\"org.eclipse.ui."
+			+ "externaltools.ATTR_WORKING_DIRECTORY\" "
+			+ "value=\"${workspace_loc:/Fiji}\"/>");
+		out.println("</launchConfiguration>");
+		out.close();
+
+		outFile = new File(parser.cwd, "Fiji.launch");
+		outFile.getParentFile().mkdirs();
+		out = new PrintStream(outFile);
+		out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		out.println("<launchConfiguration type=\"org.eclipse.jdt."
+			+ "launching.localJavaApplication\">");
+		out.println("<listAttribute key=\"org.eclipse.debug.core."
+			+ "MAPPED_RESOURCE_PATHS\">");
+		out.println("<listEntry value=\"/Fiji/ij.jar\"/>");
+		out.println("</listAttribute>");
+		out.println("<listAttribute key=\"org.eclipse.debug.core."
+			+ "MAPPED_RESOURCE_TYPES\">");
+		out.println("<listEntry value=\"1\"/>");
+		out.println("</listAttribute>");
+		out.println("<stringAttribute key=\"org.eclipse.jdt.launching."
+			+ "MAIN_TYPE\" value=\"ij.ImageJ\"/>");
+		out.println("<stringAttribute key=\"org.eclipse.jdt.launching."
+			+ "PROJECT_ATTR\" value=\"Fiji\"/>");
+		out.println("<stringAttribute key=\"org.eclipse.jdt.launching."
+			+ "VM_ARGUMENTS\" "
+			+ "value=\"-Dpluginsdir=.\"/>");
+		out.println("<stringAttribute key=\"org.eclipse.jdt.launching."
+			+ "WORKING_DIRECTORY\" value=\"${workspace_loc:/Fiji}\"/>");
+		out.println("</launchConfiguration>");
+		out.close();
+
+		outFile = new File(parser.cwd, ".project");
+		out = new PrintStream(outFile);
+		
+		out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		out.println("<projectDescription>");
+		out.println("\t<name>Fiji</name>");
+		out.println("\t<comment></comment>");
+		out.println("\t<projects>");
+		out.println("\t\t<project>Fiji</project>");
+		out.println("\t</projects>");
+		out.println("\t<buildSpec>");
+		out.println("\t\t<buildCommand>");
+		out.println("\t\t\t<name>org.eclipse.jdt.core.javabuilder"
+			+ "</name>");
+		out.println("\t\t\t<arguments>");
+		out.println("\t\t\t</arguments>");
+		out.println("\t\t</buildCommand>");
+		out.println("\t\t<buildCommand>");
+		out.println("\t\t\t<name>org.eclipse.ui.externaltools."
+			+ "ExternalToolBuilder</name>");
+		out.println("\t\t\t<triggers>full,incremental,</triggers>");
+		out.println("\t\t\t<arguments>");
+		out.println("\t\t\t\t<dictionary>");
+		out.println("\t\t\t\t\t<key>LaunchConfigHandle</key>");
+		out.println("\t\t\t\t\t<value>&lt;project&gt;/"
+			+ "Fake.launch</value>");
+		out.println("\t\t\t\t</dictionary>");
+		out.println("\t\t\t</arguments>");
+		out.println("\t\t</buildCommand>");
+		out.println("\t</buildSpec>");
+		out.println("\t<natures>");
+		out.println("\t\t<nature>org.eclipse.jdt.core.javanature"
+			+ "</nature>");
+		out.println("\t</natures>");
+		out.println("</projectDescription>");
+		out.close();
+	}
+
 
 	// our very own exception
 
@@ -2743,6 +3050,9 @@ public class Fake {
 		public static final long serialVersionUID = 1;
 		public FakeException(String message) {
 			super(message);
+		}
+		public FakeException(Exception exception) {
+			super(exception);
 		}
 
 		public String toString() {
