@@ -1654,6 +1654,10 @@ public class Fake {
 			Iterator iter = files.iterator();
 			while (iter.hasNext()) {
 				String realName = (String)iter.next();
+				if (realName.endsWith("/")) {
+					lastBase = realName;
+					continue;
+				}
 				String name = realName;
 				byte[] buffer = readFile(makePath(cwd,
 								realName));
