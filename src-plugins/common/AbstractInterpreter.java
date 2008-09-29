@@ -81,6 +81,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		// start thread to write stdout and stderr to the screen
 		reader = new Thread("out_reader") {
 			public void run() {
+				setPriority(Thread.NORM_PRIORITY);
 				while(reader_run) {
 					print_out.flush();
 					String output = byte_out.toString(); // this should go with proper encoding 8859-1 or whatever is called
