@@ -187,6 +187,7 @@ public class Fake {
 		}
 
 		public Parser(String path) throws FakeException {
+			cwd = new File(".");
 			if (path == null || path.equals(""))
 				path = Parser.path;
 			try {
@@ -195,11 +196,12 @@ public class Fake {
 					new InputStreamReader(stream);
 				reader = new BufferedReader(input);
 			} catch (IOException e) {
-				error("Could not read file: " + path);
+				error("Could not read file: " + path
+					+ "(current directory is \""
+					+ cwd.getAbsolutePath() + "\")");
 			}
 
 			lineNumber = 0;
-			cwd = new File(".");
 
 			if (allPlatforms == null) {
 				allPlatforms = new HashSet();
@@ -242,6 +244,10 @@ public class Fake {
 
 			addSpecialRule(new Special("check") {
 				void action() { check(); }
+			});
+			addSpecialRule(new Special("working-directory") {
+				void action() { System.err.println(cwd
+					.getAbsolutePath()); }
 			});
 
 			addSpecialRule(new Special("build.xml") {
