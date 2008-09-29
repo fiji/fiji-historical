@@ -1440,11 +1440,15 @@ public class Fake {
 	 * the class file names of those classes used that have been found
 	 * in the same class path.
 	 */
-	protected static void java2classFiles(String java, File cwd, Set all) {
+	protected static void java2classFiles(String java, File cwd,
+			List result, Set all) {
 		if (java.endsWith(".java"))
 			java = java.substring(0, java.length() - 5) + ".class";
 		else if (!java.endsWith(".class")) {
-			all.add(java);
+			if (!all.contains(java)) {
+				result.add(java);
+				all.add(java);
+			}
 			return;
 		}
 		byte[] buffer = readFile(makePath(cwd, java));
@@ -1465,8 +1469,9 @@ public class Fake {
 			String path = java + className + ".class";
 			if (new File(makePath(cwd, path)).exists() &&
 					!all.contains(path)) {
+				result.add(path);
 				all.add(path);
-				java2classFiles(path, cwd, all);
+				java2classFiles(path, cwd, result, all);
 			}
 		}
 	}
@@ -1474,11 +1479,12 @@ public class Fake {
 	/* discovers all the .class files for a given set of .java files */
 	protected static List java2classFiles(List javas, File cwd)
 			throws FakeException {
+		List result = new ArrayList();
 		Set all = new HashSet();
 		Iterator iter = javas.iterator();
 		while (iter.hasNext())
-			java2classFiles((String)iter.next(), cwd, all);
-		return new ArrayList(all);
+			java2classFiles((String)iter.next(), cwd, result, all);
+		return result;
 	}
 
 	// this function handles the javac singleton
