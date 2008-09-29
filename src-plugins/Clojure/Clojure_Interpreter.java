@@ -146,6 +146,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			this.notifyAll();
 		}
 		private LispThread() {
+			super("Clojure Thread");
 			setPriority(Thread.NORM_PRIORITY);
 			try { setDaemon(true); } catch (Exception e) { e.printStackTrace(); }
 			start();
