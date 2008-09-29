@@ -28,3 +28,7 @@
 [submodule "mpicbg"]
 	path = mpicbg
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/mpicbg.git
+[submodule "clojure"]
+	path = clojure
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/clojure/
+
