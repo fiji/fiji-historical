@@ -207,6 +207,12 @@ public class Fake {
 				allPlatforms.add("win32");
 				allPlatforms.add("win64");
 				allPlatforms.add("macosx");
+				allPlatforms.add("osx10.1");
+				allPlatforms.add("osx10.2");
+				allPlatforms.add("osx10.3");
+				allPlatforms.add("osx10.4");
+				allPlatforms.add("osx10.5");
+				allPlatforms.add("osx10.6");
 				Iterator iter = allPlatforms.iterator();
 				while (iter.hasNext()) {
 					String platform = (String)iter.next();
@@ -590,7 +596,7 @@ public class Fake {
 		public boolean isVarChar(char c) {
 			return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
 				|| (c >= '0' && c <= '9') || c == '_'
-				|| c == '(' || c == ')';
+				|| c == '(' || c == ')' || c == '.';
 		}
 
 		public void checkVariableNames() throws FakeException {
@@ -628,6 +634,14 @@ public class Fake {
 			if (subkey2 != null && res == null)
 				res = (String)variables.get(key
 						+ "(" + subkey2 + ")");
+			if (res == null && getPlatform().equals("macosx")) {
+				String version =
+					System.getProperty("os.version");
+				for (int i = 1; version.compareTo("10." + i
+						+ ".Z") > 0 && res == null; i++)
+					res = (String)variables.get(key
+						+ "(osx10." + i + ")");
+			}
 			if (res == null)
 				res = (String)variables.get(key
 						+ "(" + getPlatform() + ")");
@@ -1264,16 +1278,32 @@ public class Fake {
 
 		GlobFilter(String glob, long newerThan) {
 			this.glob = glob;
-			String regex = "^"
-				+ glob.replace(".", "\\.")
-				.replace("^", "\\^")
-				.replace("$", "\\$")
-				.replace("?", "[^/]")
-				.replace("*", "[^/]*")
-				.replace("[^/]*[^/]*", ".*")
-				+ "$";
+			String regex = "^" + replaceSpecials(glob) + "$";
 			pattern = Pattern.compile(regex);
 			this.newerThan = newerThan;
+		}
+
+		String replaceSpecials(String glob) {
+			StringBuffer result = new StringBuffer();
+			char[] array = glob.toCharArray();
+			int len = array.length;
+			for (int i = 0; i < len; i++) {
+				char c = array[i];
+				if (".^$".indexOf(c) >= 0)
+					result.append("\\" + c);
+				else if (c == '?')
+					result.append("[^/]");
+				else if (c == '*') {
+					if (i + 1 >= len || array[i + 1] != '*')
+						result.append("[^/]*");
+					else {
+						result.append(".*");
+						i++;
+					}
+				} else
+					result.append(c);
+			}
+			return result.toString();
 		}
 
 		public boolean accept(File dir, String name) {
