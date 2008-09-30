@@ -255,7 +255,7 @@ public class Fake {
 				void action() throws FakeException {
 					/* force all paths to be relative */
 					fijiHome = "";
-					makeAntFile(Parser.this);
+					makeAntFile(Parser.this, false);
 				}
 			});
 			addSpecialRule(new Special("eclipse") {
@@ -271,6 +271,16 @@ public class Fake {
 			addSpecialRule(new Special(".project") {
 				void action() throws FakeException {
 					eclipse();
+				}
+			});
+			addSpecialRule(new Special("netbeans") {
+				void action() throws FakeException {
+					netbeans();
+				}
+			});
+			addSpecialRule(new Special("nbproject") {
+				void action() throws FakeException {
+					netbeans();
 				}
 			});
 		}
@@ -334,6 +344,16 @@ public class Fake {
 			fijiHome = "";
 			try {
 				makeEclipseProject(Parser.this);
+			} catch (FileNotFoundException e) {
+				throw new FakeException(e);
+			}
+		}
+
+		protected void netbeans() throws FakeException {
+			/* force all paths to be relative */
+			fijiHome = "";
+			try {
+				makeNetbeansProject(Parser.this);
 			} catch (FileNotFoundException e) {
 				throw new FakeException(e);
 			}
@@ -1059,7 +1079,7 @@ public class Fake {
 					getVar("PRECOMPILEDDIRECTORY");
 				if (precompiled == null)
 					return null;
-				File file = makePath(cwd, source);
+				File file = new File(makePath(cwd, source));
 				return precompiled + file.getName();
 			}
 
@@ -1164,7 +1184,7 @@ public class Fake {
 					getVar("CLASSPATH"),
 					getMainClass(),
 					getVar("JAVAVERSION"),
-					getVarBool("DEBUG"));
+					true);
 			}
 		}
 
@@ -1200,7 +1220,7 @@ public class Fake {
 				return makeAntCompileClassTarget(target,
 					prerequisites, getVar("CLASSPATH"),
 					getVar("JAVAVERSION"),
-					getVarBool("DEBUG"));
+					true);
 			}
 		}
 
@@ -2778,7 +2798,8 @@ public class Fake {
 				+ " out of the way");
 	}
 
-	void makeAntFile(Parser parser) throws FakeException {
+	void makeAntFile(Parser parser, boolean forNetbeans)
+			throws FakeException {
 		PrintStream out;
 		try {
 			out = new PrintStream("build.xml");
@@ -2789,6 +2810,19 @@ public class Fake {
 			+ parser.allRule.target + "\" basedir=\".\">");
 		out.println("\t<property name=\"build\" location=\"build\"/>");
 
+		if (forNetbeans) {
+			out.println("\t<target name=\"deps-jar\" "
+				+ "depends=\"all\"/>");
+			out.println("\t<import "
+				+ "file=\"nbproject/build-impl.xml\"/>");
+
+			Parser.Rule run =
+				(Parser.Rule)parser.allRules.get("run");
+			if (run != null)
+				parser.allRules.remove("run");
+		}
+
+		String classPath = discoverClassPath();
 		List list = new ArrayList(parser.allRules.keySet());
 		Collections.sort(list);
 		Iterator iter = list.iterator();
@@ -2797,6 +2831,12 @@ public class Fake {
 			Parser.Rule rule =
 				(Parser.Rule)parser.allRules.get(name);
 			printAntTarget(out, rule);
+			if (rule instanceof Parser.SubFake) {
+				String precompiled =
+					((Parser.SubFake)rule).getPrecompiled();
+				if (precompiled != null)
+					classPath = ":" + precompiled;
+			}
 		}
 
 		out.println("</project>");
@@ -3040,6 +3080,102 @@ public class Fake {
 			+ "</nature>");
 		out.println("\t</natures>");
 		out.println("</projectDescription>");
+		out.close();
+	}
+
+	// Netbeans stuff
+
+	void makeNetbeansProject(Parser parser)
+			throws FakeException, FileNotFoundException {
+		makeAntFile(parser, true);
+
+		Map map = new TreeMap();
+		List list = new ArrayList();
+		list.add("ij/**/*.java");
+		map.put("ImageJA", list);
+
+		String classPath = discoverClassPath();
+		list = new ArrayList(parser.allRules.keySet());
+		Iterator iter = list.iterator();
+		while (iter.hasNext()) {
+			String name = (String)iter.next();
+			Parser.Rule rule =
+				(Parser.Rule)parser.allRules.get(name);
+			if (rule instanceof Parser.CompileJar) {
+				if (rule.target.equals("jars/javac.jar"))
+					continue;
+				rule.compileJavas(rule.prerequisites);
+				java2prefixMap(rule.prerequisites, parser.cwd,
+					true, map);
+			}
+			else if (rule instanceof Parser.SubFake) {
+				int slash = rule.target.lastIndexOf('/');
+				classPath += ":precompiled/" +
+					rule.target.substring(slash + 1);
+			}
+		}
+
+		File outFile = new File(parser.cwd, "nbproject/project.xml");
+		outFile.getParentFile().mkdirs();
+
+		PrintStream out = new PrintStream(outFile);
+		out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		out.println("<project xmlns=\"http://www.netbeans.org/"
+			+ "ns/project/1\">");
+		out.println("\t<type>org.netbeans.modules.java.j2seproject"				+ "</type>");
+		out.println("\t<configuration>");
+		out.println("\t\t<data xmlns=\"http://www.netbeans.org/"
+			+ "ns/j2se-project/3\">");
+		out.println("\t\t\t<name>Fiji</name>");
+		out.println("\t\t\t<minimum-ant-version>1.6.5"
+			+ "</minimum-ant-version>");
+		out.println("\t\t\t<source-roots>");
+		int size = map.keySet().size();
+		for (int i = 1; i <= size; i++)
+			out.println("\t\t\t\t<root id=\"src." + i + ".dir\"/>");
+		out.println("\t\t\t</source-roots>");
+		out.println("\t\t\t<test-roots/>");
+		out.println("\t\t</data>");
+		out.println("\t</configuration>");
+		out.println("</project>");
+		out.close();
+
+		outFile = new File(parser.cwd,
+				"nbproject/project.properties");
+
+		out = new PrintStream(outFile);
+		iter = map.keySet().iterator();
+		int i = 1;
+		while (iter.hasNext())
+			out.println("src." + (i++) + ".dir=" + iter.next());
+		iter = map.keySet().iterator();
+		String delim = "includes=";
+		while (iter.hasNext()) {
+			list = (List)map.get(iter.next());
+			if (list.isEmpty())
+				continue;
+			out.print(delim + join(list, ","));
+			delim = ",";
+		}
+		out.println("");
+		out.println("javac.source=1.5");
+		out.println("javac.target=1.5");
+		out.println("javac.classpath=" + classPath);
+		out.println("javac.debug=true");
+		out.println("do.jar=true");
+		out.println("main.class=ij.ImageJ");
+		out.println("run.jvmargs=-Dpluginsdir=\".\"");
+		out.println("run.classpath=${build.classes.dir}:"
+			+ "${javac.classpath}");
+		out.println("debug.classpath=${run.classpath}");
+		out.println("build.dir=build");
+		out.println("build.classes.dir=${build.dir}/classes");
+		out.println("build.test.classes.dir=${build.dir}/test/classes");
+		out.println("build.test.results.dir=${build.dir}/test/results");
+		out.println("build.classes.excludes=**/*.java,**/*.form");
+		out.println("dist.dir=dist");
+		out.println("dist.javadoc.dir=${dist}/javadoc");
+		out.println("dist.jar=");
 		out.close();
 	}
 

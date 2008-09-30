@@ -67,3 +67,6 @@
 /Fiji.launch
 /Fake.launch
 /build/
+/build.xml
+/manifest.mf
+/nbproject/
