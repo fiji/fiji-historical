@@ -797,6 +797,7 @@ public class Fake {
 			}
 
 			public String toString(int maxCharacters) {
+				String target = this.target;
 				String result = "";
 				if (getVarBool("VERBOSE") &&
 						!(this instanceof Special)) {
