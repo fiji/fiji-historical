@@ -845,6 +845,7 @@ public class Fake {
 				toolsPath = getVar("TOOLSPATH");
 				return Fake.compileJavas(javas, cwd,
 					getVar("JAVAVERSION"),
+					getVarBool("DEBUG"),
 					getVarBool("VERBOSE"),
 					getVarBool("SHOWDEPRECATION"),
 					getVar("CLASSPATH"));
@@ -1533,10 +1534,12 @@ public class Fake {
 	// returns all .java files in the list, and returns a list where
 	// all the .java files have been replaced by their .class files.
 	protected static List compileJavas(List javas, File cwd,
-			String javaVersion, boolean verbose,
+			String javaVersion, boolean debug, boolean verbose,
 			boolean showDeprecation, String extraClassPath)
 			throws FakeException {
 		List arguments = new ArrayList();
+		if (debug)
+			arguments.add("-g");
 		if (javaVersion != null && !javaVersion.equals("")) {
 			arguments.add("-source");
 			arguments.add(javaVersion);
