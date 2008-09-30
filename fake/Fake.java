@@ -2671,10 +2671,13 @@ public class Fake {
 		Set dirs = new HashSet();
 		List tasks = new ArrayList();
 		if (mode.equals("fake")) {
-			tasks.add("<exec dir=\"" + subdir +
-				"\" executable=\"${basedir}/fiji\">");
-			tasks.add("\t<arg line=\"--fake\"/>");
-			tasks.add("</exec>");
+			tasks.add("<java dir=\"" + subdir +
+				"\" classname=\"Fake\" fork=\"false\">");
+			tasks.add("\t<classpath>");
+			tasks.add("\t\t<path path=\"${basedir}/"
+				+ "precompiled/fake.jar\"/>");
+			tasks.add("\t</classpath>");
+			tasks.add("</java>");
 		} else if (mode.equals("make"))
 			tasks.add("<exec dir=\"" + subdir +
 				"\" executable=\"make\"/>");
