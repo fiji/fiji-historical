@@ -1,6 +1,10 @@
 A loose TODO list for Fiji
 ==========================
 
+- plugins updater
+- test Bilateral Filter
+- Segmentation Editor fails
+- compile and test Java7 (has nasty bugs)
 - use the headless.jar trick to compile MacAdapter.source in ImageJA
 - Albert said that plugins.config-added plugins are not added alphabetically
 - add a plugin finder (a la Google suggest) to the Control Panel, and make
