@@ -1,3 +1,9 @@
+- netbeans: use Fake via Ant
+- move Ant functions out of the classes, and squash all commits
+- Ant script has wrong target for .class rules
+- include precompiled/fake.jar in the netbeans and eclipse packages
+- make up-to-date check depend on dependencies (rebuild if the dependencies
+  needed rebuilding)
 - check out Git, or alternatively download via HTTP
 - touch the mtime of "unchanged" .jar files
 - check variable names again
