@@ -44,7 +44,41 @@ public class Fake {
 	protected static String toolsPath;
 
 	public static void main(String[] args) {
+		if (runPrecompiledFakeIfNewer(args))
+			return;
 		new Fake().make(args);
+	}
+
+	public static boolean runPrecompiledFakeIfNewer(String[] args) {
+		String url = Fake.class.getResource("Fake.class").toString();
+		String prefix = "jar:file:";
+		String suffix = "/fake.jar!/Fake.class";
+		if (!url.startsWith(prefix) || !url.endsWith(suffix))
+			return false;
+		url = url.substring(9, url.length() - suffix.length());
+		File precompiled = new File(url + "/precompiled/fake.jar");
+		if (!precompiled.exists())
+			return false;
+		File current = new File(url + "/fake.jar");
+		if (!current.exists() || current.lastModified() >=
+				precompiled.lastModified())
+			return false;
+		try {
+			JarClassLoader loader = new JarClassLoader();
+			loader.jarFiles.put(precompiled.getPath(),
+					new JarFile(precompiled.getPath()));
+			loader.forceFakeReload = true;
+			Class f = loader.loadClass("Fake", true);
+			Class[] argsType = new Class[] { args.getClass() };
+			Method main = f.getMethod("main", argsType);
+			Object o = f.newInstance();
+			main.invoke(o, new Object[] { args });
+		} catch (Exception e) {
+			System.err.println("Could not load precompiled Fake");
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return true;
 	}
 
 	final static Set variableNames = new HashSet();
@@ -2232,6 +2266,7 @@ public class Fake {
 	private static class JarClassLoader extends ClassLoader {
 		Map jarFiles;
 		Map cache;
+		boolean forceFakeReload = false;
 
 		JarClassLoader() {
 			super(Thread.currentThread().getContextClassLoader());
@@ -2289,7 +2324,9 @@ public class Fake {
 				return (Class)cached;
 			Class result;
 			try {
-				result = super.loadClass(name, resolve);
+				result = forceFakeReload &&
+						name.startsWith("Fake") ?
+					null : super.loadClass(name, resolve);
 				if (result != null)
 					return result;
 			} catch (Exception e) { }
