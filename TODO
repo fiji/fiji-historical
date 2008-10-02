@@ -1,6 +1,7 @@
 A loose TODO list for Fiji
 ==========================
 
+- find out why jps shows no title for Fiji's process
 - teach Fake to check for precompiled/fake.jar, and use it if it is newer than
   the current fake.jar file.  Then undo the Fake.sh cuteness in this regard.
   Likewise, building "fake.jar" on Windows should warn and resort to making
