@@ -152,10 +152,6 @@ plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java $COMMON
 plugins/Javascript_.jar <- src-plugins/Javascript/*.java $COMMON
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar
-plugins/register_virtual_stack_slices.jar <- \
-	src-plugins/register_virtual_stack/*.java
-plugins/registration_3d.jar <- src-plugins/registration3d/*.java
-plugins/IO_.jar <- src-plugins/io/*.java
 CLASSPATH(plugins/lens_correction.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
@@ -163,7 +159,6 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.jpg \
 	src-plugins/LSM_Toolbox/**/*.html \
 	src-plugins/LSM_Toolbox/**/*.txt
-plugins/level_sets.jar <- src-plugins/levelsets/**/*.java
 
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
