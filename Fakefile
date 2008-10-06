@@ -157,7 +157,6 @@ plugins/register_virtual_stack_slices.jar <- \
 plugins/registration_3d.jar <- src-plugins/registration3d/*.java
 plugins/IO_.jar <- src-plugins/io/*.java
 CLASSPATH(plugins/lens_correction.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar
-plugins/lens_correction.jar <- src-plugins/lenscorrection/*.java
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.png \
