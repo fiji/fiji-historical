@@ -44,7 +44,41 @@ public class Fake {
 	protected static String toolsPath;
 
 	public static void main(String[] args) {
+		if (runPrecompiledFakeIfNewer(args))
+			return;
 		new Fake().make(args);
+	}
+
+	public static boolean runPrecompiledFakeIfNewer(String[] args) {
+		String url = Fake.class.getResource("Fake.class").toString();
+		String prefix = "jar:file:";
+		String suffix = "/fake.jar!/Fake.class";
+		if (!url.startsWith(prefix) || !url.endsWith(suffix))
+			return false;
+		url = url.substring(9, url.length() - suffix.length());
+		File precompiled = new File(url + "/precompiled/fake.jar");
+		if (!precompiled.exists())
+			return false;
+		File current = new File(url + "/fake.jar");
+		if (!current.exists() || current.lastModified() >=
+				precompiled.lastModified())
+			return false;
+		try {
+			JarClassLoader loader = new JarClassLoader();
+			loader.jarFiles.put(precompiled.getPath(),
+					new JarFile(precompiled.getPath()));
+			loader.forceFakeReload = true;
+			Class f = loader.loadClass("Fake", true);
+			Class[] argsType = new Class[] { args.getClass() };
+			Method main = f.getMethod("main", argsType);
+			Object o = f.newInstance();
+			main.invoke(o, new Object[] { args });
+		} catch (Exception e) {
+			System.err.println("Could not load precompiled Fake");
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return true;
 	}
 
 	final static Set variableNames = new HashSet();
@@ -344,9 +378,6 @@ public class Fake {
 				String list = line.substring(arrow + 2).trim();
 				try {
 					Rule rule = addRule(target, list);
-
-					if (result == null)
-						result = rule;
 				} catch (Exception e) {
 					error(e.getMessage());
 				}
@@ -354,6 +385,7 @@ public class Fake {
 
 			lineNumber = -1;
 
+			result = allRule;
 			if (result == null)
 				error("Could not find default rule");
 
@@ -637,10 +669,18 @@ public class Fake {
 			if (res == null && getPlatform().equals("macosx")) {
 				String version =
 					System.getProperty("os.version");
-				for (int i = 1; version.compareTo("10." + i
-						+ ".Z") > 0 && res == null; i++)
+				int i = 0;
+				if (version.startsWith("10.")) {
+					int dot = version.indexOf('.', 3);
+					if (dot > 0) {
+						version = version.substring(3,
+							dot);
+						i = Integer.parseInt(version);
+					}
+				}
+				while (i > 0 && res == null)
 					res = (String)variables.get(key
-						+ "(osx10." + i + ")");
+						+ "(osx10." + (i--) + ")");
 			}
 			if (res == null)
 				res = (String)variables.get(key
@@ -797,6 +837,7 @@ public class Fake {
 			}
 
 			public String toString(int maxCharacters) {
+				String target = this.target;
 				String result = "";
 				if (getVarBool("VERBOSE") &&
 						!(this instanceof Special)) {
@@ -844,6 +885,7 @@ public class Fake {
 				toolsPath = getVar("TOOLSPATH");
 				return Fake.compileJavas(javas, cwd,
 					getVar("JAVAVERSION"),
+					getVarBool("DEBUG"),
 					getVarBool("VERBOSE"),
 					getVarBool("SHOWDEPRECATION"),
 					getVar("CLASSPATH"));
@@ -1532,10 +1574,12 @@ public class Fake {
 	// returns all .java files in the list, and returns a list where
 	// all the .java files have been replaced by their .class files.
 	protected static List compileJavas(List javas, File cwd,
-			String javaVersion, boolean verbose,
+			String javaVersion, boolean debug, boolean verbose,
 			boolean showDeprecation, String extraClassPath)
 			throws FakeException {
 		List arguments = new ArrayList();
+		if (debug)
+			arguments.add("-g");
 		if (javaVersion != null && !javaVersion.equals("")) {
 			arguments.add("-source");
 			arguments.add(javaVersion);
@@ -2222,6 +2266,7 @@ public class Fake {
 	private static class JarClassLoader extends ClassLoader {
 		Map jarFiles;
 		Map cache;
+		boolean forceFakeReload = false;
 
 		JarClassLoader() {
 			super(Thread.currentThread().getContextClassLoader());
@@ -2279,7 +2324,9 @@ public class Fake {
 				return (Class)cached;
 			Class result;
 			try {
-				result = super.loadClass(name, resolve);
+				result = forceFakeReload &&
+						name.startsWith("Fake") ?
+					null : super.loadClass(name, resolve);
 				if (result != null)
 					return result;
 			} catch (Exception e) { }
