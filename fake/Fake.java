@@ -64,11 +64,9 @@ public class Fake {
 				precompiled.lastModified())
 			return false;
 		try {
-			JarClassLoader loader = new JarClassLoader();
-			loader.jarFiles.put(precompiled.getPath(),
-					new JarFile(precompiled.getPath()));
-			loader.forceFakeReload = true;
-			Class f = loader.loadClass("Fake", true);
+			JarClassLoader loader = (JarClassLoader)
+				getClassLoader(precompiled.getPath());
+			Class f = loader.forceLoadClass("Fake");
 			Class[] argsType = new Class[] { args.getClass() };
 			Method main = f.getMethod("main", argsType);
 			Object o = f.newInstance();
@@ -1560,9 +1558,10 @@ public class Fake {
 		try {
 			if (javac == null) {
 				discoverJavac();
-				ClassLoader loader = getClassLoader(toolsPath);
+				JarClassLoader loader = (JarClassLoader)
+					getClassLoader(toolsPath);
 				String className = "com.sun.tools.javac.Main";
-				Class main = loader.loadClass(className);
+				Class main = loader.forceLoadClass(className);
 				Class[] argsType = new Class[] {
 					arguments.getClass()
 				};
@@ -2340,7 +2339,6 @@ public class Fake {
 	private static class JarClassLoader extends ClassLoader {
 		Map jarFiles;
 		Map cache;
-		boolean forceFakeReload = false;
 
 		JarClassLoader() {
 			super(Thread.currentThread().getContextClassLoader());
@@ -2386,6 +2384,11 @@ public class Fake {
 			return super.getResourceAsStream(name);
 		}
 
+		public Class forceLoadClass(String name)
+				throws ClassNotFoundException {
+			return loadClass(name, true, true);
+		}
+
 		public Class loadClass(String name)
 				throws ClassNotFoundException {
 			return loadClass(name, true);
@@ -2393,16 +2396,22 @@ public class Fake {
 
 		public synchronized Class loadClass(String name,
 				boolean resolve) throws ClassNotFoundException {
-			Object cached = cache.get(name);
+			return loadClass(name, resolve, false);
+		}
+
+		public synchronized Class loadClass(String name,
+					boolean resolve, boolean forceReload)
+				throws ClassNotFoundException {
+			Object cached = forceReload ? null : cache.get(name);
 			if (cached != null)
 				return (Class)cached;
 			Class result;
 			try {
-				result = forceFakeReload &&
-						name.startsWith("Fake") ?
-					null : super.loadClass(name, resolve);
-				if (result != null)
-					return result;
+				if (!forceReload) {
+					result = super.loadClass(name, resolve);
+					if (result != null)
+						return result;
+				}
 			} catch (Exception e) { }
 			String path = name.replace('.', '/') + ".class";
 			InputStream input = getResourceAsStream(path, !true);
@@ -2415,7 +2424,11 @@ public class Fake {
 						buffer, 0, buffer.length);
 				cache.put(name, result);
 				return result;
-			} catch (IOException e) { return null; }
+			} catch (IOException e) {
+				result = forceReload ?
+					super.loadClass(name, resolve) : null;
+				return result;
+			}
 		}
 	}
 
