@@ -37,6 +37,7 @@ import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.gui.Toolbar;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 
 import java.awt.Choice;
 import java.awt.Frame;
@@ -66,6 +67,13 @@ public class bUnwarpJDialog extends GenericDialog
     private ImagePlus sourceImp;
     /** Image representation for target image */
     private ImagePlus targetImp;
+    
+    // Original image processors
+    /** initial source image processor */
+    private ImageProcessor originalSourceIP;
+    /** initial target image processor */
+    private ImageProcessor originalTargetIP;
+    
 
     // Image models
     /** Model for source image */
@@ -634,14 +642,15 @@ public class bUnwarpJDialog extends GenericDialog
 
     /*------------------------------------------------------------------*/
     /**
-     * Ungray image.
+     * Ungray image. It restores the original version of the image (without mask).
      *
      * @param pa point action pointer
      */
     public void ungrayImage(final bUnwarpJPointAction pa)
     {
-       if (pa==sourcePh.getPointAction()) 
+       if (pa == sourcePh.getPointAction()) 
        {
+    	   /*
           int Xdim=source.getWidth();
           int Ydim=source.getHeight();
           FloatProcessor fp=new FloatProcessor(Xdim,Ydim);
@@ -652,10 +661,13 @@ public class bUnwarpJDialog extends GenericDialog
                  fp.putPixelValue(j,i,source_data[ij]);
           fp.resetMinAndMax();
           sourceImp.setProcessor(sourceImp.getTitle(),fp);
+          */
+    	  this.sourceImp.setProcessor(sourceImp.getTitle(), this.originalSourceIP);
           sourceImp.updateImage();
        } 
        else 
        {
+    	  /*
           int Xdim=target.getWidth();
           int Ydim=target.getHeight();
           FloatProcessor fp=new FloatProcessor(Xdim,Ydim);
@@ -665,7 +677,10 @@ public class bUnwarpJDialog extends GenericDialog
              for (int j=0; j<Xdim; j++,ij++)
                  fp.putPixelValue(j,i,target_data[ij]);
           fp.resetMinAndMax();
+          
           targetImp.setProcessor(targetImp.getTitle(),fp);
+          */
+    	  this.targetImp.setProcessor(this.targetImp.getTitle(), this.originalTargetIP);
           targetImp.updateImage();
        }
     }
@@ -758,6 +773,8 @@ public class bUnwarpJDialog extends GenericDialog
 		
 		sourceImp = imageList[sourceChoiceIndex];
 		sourceImp.setSlice(1);
+		
+		this.originalSourceIP = this.sourceImp.getProcessor();
 
 		source    =
 			new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse);
@@ -803,6 +820,9 @@ public class bUnwarpJDialog extends GenericDialog
 		
 		targetImp = imageList[targetChoiceIndex];
 		targetImp.setSlice(1);
+		
+		this.originalTargetIP = this.targetImp.getProcessor();
+		
 		target    =
 			new bUnwarpJImageModel(targetImp.getProcessor(), true);
 		target.setPyramidDepth(imagePyramidDepth+min_scale_image);
@@ -892,6 +912,11 @@ public class bUnwarpJDialog extends GenericDialog
        this.sourceImp = this.targetImp;
        this.targetImp = swapImp;
 
+       // Swap original ImageProcessors
+       final ImageProcessor swapIP = this.originalSourceIP;
+       this.originalSourceIP = this.originalTargetIP;
+       this.originalTargetIP = swapIP;
+       
        // Swap Mask
        final bUnwarpJMask swapMsk = this.sourceMsk;
        this.sourceMsk = this.targetMsk;
@@ -1089,12 +1114,27 @@ public class bUnwarpJDialog extends GenericDialog
 	
 	/*------------------------------------------------------------------*/
     /**
+     * Get original source image process.
+     */
+	public ImageProcessor getOriginalSourceIP() {
+		return this.originalSourceIP;
+	} /* end getOriginalSourceIP */
+
+	/*------------------------------------------------------------------*/
+    /**
+     * Get original target image process.
+     */
+	public ImageProcessor getOriginalTargetIP() {
+		return this.originalTargetIP;
+	} /* end getOriginalTargetIP */
+	
+	/*------------------------------------------------------------------*/
+    /**
      * Get source image model.
      */
 	public bUnwarpJImageModel getSource() {
 		return this.source;
 	} /* end getSource */
-
 
 	/**
 	 * Get the macro flag
