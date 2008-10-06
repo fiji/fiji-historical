@@ -1,6 +1,11 @@
 A loose TODO list for Fiji
 ==========================
 
+- exclude ij.jar, headless.jar and precompiled/ij.jar from netbeans project
+  (otherwise Netbeans will not use the ImageJ it compiled itself)
+- netbeans: exclude the classes found in src-plugins/ij/**/*.java from ImageJA/
+- put ij.Menus from ImageJA's fiji branch into misc/Fiji.jar, so that updating
+  ImageJ will still work.
 - plugins updater
 - test Bilateral Filter
 - Segmentation Editor fails
