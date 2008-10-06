@@ -166,7 +166,6 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.txt
 plugins/level_sets.jar <- src-plugins/levelsets/**/*.java
 
-plugins/*_.jar <- src-plugins/*/**/*.java
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
 plugins/**/*.class <- src-plugins/**/*.java
