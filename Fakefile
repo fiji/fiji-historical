@@ -215,10 +215,9 @@ MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386
 MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch ppc64 -arch x86_64
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
-LDFLAGS(macosx)=$LDFLAGS $MACOPTS
 
 CXXFLAGS(fiji)=$CXXFLAGS $MACOPTS
-LDFLAGS(fiji)=$CXXFLAGS $MACOPTS
+LDFLAGS(fiji)=$LDFLAGS $MACOPTS
 
 LIBS(linux)=-ldl
 LIBS(linux64)=-ldl
