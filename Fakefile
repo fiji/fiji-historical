@@ -98,7 +98,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/LSM_Toolbox.jar \
 	plugins/SplineDeformationGenerator_.jar \
 	plugins/level_sets.jar \
-	plugins/Non_Modal_Test.jar \
 	plugins/3D_Distance_Transform.jar \
 	\
 	plugins/Analyze/Grid_.class \
