@@ -64,4 +64,4 @@
 *-stamp
 /plugins/3D_Distance_Transform.jar
 /jars/clojure.jar
-/plugins/ImageJ_5D.jar
+/plugins/IJ_Robot.jar
