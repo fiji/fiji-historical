@@ -103,6 +103,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Color_Histogram.jar \
 	plugins/Color_Inspector_3D.jar \
 	plugins/Image_5D.jar \
+	plugins/M_I_P.jar \
 	\
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
@@ -178,11 +179,10 @@ jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
 # Third party plugins
 
 # TODO: move
-# Interactive_3D_Surface_Plot, M_I_P, View5D_, Volume_Viewer, and ij-ImageIO_
+# Interactive_3D_Surface_Plot, View5D_, Volume_Viewer, and ij-ImageIO_
 # into src-plugins, compile loci_tools (bio-formats) as submodule
 THIRD_PARTY_PLUGINS= \
 	plugins/Interactive_3D_Surface_Plot.jar \
-	plugins/M_I_P.jar \
 	plugins/TransformJ_.jar \
 	plugins/View5D_.jar \
 	plugins/Volume_Viewer.jar \
