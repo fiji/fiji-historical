@@ -1032,7 +1032,9 @@ public class Fake {
 			void action(String directory) throws FakeException {
 				String program = getVar("SUBFAKESCRIPT",
 					directory);
-				if (program != null) {
+				if (new File(makePath(cwd, directory
+							+ "/.git")).exists() &&
+						program != null) {
 					try {
 						action(program, directory);
 					} catch (IOException e) {
