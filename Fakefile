@@ -100,6 +100,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/level_sets.jar \
 	plugins/3D_Distance_Transform.jar \
 	plugins/Analyze_Reader_Writer.jar \
+	plugins/Color_Histogram.jar \
 	\
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
@@ -174,10 +175,10 @@ jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
 
 # Third party plugins
 
-# TODO: move Color_Histogram, Color_Inspector, Image_5D,
+# TODO: move Color_Inspector, Image_5D,
 # Interactive_3D_Surface_Plot, M_I_P, View5D_, Volume_Viewer, and ij-ImageIO_
 # into src-plugins, compile loci_tools (bio-formats) as submodule
-THIRD_PARTY_PLUGINS=plugins/Color_Histogram.jar \
+THIRD_PARTY_PLUGINS= \
 	plugins/Color_Inspector_3D.jar \
 	plugins/Image_5D.jar \
 	plugins/Interactive_3D_Surface_Plot.jar \
