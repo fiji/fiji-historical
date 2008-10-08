@@ -104,6 +104,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Color_Inspector_3D.jar \
 	plugins/Image_5D.jar \
 	plugins/M_I_P.jar \
+	plugins/Interactive_3D_Surface_Plot.jar \
 	\
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
@@ -163,6 +164,7 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.jpg \
 	src-plugins/LSM_Toolbox/**/*.html \
 	src-plugins/LSM_Toolbox/**/*.txt
+MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
@@ -179,10 +181,9 @@ jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
 # Third party plugins
 
 # TODO: move
-# Interactive_3D_Surface_Plot, View5D_, Volume_Viewer, and ij-ImageIO_
+# View5D_, Volume_Viewer, and ij-ImageIO_
 # into src-plugins, compile loci_tools (bio-formats) as submodule
 THIRD_PARTY_PLUGINS= \
-	plugins/Interactive_3D_Surface_Plot.jar \
 	plugins/TransformJ_.jar \
 	plugins/View5D_.jar \
 	plugins/Volume_Viewer.jar \
