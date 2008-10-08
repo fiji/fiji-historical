@@ -266,6 +266,9 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		// if an image was returned, assume success
 		if (o instanceof ImagePlus) return (ImagePlus)o;
 
+		// if null and the file path does not exist, return null
+		if (! new File(path).exists()) return null;
+
 		// try opening the file with LOCI Bio-Formats plugin - always check this last!
 		// Do not call Bio-Formats if File>Import>Image Sequence is opening this file.
 		if (o==null && (IJ.getVersion().compareTo("1.38j")<0||!IJ.redirectingErrorMessages()) && width != IMAGE_OPENED) {
