@@ -44,7 +44,41 @@ public class Fake {
 	protected static String toolsPath;
 
 	public static void main(String[] args) {
+		if (runPrecompiledFakeIfNewer(args))
+			return;
 		new Fake().make(args);
+	}
+
+	public static boolean runPrecompiledFakeIfNewer(String[] args) {
+		String url = Fake.class.getResource("Fake.class").toString();
+		String prefix = "jar:file:";
+		String suffix = "/fake.jar!/Fake.class";
+		if (!url.startsWith(prefix) || !url.endsWith(suffix))
+			return false;
+		url = url.substring(9, url.length() - suffix.length());
+		File precompiled = new File(url + "/precompiled/fake.jar");
+		if (!precompiled.exists())
+			return false;
+		File current = new File(url + "/fake.jar");
+		if (!current.exists() || current.lastModified() >=
+				precompiled.lastModified())
+			return false;
+		try {
+			JarClassLoader loader = new JarClassLoader();
+			loader.jarFiles.put(precompiled.getPath(),
+					new JarFile(precompiled.getPath()));
+			loader.forceFakeReload = true;
+			Class f = loader.loadClass("Fake", true);
+			Class[] argsType = new Class[] { args.getClass() };
+			Method main = f.getMethod("main", argsType);
+			Object o = f.newInstance();
+			main.invoke(o, new Object[] { args });
+		} catch (Exception e) {
+			System.err.println("Could not load precompiled Fake");
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return true;
 	}
 
 	final static Set variableNames = new HashSet();
@@ -344,9 +378,6 @@ public class Fake {
 				String list = line.substring(arrow + 2).trim();
 				try {
 					Rule rule = addRule(target, list);
-
-					if (result == null)
-						result = rule;
 				} catch (Exception e) {
 					error(e.getMessage());
 				}
@@ -354,6 +385,7 @@ public class Fake {
 
 			lineNumber = -1;
 
+			result = allRule;
 			if (result == null)
 				error("Could not find default rule");
 
@@ -637,10 +669,18 @@ public class Fake {
 			if (res == null && getPlatform().equals("macosx")) {
 				String version =
 					System.getProperty("os.version");
-				for (int i = 1; version.compareTo("10." + i
-						+ ".Z") > 0 && res == null; i++)
+				int i = 0;
+				if (version.startsWith("10.")) {
+					int dot = version.indexOf('.', 3);
+					if (dot > 0) {
+						version = version.substring(3,
+							dot);
+						i = Integer.parseInt(version);
+					}
+				}
+				while (i > 0 && res == null)
 					res = (String)variables.get(key
-						+ "(osx10." + i + ")");
+						+ "(osx10." + (i--) + ")");
 			}
 			if (res == null)
 				res = (String)variables.get(key
@@ -797,6 +837,7 @@ public class Fake {
 			}
 
 			public String toString(int maxCharacters) {
+				String target = this.target;
 				String result = "";
 				if (getVarBool("VERBOSE") &&
 						!(this instanceof Special)) {
@@ -844,6 +885,7 @@ public class Fake {
 				toolsPath = getVar("TOOLSPATH");
 				return Fake.compileJavas(javas, cwd,
 					getVar("JAVAVERSION"),
+					getVarBool("DEBUG"),
 					getVarBool("VERBOSE"),
 					getVarBool("SHOWDEPRECATION"),
 					getVar("CLASSPATH"));
@@ -1440,11 +1482,15 @@ public class Fake {
 	 * the class file names of those classes used that have been found
 	 * in the same class path.
 	 */
-	protected static void java2classFiles(String java, File cwd, Set all) {
+	protected static void java2classFiles(String java, File cwd,
+			List result, Set all) {
 		if (java.endsWith(".java"))
 			java = java.substring(0, java.length() - 5) + ".class";
 		else if (!java.endsWith(".class")) {
-			all.add(java);
+			if (!all.contains(java)) {
+				result.add(java);
+				all.add(java);
+			}
 			return;
 		}
 		byte[] buffer = readFile(makePath(cwd, java));
@@ -1465,8 +1511,9 @@ public class Fake {
 			String path = java + className + ".class";
 			if (new File(makePath(cwd, path)).exists() &&
 					!all.contains(path)) {
+				result.add(path);
 				all.add(path);
-				java2classFiles(path, cwd, all);
+				java2classFiles(path, cwd, result, all);
 			}
 		}
 	}
@@ -1474,11 +1521,12 @@ public class Fake {
 	/* discovers all the .class files for a given set of .java files */
 	protected static List java2classFiles(List javas, File cwd)
 			throws FakeException {
+		List result = new ArrayList();
 		Set all = new HashSet();
 		Iterator iter = javas.iterator();
 		while (iter.hasNext())
-			java2classFiles((String)iter.next(), cwd, all);
-		return new ArrayList(all);
+			java2classFiles((String)iter.next(), cwd, result, all);
+		return result;
 	}
 
 	// this function handles the javac singleton
@@ -1526,10 +1574,12 @@ public class Fake {
 	// returns all .java files in the list, and returns a list where
 	// all the .java files have been replaced by their .class files.
 	protected static List compileJavas(List javas, File cwd,
-			String javaVersion, boolean verbose,
+			String javaVersion, boolean debug, boolean verbose,
 			boolean showDeprecation, String extraClassPath)
 			throws FakeException {
 		List arguments = new ArrayList();
+		if (debug)
+			arguments.add("-g");
 		if (javaVersion != null && !javaVersion.equals("")) {
 			arguments.add("-source");
 			arguments.add(javaVersion);
@@ -1648,6 +1698,10 @@ public class Fake {
 			Iterator iter = files.iterator();
 			while (iter.hasNext()) {
 				String realName = (String)iter.next();
+				if (realName.endsWith("/")) {
+					lastBase = realName;
+					continue;
+				}
 				String name = realName;
 				byte[] buffer = readFile(makePath(cwd,
 								realName));
@@ -2212,6 +2266,7 @@ public class Fake {
 	private static class JarClassLoader extends ClassLoader {
 		Map jarFiles;
 		Map cache;
+		boolean forceFakeReload = false;
 
 		JarClassLoader() {
 			super(Thread.currentThread().getContextClassLoader());
@@ -2269,7 +2324,9 @@ public class Fake {
 				return (Class)cached;
 			Class result;
 			try {
-				result = super.loadClass(name, resolve);
+				result = forceFakeReload &&
+						name.startsWith("Fake") ?
+					null : super.loadClass(name, resolve);
 				if (result != null)
 					return result;
 			} catch (Exception e) { }

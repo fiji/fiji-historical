@@ -3,10 +3,10 @@ all: run
 run:
 	sh Fake.sh run
 
-fiji:
+fiji: fiji.cxx
 	sh Fake.sh fiji
 
-fake.jar:
+fake.jar: fake/Fake.java
 	sh Fake.sh fake.jar
 
 # MicroManager

@@ -49,10 +49,13 @@
 import bunwarpj.*;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
 import ij.io.FileSaver;
 import ij.io.Opener;
 import ij.plugin.PlugIn;
+import ij.process.ColorProcessor;
+
 import java.awt.Point;
 import java.util.Stack;
 import java.util.StringTokenizer;
@@ -75,7 +78,7 @@ import java.util.StringTokenizer;
  * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.0 09/11/2008
+ * @version 2.0 10/06/2008
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  * @author Jan Kybic
  */
@@ -718,8 +721,10 @@ public class bUnwarpJ_ implements PlugIn
        sourceImp = opener.openImage(fn_source);
        if(sourceImp == null)
            IJ.error("\nError: " + fn_source + " could not be opened\n");
-       
-       bUnwarpJImageModel source = new bUnwarpJImageModel(sourceImp.getProcessor(), false);
+   
+       bUnwarpJImageModel source = null;
+
+       source = new bUnwarpJImageModel(sourceImp.getProcessor(), false);
        source.setPyramidDepth(0);
        source.getThread().start();
 
@@ -730,15 +735,17 @@ public class bUnwarpJ_ implements PlugIn
        bUnwarpJMiscTools.loadTransformation(fn_tnf, cx, cy);
 
        // Join threads
+
        try {
-          source.getThread().join();
+    	   source.getThread().join();
        } catch (InterruptedException e) {
-          IJ.error("Unexpected interruption exception " + e);
+    	   IJ.error("Unexpected interruption exception " + e);
        }
+
 
        // Apply transformation to source
        bUnwarpJMiscTools.applyTransformationToSource(
-          sourceImp, targetImp, source, intervals, cx, cy);
+    		   sourceImp, targetImp, source, intervals, cx, cy);
 
        // Save results
        FileSaver fs = new FileSaver(sourceImp);

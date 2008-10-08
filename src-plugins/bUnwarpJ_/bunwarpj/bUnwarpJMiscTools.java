@@ -23,9 +23,11 @@ package bunwarpj;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.gui.ImageWindow;
 import ij.io.OpenDialog;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -44,13 +46,13 @@ import java.util.StringTokenizer;
 public class bUnwarpJMiscTools
 {
     /**
-     * Apply a given splines transformation to the source image.
+     * Apply a given splines transformation to the source (gray-scale) image.
      * The source image is modified. The target image is used to know
      * the output size.
      *
      * @param sourceImp source image representation
      * @param targetImp target image representation
-     * @param source source image
+     * @param source source image model
      * @param intervals intervals in the deformation
      * @param cx x- b-spline coefficients
      * @param cy y- b-spline coefficients
@@ -95,7 +97,151 @@ public class bUnwarpJMiscTools
         }
 
         // Compute the warped image
-        FloatProcessor fp = new FloatProcessor(targetWidth, targetHeight);
+        /* GRAY SCALE IMAGES */
+        if(!(sourceImp.getProcessor() instanceof ColorProcessor))
+        {
+        	FloatProcessor fp = new FloatProcessor(targetWidth, targetHeight);
+        	for (int v=0; v<targetHeight; v++)
+        		for (int u=0; u<targetWidth; u++)
+        		{
+        			final double x = transformation_x[v][u];
+        			final double y = transformation_y[v][u];
+
+        			if (x>=0 && x<sourceWidth && y>=0 && y<sourceHeight)
+        			{
+        				source.prepareForInterpolation(x, y, ORIGINAL);
+        				fp.putPixelValue(u, v, source.interpolateI());
+        			}
+        			else
+        				fp.putPixelValue(u, v, 0);
+        		}
+        	fp.resetMinAndMax();
+        	sourceImp.setProcessor(sourceImp.getTitle(), fp);
+        	sourceImp.updateImage();
+        }
+        else /* COLOR IMAGES */
+        {        	
+        	// red
+            bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false);
+            sourceR.setPyramidDepth(0);
+            sourceR.getThread().start();
+            // green
+            bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false);
+            sourceG.setPyramidDepth(0);
+            sourceG.getThread().start();
+            //blue
+            bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false);
+            sourceB.setPyramidDepth(0);
+            sourceB.getThread().start();
+            
+            // Join threads
+            try {
+            	sourceR.getThread().join();
+            	sourceG.getThread().join();
+            	sourceB.getThread().join();
+            } catch (InterruptedException e) {
+            	IJ.error("Unexpected interruption exception " + e);
+            }
+            
+            // Calculate warped RGB image
+        	ColorProcessor cp = new ColorProcessor(targetWidth, targetHeight);
+        	FloatProcessor fpR = new FloatProcessor(targetWidth, targetHeight);
+        	FloatProcessor fpG = new FloatProcessor(targetWidth, targetHeight);
+        	FloatProcessor fpB = new FloatProcessor(targetWidth, targetHeight);
+            for (int v=0; v<targetHeight; v++)
+              for (int u=0; u<targetWidth; u++)
+              {
+                 final double x = transformation_x[v][u];
+                 final double y = transformation_y[v][u];
+
+                 if (x>=0 && x<sourceWidth && y>=0 && y<sourceHeight)
+                 {                	 
+                     sourceR.prepareForInterpolation(x, y, ORIGINAL);
+                     fpR.putPixelValue(u, v, sourceR.interpolateI());
+                     
+                     sourceG.prepareForInterpolation(x, y, ORIGINAL);
+                     fpG.putPixelValue(u, v, sourceG.interpolateI());
+                     
+                     sourceB.prepareForInterpolation(x, y, ORIGINAL);
+                     fpB.putPixelValue(u, v, sourceB.interpolateI());                 
+                 }
+                 else
+                 {
+                     fpR.putPixelValue(u, v, 0);
+                     fpG.putPixelValue(u, v, 0);
+                     fpB.putPixelValue(u, v, 0);
+                 }
+              }
+            cp.setPixels(0, fpR);
+            cp.setPixels(1, fpG);
+            cp.setPixels(2, fpB);            
+            cp.resetMinAndMax();
+            
+            sourceImp.setProcessor(sourceImp.getTitle(), cp);
+            sourceImp.updateImage();
+        }
+    }
+
+    /**
+     * Apply a given splines transformation to the source (RGB color) image.
+     * The source image is modified. The target image is used to know
+     * the output size.
+     *
+     * @param sourceImp source image representation
+     * @param targetImp target image representation
+     * @param sourceR image model of the source red channel 
+     * @param sourceG image model of the source green channel
+     * @param sourceB image model of the source blue channel
+     * @param intervals intervals in the deformation
+     * @param cx x- b-spline coefficients
+     * @param cy y- b-spline coefficients
+     */
+    static public void applyTransformationToSource(
+       ImagePlus sourceImp,
+       ImagePlus targetImp,
+       bUnwarpJImageModel sourceR,
+       bUnwarpJImageModel sourceG,
+       bUnwarpJImageModel sourceB,
+       int intervals,
+       double [][]cx,
+       double [][]cy)
+    {
+       int targetHeight = targetImp.getProcessor().getHeight();
+       int targetWidth  = targetImp.getProcessor().getWidth ();
+       int sourceHeight = sourceImp.getProcessor().getHeight();
+       int sourceWidth  = sourceImp.getProcessor().getWidth ();
+
+       // Ask for memory for the transformation
+       double [][] transformation_x = new double [targetHeight][targetWidth];
+       double [][] transformation_y = new double [targetHeight][targetWidth];
+
+       // Compute the deformation
+       // Set these coefficients to an interpolator
+       bUnwarpJImageModel swx = new bUnwarpJImageModel(cx);
+       bUnwarpJImageModel swy = new bUnwarpJImageModel(cy);
+
+        // Compute the transformation mapping
+        boolean ORIGINAL = false;
+        for (int v=0; v<targetHeight; v++)
+        {
+          final double tv = (double)(v * intervals) / (double)(targetHeight - 1) + 1.0F;
+          for (int u = 0; u<targetWidth; u++)
+          {
+             final double tu = (double)(u * intervals) / (double)(targetWidth - 1) + 1.0F;
+
+             swx.prepareForInterpolation(tu, tv, ORIGINAL);
+             transformation_x[v][u] = swx.interpolateI();
+
+             swy.prepareForInterpolation(tu, tv, ORIGINAL);
+             transformation_y[v][u] = swy.interpolateI();
+          }
+        }
+
+        // Compute the warped image
+        ColorProcessor cp = new ColorProcessor(targetWidth, targetHeight);
+    	FloatProcessor fpR = new FloatProcessor(targetWidth, targetHeight);
+    	FloatProcessor fpG = new FloatProcessor(targetWidth, targetHeight);
+    	FloatProcessor fpB = new FloatProcessor(targetWidth, targetHeight);
         for (int v=0; v<targetHeight; v++)
           for (int u=0; u<targetWidth; u++)
           {
@@ -103,18 +249,32 @@ public class bUnwarpJMiscTools
              final double y = transformation_y[v][u];
 
              if (x>=0 && x<sourceWidth && y>=0 && y<sourceHeight)
-             {
-                 source.prepareForInterpolation(x, y, ORIGINAL);
-                 fp.putPixelValue(u, v, source.interpolateI());
+             {                	 
+                 sourceR.prepareForInterpolation(x, y, ORIGINAL);
+                 fpR.putPixelValue(u, v, sourceR.interpolateI());
+                 
+                 sourceG.prepareForInterpolation(x, y, ORIGINAL);
+                 fpG.putPixelValue(u, v, sourceG.interpolateI());
+                 
+                 sourceB.prepareForInterpolation(x, y, ORIGINAL);
+                 fpB.putPixelValue(u, v, sourceB.interpolateI());                 
              }
              else
-                 fp.putPixelValue(u, v, 0);
+             {
+                 fpR.putPixelValue(u, v, 0);
+                 fpG.putPixelValue(u, v, 0);
+                 fpB.putPixelValue(u, v, 0);
+             }
           }
-        fp.resetMinAndMax();
-        sourceImp.setProcessor(sourceImp.getTitle(), fp);
+        cp.setPixels(0, fpR);
+        cp.setPixels(1, fpG);
+        cp.setPixels(2, fpB);            
+        cp.resetMinAndMax();
+        
+        sourceImp.setProcessor(sourceImp.getTitle(), cp);
         sourceImp.updateImage();
-    }
-
+    }    
+    
     /**
      * Apply a given raw transformation to the source image.
      * The source image is modified. The target image is used to know
@@ -141,24 +301,90 @@ public class bUnwarpJMiscTools
        boolean ORIGINAL = false;
 
        // Compute the warped image
-       FloatProcessor fp = new FloatProcessor(targetWidth, targetHeight);
-       for (int v=0; v<targetHeight; v++)
-          for (int u=0; u<targetWidth; u++)
-          {
-             final double x = transformation_x[v][u];
-             final double y = transformation_y[v][u];
+       /* GRAY SCALE IMAGES */
+       if(!(sourceImp.getProcessor() instanceof ColorProcessor))
+       {
+    	   FloatProcessor fp = new FloatProcessor(targetWidth, targetHeight);
+    	   for (int v=0; v<targetHeight; v++)
+    		   for (int u=0; u<targetWidth; u++)
+    		   {
+    			   final double x = transformation_x[v][u];
+    			   final double y = transformation_y[v][u];
 
-             if (x>=0 && x<sourceWidth && y>=0 && y<sourceHeight)
-             {
-                 source.prepareForInterpolation(x, y, ORIGINAL);
-                 fp.putPixelValue(u, v, source.interpolateI());
-             }
-             else
-                 fp.putPixelValue(u, v, 0);
-          }
-       fp.resetMinAndMax();
-       sourceImp.setProcessor(sourceImp.getTitle(), fp);
-       sourceImp.updateImage();
+    			   if (x>=0 && x<sourceWidth && y>=0 && y<sourceHeight)
+    			   {
+    				   source.prepareForInterpolation(x, y, ORIGINAL);
+    				   fp.putPixelValue(u, v, source.interpolateI());
+    			   }
+    			   else
+    				   fp.putPixelValue(u, v, 0);
+    		   }
+    	   fp.resetMinAndMax();
+    	   sourceImp.setProcessor(sourceImp.getTitle(), fp);
+    	   sourceImp.updateImage();
+       }
+       else /* COLOR IMAGES */
+       {        	
+    	   // red
+    	   bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false);
+    	   sourceR.setPyramidDepth(0);
+    	   sourceR.getThread().start();
+    	   // green
+    	   bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false);
+    	   sourceG.setPyramidDepth(0);
+    	   sourceG.getThread().start();
+    	   //blue
+    	   bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false);
+    	   sourceB.setPyramidDepth(0);
+    	   sourceB.getThread().start();
+
+    	   // Join threads
+    	   try {
+    		   sourceR.getThread().join();
+    		   sourceG.getThread().join();
+    		   sourceB.getThread().join();
+    	   } catch (InterruptedException e) {
+    		   IJ.error("Unexpected interruption exception " + e);
+    	   }
+
+    	   // Calculate warped RGB image
+    	   ColorProcessor cp = new ColorProcessor(targetWidth, targetHeight);
+    	   FloatProcessor fpR = new FloatProcessor(targetWidth, targetHeight);
+    	   FloatProcessor fpG = new FloatProcessor(targetWidth, targetHeight);
+    	   FloatProcessor fpB = new FloatProcessor(targetWidth, targetHeight);
+    	   for (int v=0; v<targetHeight; v++)
+    		   for (int u=0; u<targetWidth; u++)
+    		   {
+    			   final double x = transformation_x[v][u];
+    			   final double y = transformation_y[v][u];
+
+    			   if (x>=0 && x<sourceWidth && y>=0 && y<sourceHeight)
+    			   {                	 
+    				   sourceR.prepareForInterpolation(x, y, ORIGINAL);
+    				   fpR.putPixelValue(u, v, sourceR.interpolateI());
+
+    				   sourceG.prepareForInterpolation(x, y, ORIGINAL);
+    				   fpG.putPixelValue(u, v, sourceG.interpolateI());
+
+    				   sourceB.prepareForInterpolation(x, y, ORIGINAL);
+    				   fpB.putPixelValue(u, v, sourceB.interpolateI());                 
+    			   }
+    			   else
+    			   {
+    				   fpR.putPixelValue(u, v, 0);
+    				   fpG.putPixelValue(u, v, 0);
+    				   fpB.putPixelValue(u, v, 0);
+    			   }
+    		   }
+    	   cp.setPixels(0, fpR);
+    	   cp.setPixels(1, fpG);
+    	   cp.setPixels(2, fpB);            
+    	   cp.resetMinAndMax();
+
+    	   sourceImp.setProcessor(sourceImp.getTitle(), cp);
+    	   sourceImp.updateImage();
+       } // end calculating warped color image
+       
     }
 
 
@@ -771,21 +997,33 @@ public class bUnwarpJMiscTools
        int k=0;
        int height=ip.getHeight();
        int width =ip.getWidth ();
-       if (ip instanceof ByteProcessor) {
+       if (ip instanceof ByteProcessor) 
+       {
           final byte[] pixels = (byte[])ip.getPixels();
           for (int y = 0; (y < height); y++)
              for (int x = 0; (x < width); x++, k++)
                 image[k] = (double)(pixels[k] & 0xFF);
-       } else if (ip instanceof ShortProcessor) {
+       } 
+       else if (ip instanceof ShortProcessor) 
+       {
           final short[] pixels = (short[])ip.getPixels();
           for (int y = 0; (y < height); y++)
              for (int x = 0; (x < width); x++, k++)
                 if (pixels[k] < (short)0) image[k] = (double)pixels[k] + 65536.0F;
                 else                      image[k] = (double)pixels[k];
-       } else if (ip instanceof FloatProcessor) {
+       } 
+       else if (ip instanceof FloatProcessor) 
+       {
           final float[] pixels = (float[])ip.getPixels();
           for (int p = 0; p<height*width; p++)
              image[p]=pixels[p];
+       }
+       else if (ip instanceof ColorProcessor)
+       {
+    	  ImageProcessor fp = ip.convertToFloat();
+    	  final float[] pixels = (float[])fp.getPixels();
+          for (int p = 0; p<height*width; p++)
+             image[p] = pixels[p];    	  
        }
     }
     /*------------------------------------------------------------------*/

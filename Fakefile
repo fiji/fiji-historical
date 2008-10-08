@@ -82,6 +82,7 @@ SUBMODULE_TARGETS=\
 	plugins/VIB_.jar \
 	plugins/TrakEM2_.jar \
 	plugins/mpicbg_.jar \
+	jars/clojure.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -97,7 +98,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/LSM_Toolbox.jar \
 	plugins/SplineDeformationGenerator_.jar \
 	plugins/level_sets.jar \
-	plugins/Non_Modal_Test.jar \
+	plugins/3D_Distance_Transform.jar \
 	\
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
@@ -135,6 +136,7 @@ CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar
 plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar TrakEM2/
 CLASSPATH(plugins/mpicbg_.jar)=jars/imagescience.jar
 plugins/mpicbg_.jar <- mpicbg/
+jars/clojure.jar <- clojure/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.3
@@ -149,21 +151,14 @@ plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java $COMMON
 plugins/Javascript_.jar <- src-plugins/Javascript/*.java $COMMON
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar
-plugins/register_virtual_stack_slices.jar <- \
-	src-plugins/register_virtual_stack/*.java
-plugins/registration_3d.jar <- src-plugins/registration3d/*.java
-plugins/IO_.jar <- src-plugins/io/*.java
 CLASSPATH(plugins/lens_correction.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar
-plugins/lens_correction.jar <- src-plugins/lenscorrection/*.java
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.png \
 	src-plugins/LSM_Toolbox/**/*.jpg \
 	src-plugins/LSM_Toolbox/**/*.html \
 	src-plugins/LSM_Toolbox/**/*.txt
-plugins/level_sets.jar <- src-plugins/levelsets/**/*.java
 
-plugins/*_.jar <- src-plugins/*/**/*.java
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
 plugins/**/*.class <- src-plugins/**/*.java
@@ -220,10 +215,9 @@ MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386
 MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch ppc64 -arch x86_64
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
-LDFLAGS(macosx)=$LDFLAGS $MACOPTS
 
 CXXFLAGS(fiji)=$CXXFLAGS $MACOPTS
-LDFLAGS(fiji)=$CXXFLAGS $MACOPTS
+LDFLAGS(fiji)=$LDFLAGS $MACOPTS
 
 LIBS(linux)=-ldl
 LIBS(linux64)=-ldl
@@ -270,8 +264,10 @@ precompile-submodules[] <- \
 	precompiled/TrakEM2_.jar \
 	precompiled/VIB_.jar \
 	precompiled/mpicbg_.jar \
+	precompiled/clojure.jar \
 
 precompiled/ij.jar <- ij.jar
+precompiled/clojure.jar <- jars/clojure.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules

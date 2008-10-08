@@ -62,3 +62,5 @@
 /plugins/ij-ImageIO_.jar
 /plugins/loci_tools.jar
 *-stamp
+/plugins/3D_Distance_Transform.jar
+/jars/clojure.jar

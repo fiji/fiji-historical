@@ -28,7 +28,9 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.SaveDialog;
+import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 
 import java.awt.Point;
 import java.io.File;
@@ -3231,7 +3233,12 @@ public class bUnwarpJTransformation
        for (int v=0; v<auxTargetCurrentHeight; v++)
           for (int u=0; u<auxTargetCurrentWidth; u++)
              fp.putPixelValue(u, v, transformedImage[v][u]);
-       is.addSlice("Deformation Grid",fp);
+       
+       // Gray scale images
+       if(!(this.dialog.getOriginalSourceIP() instanceof ColorProcessor))
+    	   is.addSlice("Deformation Grid",fp);
+       else // Color images
+    	   is.addSlice("Deformation Grid",fp.convertToRGB());
     }
 
     /*------------------------------------------------------------------*/
@@ -3255,7 +3262,7 @@ public class bUnwarpJTransformation
        bUnwarpJMask auxTargetMsk = this.targetMsk;
        bUnwarpJMask auxSourceMsk = this.sourceMsk;
        int auxTargetCurrentHeight = this.targetCurrentHeight;
-       int auxTargetCurrentWidth = this.targetCurrentWidth;
+       int auxTargetCurrentWidth = this.targetCurrentWidth;       
 
        // Change if necessary
        if(bIsReverse)
@@ -3301,7 +3308,12 @@ public class bUnwarpJTransformation
        for (int v=0; v<auxTargetCurrentHeight; v++)
           for (int u=0; u<auxTargetCurrentWidth; u++)
              fp.putPixelValue(u, v, transformedImage[v][u]);
-       is.addSlice("Deformation Field",fp);
+       
+       // Gray scale images
+       if(!(this.dialog.getOriginalSourceIP() instanceof ColorProcessor))
+    	   is.addSlice("Deformation Field",fp);
+       else // Color images
+    	   is.addSlice("Deformation Field",fp.convertToRGB());
     }
 
     /*-------------------------------------------------------------------*/
@@ -3328,6 +3340,7 @@ public class bUnwarpJTransformation
        int auxTargetWidth = this.targetWidth;
        int auxTargetHeight = this.targetHeight;
        ImagePlus output_ip = this.output_ip_1;
+       ImageProcessor originalIP = this.dialog.getOriginalSourceIP();
 
        // Change if necessary
        if(bIsReverse)
@@ -3339,6 +3352,7 @@ public class bUnwarpJTransformation
            auxTargetWidth = this.sourceWidth;
            auxTargetHeight = this.sourceHeight;
            output_ip = this.output_ip_2;
+           originalIP = this.dialog.getOriginalTargetIP();
        }
 
        // Ask for memory for the transformation
@@ -3354,60 +3368,158 @@ public class bUnwarpJTransformation
            bUnwarpJMiscTools.showImage("Transf. Y", transformation_y);
        }
 
-        // Compute the warped image
-        FloatProcessor fp = new FloatProcessor(auxTargetWidth, auxTargetHeight);
-        FloatProcessor fp_mask = new FloatProcessor(auxTargetWidth, auxTargetHeight);
-        FloatProcessor fp_target = new FloatProcessor(auxTargetWidth, auxTargetHeight);
-
-        int uv = 0;
-
-        for (int v=0; v<auxTargetHeight; v++)
-          for (int u=0; u<auxTargetWidth; u++,uv++)
-          {
-              fp_target.putPixelValue(u, v, auxTarget.getImage()[uv]);
-              if (!auxTargetMsk.getValue(u,v))
-              {
-                 fp.putPixelValue(u,v,0);
-                 fp_mask.putPixelValue(u,v,0);
-              }
-              else
-              {
-                final double x = transformation_x[v][u];
-                final double y = transformation_y[v][u];
-                if (auxSourceMsk.getValue(x,y))
-                {
-                   auxSource.prepareForInterpolation(x,y,ORIGINAL);
-                   double sval = auxSource.interpolateI();
-                   fp.putPixelValue(u,v,sval);
-                   fp_mask.putPixelValue(u,v,255);
-                }
-                else
-                {
-                    fp.putPixelValue(u,v,0);
-                    fp_mask.putPixelValue(u,v,0);
-                }
-             }
-         }
-       fp.resetMinAndMax();
-       final ImageStack is = new ImageStack(auxTargetWidth, auxTargetHeight);
-
-       String s = bIsReverse ? new String("Target") : new String("Source");
-       is.addSlice("Registered " + s + " Image", fp);
-       if (outputLevel > -1)
-           is.addSlice("Target Image", fp_target);
-       if (outputLevel > -1)
-           is.addSlice("Warped Source Mask",fp_mask);
-
-       if (outputLevel == 2)
+       /* GRAY SCALE IMAGES */
+       if(!(originalIP instanceof ColorProcessor))
        {
-          showDeformationVectors(intervals, cx, cy, is, bIsReverse);
-          showDeformationGrid(intervals, cx, cy, is, bIsReverse);
+    	   // Compute the warped image
+    	   FloatProcessor fp = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+    	   FloatProcessor fp_mask = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+    	   FloatProcessor fp_target = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+
+    	   int uv = 0;
+
+    	   for (int v=0; v<auxTargetHeight; v++)
+    		   for (int u=0; u<auxTargetWidth; u++,uv++)
+    		   {
+    			   fp_target.putPixelValue(u, v, auxTarget.getImage()[uv]);
+    			   if (!auxTargetMsk.getValue(u,v))
+    			   {
+    				   fp.putPixelValue(u,v,0);
+    				   fp_mask.putPixelValue(u,v,0);
+    			   }
+    			   else
+    			   {
+    				   final double x = transformation_x[v][u];
+    				   final double y = transformation_y[v][u];
+    				   if (auxSourceMsk.getValue(x,y))
+    				   {
+    					   auxSource.prepareForInterpolation(x,y,ORIGINAL);
+    					   double sval = auxSource.interpolateI();
+    					   fp.putPixelValue(u,v,sval);
+    					   fp_mask.putPixelValue(u,v,255);
+    				   }
+    				   else
+    				   {
+    					   fp.putPixelValue(u,v,0);
+    					   fp_mask.putPixelValue(u,v,0);
+    				   }
+    			   }
+    		   }
+    	   fp.resetMinAndMax();
+    	   final ImageStack is = new ImageStack(auxTargetWidth, auxTargetHeight);
+
+    	   String s = bIsReverse ? new String("Target") : new String("Source");
+    	   is.addSlice("Registered " + s + " Image", fp);
+    	   if (outputLevel > -1)
+    		   is.addSlice("Target Image", fp_target);
+    	   if (outputLevel > -1)
+    		   is.addSlice("Warped Source Mask",fp_mask);
+
+    	   if (outputLevel == 2)
+    	   {
+    		   showDeformationVectors(intervals, cx, cy, is, bIsReverse);
+    		   showDeformationGrid(intervals, cx, cy, is, bIsReverse);
+    	   }
+    	   output_ip.setStack("Registered " + s + " Image", is);
+    	   output_ip.setSlice(1);
+    	   output_ip.getProcessor().resetMinAndMax();
+    	   if (outputLevel > -1)
+    		   output_ip.updateAndRepaintWindow();
        }
-       output_ip.setStack("Registered " + s + " Image", is);
-       output_ip.setSlice(1);
-       output_ip.getProcessor().resetMinAndMax();
-       if (outputLevel > -1)
-           output_ip.updateAndRepaintWindow();
+       else /* COLOR IMAGES */
+       {
+    	   // Compute the warped image
+    	   // red
+    	   bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(0, null), false);
+    	   sourceR.setPyramidDepth(0);
+    	   sourceR.getThread().start();
+    	   // green
+    	   bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(1, null), false);
+    	   sourceG.setPyramidDepth(0);
+    	   sourceG.getThread().start();
+    	   //blue
+    	   bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(2, null), false);
+    	   sourceB.setPyramidDepth(0);
+    	   sourceB.getThread().start();
+
+    	   // Join threads
+    	   try {
+    		   sourceR.getThread().join();
+    		   sourceG.getThread().join();
+    		   sourceB.getThread().join();
+    	   } catch (InterruptedException e) {
+    		   IJ.error("Unexpected interruption exception " + e);
+    	   }
+
+    	   // Calculate warped RGB image
+    	   ColorProcessor cp = new ColorProcessor(targetWidth, targetHeight);
+    	   FloatProcessor fpR = new FloatProcessor(targetWidth, targetHeight);
+    	   FloatProcessor fpG = new FloatProcessor(targetWidth, targetHeight);
+    	   FloatProcessor fpB = new FloatProcessor(targetWidth, targetHeight);
+    	   ColorProcessor cp_mask = new ColorProcessor(auxTargetWidth, auxTargetHeight);
+    	   for (int v=0; v<targetHeight; v++)
+    		   for (int u=0; u<targetWidth; u++)
+    		   {
+    			   if (!auxTargetMsk.getValue(u,v))
+    			   {
+    				   fpR.putPixelValue(u, v, 0);
+					   fpG.putPixelValue(u, v, 0);
+					   fpB.putPixelValue(u, v, 0);
+					   cp_mask.putPixelValue(u,v,0);
+    			   }
+    			   else 
+    			   {
+    				   final double x = transformation_x[v][u];
+    				   final double y = transformation_y[v][u];
+
+    				   if (auxSourceMsk.getValue(x,y))
+    				   {                	 
+    					   sourceR.prepareForInterpolation(x, y, ORIGINAL);
+    					   fpR.putPixelValue(u, v, sourceR.interpolateI());
+
+    					   sourceG.prepareForInterpolation(x, y, ORIGINAL);
+    					   fpG.putPixelValue(u, v, sourceG.interpolateI());
+
+    					   sourceB.prepareForInterpolation(x, y, ORIGINAL);
+    					   fpB.putPixelValue(u, v, sourceB.interpolateI());   
+
+    					   cp_mask.putPixelValue(u,v,255);
+    				   }
+    				   else
+    				   {
+    					   fpR.putPixelValue(u, v, 0);
+    					   fpG.putPixelValue(u, v, 0);
+    					   fpB.putPixelValue(u, v, 0);
+    					   cp_mask.putPixelValue(u,v,0);
+    				   }
+    			   }
+    		   }
+    	   cp.setPixels(0, fpR);
+    	   cp.setPixels(1, fpG);
+    	   cp.setPixels(2, fpB);            
+           cp.resetMinAndMax();
+           
+           
+    	   final ImageStack is = new ImageStack(auxTargetWidth, auxTargetHeight);
+
+    	   String s = bIsReverse ? new String("Target") : new String("Source");
+    	   is.addSlice("Registered " + s + " Image", cp);
+    	   if (outputLevel > -1)
+    		   is.addSlice("Target Image", bIsReverse ? this.dialog.getOriginalSourceIP() : this.dialog.getOriginalTargetIP());    		   
+    	   if (outputLevel > -1)
+    		   is.addSlice("Warped Source Mask", cp_mask);
+
+    	   if (outputLevel == 2)
+    	   {
+    		   showDeformationVectors(intervals, cx, cy, is, bIsReverse);
+    		   showDeformationGrid(intervals, cx, cy, is, bIsReverse);
+    	   }
+    	   output_ip.setStack("Registered " + s + " Image", is);
+    	   output_ip.setSlice(1);
+    	   output_ip.getProcessor().resetMinAndMax();
+    	   if (outputLevel > -1)
+    		   output_ip.updateAndRepaintWindow();
+       } // end caculate warped color image
     }
 
     /*------------------------------------------------------------------*/
