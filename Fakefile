@@ -83,6 +83,7 @@ SUBMODULE_TARGETS=\
 	plugins/TrakEM2_.jar \
 	plugins/mpicbg_.jar \
 	jars/clojure.jar \
+	plugins/loci_tools.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -99,6 +100,14 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/SplineDeformationGenerator_.jar \
 	plugins/level_sets.jar \
 	plugins/3D_Distance_Transform.jar \
+	plugins/Analyze_Reader_Writer.jar \
+	plugins/Color_Histogram.jar \
+	plugins/Color_Inspector_3D.jar \
+	plugins/Image_5D.jar \
+	plugins/M_I_P.jar \
+	plugins/Interactive_3D_Surface_Plot.jar \
+	plugins/View5D_.jar \
+	plugins/Volume_Viewer.jar \
 	\
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
@@ -137,6 +146,8 @@ plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar TrakEM2/
 CLASSPATH(plugins/mpicbg_.jar)=jars/imagescience.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/clojure.jar <- clojure/
+SUBFAKESCRIPT(bio-formats/)=../scripts/build-bio-formats.sh
+plugins/loci_tools.jar <- bio-formats/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.3
@@ -158,6 +169,7 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.jpg \
 	src-plugins/LSM_Toolbox/**/*.html \
 	src-plugins/LSM_Toolbox/**/*.txt
+MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
@@ -173,20 +185,10 @@ jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
 
 # Third party plugins
 
-# TODO: move Color_Histogram, Color_Inspector, Image_5D, Analyze_Reader_Writer,
-# Interactive_3D_Surface_Plot, M_I_P, View5D_, Volume_Viewer, and ij-ImageIO_
-# into src-plugins, compile loci_tools (bio-formats) as submodule
-THIRD_PARTY_PLUGINS=plugins/Color_Histogram.jar \
-	plugins/Color_Inspector_3D.jar \
-	plugins/Image_5D.jar \
-	plugins/Analyze_Reader_Writer.jar \
-	plugins/Interactive_3D_Surface_Plot.jar \
-	plugins/M_I_P.jar \
+# TODO: compile ij-ImageIO_ as submodule
+THIRD_PARTY_PLUGINS= \
 	plugins/TransformJ_.jar \
-	plugins/View5D_.jar \
-	plugins/Volume_Viewer.jar \
 	plugins/ij-ImageIO_.jar \
-	plugins/loci_tools.jar \
 
 third-party-plugins[] <- $THIRD_PARTY_PLUGINS
 plugins/*.jar <- staged-plugins/*.jar
@@ -215,10 +217,9 @@ MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386
 MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch ppc64 -arch x86_64
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
-LDFLAGS(macosx)=$LDFLAGS $MACOPTS
 
 CXXFLAGS(fiji)=$CXXFLAGS $MACOPTS
-LDFLAGS(fiji)=$CXXFLAGS $MACOPTS
+LDFLAGS(fiji)=$LDFLAGS $MACOPTS
 
 LIBS(linux)=-ldl
 LIBS(linux64)=-ldl
@@ -266,6 +267,7 @@ precompile-submodules[] <- \
 	precompiled/VIB_.jar \
 	precompiled/mpicbg_.jar \
 	precompiled/clojure.jar \
+	precompiled/loci_tools.jar \
 
 precompiled/ij.jar <- ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
