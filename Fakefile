@@ -109,6 +109,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/View5D_.jar \
 	plugins/Volume_Viewer.jar \
 	plugins/IJ_Robot.jar \
+	plugins/Fiji_Updater.jar \
 	\
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
