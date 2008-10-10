@@ -614,6 +614,12 @@ public class bUnwarpJTransformation
        // Show results.
        showTransformation(intervals, cxTargetToSource, cyTargetToSource, false);
        showTransformation(intervals, cxSourceToTarget, cySourceToTarget, true);
+       
+       // Show masks
+       /*
+       this.sourceMsk.showMask();
+       this.targetMsk.showMask();
+       */
 
        // Display final errors.
        IJ.write(" Final direct similarity error = " + this.finalDirectSimilarityError);
@@ -3452,10 +3458,10 @@ public class bUnwarpJTransformation
     	   }
 
     	   // Calculate warped RGB image
-    	   ColorProcessor cp = new ColorProcessor(targetWidth, targetHeight);
-    	   FloatProcessor fpR = new FloatProcessor(targetWidth, targetHeight);
-    	   FloatProcessor fpG = new FloatProcessor(targetWidth, targetHeight);
-    	   FloatProcessor fpB = new FloatProcessor(targetWidth, targetHeight);
+    	   ColorProcessor cp = new ColorProcessor(auxTargetWidth, auxTargetHeight);
+    	   FloatProcessor fpR = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+    	   FloatProcessor fpG = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+    	   FloatProcessor fpB = new FloatProcessor(auxTargetWidth, auxTargetHeight);
     	   ColorProcessor cp_mask = new ColorProcessor(auxTargetWidth, auxTargetHeight);
     	   for (int v=0; v<targetHeight; v++)
     		   for (int u=0; u<targetWidth; u++)

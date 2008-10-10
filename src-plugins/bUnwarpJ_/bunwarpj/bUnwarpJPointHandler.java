@@ -127,8 +127,8 @@ public class bUnwarpJPointHandler extends Roi
        setSpectrum();
        started = true;
 
-       this.mask=mask;
-       clearMask();
+       this.mask = mask;
+       //clearMask();
     } /* end bUnwarpJPointHandler */
 
     /**

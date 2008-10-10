@@ -774,27 +774,32 @@ public class bUnwarpJDialog extends GenericDialog
 		sourceImp = imageList[sourceChoiceIndex];
 		sourceImp.setSlice(1);
 		
+		// Save original image processor
 		this.originalSourceIP = this.sourceImp.getProcessor();
 
+		// Create image model to perform registration
 		source    =
 			new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse);
 
 		source.setPyramidDepth(imagePyramidDepth+min_scale_image);
 		source.getThread().start();
 		sourceIc  = sourceImp.getWindow().getCanvas();
+		
 		// If it is an stack, the second slice is considered a mask
 		if (sourceImp.getStackSize() == 1) 
 		{
 			// Create an empty mask
 			sourceMsk = new bUnwarpJMask(sourceImp.getProcessor(),false);
-		} else {
-			// Take the mask from the second slice
+		} 
+		else 
+		{
+			// Take the mask from the second slice			
 			sourceImp.setSlice(2);
 			sourceMsk = new bUnwarpJMask(sourceImp.getProcessor(), true);
 			sourceImp.setSlice(1);
 		}
 		sourcePh  = new bUnwarpJPointHandler(sourceImp, tb, sourceMsk, this);
-
+		
 		tb.setSource(sourceImp, sourcePh);
     } /* end createSourceImage */
 
@@ -828,11 +833,15 @@ public class bUnwarpJDialog extends GenericDialog
 		target.setPyramidDepth(imagePyramidDepth+min_scale_image);
 		target.getThread().start();
 		targetIc  = targetImp.getWindow().getCanvas();
+		
 		// If it is an stack, the second slice is considered a mask
-		if (targetImp.getStackSize()==1) {
+		if (targetImp.getStackSize()==1) 
+		{
 			// Create an empty mask
 			targetMsk = new bUnwarpJMask(targetImp.getProcessor(), false);
-		} else {
+		} 
+		else 
+		{
 			// Take the mask from the second slice
 			targetImp.setSlice(2);
 			targetMsk = new bUnwarpJMask(targetImp.getProcessor(), true);
@@ -885,9 +894,7 @@ public class bUnwarpJDialog extends GenericDialog
            for(int i = 0; i < numOfPoints; i++)
            {
                sourcePh.addPoint(xSource[i] + originXSource, ySource[i] + originYSource);
-//               System.out.println(i + ": added point [" + (xSource[i] + originXSource) + ", " + (ySource[i] + originYSource) + "] to source landmarks. ");
                targetPh.addPoint(xTarget[i] + originXTarget, yTarget[i] + originYTarget);
-//               System.out.println(i + ": added point [" + (xTarget[i] + originXTarget) + ", " + (yTarget[i] + originYTarget) + "] to target landmarks. \n");
            }
        }
 

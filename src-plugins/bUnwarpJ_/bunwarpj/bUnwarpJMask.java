@@ -24,6 +24,7 @@ package bunwarpj;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
@@ -52,7 +53,7 @@ public class bUnwarpJMask
     /** mask height */
     private int           height;
     /** polygon composing the flag */
-    private Polygon       polygon=null;
+    private Polygon       polygon = null;
     /** flag to check if the mask comes from the stack of images */
     private boolean       mask_from_the_stack;
 
@@ -63,48 +64,58 @@ public class bUnwarpJMask
     /*------------------------------------------------------------------*/
     /**
      * Empty constructor, the input image is used only to take the
-     * image size.
+     * image size it take_mask is false, otherwise, it is used as the 
+     * mask information.
      *
      * @param ip image
      * @param take_mask flag to take the mask from the stack of images
      */
-    public bUnwarpJMask (
-       final ImageProcessor ip, boolean take_mask
-    )
+    public bUnwarpJMask (final ImageProcessor ip, boolean take_mask)
     {
        width  = ip.getWidth();
        height = ip.getHeight();
        mask = new boolean[width * height];
-       if (!take_mask) {
-           mask_from_the_stack=false;
+       
+       // Empty mask
+       if (!take_mask) 
+       {
+           mask_from_the_stack = false;
            clearMask();
-       } else {
-           mask_from_the_stack=true;
-           int k=0;
-          if (ip instanceof ByteProcessor) {
-             final byte[] pixels = (byte[])ip.getPixels();
-             for (int y = 0; (y < height); y++) {
-                for (int x = 0; (x < width); x++, k++) {
-                   mask[k] = (pixels[k] != 0);
-                }
-             }
-          }
-          else if (ip instanceof ShortProcessor) {
-             final short[] pixels = (short[])ip.getPixels();
-             for (int y = 0; (y < height); y++) {
-                for (int x = 0; (x < width); x++, k++) {
-                   mask[k] = (pixels[k] != 0);
-                }
-             }
-          }
-          else if (ip instanceof FloatProcessor) {
-             final float[] pixels = (float[])ip.getPixels();
-             for (int y = 0; (y < height); y++) {
-                for (int x = 0; (x < width); x++, k++) {
-                   mask[k] = (pixels[k] != 0.0F);
-                }
-             }
-          }
+       } 
+       else // Mask from image 
+       {
+    	   mask_from_the_stack = true;
+    	   int k = 0;
+    	   
+    	   if (ip instanceof ByteProcessor) 
+    	   {
+    		   final byte[] pixels = (byte[])ip.getPixels();
+    		   for (int y = 0; (y < height); y++) 
+    			   for (int x = 0; (x < width); x++, k++) 
+    				   mask[k] = (pixels[k] != 0);
+    	   }
+    	   else if (ip instanceof ShortProcessor) 
+    	   {
+    		   final short[] pixels = (short[])ip.getPixels();
+    		   for (int y = 0; (y < height); y++) 
+    			   for (int x = 0; (x < width); x++, k++)
+    				   mask[k] = (pixels[k] != 0);
+    	   }
+    	   else if (ip instanceof FloatProcessor) 
+    	   {
+    		   final float[] pixels = (float[])ip.getPixels();
+    		   for (int y = 0; (y < height); y++) 
+    			   for (int x = 0; (x < width); x++, k++)
+    				   mask[k] = (pixels[k] != 0.0F);    				       			       		  
+    	   }
+    	   else if (ip instanceof ColorProcessor) 
+    	   {
+    		   for (int y = 0; (y < height); y++) 
+    			   for (int x = 0; (x < width); x++, k++)
+    				   mask[k] = ( (ip.get(x, y) & 0x00FFFFFF) != 0);
+    	   }
+    	   else
+    		   IJ.error("Mask slice is an image processor bUnwarpJ cannot process");
        }
     } 
   

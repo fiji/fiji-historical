@@ -133,11 +133,14 @@ public class bUnwarpJFinalAction implements Runnable
         final FloatProcessor fp = new FloatProcessor(Xdimt, Ydimt);
 
         for (int i=0; i<Ydimt; i++)
-           for (int j=0; j<Xdimt; j++)
-               if (sourceMsk.getValue(j, i) && targetMsk.getValue(j, i))
-                  fp.putPixelValue(j, i, (target.getImage())[i*Xdimt+j]-
-                                         (source.getImage())[i*Xdims+j]);
-               else fp.putPixelValue(j, i, 0);
+        	for (int j=0; j<Xdimt; j++)
+        		if (sourceMsk.getValue(j, i) && targetMsk.getValue(j, i))
+        			fp.putPixelValue(j, i, (target.getImage())[i*Xdimt+j]-
+        					(source.getImage())[i*Xdims+j]);
+        		else
+        		{
+        			fp.putPixelValue(j, i, 0);
+        		}
         fp.resetMinAndMax();
         final ImagePlus      ip1 = new ImagePlus("Output Source-Target", fp);
         final ImageWindow    iw1 = new ImageWindow(ip1);

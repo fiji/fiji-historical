@@ -22,7 +22,7 @@
 
 /**
  * ====================================================================
- *  Version: September 11th, 2008
+ *  Version: October 9th, 2008
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -78,7 +78,7 @@ import java.util.StringTokenizer;
  * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.0 10/06/2008
+ * @version 2.0 10/09/2008
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  * @author Jan Kybic
  */
@@ -140,7 +140,7 @@ public class bUnwarpJ_ implements PlugIn
     	final ImagePlus[] imageList = createImageList();
     	if (imageList.length < 2) 
     	{
-    		IJ.error("At least two images are required (stack of color images disallowed)");
+    		IJ.error("At least two (8, 16, 32-bit or RGB Color) images are required");
     		return;
     	}
 	
@@ -450,9 +450,10 @@ public class bUnwarpJ_ implements PlugIn
 
     /*------------------------------------------------------------------*/
     /**
-     * Create the image list.
+     * Create a list with the open images in ImageJ that bUnwarpJ can
+     * process.
      *
-     * @return image list
+     * @return array of references to the open images in bUnwarpJ
      */
     private ImagePlus[] createImageList () 
     {
@@ -463,8 +464,10 @@ public class bUnwarpJ_ implements PlugIn
           final ImagePlus imp = WindowManager.getImage(windowList[k]);
           final int inputType = imp.getType();
 
+          // Since October 6th, 2008, bUnwarpJ can deal with 8, 16, 32-bit grayscale 
+          // and RGB Color images.
           if ((imp.getStackSize() == 1) || (inputType == imp.GRAY8) || (inputType == imp.GRAY16)
-             || (inputType == imp.GRAY32)) 
+             || (inputType == imp.GRAY32) || (inputType == imp.COLOR_RGB)) 
           {
              stack.push(imp);
           }
