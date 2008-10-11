@@ -111,6 +111,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/IJ_Robot.jar \
 	plugins/Fiji_Updater.jar \
 	plugins/Multi_Thresholder.jar \
+	plugins/Daltonize_.jar \
 	\
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
