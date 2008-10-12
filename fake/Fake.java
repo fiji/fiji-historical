@@ -1103,10 +1103,30 @@ public class Fake {
 
 		class CompileJar extends Rule {
 			String configPath;
+			String classPath;
 
 			CompileJar(String target, List prerequisites) {
 				super(target, uniq(prerequisites));
 				configPath = getPluginsConfig();
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String prereq = (String)iter.next();
+					if (!prereq.endsWith(".jar/"))
+						continue;
+					prereq = stripSuffix(prereq, "/");
+					if (classPath == null)
+						classPath = prereq;
+					else
+						classPath += ":" + prereq;
+				}
+			}
+
+			String getVar(String var) {
+				String value = super.getVar(var);
+				if (var.toUpperCase().equals("CLASSPATH"))
+					return value == null ? classPath
+						: value + ":" + classPath;
+				return value;
 			}
 
 			void action() throws FakeException {
@@ -1721,6 +1741,11 @@ public class Fake {
 			Iterator iter = files.iterator();
 			while (iter.hasNext()) {
 				String realName = (String)iter.next();
+				if (realName.endsWith(".jar/")) {
+					copyJar(stripSuffix(makePath(cwd,
+						realName), "/"), jar);
+					continue;
+				}
 				if (realName.endsWith("/")) {
 					lastBase = realName;
 					continue;
@@ -1763,10 +1788,44 @@ public class Fake {
 					+ "Stored it as " + path
 					+ " instead.");
 		} catch (Exception e) {
+			new File(path).delete();
 			e.printStackTrace();
 			throw new FakeException("Error writing "
 				+ path + ": " + e);
 		}
+	}
+
+	static void copyJar(String inJar, JarOutputStream out)
+			throws Exception {
+		File file = new File(inJar);
+		InputStream input = new FileInputStream(file);
+		JarInputStream in = new JarInputStream(input);
+
+		JarEntry entry;
+		while ((entry = in.getNextJarEntry()) != null) {
+			String name = entry.getName();
+			if (name.startsWith("META-INF/")) {
+				in.closeEntry();
+				continue;
+			}
+			byte[] buf = readStream(in);
+			in.closeEntry();
+			try {
+				entry.setCompressedSize(-1);
+				out.putNextEntry(entry);
+				out.write(buf, 0, buf.length);
+				out.closeEntry();
+			} catch (ZipException e) {
+				String msg = e.getMessage();
+				if (!msg.startsWith("duplicat")) {
+					System.err.println("Error writing "
+						+ name);
+					throw e;
+				}
+				System.err.println("ignoring " + msg);
+			}
+		}
+		in.close();
 	}
 
 	static byte[] readFile(String fileName) {
