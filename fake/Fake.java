@@ -993,13 +993,15 @@ public class Fake {
 		}
 
 		class SubFake extends Rule {
+			String baseName;
 			String source;
 			String configPath;
 
 			SubFake(String target, List prerequisites) {
 				super(target, prerequisites);
-				source = getLastPrerequisite()
-					+ new File(target).getName();
+				baseName = new File(target).getName();
+				source = getLastPrerequisite() + baseName;
+				baseName = stripSuffix(baseName, ".jar");
 				configPath = getPluginsConfig();
 			}
 
@@ -1050,7 +1052,9 @@ public class Fake {
 					getVarBool("IGNOREMISSINGFAKEFILES",
 						directory),
 					getVarPath("TOOLSPATH", directory),
-					getVarPath("CLASSPATH", directory));
+					getVarPath("CLASSPATH", directory),
+					getVar("PLUGINSCONFIGDIRECTORY")
+						+ "/" + baseName + ".Fakefile");
 			}
 
 			String getVarPath(String variable, String subkey) {
@@ -2024,9 +2028,16 @@ public class Fake {
 
 	protected void fakeOrMake(File cwd, String directory, boolean verbose,
 			boolean ignoreMissingFakefiles, String toolsPath,
-			String classPath) throws FakeException {
+			String classPath, String fallBackFakefile)
+			throws FakeException {
+		if (new File(directory).list().length == 0)
+			return;
 		String fakeFile = directory + '/' + Parser.path;
 		boolean tryFake = new File(fakeFile).exists();
+		if (!tryFake) {
+			fakeFile = fallBackFakefile;
+			tryFake = new File(fakeFile).exists();
+		}
 		if (ignoreMissingFakefiles && !tryFake &&
 				!(new File(directory + "/Makefile").exists())) {
 			if (verbose)
@@ -2467,6 +2478,12 @@ public class Fake {
 
 	public static String join(List list) {
 		return join(list, " ");
+	}
+
+	public static String stripSuffix(String string, String suffix) {
+		if (!string.endsWith(suffix))
+			return string;
+		return string.substring(0, string.length() - suffix.length());
 	}
 
 	public static String join(List list, String separator) {
