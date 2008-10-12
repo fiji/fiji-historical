@@ -150,7 +150,6 @@ plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar TrakEM2/
 CLASSPATH(plugins/mpicbg_.jar)=jars/imagescience.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/clojure.jar <- clojure/
-SUBFAKESCRIPT(bio-formats/)=../scripts/build-bio-formats.sh
 plugins/loci_tools.jar <- bio-formats/
 
 # From source
