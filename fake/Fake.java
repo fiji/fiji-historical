@@ -952,6 +952,7 @@ public class Fake {
 					byte[] buf = readStream(in);
 					in.closeEntry();
 					try {
+						entry.setCompressedSize(-1);
 						out.putNextEntry(entry);
 						out.write(buf);
 						out.closeEntry();
