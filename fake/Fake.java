@@ -1033,20 +1033,6 @@ public class Fake {
 			}
 
 			void action(String directory) throws FakeException {
-				String program = getVar("SUBFAKESCRIPT",
-					directory);
-				if (new File(makePath(cwd, directory
-							+ "/.git")).exists() &&
-						program != null) {
-					try {
-						action(program, directory);
-					} catch (IOException e) {
-						e.printStackTrace();
-						String msg = e.getMessage();
-						throw new FakeException(msg);
-					}
-					return;
-				}
 				fakeOrMake(cwd, directory,
 					getVarBool("VERBOSE", directory),
 					getVarBool("IGNOREMISSINGFAKEFILES",
@@ -1074,14 +1060,6 @@ public class Fake {
 					result += file.getAbsolutePath();
 				}
 				return result;
-			}
-
-			void action(String program, String directory)
-					throws IOException, FakeException {
-				program = expandVariables(program, directory);
-				execute(splitCommandLine(program),
-					new File(cwd, directory),
-					getVarBool("VERBOSE", directory));
 			}
 		}
 
