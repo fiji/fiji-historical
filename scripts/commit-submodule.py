@@ -120,6 +120,13 @@ if write_fakefile:
 	f.close()
 	execute('git add Fakefile')
 
+# update .gitmodules
+path = submodule[:-1]
+execute('git config -f .gitmodules submodule.' + path + '.path ' + path)
+execute('git config -f .gitmodules submodule.' + path + '.url ' +
+	execute('git config -f ' + path + '/.git/config remote.origin.url'))
+execute('git add .gitmodules')
+
 # add .config and .Fakefile if there
 slash = target.find('/')
 base_name = target[slash + 1:]
