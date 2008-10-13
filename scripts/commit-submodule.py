@@ -120,6 +120,16 @@ if write_fakefile:
 	f.close()
 	execute('git add Fakefile')
 
+# add .config and .Fakefile if there
+slash = target.find('/')
+base_name = target[slash + 1:]
+if base_name.endswith('.jar'):
+	base_name = base_name[:-4]
+for extension in [ 'config', 'Fakefile' ]:
+	path = 'staged-plugins/' + base_name + '.' + extension
+	if os.path.exists(path):
+		execute('git add ' + path)
+
 # precompile
 
 print execute('./fiji --fake ' + precompiled_target)
