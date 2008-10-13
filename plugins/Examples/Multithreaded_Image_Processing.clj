@@ -57,7 +57,7 @@
 
 
 (defn do-it [start end]
-  "Print all numbers from start to end (inclusive)"
+  "Print all numbers from start to end (exclusive)"
   (map println
        (range start end)))
 
@@ -67,6 +67,11 @@
 (defn do-it-iterating [start end]
   "Print all numbers from start to end (inclusive)"
   (doseq i (range start (+ 1 end))
+    (println i)))
+
+(defn do-times [start end]
+  "Print all numbers from start to end (exclusive)"
+  (dotimes i (range start end)
     (println i)))
 
 ; Invoke like
