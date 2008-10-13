@@ -952,6 +952,7 @@ public class Fake {
 					byte[] buf = readStream(in);
 					in.closeEntry();
 					try {
+						entry.setCompressedSize(-1);
 						out.putNextEntry(entry);
 						out.write(buf);
 						out.closeEntry();
@@ -992,13 +993,15 @@ public class Fake {
 		}
 
 		class SubFake extends Rule {
+			String baseName;
 			String source;
 			String configPath;
 
 			SubFake(String target, List prerequisites) {
 				super(target, prerequisites);
-				source = getLastPrerequisite()
-					+ new File(target).getName();
+				baseName = new File(target).getName();
+				source = getLastPrerequisite() + baseName;
+				baseName = stripSuffix(baseName, ".jar");
 				configPath = getPluginsConfig();
 			}
 
@@ -1030,26 +1033,14 @@ public class Fake {
 			}
 
 			void action(String directory) throws FakeException {
-				String program = getVar("SUBFAKESCRIPT",
-					directory);
-				if (new File(makePath(cwd, directory
-							+ "/.git")).exists() &&
-						program != null) {
-					try {
-						action(program, directory);
-					} catch (IOException e) {
-						e.printStackTrace();
-						String msg = e.getMessage();
-						throw new FakeException(msg);
-					}
-					return;
-				}
 				fakeOrMake(cwd, directory,
 					getVarBool("VERBOSE", directory),
 					getVarBool("IGNOREMISSINGFAKEFILES",
 						directory),
 					getVarPath("TOOLSPATH", directory),
-					getVarPath("CLASSPATH", directory));
+					getVarPath("CLASSPATH", directory),
+					getVar("PLUGINSCONFIGDIRECTORY")
+						+ "/" + baseName + ".Fakefile");
 			}
 
 			String getVarPath(String variable, String subkey) {
@@ -1069,14 +1060,6 @@ public class Fake {
 					result += file.getAbsolutePath();
 				}
 				return result;
-			}
-
-			void action(String program, String directory)
-					throws IOException, FakeException {
-				program = expandVariables(program, directory);
-				execute(splitCommandLine(program),
-					new File(cwd, directory),
-					getVarBool("VERBOSE", directory));
 			}
 		}
 
@@ -1102,10 +1085,30 @@ public class Fake {
 
 		class CompileJar extends Rule {
 			String configPath;
+			String classPath;
 
 			CompileJar(String target, List prerequisites) {
 				super(target, uniq(prerequisites));
 				configPath = getPluginsConfig();
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String prereq = (String)iter.next();
+					if (!prereq.endsWith(".jar/"))
+						continue;
+					prereq = stripSuffix(prereq, "/");
+					if (classPath == null)
+						classPath = prereq;
+					else
+						classPath += ":" + prereq;
+				}
+			}
+
+			String getVar(String var) {
+				String value = super.getVar(var);
+				if (var.toUpperCase().equals("CLASSPATH"))
+					return value == null ? classPath
+						: value + ":" + classPath;
+				return value;
 			}
 
 			void action() throws FakeException {
@@ -1720,6 +1723,11 @@ public class Fake {
 			Iterator iter = files.iterator();
 			while (iter.hasNext()) {
 				String realName = (String)iter.next();
+				if (realName.endsWith(".jar/")) {
+					copyJar(stripSuffix(makePath(cwd,
+						realName), "/"), jar);
+					continue;
+				}
 				if (realName.endsWith("/")) {
 					lastBase = realName;
 					continue;
@@ -1762,10 +1770,44 @@ public class Fake {
 					+ "Stored it as " + path
 					+ " instead.");
 		} catch (Exception e) {
+			new File(path).delete();
 			e.printStackTrace();
 			throw new FakeException("Error writing "
 				+ path + ": " + e);
 		}
+	}
+
+	static void copyJar(String inJar, JarOutputStream out)
+			throws Exception {
+		File file = new File(inJar);
+		InputStream input = new FileInputStream(file);
+		JarInputStream in = new JarInputStream(input);
+
+		JarEntry entry;
+		while ((entry = in.getNextJarEntry()) != null) {
+			String name = entry.getName();
+			if (name.startsWith("META-INF/")) {
+				in.closeEntry();
+				continue;
+			}
+			byte[] buf = readStream(in);
+			in.closeEntry();
+			try {
+				entry.setCompressedSize(-1);
+				out.putNextEntry(entry);
+				out.write(buf, 0, buf.length);
+				out.closeEntry();
+			} catch (ZipException e) {
+				String msg = e.getMessage();
+				if (!msg.startsWith("duplicat")) {
+					System.err.println("Error writing "
+						+ name);
+					throw e;
+				}
+				System.err.println("ignoring " + msg);
+			}
+		}
+		in.close();
 	}
 
 	static byte[] readFile(String fileName) {
@@ -1964,9 +2006,19 @@ public class Fake {
 
 	protected void fakeOrMake(File cwd, String directory, boolean verbose,
 			boolean ignoreMissingFakefiles, String toolsPath,
-			String classPath) throws FakeException {
+			String classPath, String fallBackFakefile)
+			throws FakeException {
+		String[] files = new File(directory).list();
+		if (files == null || files.length == 0)
+			return;
+		files = null;
+
 		String fakeFile = directory + '/' + Parser.path;
 		boolean tryFake = new File(fakeFile).exists();
+		if (!tryFake) {
+			fakeFile = fallBackFakefile;
+			tryFake = new File(fakeFile).exists();
+		}
 		if (ignoreMissingFakefiles && !tryFake &&
 				!(new File(directory + "/Makefile").exists())) {
 			if (verbose)
@@ -2407,6 +2459,12 @@ public class Fake {
 
 	public static String join(List list) {
 		return join(list, " ");
+	}
+
+	public static String stripSuffix(String string, String suffix) {
+		if (!string.endsWith(suffix))
+			return string;
+		return string.substring(0, string.length() - suffix.length());
 	}
 
 	public static String join(List list, String separator) {

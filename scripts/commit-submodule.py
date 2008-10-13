@@ -120,6 +120,23 @@ if write_fakefile:
 	f.close()
 	execute('git add Fakefile')
 
+# update .gitmodules
+path = submodule[:-1]
+execute('git config -f .gitmodules submodule.' + path + '.path ' + path)
+execute('git config -f .gitmodules submodule.' + path + '.url ' +
+	execute('git config -f ' + path + '/.git/config remote.origin.url'))
+execute('git add .gitmodules')
+
+# add .config and .Fakefile if there
+slash = target.find('/')
+base_name = target[slash + 1:]
+if base_name.endswith('.jar'):
+	base_name = base_name[:-4]
+for extension in [ 'config', 'Fakefile' ]:
+	path = 'staged-plugins/' + base_name + '.' + extension
+	if os.path.exists(path):
+		execute('git add ' + path)
+
 # precompile
 
 print execute('./fiji --fake ' + precompiled_target)
@@ -131,7 +148,7 @@ execute('git add ' + precompiled_target + ' ' + submodule[:-1])
 # commit it
 
 action = 'Add'
-if not target in has_rule.keys():
+if submodule in has_rule.keys():
 	action = 'Update'
 f = open('.msg', 'w')
 f.write(action + ' the submodule "' + submodule[:-1] + '"')
