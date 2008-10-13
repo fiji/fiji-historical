@@ -2008,8 +2008,11 @@ public class Fake {
 			boolean ignoreMissingFakefiles, String toolsPath,
 			String classPath, String fallBackFakefile)
 			throws FakeException {
-		if (new File(directory).list().length == 0)
+		String[] files = new File(directory).list();
+		if (files == null || files.length == 0)
 			return;
+		files = null;
+
 		String fakeFile = directory + '/' + Parser.path;
 		boolean tryFake = new File(fakeFile).exists();
 		if (!tryFake) {
