@@ -144,10 +144,10 @@ jdk[scripts/checkout-jdk.py $JDK] <-
 ij.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar
 plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
-CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar
-plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar TrakEM2/
 CLASSPATH(plugins/mpicbg_.jar)=jars/imagescience.jar
 plugins/mpicbg_.jar <- mpicbg/
+CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar
+plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugin/mpicbg_.jar TrakEM2/
 jars/clojure.jar <- clojure/
 SUBFAKESCRIPT(bio-formats/)=../scripts/build-bio-formats.sh
 plugins/loci_tools.jar <- bio-formats/
