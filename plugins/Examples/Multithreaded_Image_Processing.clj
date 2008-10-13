@@ -154,7 +154,7 @@
 (let [r (Random. (System/currentTimeMillis))]
   (defn line-randomizer [row #^floats pixels width]
     "Randomize the value of all pixels in the given row of the image contained in the unidimensional array of pixels"
-    (let [offset (* width row)]
+    (let [offset (int (* width row))]
       (dotimes i width
         (aset pixels (+ i offset) (.nextFloat r))))))
 
@@ -168,8 +168,8 @@
 ; #^floats pixels (make-array Float/TYPE (* width height))
 ; Note the #^floats, which is shorthand for (with-meta (make-array ...) {:floats}) and adds an obvious type declaration to avoid reflection.
 
-(let [width 512
-      height 512
+(let [width (int 512)   ; without the cast, 512 would be a Number, not a primitive. Number (like Integer, Float, etc.) need unboxing, which is costly.
+      height (int 512)
       #^ImagePlus imp (IJ/createImage "Random image" "32-bit" width height 1)
       #^floats pixels (.getPixels (.getProcessor imp))]
   (multithreader 0 height
