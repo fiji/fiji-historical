@@ -22,7 +22,7 @@
 
 /**
  * ====================================================================
- *  Version: October 9th, 2008
+ *  Version: October 14th, 2008
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -244,6 +244,8 @@ public class bUnwarpJ_ implements PlugIn
           else if (args[0].equals("-compose_raw"))          composeRawTransformationsCommandLine(args);
           else if (args[0].equals("-compose_raw_elastic"))  composeRawElasticTransformationsCommandLine(args);
           else if (args[0].equals("-adapt_transform"))      adaptCoefficientsCommandLine(args);
+          else 
+        	  dumpSyntax();
        }
        System.exit(0);
     }
@@ -343,9 +345,9 @@ public class bUnwarpJ_ implements PlugIn
            fn_tnf_2 = fn_out_2.substring(0, dot) + "_transf.txt";
 
        // Open target
-       Opener opener=new Opener();
+       Opener opener = new Opener();
        ImagePlus targetImp;
-       targetImp=opener.openImage(fn_target);
+       targetImp = opener.openImage(fn_target);
        
        bUnwarpJImageModel target =
           new bUnwarpJImageModel(targetImp.getProcessor(), true);
@@ -358,7 +360,7 @@ public class bUnwarpJ_ implements PlugIn
        if (fn_target_mask.equalsIgnoreCase(new String("NULL")) == false)
            targetMsk.readFile(fn_target_mask);
        
-       bUnwarpJPointHandler targetPh=null;
+       bUnwarpJPointHandler targetPh = null;
 
        // Open source
        boolean bIsReverse = true;
@@ -380,7 +382,7 @@ public class bUnwarpJ_ implements PlugIn
        bUnwarpJPointHandler sourcePh=null;
 
        // Load landmarks
-       if (fn_landmark.equals(""))
+       if (fn_landmark.equals("") == false)
        {
           Stack sourceStack = new Stack();
           Stack targetStack = new Stack();
@@ -400,13 +402,13 @@ public class bUnwarpJ_ implements PlugIn
        
        // Load initial affine matrices
        double[][] sourceAffineMatrix = null;
-       if(fn_affine_1.equals("") && fn_affine_1.equals("NULL") == false)
+       if(fn_affine_1.equals("") == false && fn_affine_1.equalsIgnoreCase(new String("NULL")) == false)
        {
            sourceAffineMatrix = new double[2][3];
            bUnwarpJMiscTools.loadAffineMatrix(fn_affine_1, sourceAffineMatrix);
        }
        double[][] targetAffineMatrix = null;
-       if(fn_affine_2.equals("") && fn_affine_2.equals("NULL") == false)
+       if(fn_affine_2.equals("") == false && fn_affine_2.equalsIgnoreCase(new String("NULL")) == false)
        {
            targetAffineMatrix = new double[2][3];
            bUnwarpJMiscTools.loadAffineMatrix(fn_affine_2, targetAffineMatrix);
@@ -752,7 +754,11 @@ public class bUnwarpJ_ implements PlugIn
 
        // Save results
        FileSaver fs = new FileSaver(sourceImp);
-       fs.saveAsTiff(fn_out);
+       boolean ret = fs.saveAsTiff(fn_out);
+       if(ret == false)
+    	   System.out.println("Error when saving file " + fn_out);
+       else
+    	   System.out.println("Saved file " + fn_out);
        
     } /* end elasticTransformIMageCommandLine */
 
@@ -803,7 +809,11 @@ public class bUnwarpJ_ implements PlugIn
 
        // Save results
        FileSaver fs = new FileSaver(sourceImp);
-       fs.saveAsTiff(fn_out);
+       boolean ret = fs.saveAsTiff(fn_out);
+       if(ret == false)
+    	   System.out.println("Error when saving file " + fn_out);
+       else
+    	   System.out.println("Saved file " + fn_out);
        
     } /* end rawTransformImageCommandLine */    
     
