@@ -243,6 +243,18 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("io.PDF_Viewer", path);
 		}
 
+		// Greg Jefferis: open nrrd images
+		// see Nrrd_Reader code or 
+		// http://teem.sourceforge.net/nrrd/
+		try {
+			String nrrdMagic=new String(buf,0,7,"US-ASCII");
+			if(nrrdMagic.equals("NRRD000")) {
+				// Ok we've identified the file type - now load it
+				return tryPlugIn("io.Nrrd_Reader", path);
+			}
+		} catch (Exception e) {
+		}
+
 		// Johannes Schindelin: open one or more images in a .ico file
 		if (name.endsWith(".ico"))
 			return tryPlugIn("io.ICO_Reader", path);
