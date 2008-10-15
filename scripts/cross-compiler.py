@@ -16,6 +16,7 @@ if sys.argv[1] != 'win64':
 root = 'root-x86_64-pc-linux/'
 cxx = root + 'bin/x86_64-pc-mingw32-g++'
 strip = root + 'bin/x86_64-pc-mingw32-strip'
+windres = root + 'bin/x86_64-pc-mingw32-windres'
 target = 'precompiled/fiji-win64.exe'
 
 if not os.path.exists(cxx):
@@ -31,7 +32,14 @@ if not os.path.exists(cxx):
 		print "You need to install the mingw64 cross compiler into", cxx
 		sys.exit(1)
 
+res = open('tmp.rc', 'w')
+res.write('101 ICON images/fiji.ico')
+res.close()
+print(windres + ' -o tmp.o -i tmp.rc')
+print execute(windres + ' -o tmp.o -i tmp.rc')
+
 quoted_args = ' '.join(sys.argv[2:]).replace("'", '"').replace('"', '\"')
-print(cxx + ' -o ' + target + ' ' + quoted_args + ' fiji.cxx')
-print execute(cxx + ' -o ' + target + ' ' + quoted_args + ' fiji.cxx')
+print(cxx + ' -o ' + target + ' ' + quoted_args + ' fiji.cxx tmp.o')
+print execute(cxx + ' -o ' + target + ' ' + quoted_args + ' fiji.cxx tmp.o')
+print(strip + ' ' + target)
 print execute(strip + ' ' + target)

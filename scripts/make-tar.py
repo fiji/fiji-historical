@@ -13,10 +13,10 @@ folder = sys.argv[2]
 print 'Making', tarfile, 'from', folder
 
 if tarfile.endswith('.bz2'):
-	packer = 'bzip2 -9'
+	packer = 'bzip2 -9 -f'
 	tarfile = tarfile[:len(tarfile) - 4]
 elif tarfile.endswith('.gz'):
-	packer = 'gzip -9'
+	packer = 'gzip -9 -f'
 	tarfile = tarfile[:len(tarfile) - 3]
 else:
 	packer = ''

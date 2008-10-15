@@ -74,6 +74,12 @@ public class bUnwarpJTransformation
     private bUnwarpJImageModel   source;
     /** pointer to the target image model */
     private bUnwarpJImageModel   target;
+    
+    // Original image processors
+    /** initial source image processor */
+    private ImageProcessor originalSourceIP;
+    /** initial target image processor */
+    private ImageProcessor originalTargetIP;
 
     // Landmarks
     /** pointer to the source point handler */
@@ -307,6 +313,10 @@ public class bUnwarpJTransformation
        this.output_ip_1           = output_ip_1;
        this.output_ip_2           = output_ip_2;
        this.dialog                = dialog;
+       
+       this.originalSourceIP	  = sourceImp.getProcessor();
+       this.originalTargetIP	  = targetImp.getProcessor();
+       
        sourceWidth                = source.getWidth();
        sourceHeight               = source.getHeight();
        targetWidth                = target.getWidth();
@@ -3144,7 +3154,7 @@ public class bUnwarpJTransformation
           else           new_filename = filename.substring(0, dot) + sDirection + "_transf";
           filename=path+filename;
 
-          if (outputLevel > -1 && this.dialog.isMacroCall() == false)
+          if (outputLevel > -1 && this.dialog != null && this.dialog.isMacroCall() == false)
           {
              final SaveDialog sd = new SaveDialog("Save Transformation", new_filename, ".txt");
 
@@ -3159,7 +3169,7 @@ public class bUnwarpJTransformation
        }
 
        // Save the file
-       if(this.dialog.isMacroCall())
+       if(this.dialog != null && this.dialog.isMacroCall())
     	   filename += ".txt";
        bUnwarpJMiscTools.saveElasticTransformation(intervals, cx, cy, filename);
     }
@@ -3346,7 +3356,7 @@ public class bUnwarpJTransformation
        int auxTargetWidth = this.targetWidth;
        int auxTargetHeight = this.targetHeight;
        ImagePlus output_ip = this.output_ip_1;
-       ImageProcessor originalIP = this.dialog.getOriginalSourceIP();
+       ImageProcessor originalIP = this.originalSourceIP;
 
        // Change if necessary
        if(bIsReverse)
@@ -3358,7 +3368,7 @@ public class bUnwarpJTransformation
            auxTargetWidth = this.sourceWidth;
            auxTargetHeight = this.sourceHeight;
            output_ip = this.output_ip_2;
-           originalIP = this.dialog.getOriginalTargetIP();
+           originalIP = this.originalTargetIP;
        }
 
        // Ask for memory for the transformation

@@ -37,3 +37,6 @@
 [submodule "ij-plugins"]
 	path = ij-plugins
 	url = git://pacific.mpi-cbg.de/ij-plugins
+[submodule "Retrotranslator"]
+	path = Retrotranslator
+	url = git://pacific.mpi-cbg.de/Retrotranslator
