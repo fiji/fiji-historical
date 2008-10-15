@@ -63,19 +63,9 @@ public class Fake {
 		if (!current.exists() || current.lastModified() >=
 				precompiled.lastModified())
 			return false;
-		try {
-			JarClassLoader loader = (JarClassLoader)
-				getClassLoader(precompiled.getPath());
-			Class f = loader.forceLoadClass("Fake");
-			Class[] argsType = new Class[] { args.getClass() };
-			Method main = f.getMethod("main", argsType);
-			Object o = f.newInstance();
-			main.invoke(o, new Object[] { args });
-		} catch (Exception e) {
-			System.err.println("Could not load precompiled Fake");
-			e.printStackTrace();
-			System.exit(1);
-		}
+		System.err.println("Please copy the precompiled fake.jar "
+			+ "over the current fake.jar; the latter is older!");
+		System.exit(1);
 		return true;
 	}
 
