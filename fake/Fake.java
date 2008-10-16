@@ -83,6 +83,7 @@ public class Fake {
 		variableNames.add("CXXFLAGS");
 		variableNames.add("LDFLAGS");
 		variableNames.add("MAINCLASS");
+		variableNames.add("TOOLSPATH");
 		fijiHome = discoverFijiHome();
 	}
 
