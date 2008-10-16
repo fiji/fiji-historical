@@ -62,10 +62,11 @@
 /plugins/ij-ImageIO_.jar
 /plugins/loci_tools.jar
 *-stamp
-/plugins/3D_Distance_Transform.jar
+<<<<<<< HEAD:.gitignore
 /jars/clojure.jar
 /plugins/IJ_Robot.jar
 /plugins/Fiji_Updater.jar
 /plugins/Multi_Thresholder.jar
 /plugins/Daltonize_.jar
 /plugins/Stitching_.jar
+=======

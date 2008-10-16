@@ -100,7 +100,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/LSM_Toolbox.jar \
 	plugins/SplineDeformationGenerator_.jar \
 	plugins/level_sets.jar \
-	plugins/3D_Distance_Transform.jar \
+<<<<<<< HEAD:Fakefile
 	plugins/Analyze_Reader_Writer.jar \
 	plugins/Color_Histogram.jar \
 	plugins/Color_Inspector_3D.jar \
@@ -114,7 +114,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Multi_Thresholder.jar \
 	plugins/Daltonize_.jar \
 	plugins/Stitching_.jar \
-	\
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
