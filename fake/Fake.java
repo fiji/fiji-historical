@@ -1,3 +1,5 @@
+/* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
