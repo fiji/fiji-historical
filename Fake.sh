@@ -12,33 +12,23 @@ Linux)
 MINGW*|CYGWIN*) platform=win32; exe=.exe;;
 esac
 
-strip_variables () {
+handle_variables () {
+	case "$1" in
+	--strip) strip_variables=t; shift;;
+	*) strip_variables=;;
+	esac
 	while test $# -ge 1
 	do
 		case "$1" in
-		*=*);;
-		*) echo "$1";;
+		*=*) test ! -z "$strip_variables" || echo "$1";;
+		*) test -z "$strip_variables" || echo "$1";;
 		esac
 		shift
 	done
 }
 
-# Someone with more Bourne shell skills than me (MHL) could probably
-# combine remove the redundancy between this function and the previous
-# one:
-get_variables () {
-	while test $# -ge 1
-	do
-		case "$1" in
-		*=*) echo "$1";;
-		*);;
-		esac
-		shift
-	done
-}
-
-targets=$(strip_variables "$@")
-variables=$(get_variables "$@")
+targets=$(handle_variables --strip "$@")
+variables=$(handle_variables "$@")
 
 # make sure fake.jar is up-to-date
 test "a$targets" != afake.jar &&
