@@ -113,6 +113,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Fiji_Updater.jar \
 	plugins/Multi_Thresholder.jar \
 	plugins/Daltonize_.jar \
+	plugins/Stitching_.jar \
 	\
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
@@ -175,6 +176,7 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.html \
 	src-plugins/LSM_Toolbox/**/*.txt
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
+CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar
 
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
