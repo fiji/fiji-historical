@@ -1,0 +1,30 @@
+20081016
+
+Fiji Release
+
+We are glad to announce the first release of Fiji, codenamed Dresden.
+
+http://pacific.mpi-cbg.de
+
+Fiji is Just ImageJ, batteries included.
+
+Fiji is an ImageJ distribution that bundles a collection of plugins, jar libraries and scripting languages in a consistent framework.
+
+Fiji includes Java JDK and java3d, and is available for Windows, MacOSX and Linux.
+
+Fiji aims at convenience in plugin use and reuse, and includes an updater to keep up to date with bug fixes and improvements.
+
+Fiji targets image registration, stitching, segmentation, feature extraction and 3D visualization, among others.
+For examples see http://pacific.mpi-cbg.de
+
+Fiji brings together several ImageJ-based projects including ImageJA, VIB, bUnwarpJ, TrakEM2, and others, kindly developed and distributed under open source licenses.
+
+For developers, Fiji provides its own build system, Fake (Fiji+Make), and is distributed under version control with git. The main Fiji executable is native, cross-platform, and provides numerous features for easy plugin compilation and interaction.
+
+For Fiji development see http://pacific.mpi-cbg.de/wiki/index.php/Developing_Fiji
+
+Fiji core developers and main contributors:
+ Ignacio Arganda, Albert Cardona, Erwin Frise, Greg Jefferis, Verena Kaynig, Mark Longair, Stephan Preibisch, Stephan Saalfeld, Johannes Schindelin, Benjamin Schmid, Cornelius Sicker, Jean-Yves Tinevez, Pavel Tomancak.
+
+We would like to thank Wayne Rasband for ImageJ, for his continuous development efforts and for his infinite patience. Thank you so much!
+
