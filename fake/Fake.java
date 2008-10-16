@@ -2324,26 +2324,38 @@ public class Fake {
 		if (classLoader == null)
 			classLoader = new JarClassLoader();
 		if (jarFile != null &&
-				! classLoader.jarFiles.containsKey(jarFile))
-			classLoader.jarFiles.put(jarFile, new JarFile(jarFile));
+		    ! classLoader.jarFilesMap.containsKey(jarFile)) {
+			JarFile jar = new JarFile(jarFile);
+			synchronized (classLoader) {
+				/* n.b. We don't need to synchronize
+				   fetching since nothing is ever removed */
+				classLoader.jarFilesMap.put(jarFile, jar);
+				classLoader.jarFilesNames.add(jarFile);
+				classLoader.jarFilesObjects.add(jar);
+			}
+		}
 		return classLoader;
 	}
 
 	private static class JarClassLoader extends ClassLoader {
-		Map jarFiles;
+		Map jarFilesMap;
+		List jarFilesNames;
+		List jarFilesObjects;
 		Map cache;
 
 		JarClassLoader() {
 			super(Thread.currentThread().getContextClassLoader());
-			jarFiles = new HashMap();
+			jarFilesMap = new HashMap();
+			jarFilesNames = new ArrayList(10);
+			jarFilesObjects = new ArrayList(10);
 			cache = new HashMap();
 		}
 
 		public URL getResource(String name) {
-			Iterator iter = jarFiles.keySet().iterator();
-			while (iter.hasNext()) {
-				String file = (String)iter.next();
-				JarFile jar = (JarFile)jarFiles.get(file);
+			int n = jarFilesNames.size();
+			for (int i = n - 1; i >= 0; --i) {
+				JarFile jar = (JarFile)jarFilesObjects.get(i);
+				String file = (String)jarFilesNames.get(i);
 				if (jar.getEntry(name) == null)
 					continue;
 				String url = "file:///"
@@ -2362,9 +2374,9 @@ public class Fake {
 
 		public InputStream getResourceAsStream(String name,
 				boolean nonSystemOnly) {
-			Iterator iter = jarFiles.values().iterator();
-			while (iter.hasNext()) {
-				JarFile jar = (JarFile)iter.next();
+			int n = jarFilesNames.size();
+			for (int i = n - 1; i >= 0; --i) {
+				JarFile jar = (JarFile)jarFilesObjects.get(i);
 				JarEntry entry = jar.getJarEntry(name);
 				if (entry == null)
 					continue;
