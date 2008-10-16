@@ -100,7 +100,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/LSM_Toolbox.jar \
 	plugins/SplineDeformationGenerator_.jar \
 	plugins/level_sets.jar \
-<<<<<<< HEAD:Fakefile
 	plugins/Analyze_Reader_Writer.jar \
 	plugins/Color_Histogram.jar \
 	plugins/Color_Inspector_3D.jar \
