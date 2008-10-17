@@ -53,7 +53,7 @@ build : build-arch build-indep
 build-arch : build-arch-stamp
 
 build-arch-stamp : configure-stamp
-	sh Fake.sh VERBOSE=true TOOLSPATH=$(INSTALLED_JVM_ROOT)lib/tools.jar CLASSPATH=$(JAVA3D_CLASSES)
+	sh Fake.sh --class-path $(JAVA3D_CLASSES) VERBOSE=true TOOLSPATH=$(INSTALLED_JVM_ROOT)lib/tools.jar
 	touch $@
 
 build-indep : build-indep-stamp
@@ -66,7 +66,7 @@ clean :
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp install-arch-stamp install-indep-stamp
 	rm -f $(INDEP_STAMPS) $(ARCH_STAMPS)
-	sh Fake.sh VERBOSE=true TOOLSPATH=$(INSTALLED_JVM_ROOT)lib/tools.jar CLASSPATH=$(JAVA3D_CLASSES) clean
+	sh Fake.sh --class-path $(JAVA3D_CLASSES) VERBOSE=true TOOLSPATH=$(INSTALLED_JVM_ROOT)lib/tools.jar clean
 	rm -f fjij fiji.o
 	dh_clean
 
