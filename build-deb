@@ -39,11 +39,11 @@ then
 	${J}ext/vecmath.jar \
 	${J}i386/libj3dcore-ogl-cg.so \
 	${J}i386/libj3dcore-ogl.so
-    JAVA3D_CLASSES="$CWD/${J}ext/j3dcore.jar:"
-    JAVA3D_CLASSES="${JAVA3D_CLASSES}$CWD/${J}ext/j3dutils.jar:"
-    JAVA3D_CLASSES="${JAVA3D_CLASSES}$CWD/${J}ext/vecmath.jar:"
-    JAVA3D_CLASSES="${JAVA3D_CLASSES}$CWD/${J}i386/libj3dcore-ogl-cg.so:"
-    JAVA3D_CLASSES="${JAVA3D_CLASSES}$CWD/${J}i386/libj3dcore-ogl.so"
+    JAVA3D_JARS="$CWD/${J}ext/j3dcore.jar:"
+    JAVA3D_JARS="${JAVA3D_JARS}$CWD/${J}ext/j3dutils.jar:"
+    JAVA3D_JARS="${JAVA3D_JARS}$CWD/${J}ext/vecmath.jar:"
+    JAVA3D_JARS="${JAVA3D_JARS}$CWD/${J}i386/libj3dcore-ogl-cg.so:"
+    JAVA3D_JARS="${JAVA3D_JARS}$CWD/${J}i386/libj3dcore-ogl.so"
     export JAVA_HOME=/usr/lib/jvm/java-6-sun-1.6.0.07/
 elif [ $DEB_BUILD_ARCH == "amd64" ]
 then
@@ -53,14 +53,14 @@ then
 	${J}ext/j3dutils.jar \
 	${J}ext/vecmath.jar \
 	${J}amd64/libj3dcore-ogl.so
-    JAVA3D_CLASSES="$CWD/${J}ext/j3dcore.jar:"
-    JAVA3D_CLASSES="${JAVA3D_CLASSES}:$CWD/${J}ext/j3dutils.jar:"
-    JAVA3D_CLASSES="${JAVA3D_CLASSES}:$CWD/${J}ext/vecmath.jar:"
-    JAVA3D_CLASSES="${JAVA3D_CLASSES}:$CWD/${J}amd64/libj3dcore-ogl.so"
+    JAVA3D_JARS="$CWD/${J}ext/j3dcore.jar:"
+    JAVA3D_JARS="${JAVA3D_JARS}:$CWD/${J}ext/j3dutils.jar:"
+    JAVA3D_JARS="${JAVA3D_JARS}:$CWD/${J}ext/vecmath.jar:"
+    JAVA3D_JARS="${JAVA3D_JARS}:$CWD/${J}amd64/libj3dcore-ogl.so"
     export JAVA_HOME=/usr/lib/jvm/java-6-sun-1.6.0.06/
 fi
 
-export JAVA3D_CLASSES
+export JAVA3D_JARS
 
 # FIXME: we should have a less brutal way of doing this.  The problem
 # is that the -I option to dpkg-buildpackage (passed on to
