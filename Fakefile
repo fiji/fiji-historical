@@ -256,7 +256,8 @@ cross-*[scripts/chrooted-cross-compiler.sh * \
 LAUNCHER(*)=precompiled/fiji-$PLATFORM
 LAUNCHER(win32)=precompiled/fiji-win32.exe
 LAUNCHER(win64)=precompiled/fiji-win64.exe
-LAUNCHER(macosx)=$LAUNCHER precompiled/fiji-tiger
+LAUNCHER(osx10.4)=precompiled/fiji-macosx
+LAUNCHER(osx10.5)=precompiled/fiji-macosx precompiled/fiji-tiger
 precompile-fiji[] <- $LAUNCHER
 
 precompiled/fiji-tiger[scripts/copy-file.py $PRE $TARGET] <- fiji-tiger
