@@ -26,6 +26,15 @@ JRE_PREFIX := linux/unknown/
 endif
 endif
 
+DISTRO := $(shell lsb_release -is)
+ifeq ($(DISTRO),Debian)
+	INSTALLED_JVM_ROOT := /usr/lib/jvm/java-6-sun-1.6.0.07/
+else
+ifeq ($(DISTRO),Ubuntu)
+	INSTALLED_JVM_ROOT := /usr/lib/jvm/java-6-sun-1.6.0.03/
+endif
+endif
+
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
@@ -44,7 +53,7 @@ build : build-arch build-indep
 build-arch : build-arch-stamp
 
 build-arch-stamp : configure-stamp
-	sh Fake.sh
+	sh Fake.sh VERBOSE=true TOOLSPATH=$(INSTALLED_JVM_ROOT)lib/tools.jar CLASSPATH=$(JAVA3D_CLASSES)
 	touch $@
 
 build-indep : build-indep-stamp
@@ -57,7 +66,7 @@ clean :
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp install-arch-stamp install-indep-stamp
 	rm -f $(INDEP_STAMPS) $(ARCH_STAMPS)
-	sh Fake.sh clean
+	sh Fake.sh VERBOSE=true TOOLSPATH=$(INSTALLED_JVM_ROOT)lib/tools.jar CLASSPATH=$(JAVA3D_CLASSES) clean
 	rm -f fjij fiji.o
 	dh_clean
 
@@ -87,24 +96,17 @@ install-arch-stamp : build-arch-stamp
 	cp -rv jars $(DESTDIR)/usr/lib/fiji/
 	cp -rv macros $(DESTDIR)/usr/lib/fiji/
 	cp -rv images $(DESTDIR)/usr/lib/fiji/
-	install -d $(DESTDIR)/usr/lib/fiji/java/$(JRE_PREFIX)
-	cp -rv java/$(JRE_PREFIX)jre $(DESTDIR)/usr/lib/fiji/java/$(JRE_PREFIX)
+	install -m 644 java/$(JRE_PREFIX)jre/lib/ext/j3dcore.jar $(INSTALLED_JVM_ROOT)jre/lib/ext/j3dcore.jar
+	install -m 644 java/$(JRE_PREFIX)jre/lib/ext/vecmath.jar $(INSTALLED_JVM_ROOT)jre/lib/ext/vecmath.jar
+	install -m 644 java/$(JRE_PREFIX)jre/lib/ext/j3dutils.jar $(INSTALLED_JVM_ROOT)jre/lib/ext/j3dutils.jar
+	install -m 755 java/$(JRE_PREFIX)jre/lib/i386/libj3dcore-ogl.so $(INSTALLED_JVM_ROOT)jre/lib/i386/libj3dcore-ogl.so
+	install -m 755 java/$(JRE_PREFIX)jre/lib/i386/libj3dcore-ogl-cg.so $(INSTALLED_JVM_ROOT)jre/lib/i386/libj3dcore-ogl-cg.so
 	install -d $(DESTDIR)/usr/share/doc/fiji/
 	install -m 644 ij.jar $(DESTDIR)/usr/lib/fiji/
 	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/fiji/
 	install -m 644 NOTES $(DESTDIR)/usr/share/doc/fiji/
 	install -m 644 README $(DESTDIR)/usr/share/doc/fiji/
 	install -m 644 TODO $(DESTDIR)/usr/share/doc/fiji/
-	#install -d $(DESTDIR)/usr/share/icons/hicolor/16x16/apps
-	#install -d $(DESTDIR)/usr/share/icons/hicolor/22x22/apps
-	#install -d $(DESTDIR)/usr/share/icons/hicolor/32x32/apps
-	#install -d $(DESTDIR)/usr/share/icons/hicolor/48x48/apps
-	#install -d $(DESTDIR)/usr/share/icons/hicolor/scalable/apps
-	#install -m 644 images/gnome/16x16/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/16x16/apps/
-	#install -m 644 images/gnome/22x22/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/22x22/apps/
-	#install -m 644 images/gnome/32x32/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/32x32/apps/
-	#install -m 644 images/gnome/48x48/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/48x48/apps/
-	#install -m 644 images/gnome/scalable/apps/fiji.svg $(DESTDIR)/usr/share/icons/hicolor/scalable/apps/
 	install -d $(DESTDIR)/usr/share/pixmaps/
 	install -m 644 images/fiji-icon-16x16.xpm $(DESTDIR)/usr/share/pixmaps/
 	install -m 644 images/fiji-icon-32x32.xpm $(DESTDIR)/usr/share/pixmaps/

@@ -2,7 +2,7 @@ Source: fiji
 Section: unknown
 Priority: extra
 Maintainer: Mark Longair <mhl@pobox.com>
-Build-Depends: debhelper (>= 5), gcc, lsb-release
+Build-Depends: debhelper (>= 5), gcc, lsb-release, sun-java6-jdk (= @@SUN_JAVA_PACKAGE_VERSION@@)
 Standards-Version: 3.7.2
 
 Package: fiji

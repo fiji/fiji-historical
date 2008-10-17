@@ -1,3 +1,13 @@
+fiji (0.9.3.20081015rc4) unstable; urgency=low
+
+  * An update for the public release of Fiji to the ImageJ
+    mailing list.  The key difference here is that we no
+    longer include the JVM, but instead depend on
+    sun-java6-bin (with different versions for Ubuntu and
+    Debian.)
+
+ -- Mark Longair <mhl@pobox.com>  Wed, 15 Oct 2008 23:00:00 +0200
+
 fiji (0.9.3.20080807rc3) unstable; urgency=low
 
   * Fiji should now appear in the GNOME and KDE menus under
