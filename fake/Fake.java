@@ -1594,6 +1594,10 @@ public class Fake {
 			String javaVersion, boolean debug, boolean verbose,
 			boolean showDeprecation, String extraClassPath)
 			throws FakeException {
+		/* FIXME: extraClassPath seems to have an extra
+		   ":null" at the end by this stage (although what's
+		   returned by getVariable("CLASSPATH") is correct. */
+		// System.out.println("**** extraClassPath is: "+extraClassPath);
 		List arguments = new ArrayList();
 		if (debug)
 			arguments.add("-g");

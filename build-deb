@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# FIXME: this should all just be rolled into the debian/rules file
+# so the package can be auto-built by the usual mechanism.  This
+# shouldn't be too hard, though, and it's simpler to fix bugs with
+# this as a separate script.
+
 set -e
 
 CONTROL_TEMPLATE=debian/control.template
@@ -57,8 +62,15 @@ fi
 
 export JAVA3D_CLASSES
 
-rm -rf java/*
+# FIXME: we should have a less brutal way of doing this.  The problem
+# is that the -I option to dpkg-buildpackage (passed on to
+# dpkg-source) isn't flexible enough to specify that we only want to
+# keep particular files from the java directory.  A better solution
+# may be to maintain separate branches of the java/linux*
+# subdirectories, but it would but nice to still be building from the
+# master branch.
 
+rm -rf java/*
 tar xzvf preserved-java.tar.gz
 rm preserved-java.tar.gz
 
