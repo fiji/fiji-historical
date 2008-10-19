@@ -119,7 +119,7 @@ public class Distortion_Correction implements PlugIn{
 	GenericDialog gd = new GenericDialog("Input");
 	gd.addNumericField("number of images: ", 9, 0);
 	gd.addNumericField("power of polyn. kernel ", 5, 0);
-	gd.addNumericField("lambda ", 0.000001, 8);
+	gd.addNumericField("lambda ", 0.000001, 6);
 	gd.addChoice("first image", names, names[0]);
 	gd.addCheckbox("apply correction to images", true);
 	gd.addCheckbox("visualize results", false);
@@ -207,13 +207,29 @@ public class Distortion_Correction implements PlugIn{
 			
 		}
 	    }	
+
 	    if (saveOrLoad == 0){
 		nlt = distortionCorrection(h1, h2, tp, dimension, lambda, imageWidth, imageHeight);
+                nlt.visualizeSmall(lambda);
+
+		while(true){
+		GenericDialog gdl = new GenericDialog("New lambda?");
+		gdl.addMessage("If the distortion field shows a clear translation, \n it is likely that you need to increase lambda.");
+		gdl.addNumericField("lambda ", lambda, 6);
+		gdl.showDialog();	
+		if (gdl.wasCanceled()) {
+		  break;
+		}
+		lambda = gdl.getNextNumber();
+		nlt = distortionCorrection(h1, h2, tp, dimension, lambda, imageWidth, imageHeight);
+                nlt.visualizeSmall(lambda);
+								
+		}
 		nlt.save(source_dir + saveFileName);
 	    }
 	}
 	//after all preprocessing is done, estimate the distortion correction transform
-		
+
 
 	if (saveOrLoad == 1){
 	    nlt.load(source_dir + saveFileName);

@@ -526,6 +526,58 @@ public class NonLinearTransform{
 				System.out.println("FINISHED");
 		}
 
+
+		public void visualizeSmall(double lambda){
+				int density = Math.max(width,height)/32;
+				
+				double[][] orig = new double[width *  height][2];
+				double[][] trans = new double[height * width][2];
+		
+				FloatProcessor magnitude = new FloatProcessor(width, height);
+				ColorProcessor quiver = new ColorProcessor(width, height);
+				quiver.setLineWidth(1);
+				quiver.setColor(Color.green);
+		
+				GeneralPath quiverField = new GeneralPath();
+		
+				float minM = 1000, maxM = 0;
+				float minArc = 5, maxArc = -6;
+				int countVert = 0, countHor = 0, countHorWhole = 0;
+				
+				for (int i=0; i < width; i++){
+						countHor = 0;
+						for (int j=0; j < height; j++){
+								double[] position = {(double) i,(double) j};
+								double[] posExpanded = kernelExpand(position);
+								double[] newPosition = multiply(beta, posExpanded);
+
+								orig[i*j][0] = position[0];
+								orig[i*j][1] = position[1];
+				
+								trans[i*j][0] = newPosition[0];
+								trans[i*j][1] = newPosition[1];
+				
+								double m = (position[0] - newPosition[0]) * (position[0] - newPosition[0]);
+								m += (position[1] - newPosition[1]) * (position[1] - newPosition[1]);
+								m = Math.sqrt(m);
+								magnitude.setf(i,j, (float) m);
+								minM = Math.min(minM, (float) m); 
+								maxM = Math.max(maxM, (float) m);
+				
+								if (i%density == 0 && j%density == 0)
+										drawQuiverField(quiverField, position[0], position[1], newPosition[0], newPosition[1]);
+						}
+				}
+		
+				magnitude.setMinAndMax(minM, maxM);
+				ImagePlus quiverImg = new ImagePlus("Quiver Plot for lambda = "+lambda, magnitude);
+				quiverImg.show();
+				quiverImg.getCanvas().setDisplayList(quiverField, Color.green, null );
+				quiverImg.updateAndDraw();
+		
+				System.out.println("FINISHED");
+		}
+
 	
 		public static void drawGrid(GeneralPath g, double[][] points, int count, int s){
 				for (int i=0; i < count - 1; i++){
