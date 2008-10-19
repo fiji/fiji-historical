@@ -119,7 +119,7 @@ public class Distortion_Correction implements PlugIn{
 	GenericDialog gd = new GenericDialog("Input");
 	gd.addNumericField("number of images: ", 9, 0);
 	gd.addNumericField("power of polyn. kernel ", 5, 0);
-	gd.addNumericField("lambda ", 0.00000001, 13);
+	gd.addNumericField("lambda ", 0.000001, 8);
 	gd.addChoice("first image", names, names[0]);
 	gd.addCheckbox("apply correction to images", true);
 	gd.addCheckbox("visualize results", false);
@@ -390,7 +390,7 @@ public class Distortion_Correction implements PlugIn{
 	    xk.setMatrix(0, 0, 0, s-1, xk_ij);
 	    xk.setMatrix(1, 1, s, 2*s-1, xk_ij);
 			
-	    double[] vals = {expandedX[i][0], expandedX[i][1]};
+	    double[] vals = {hack1[i][0], hack1[i][1]};
 	    Matrix c = new Matrix(vals, 2);
 
 	    Matrix X = xk.transpose().times(xk).times(lambda);
@@ -398,8 +398,8 @@ public class Distortion_Correction implements PlugIn{
 						
 	    S1 = S1.plus(Y.plus(X));
 			
-	    double trans1 = (transformParams[i][2]* transformParams[i][5] - transformParams[i][0]*transformParams[i][4])/100.0;
-	    double trans2 = (transformParams[i][1]* transformParams[i][4] - transformParams[i][3]*transformParams[i][5])/100.0;
+	    double trans1 = (transformParams[i][2]* transformParams[i][5] - transformParams[i][0]*transformParams[i][4]);
+	    double trans2 = (transformParams[i][1]* transformParams[i][4] - transformParams[i][3]*transformParams[i][5]);
 	    double[] trans = {trans1, trans2};
 
 			
@@ -412,7 +412,7 @@ public class Distortion_Correction implements PlugIn{
 		
 
 	Matrix regularize = Matrix.identity(S1.getRowDimension(), S1.getColumnDimension());
-	Matrix beta = new Matrix(S1.plus(regularize.times(0.001)).inverse().times(S2).times(100.0).getColumnPackedCopy(),s);
+	Matrix beta = new Matrix(S1.plus(regularize.times(0.001)).inverse().times(S2).getColumnPackedCopy(),s);
 		
 	nlt.setBeta(beta.getArray());
 	nlt.inverseTransform(hack1);
