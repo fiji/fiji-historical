@@ -1,6 +1,6 @@
 [submodule "ImageJA"]
 	path = ImageJA
-	url = git://repo.or.cz/imageja.git
+	url = repo.or.cz:/srv/git/imageja.git
 [submodule "TrakEM2"]
 	path = TrakEM2
 	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
