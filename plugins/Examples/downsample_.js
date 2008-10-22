@@ -65,6 +65,7 @@ if ( imp )
 	gd.addNumericField( "height :", height, 0 );
 	gd.addNumericField( "source sigma :", sourceSigma, 2 );
 	gd.addNumericField( "target sigma :", targetSigma, 2 );
+	gd.addCheckbox("Keep source image", true);
 	var fields = gd.getNumericFields();
 	
 	widthField = fields.get( 0 );
@@ -83,6 +84,7 @@ if ( imp )
 		height = gd.getNextNumber();
 		sourceSigma = gd.getNextNumber();
 		targetSigma = gd.getNextNumber();
+		keepImage = gd.getNextBoolean();
 		
 		if ( width <= imp.getWidth() )
 		{
@@ -91,7 +93,9 @@ if ( imp )
 				s = targetSigma * imp.getWidth() / width;
 			else
 				s = targetSigma * imp.getHeight() / height;
-
+			
+			if (keepImage)
+				IJ.run("Duplicate...", "Downsampled");
 			IJ.run( "Gaussian Blur...", "sigma=" + Math.sqrt( s * s - sourceSigma * sourceSigma ) + " stack" );
 			IJ.run( "Scale...", "x=- y=- width=" + width + " height=" + height + " process title=-" );
 			IJ.run( "Canvas Size...", "width=" + width + " height=" + height + " position=Center" );
