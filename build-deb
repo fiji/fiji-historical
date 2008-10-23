@@ -84,4 +84,4 @@ echo JAVA_HOME is $JAVA_HOME
 
 INSTALLED_JVM_ROOT=/usr/lib/jvm/java-6-sun-1.6.0.07/
 
-sh -x Fake.sh "CLASSPATH(plugins/VIB_.jar)=${JAVA3D_JARS}" "CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar:${JAVA3D_JARS}" VERBOSE=true "TOOLSPATH=${INSTALLED_JVM_ROOT}lib/tools.jar" "TOOLSPATH(plugins/VIB_.jar)=${INSTALLED_JVM_ROOT}lib/tools.jar"  "TOOLSPATH(plugins/TrakEM2_.jar)=${INSTALLED_JVM_ROOT}lib/tools.jar" "CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar"
+sh -x Fake.sh "CLASSPATH(plugins/VIB_.jar)=${JAVA3D_JARS}" "CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:${JAVA3D_JARS}"
