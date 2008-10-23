@@ -425,8 +425,24 @@ static const char *get_fiji_dir(const char *argv0)
 	return buffer.c_str();
 }
 
+static int cross_platform_setenv(const char * variable_name, const char * variable_value) {
+#ifdef WIN32
+	/* support Windows with its ridiculously anachronistic putenv() */
+	string expression(variable_name);
+	expression += "=";
+	expression += variable_value;
+	return putenv(expression.c_str());
+#else
+	return setenv(variable_name,variable_value,1);
+#endif
+}
+
 static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 {
+	// Save the original value of JAVA_HOME; if creating the JVM this
+	// way doesn't work, set it back so that calling the system JVM
+	// can use the JAVA_HOME variable if it's set...
+	char *original_java_home_env = getenv("JAVA_HOME");
 #ifdef MACOSX
 	set_path_to_JVM();
 #else
@@ -436,17 +452,20 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 	static jint (*JNI_CreateJavaVM)(JavaVM **pvm, void **penv, void *args);
 
 	java_home << fiji_dir << "/" << relative_java_home;
+	if (cross_platform_setenv("JAVA_HOME",java_home.str().c_str())) {
+		cerr << "Failed to set JAVA_HOME to " << java_home.str() << endl;
+		perror("cross_platform_setenv");
+		return 1;
+	}
 #ifdef WIN32
-	/* support Windows with its ridiculously anachronistic putenv() */
-	stringstream java_home_env;
-	java_home_env << "JAVA_HOME=" << java_home.str();
-	putenv(strdup(java_home_env.str().c_str()));
 	/* Windows automatically adds the path of the executable to PATH */
-	stringstream path;
-	path << "PATH=" << getenv("PATH") << ";" << java_home.str() << "/bin";
-	putenv(strdup(path.str().c_str()));
-#else
-	setenv("JAVA_HOME", java_home.str().c_str(), 1);
+	string path(getenv("PATH"));
+	path += (";" << java_home.str() << "/bin");
+	if (cross_platform_setenv("PATH",path.c_str())) {
+		cerr << "Failed to set PATH to " << path << endl;
+		perror("cross_platform_setenv");
+		return 1;
+	}
 #endif
 	buffer << java_home.str() << "/" << library_path;
 
@@ -457,6 +476,10 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 			error = "(unknown error)";
 		cerr << "Could not load Java library '" <<
 			buffer.str() << "': " << error << endl;
+		if (cross_platform_setenv("JAVA_HOME",original_java_home_env)) {
+			cerr << "Failed to set JAVA_HOME back to " << original_java_home_env << endl;
+			perror("cross_platform_setenv");
+		}
 		return 1;
 	}
 	dlerror(); /* Clear any existing error */
@@ -466,6 +489,10 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 	err = dlerror();
 	if (err) {
 		cerr << "Error loading libjvm: " << err << endl;
+		if (cross_platform_setenv("JAVA_HOME",original_java_home_env)) {
+			cerr << "Failed to set JAVA_HOME to " << original_java_home_env << endl;
+			perror("cross_platform_setenv");
+		}
 		return 1;
 	}
 #endif
@@ -1274,7 +1301,19 @@ static int start_ij(void)
 		append_string(options.java_options, NULL);
 		prepend_string(options.java_options, "java");
 
-		if (execvp("java", options.java_options.list))
+		string java_binary("java");
+		char * java_home_env = getenv("JAVA_HOME");
+		if( java_home_env && strlen(java_home_env) > 0 ) {
+			int n = strlen(java_home_env);
+			cerr << "Found that JAVA_HOME was: '" << java_home_env << "'" << endl;
+			java_binary = java_home_env;
+			if( java_home_env[n-1] != '/' ) {
+				java_binary += "/";
+			}
+			java_binary += "bin/java";
+		}
+		cerr << "Using java binary: " << java_binary << endl;
+		if (execvp(java_binary.c_str(), options.java_options.list))
 			cerr << "Could not launch system-wide Java" << endl;
 		exit(1);
 	}
