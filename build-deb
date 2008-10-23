@@ -76,6 +76,8 @@ rm preserved-java.tar.gz
 
 # dpkg-buildpackage -rfakeroot -us -uc
 
+rm -f fake.jar precompiled/fake.jar plugins/*.jar
+
 echo ================================================================
 
 echo JAVA_HOME is $JAVA_HOME
