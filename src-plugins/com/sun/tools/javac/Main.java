@@ -77,10 +77,6 @@ public class Main {
      * javac, see the man page for details.
      */
     public static int compile(String[] args) {
-        System.out.println("########### bundled javac compile called: ");
-        for( int i = 0; i < args.length; ++i ) {
-            System.out.println("    ######## args["+i+"] is: "+args[i]);
-        }
         com.sun.tools.javac.main.Main compiler =
             new com.sun.tools.javac.main.Main("javac");
         return compiler.compile(args);
@@ -99,10 +95,6 @@ public class Main {
      * javac, see the man page for details.
      */
     public static int compile(String[] args, PrintWriter out) {
-        System.out.println("########### bundled javac compile called (with PrintWriter parameter): ");
-        for( int i = 0; i < args.length; ++i ) {
-            System.out.println("    ######## args["+i+"] is: "+args[i]);
-        }
         com.sun.tools.javac.main.Main compiler =
             new com.sun.tools.javac.main.Main("javac", out);
         return compiler.compile(args);
