@@ -1096,9 +1096,12 @@ public class Fake {
 
 			String getVar(String var) {
 				String value = super.getVar(var);
-				if (var.toUpperCase().equals("CLASSPATH"))
-					return value == null ? classPath
-						: value + ":" + classPath;
+				if (var.toUpperCase().equals("CLASSPATH")) {
+					if( classPath != null ) {
+						return (value == null) ? classPath
+							: (value + ":" + classPath);
+					}
+				}
 				return value;
 			}
 
