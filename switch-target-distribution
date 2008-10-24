@@ -38,8 +38,8 @@ sed -e s/@@SUN_JAVA_PACKAGE_VERSION@@/${SUN_JAVA_PACKAGE_VERSION}/ -e s/@@JDK_BU
 
 sed s/@@UBUNTU_SUFFIX@@/${UBUNTU_SUFFIX}/ < ${CHANGELOG_TEMPLATE} > ${CHANGELOG}
 
-VERSION_IN_CHANGELOG=`perl -e 'use Dpkg::Changelog qw(parse_changelog); print parse_changelog->{version}'`
-PACKAGE_IN_CHANGELOG=`perl -e 'use Dpkg::Changelog qw(parse_changelog); print parse_changelog->{source}'`
+VERSION_IN_CHANGELOG=`dpkg-parsechangelog | egrep ^Version: | sed "s/Version: //"`
+PACKAGE_IN_CHANGELOG=`dpkg-parsechangelog | egrep ^Source: | sed "s/Source: //"`
 
 CWD_BASENAME=$(basename `realpath .`)
 REQUIRED_DIRECTORY_NAME=${PACKAGE_IN_CHANGELOG}-${VERSION_IN_CHANGELOG}
