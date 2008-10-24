@@ -8,11 +8,11 @@ CONTROL=debian/control
 CHANGELOG_TEMPLATE=debian/changelog.template
 CHANGELOG=debian/changelog
 
-if test xdebian == x$1
+if test xdebian = x$1
 then
     UBUNTU_SUFFIX=
     SUN_JAVA_PACKAGE_VERSION=6-07-4
-elif test xubuntu == x$1
+elif test xubuntu = x$1
 then
     UBUNTU_SUFFIX=ubuntu
     SUN_JAVA_PACKAGE_VERSION=6-03-0ubuntu2
@@ -23,10 +23,10 @@ else
 fi
 
 DISTRO=`lsb_release -is`
-if test x$DISTRO == xDebian
+if test x$DISTRO = xDebian
 then
     JDK_BUILD_VERSION=6-07-4
-elif test x$DISTRO == xUbuntu
+elif test x$DISTRO = xUbuntu
 then
     JDK_BUILD_VERSION=6-03-0ubuntu2
 else
