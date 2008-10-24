@@ -148,7 +148,7 @@ plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
 CLASSPATH(plugins/mpicbg_.jar)=jars/imagescience.jar
 plugins/mpicbg_.jar <- mpicbg/
 CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar
-plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugin/mpicbg_.jar TrakEM2/
+plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugins/mpicbg_.jar TrakEM2/
 jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
 plugins/ij-ImageIO_.jar <- ij-plugins/
