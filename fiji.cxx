@@ -431,7 +431,7 @@ static int cross_platform_setenv(const char * variable_name, const char * variab
 	string expression(variable_name);
 	expression += "=";
 	expression += variable_value;
-	return putenv(expression.c_str());
+	return putenv(strdup(expression.c_str()));
 #else
 	return setenv(variable_name,variable_value,1);
 #endif
