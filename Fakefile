@@ -208,7 +208,7 @@ JAVA_LIB_PATH(macosx)=
 
 # The variables CFLAGS, CXXFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
-CXXFLAGS(*)=-Iincludes \
+CXXFLAGS(*)=-Wall -Iincludes \
 	-DJAVA_HOME='"$JAVA_HOME"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
 CXXFLAGS(win32)=$CXXFLAGS $WINOPTS
