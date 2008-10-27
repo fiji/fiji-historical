@@ -22,7 +22,7 @@
 
 /**
  * ====================================================================
- *  Version: October 14th, 2008
+ *  Version: October 24th, 2008
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -49,12 +49,10 @@
 import bunwarpj.*;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.WindowManager;
 import ij.io.FileSaver;
 import ij.io.Opener;
 import ij.plugin.PlugIn;
-import ij.process.ColorProcessor;
 
 import java.awt.Point;
 import java.util.Stack;
@@ -78,7 +76,7 @@ import java.util.StringTokenizer;
  * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.0 10/09/2008
+ * @version 2.0 10/24/2008
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  * @author Jan Kybic
  */
@@ -187,7 +185,7 @@ public class bUnwarpJ_ implements PlugIn
 		this.saveTransformation 	= dialog.getNextBoolean();
         dialog.setSaveTransformation(this.saveTransformation);
 
-        imagePyramidDepth = max_scale_deformation-min_scale_deformation+1;
+        this.imagePyramidDepth = max_scale_deformation-min_scale_deformation+1;
 
         int outputLevel = 1;
 
@@ -219,7 +217,7 @@ public class bUnwarpJ_ implements PlugIn
 
     /*------------------------------------------------------------------*/
     /**
-     * Main method for bUnwarpJ.
+     * Main method for bUnwarpJ (command line).
      *
      * @param args arguments to decide the action
      */
@@ -460,7 +458,7 @@ public class bUnwarpJ_ implements PlugIn
     private ImagePlus[] createImageList () 
     {
        final int[] windowList = WindowManager.getIDList();
-       final Stack stack = new Stack();
+       final Stack <ImagePlus> stack = new Stack <ImagePlus>();
        for (int k = 0; ((windowList != null) && (k < windowList.length)); k++) 
        {
           final ImagePlus imp = WindowManager.getImage(windowList[k]);
@@ -468,8 +466,8 @@ public class bUnwarpJ_ implements PlugIn
 
           // Since October 6th, 2008, bUnwarpJ can deal with 8, 16, 32-bit grayscale 
           // and RGB Color images.
-          if ((imp.getStackSize() == 1) || (inputType == imp.GRAY8) || (inputType == imp.GRAY16)
-             || (inputType == imp.GRAY32) || (inputType == imp.COLOR_RGB)) 
+          if ((imp.getStackSize() == 1) || (inputType == ImagePlus.GRAY8) || (inputType == ImagePlus.GRAY16)
+             || (inputType == ImagePlus.GRAY32) || (inputType == ImagePlus.COLOR_RGB)) 
           {
              stack.push(imp);
           }
@@ -614,22 +612,23 @@ public class bUnwarpJ_ implements PlugIn
     /**
      * Get tokens.
      *
-     * @param options options to get the tokens
+     * @param options string to get the tokens from
      * @return tokens
      */
     private String[] getTokens (final String options) 
     {
         StringTokenizer t = new StringTokenizer(options);
         String[] token = new String[t.countTokens()];
-        for (int k = 0; (k < token.length); k++) {
-                token[k] = t.nextToken();
-        }
+        for (int k = 0; k < token.length; k++) 
+                token[k] = t.nextToken();        
         return(token);
     } /* end getTokens */
 
     /*------------------------------------------------------------------*/
     /**
-     * Method to adapt coefficients to new image size.
+     * Method to adapt coefficients to new image size. The factor between
+     * the old and the new image size is expected to be a power of 2, positive
+     * or negative (8, 4, 2, 0.5, 0.25, etc).
      *
      * @param args program arguments
      */
@@ -680,13 +679,13 @@ public class bUnwarpJ_ implements PlugIn
        }
 
        // adapt coefficients.
-       int iImageSizeFactor = Integer.parseInt(sImageSizeFactor);
+       double dImageSizeFactor = Double.parseDouble(sImageSizeFactor);
        
        for(int i = 0; i < (intervals+3); i++)
            for(int j = 0; j < (intervals+3); j++)
            {
-                cx[i][j] *= iImageSizeFactor;
-                cy[i][j] *= iImageSizeFactor;
+                cx[i][j] *= dImageSizeFactor;
+                cy[i][j] *= dImageSizeFactor;
            }
        
        // Save transformation
@@ -878,7 +877,7 @@ public class bUnwarpJ_ implements PlugIn
     /*------------------------------------------------------------------*/
     /**
      * Method to compare an elastic deformation with a raw deformation
-     * through the warping index.
+     * through the warping index (both transformations having same direction).
      *
      * @param args program arguments
      */
@@ -915,7 +914,6 @@ public class bUnwarpJ_ implements PlugIn
        double [][]cy_direct = new double[intervals+3][intervals+3];
 
        bUnwarpJMiscTools.loadTransformation(fn_tnf_elastic, cx_direct, cy_direct);
-
       
        // We load the transformation raw file.
        double[][] transformation_x = new double[targetImp.getHeight()][targetImp.getWidth()];
@@ -935,7 +933,8 @@ public class bUnwarpJ_ implements PlugIn
     
     /*------------------------------------------------------------------*/
     /**
-     * Method to compare two raw deformations through the warping index.
+     * Method to compare two raw deformations through the warping index
+     * (both transformations having same direction).
      *
      * @param args program arguments
      */
@@ -1513,13 +1512,13 @@ public class bUnwarpJ_ implements PlugIn
      *          source_image                       : In any image format<br>
      *          Input Elastic Transformation File  : As saved by bUnwarpJ in elastic format<br>
      *          Output Elastic Transformation File : As saved by bUnwarpJ in elastic format<br>
-     *          Image Size Factor                  : Integer (2, 4, 8...)<br>
+     *          Image Size Factor                  : Double (0.25, 0.5, 2, 4, 8...)<br>
      *          
      * @param targetImageName target image file name (with path)
      * @param sourceImageName source image file name (with path)
      * @param inputElasticTransfFileName input elastic transformation file name (with path)
      * @param outputElasticTransfFileName output elastic transformation file name (with path)
-     * @param sizeFactor integer size factor (between old and new image)
+     * @param sizeFactor double size factor (between old and new image)
      */
     public static void adaptCoefficientsMacro(
     		String targetImageName,

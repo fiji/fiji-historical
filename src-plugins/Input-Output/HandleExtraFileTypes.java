@@ -243,6 +243,16 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("io.PDF_Viewer", path);
 		}
 
+		// Johannes Schindelin: handle scripts
+		if (name.endsWith(".py"))
+			return tryPlugIn("Jython.Refresh_Jython_Scripts", path);
+		if (name.endsWith(".rb"))
+			return tryPlugIn("JRuby.Refresh_JRuby_Scripts", path);
+		if (name.endsWith(".js"))
+			return tryPlugIn("Javascript.Refresh_Javascript_Scripts", path);
+		if (name.endsWith(".clj"))
+			return tryPlugIn("Clojure.Refresh_Clojure_Scripts", path);
+
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type
 		// and then call appropriate plugin using the above as models

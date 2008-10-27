@@ -915,7 +915,8 @@ static void /* no-return */ usage(void)
 		<< "--jruby" << endl
 		<< "\tstart JRuby instead of ImageJ (this is the" << endl
 		<< "\tdefault when called with a file ending in .rb)" << endl
-		<< "--main-class <class name>" << endl
+		<< "--main-class <class name> (this is the" << endl
+		<< "\tdefault when called with a file ending in .class)" << endl
 		<< "\tstart the given class instead of ImageJ" << endl
 		<< "--fake" << endl
 		<< "\tstart Fake instead of ImageJ" << endl
@@ -1056,19 +1057,9 @@ static int start_ij(void)
 		else if (!strcmp("--help", main_argv[i]) ||
 				!strcmp("-h", main_argv[i]))
 			usage();
-		else {
-			int len = strlen(main_argv[i]);
-			if (len > 6 && !strcmp(main_argv[i]
-						+ len - 6, ".class")) {
-				class_path += "." PATH_SEP;
-				string dotted = main_argv[i];
-				replace(dotted.begin(), dotted.end(), '/', '.');
-				dotted = dotted.substr(0, len - 6);
-				main_class = strdup(dotted.c_str());
-			}
-			else
-				main_argv[count++] = main_argv[i];
-		}
+		else
+			main_argv[count++] = main_argv[i];
+
 	main_argc = count;
 
 	if (!headless &&
@@ -1119,7 +1110,6 @@ static int start_ij(void)
 	if (retrotranslator && build_classpath(class_path,
 				string(fiji_dir) + "/retro", 0))
 		return 1;
-	add_option(options, class_path, 0);
 
 	if (plugin_path.str() == "")
 		plugin_path << "-Dplugins.dir=" << fiji_dir;
@@ -1164,9 +1154,20 @@ static int start_ij(void)
 			main_class = "org.python.util.jython";
 		else if (len > 3 && !strcmp(first + len - 3, ".rb"))
 			main_class = "org.jruby.Main";
+		else if (len > 6 && !strcmp(first + len - 6, ".class")) {
+			class_path += "." PATH_SEP;
+			string dotted = first;
+			replace(dotted.begin(), dotted.end(), '/', '.');
+			dotted = dotted.substr(0, len - 6);
+			main_class = strdup(dotted.c_str());
+			main_argv++;
+			main_argc--;
+		}
 		else
 			main_class = "ij.ImageJ";
 	}
+
+	add_option(options, class_path, 0);
 
 	if (add_class_path_option) {
 		add_option(options, "-classpath", 1);
