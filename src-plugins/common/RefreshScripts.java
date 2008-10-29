@@ -37,8 +37,6 @@ import java.awt.Menu;
 import java.awt.PopupMenu;
 import java.awt.MenuItem;
 import java.awt.MenuBar;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.io.File;
 import java.io.StringWriter;
@@ -71,7 +69,7 @@ import java.io.FileReader;
  * 	or tweak ImageJ, or a thousand not-so-straighforward ways.
  *
  */
-abstract public class RefreshScripts implements PlugIn, ActionListener {
+abstract public class RefreshScripts implements PlugIn {
 
 	protected String scriptExtension;
 	protected String languageName;
@@ -119,20 +117,19 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 			items[i] = m.getItem(i);
 		}
 		String newLabel = strip(filename);
-		String newCommand = subDirectory + (0 == subDirectory.length() ? "" : File.separator) + filename;
-		for (int i=0; i<n; i++) {
-			String command = items[i].getActionCommand();
-			if( newCommand.equals(command) ) {
-				m.remove(items[i]);
-			}
-		}
+		String newCommand = getClass().getName() + "(\""
+			+ topLevelDirectory + File.separator
+			+ (0 == subDirectory.length() ?
+				"" : subDirectory + File.separator)
+			+ filename + "\")";
 
 		// Now add the command:
 		MenuItem item = new MenuItem(newLabel);
-		item.addActionListener(this);
 		// storing the name of the script file as the action command. The label is stripped!
-		item.setActionCommand(newCommand);
 		m.add(item);
+		item.addActionListener(IJ.getInstance());
+
+		Menus.getCommands().put(newLabel, newCommand);
 	}
 
 	/** Split subDirectory by File.separator and make sure submenus
@@ -248,6 +245,11 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 
 	public void run(String arg) {
 
+		if( arg != null && ! arg.equals("") ) {
+			runScript(arg);
+			return;
+		}
+
 		if( scriptExtension == null || languageName == null ) {
 			IJ.error("BUG: setLanguageProperties must have been called (with non-null scriptExtension and languageName");
 			return;
@@ -289,30 +291,6 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 
 	/** Run the script in a new thread. */
 	abstract protected void runScript(String filename);
-
-	/** Listens to the MenuItem objects holding the name of the python script.*/
-	public void actionPerformed(ActionEvent ae) {
-		Object source = ae.getSource();
-		if (source instanceof MenuItem) {
-			MenuItem item = (MenuItem)source;
-			final String file_name = item.getActionCommand();
-			if (file_name.endsWith(scriptExtension)) {
-				// fork to avoid running on the EventDispatchThread
-				new Thread() {
-					public void run() {
-						setPriority(Thread.NORM_PRIORITY);
-						try {
-							String scriptFilename = script_dir.getCanonicalPath() + File.separator + file_name;
-							runScript(scriptFilename);
-						} catch (Exception e) {
-							e.printStackTrace();
-							IJ.log(e.toString());
-						}
-					}
-				}.start();
-			}
-		}
-	}
 
 	static public void printError(Throwable t) {
 		final StringWriter w = new StringWriter();

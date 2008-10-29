@@ -29,36 +29,32 @@ import ij.IJ;
 public class bUnwarpJCredits implements ij.plugin.PlugIn
 { /* begin class bUnwarpJCredits */
 
-	static public String version = "2.0 10-14-2008";
-	
-    /*....................................................................
+	static public String version = "2.0 10-24-2008";
+
+	/*....................................................................
        Public methods
     ....................................................................*/
 
-    /*------------------------------------------------------------------*/
-    /**
-     * Launch the credits plugin
-     *
-     * @param arg thread arguments
-     */
+	/*------------------------------------------------------------------*/
+	/**
+	 * Launch the credits plugin
+	 *
+	 * @param arg thread arguments
+	 */
 	public void run(String arg) 
 	{
 		String text = new String("");
 		text += "\n";
 		text += " bUnwarpJ " + bUnwarpJCredits.version + "\n";
-		text += " This work is an extension of the original UnwarpJ plugin. It has been modified in order\n" +
-                   " to do bidirectional registration.\n";
-		text += "\n Its first version was developed by Ignacio Arganda-Carreras and Jan Kybic and finished\n" +
-                   " in October 2005.\n";
-		text += "\n";
+		text += " Consistent and elastic pairwise image registration (B-spline image and deformation representation).\n";
 		text += " The work is based on the paper:\n";
 		text += "\n Ignacio Arganda-Carreras, Carlos O. S. Sorzano, Roberto Marabini, Jose M. Carazo,\n" +
-                   " Carlos Ortiz de Solorzano, and Jan Kybic. 'Consistent and Elastic Registration of Histological\n" +
-                   " Sections using Vector-Spline Regularization'. Lecture Notes in Computer Science, Springer\n" +
-                   " Berlin / Heidelberg, Volume 4241/2006, CVAMIA: Computer Vision Approaches to Medical\n" +
-                   " Image Analysis, Pages 85-95, 2006.\n";
+		" Carlos Ortiz de Solorzano, and Jan Kybic. 'Consistent and Elastic Registration of Histological\n" +
+		" Sections using Vector-Spline Regularization'. Lecture Notes in Computer Science, Springer\n" +
+		" Berlin / Heidelberg, Volume 4241/2006, CVAMIA: Computer Vision Approaches to Medical\n" +
+		" Image Analysis, Pages 85-95, 2006.\n";
 		text += "\n";
-	
+
 		IJ.showMessage("bUnwarpJ", text);
 	}
 

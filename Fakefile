@@ -100,7 +100,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/LSM_Toolbox.jar \
 	plugins/SplineDeformationGenerator_.jar \
 	plugins/level_sets.jar \
-	plugins/3D_Distance_Transform.jar \
 	plugins/Analyze_Reader_Writer.jar \
 	plugins/Color_Histogram.jar \
 	plugins/Color_Inspector_3D.jar \
@@ -114,7 +113,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Multi_Thresholder.jar \
 	plugins/Daltonize_.jar \
 	plugins/Stitching_.jar \
-	\
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
@@ -150,7 +148,7 @@ plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
 CLASSPATH(plugins/mpicbg_.jar)=jars/imagescience.jar
 plugins/mpicbg_.jar <- mpicbg/
 CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar
-plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugin/mpicbg_.jar TrakEM2/
+plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugins/mpicbg_.jar TrakEM2/
 jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
 plugins/ij-ImageIO_.jar <- ij-plugins/
@@ -258,7 +256,8 @@ cross-*[scripts/chrooted-cross-compiler.sh * \
 LAUNCHER(*)=precompiled/fiji-$PLATFORM
 LAUNCHER(win32)=precompiled/fiji-win32.exe
 LAUNCHER(win64)=precompiled/fiji-win64.exe
-LAUNCHER(macosx)=$LAUNCHER precompiled/fiji-tiger
+LAUNCHER(osx10.4)=precompiled/fiji-macosx
+LAUNCHER(osx10.5)=precompiled/fiji-macosx precompiled/fiji-tiger
 precompile-fiji[] <- $LAUNCHER
 
 precompiled/fiji-tiger[scripts/copy-file.py $PRE $TARGET] <- fiji-tiger

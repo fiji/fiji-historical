@@ -265,6 +265,7 @@ public class UpdateFiji implements PlugIn {
 		queue.add("ij.jar");
 		queueDirectory(queue, "plugins");
 		queueDirectory(queue, "jars");
+		queueDirectory(queue, "retro");
 
 		Iterator iter = queue.iterator();
 		int i = 0, total = queue.size();
