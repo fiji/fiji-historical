@@ -125,10 +125,15 @@ if write_fakefile:
 
 # update .gitmodules
 path = submodule[:-1]
-execute('git config -f .gitmodules submodule.' + path + '.path ' + path)
-execute('git config -f .gitmodules submodule.' + path + '.url ' +
-	execute('git config -f ' + path + '/.git/config remote.origin.url'))
-execute('git add .gitmodules')
+modules_config = 'git config -f .gitmodules submodule.' + path
+try:
+	print 'URL: ' + execute(modules_config + '.url')
+except:
+	execute(modules_config + '.path ' + path)
+	execute(modules_config + '.url ' +
+		execute('git config -f ' + path
+			+ '/.git/config remote.origin.url'))
+	execute('git add .gitmodules')
 
 # add .config and .Fakefile if there
 slash = target.find('/')
