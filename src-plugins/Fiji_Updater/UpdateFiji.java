@@ -252,20 +252,28 @@ public class UpdateFiji implements PlugIn {
 	}
 
 	public void initialize(String fijiPath) {
+		initialize(fijiPath, null);
+	}
+
+	public void initialize(String fijiPath, String[] only) {
 		this.fijiPath = (fijiPath == null ?
 			getDefaultFijiPath() : fijiPath);
 
 		List queue = new ArrayList();
 
-		String platform = getPlatform();
-		queue.add("fiji-" + platform);
-		if (platform.equals("macosx"))
-			queue.add("fiji-tiger");
+		if (only == null || only.length == 0) {
+			String platform = getPlatform();
+			queue.add("fiji-" + platform);
+			if (platform.equals("macosx"))
+				queue.add("fiji-tiger");
 
-		queue.add("ij.jar");
-		queueDirectory(queue, "plugins");
-		queueDirectory(queue, "jars");
-		queueDirectory(queue, "retro");
+			queue.add("ij.jar");
+			queueDirectory(queue, "plugins");
+			queueDirectory(queue, "jars");
+			queueDirectory(queue, "retro");
+		} else
+			for (int i = 0; i < only.length; i++)
+				queue.add(only[i]);
 
 		Iterator iter = queue.iterator();
 		int i = 0, total = queue.size();
@@ -490,7 +498,14 @@ public class UpdateFiji implements PlugIn {
 		}
 	}
 
-	public static void updateServer(String listFilePath) {
+	public static void updateServer(String[] args) {
+		String listFilePath = defaultServerListPath;
+		if (args.length > 0 && (args[0].startsWith("/") ||
+					args[0].startsWith("."))) {
+			listFilePath = args[0];
+			args = shift(args);
+		}
+
 		UpdateFiji remote = new UpdateFiji();
 		try {
 			InputStream input = new FileInputStream(listFilePath);
@@ -506,15 +521,29 @@ public class UpdateFiji implements PlugIn {
 
 		UpdateFiji local = new UpdateFiji();
 		local.forServer = true;
-		local.initialize(null);
+		local.initialize(null, args);
 
-		String[] launchers = {
-			"linux", "linux64",
-			"macosx", "tiger",
-			"win32.exe", "win64.exe"
-		};
-		for (int i = 0; i < launchers.length; i++)
-			local.initializeFile("fiji-" + launchers[i]);
+		if (args.length == 0) {
+			String[] launchers = {
+				"linux", "linux64",
+				"macosx", "tiger",
+				"win32.exe", "win64.exe"
+			};
+			for (int i = 0; i < launchers.length; i++)
+				local.initializeFile("fiji-" + launchers[i]);
+		} else {
+			// Only update a few files, but do not remove the others
+			Iterator iter = remote.digests.keySet().iterator();
+			while (iter.hasNext()) {
+				String name = (String)iter.next();
+				if (local.digests.containsKey(name))
+					continue;
+				local.digests.put(name,
+						remote.digests.get(name));
+				local.dates.put(name,
+						remote.dates.get(name));
+			}
+		}
 
 		String remotePrefix = new File(listFilePath).getParent();
 
@@ -561,15 +590,21 @@ public class UpdateFiji implements PlugIn {
 		}
 	}
 
+	public static String[] shift(String[] list) {
+		if (list.length < 1)
+			return list;
+		String[] result = new String[list.length - 1];
+		System.arraycopy(list, 1, result, 0, result.length);
+		return result;
+	}
+
 	public static void main(String[] args) {
 		if (args.length == 0)
 			show(null);
 		else if (args.length == 2 && args[0].equals("show"))
 			show(args[1]);
-		else if (args.length == 2 && args[0].equals("update"))
-			updateServer(args[1]);
-		else if (args.length == 1 && args[0].equals("update"))
-			updateServer(defaultServerListPath);
+		else if (args.length > 0 && args[0].equals("update"))
+			updateServer(shift(args));
 		else {
 			System.err.println("Usage: UpdateFiji "
 				+ "[(show|update) list-url]");
