@@ -181,7 +181,6 @@ public class bUnwarpJImageModel implements Runnable
 		coefficientsAreMirrored = true;
 
 		// Copy the pixel array
-		int k = 0;
 		image = new double[width * height];
 		bUnwarpJMiscTools.extractImage(ip, image);
 
@@ -766,20 +765,25 @@ public class bUnwarpJImageModel implements Runnable
 	public void popFromPyramid()
 	{
 		// Pop coefficients
-		if (cpyramid.isEmpty()) {
+		if (cpyramid.isEmpty()) 
+		{
 			currentWidth       = width;
 			currentHeight      = height;
 			currentCoefficient = coefficient;
-		} else {
+		} 
+		else 
+		{
 			currentWidth       = ((Integer)cpyramid.pop()).intValue();
 			currentHeight      = ((Integer)cpyramid.pop()).intValue();
 			currentCoefficient = (double [])cpyramid.pop();
 		}
 
-		if (currentDepth>0) currentDepth--;
+		if (currentDepth > 0) 
+			currentDepth--;
 
 		// Pop image
-		if (isTarget && !imgpyramid.isEmpty()) {
+		if (isTarget && !imgpyramid.isEmpty()) 
+		{
 			if (currentWidth != ((Integer)imgpyramid.pop()).intValue())
 				System.out.println("I cannot understand");
 			if (currentHeight != ((Integer)imgpyramid.pop()).intValue())
@@ -1182,20 +1186,22 @@ public class bUnwarpJImageModel implements Runnable
 	 */
 	public void setPyramidDepth (final int pyramidDepth)
 	{
-		int proposedPyramidDepth=pyramidDepth;
+		int proposedPyramidDepth = pyramidDepth;
 
 		// Check what is the maximum depth allowed by the image
-		int currentWidth=width;
-		int currentHeight=height;
-		int scale=0;
-		while (currentWidth>=min_image_size && currentHeight>=min_image_size) {
+		int currentWidth = width;
+		int currentHeight = height;
+		int scale = 0;
+		while (currentWidth>=min_image_size && currentHeight>=min_image_size) 
+		{
 			currentWidth/=2;
 			currentHeight/=2;
 			scale++;
 		}
 		scale--;
 
-		if (proposedPyramidDepth>scale) proposedPyramidDepth=scale;
+		if (proposedPyramidDepth > scale) 
+			proposedPyramidDepth = scale;
 
 		this.pyramidDepth = proposedPyramidDepth;
 	} /* end setPyramidDepth */
@@ -1289,7 +1295,8 @@ public class bUnwarpJImageModel implements Runnable
 		int halfWidth = width;
 		int halfHeight = height;
 		basicToCardinal2D(coefficient, fullDual, width, height, 7);
-		for (int depth = 1; ((depth <= pyramidDepth) && (!t.isInterrupted())); depth++) {
+		for (int depth = 1; ((depth <= pyramidDepth) && (!t.isInterrupted())); depth++) 
+		{
 			fullWidth = halfWidth;
 			fullHeight = halfHeight;
 			halfWidth /= 2;
@@ -1303,7 +1310,7 @@ public class bUnwarpJImageModel implements Runnable
 		}
 		smallestWidth  = halfWidth;
 		smallestHeight = halfHeight;
-		currentDepth=pyramidDepth+1;
+		currentDepth = pyramidDepth+1;
 	} /* end buildCoefficientPyramid */
 
 	/*------------------------------------------------------------------*/
@@ -1318,7 +1325,8 @@ public class bUnwarpJImageModel implements Runnable
 		 int halfWidth = width;
 		 int halfHeight = height;
 		 cardinalToDual2D(image, fullDual, width, height, 3);
-		 for (int depth = 1; ((depth <= pyramidDepth) && (!t.isInterrupted())); depth++) {
+		 for (int depth = 1; ((depth <= pyramidDepth) && (!t.isInterrupted())); depth++) 
+		 {
 			 fullWidth = halfWidth;
 			 fullHeight = halfHeight;
 			 halfWidth /= 2;

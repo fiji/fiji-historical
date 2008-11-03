@@ -329,13 +329,13 @@ public class bUnwarpJTransformation
 		this.output_ip_2           = output_ip_2;
 		this.dialog                = dialog;
 
-		this.originalSourceIP	  = sourceImp.getProcessor();
-		this.originalTargetIP	  = targetImp.getProcessor();
+		this.originalSourceIP	  = this.dialog.getOriginalSourceIP();
+		this.originalTargetIP	  = this.dialog.getOriginalTargetIP();
 
-		sourceWidth                = source.getWidth();
-		sourceHeight               = source.getHeight();
-		targetWidth                = target.getWidth();
-		targetHeight               = target.getHeight();
+		this.sourceWidth           = source.getWidth();
+		this.sourceHeight          = source.getHeight();
+		this.targetWidth           = target.getWidth();
+		this.targetHeight          = target.getHeight();
 	} /* end bUnwarpJTransformation */
 
 	/*------------------------------------------------------------------*/
@@ -366,7 +366,7 @@ public class bUnwarpJTransformation
 
 		// Ask memory for the transformation coefficients
 		intervals = (int)Math.pow(2, min_scale_deformation);
-
+		
 		cxTargetToSource = new double[intervals+3][intervals+3];
 		cyTargetToSource = new double[intervals+3][intervals+3];
 
@@ -422,6 +422,8 @@ public class bUnwarpJTransformation
 				cyTargetToSource[i][j] = yv + affineMatrix[1][0] * u;
 			}
 		}
+
+	
 
 		// Compute the affine transformation FROM THE SOURCE TO THE TARGET coordinates
 		// Notice again that this matrix is independent of the scale, but the residues are not
@@ -2970,7 +2972,6 @@ public class bUnwarpJTransformation
 		Arrays.sort(sortedgradient);
 
 		double largestGradient = sortedgradient[M-1];
-		//System.out.println("largestGradient = " + largestGradient);
 
 		// We set the threshold gradient at 9% of the largest value.
 		double gradient_th = 0.09 * largestGradient;
@@ -2981,7 +2982,6 @@ public class bUnwarpJTransformation
 			if(sortedgradient[i] >= gradient_th)
 				Mused++;
 
-		//System.out.println("Mused = " + Mused);
 
 		double [][] u         = new double  [Mused][Mused];
 //		double [][] v         = null; //new double  [Mused][Mused];
