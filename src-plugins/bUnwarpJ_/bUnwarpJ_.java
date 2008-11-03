@@ -22,7 +22,7 @@
 
 /**
  * ====================================================================
- *  Version: October 24th, 2008
+ *  Version: November 3rd, 2008
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -76,7 +76,7 @@ import java.util.StringTokenizer;
  * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.0 10/24/2008
+ * @version 2.0 11/03/2008
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  * @author Jan Kybic
  */
@@ -116,8 +116,6 @@ public class bUnwarpJ_ implements PlugIn
     
     /** minimum image scale */
     private int     min_scale_image            = 0;
-    /** maximum depth for the image pyramid */
-    private int     imagePyramidDepth          = 3;
     /** stopping threshold */
     private static double  stopThreshold      = 1e-2;
 
@@ -184,8 +182,6 @@ public class bUnwarpJ_ implements PlugIn
 		this.richOutput 		   	= dialog.getNextBoolean();
 		this.saveTransformation 	= dialog.getNextBoolean();
         dialog.setSaveTransformation(this.saveTransformation);
-
-        this.imagePyramidDepth = max_scale_deformation-min_scale_deformation+1;
 
         int outputLevel = 1;
 

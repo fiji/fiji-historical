@@ -122,7 +122,7 @@ public class bUnwarpJDialog extends GenericDialog
 	/** maximum scale deformation */
 	private int max_scale_deformation = 2;
 	/** mode ("Accurate" by default) */
-	private static int mode = 1;
+	private int mode = 1;
 
 	// Transformation parameters
 	/** divergency weight */
@@ -741,11 +741,11 @@ public class bUnwarpJDialog extends GenericDialog
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Compute the depth of the resolution pyramid.
+	 * Compute the depth of the image resolution pyramid.
 	 */
 	private void computeImagePyramidDepth ()
 	{
-		imagePyramidDepth = max_scale_deformation - min_scale_deformation + 1;
+		this.imagePyramidDepth = max_scale_deformation - min_scale_deformation + 1;
 	}
 
 
@@ -781,10 +781,11 @@ public class bUnwarpJDialog extends GenericDialog
 		source    =
 			new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse);
 
-		source.setPyramidDepth(imagePyramidDepth+min_scale_image);
+		this.computeImagePyramidDepth();
+		source.setPyramidDepth(imagePyramidDepth + min_scale_image);
 		source.getThread().start();
 		sourceIc  = sourceImp.getWindow().getCanvas();
-
+		
 		// If it is an stack, the second slice is considered a mask
 		if (sourceImp.getStackSize() == 1) 
 		{
@@ -830,7 +831,9 @@ public class bUnwarpJDialog extends GenericDialog
 
 		target    =
 			new bUnwarpJImageModel(targetImp.getProcessor(), true);
-		target.setPyramidDepth(imagePyramidDepth+min_scale_image);
+		
+		this.computeImagePyramidDepth();
+		target.setPyramidDepth(imagePyramidDepth + min_scale_image);
 		target.getThread().start();
 		targetIc  = targetImp.getWindow().getCanvas();
 
