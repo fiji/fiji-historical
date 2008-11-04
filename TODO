@@ -1,43 +1,32 @@
 A loose TODO list for Fiji
 ==========================
 
-- win:
-	- does not find in PATH
-	- console does not stay open
-	- memory misdetection
-	- could not find Java
+- win: verify that console window stays open when falling back to system Java
 - TrakEM2: use CommandListener to override the "File>Save" menu item
 - 3D viewer: Escape should activate the hand
 - try RecMaxSupressor (and apply it to 3d)
 - move Amira I/O into bio-formats already
 - make a JDK-less mirror of fiji.git
-- ImageJ: "write()" should fall back to stderr in headless mode
+- headless: should we activate "batch"?
+- find a way to set cwd for sed.py in VIB
+- fix "fiji -eval 'run("some script");'"
 - exclude ij.jar, headless.jar and precompiled/ij.jar from netbeans project
   (otherwise Netbeans will not use the ImageJ it compiled itself)
 - netbeans: exclude the classes found in src-plugins/ij/**/*.java from ImageJA/
-- put ij.Menus from ImageJA's fiji branch into misc/Fiji.jar, so that updating
-  ImageJ will still work.
-- plugins updater
 - test Bilateral Filter
 - Segmentation Editor fails
 - compile and test Java7 (has nasty bugs)
 - find out why jps shows no title for Fiji's process
 - Building "fake.jar" on Windows should warn and resort to making
   precompiled/fake.jar directly.  Same goes for the Fiji launcher.
-- scripts/commit-submodule.py: add to .gitmodules, too
 - add script recorder for the new scripting languages
-- add task-oriented tutorials (wiki)
-- add current BioFormats.
 - use the headless.jar trick to compile MacAdapter.source in ImageJA
-- Albert said that plugins.config-added plugins are not added alphabetically
-- add a plugin finder (a la Google suggest) to the Control Panel, and make
-  it wider by default
 - check which Reader Plugins do not extend ImagePlus
 - extend GenericDialog to provide Help, Advanced button
 - GenericDialog.addTooltext()
 - add tests (test that all plugins are found, test which image types
   they support, add regression tests, if file importers return ImagePlus)
-- maybe make a live CD from detaolb or some such
+- maybe make a live CD from knoppix or some such
 - maybe change the path of IJ_Prefs.txt also on other platforms than Win32?
 - in ImageJA: add Experts- and Simplified views to the GenericDialog.
 - in ImageJA: is there a way to have a FileField in GenericDialog?
@@ -46,17 +35,6 @@ A loose TODO list for Fiji
   HandleExtraFileTypes for save?  This would allow to work on top of custom
   file formats seamlessly.
 - reimplement TransformJ (Stephan Preibisch)
-
-
-Notes for the 1st Fiji Hackathon round table
-============================================
-
-some keywords to trigger discussions...
-
-- TaskManager (start from Thread Killer)
-- Tutorial on Git submodules
-- HOWTOs (Tutorials), lots of them!
-- ITK
+- look at ITK
 - Matlab (socket)
-- Funding?  (Zürich)
 - backup
