@@ -1,6 +1,8 @@
 A loose TODO list for Fiji
 ==========================
 
+- find a way to set cwd for sed.py in VIB
+- fix "fiji -eval 'run("some script");'"
 - exclude ij.jar, headless.jar and precompiled/ij.jar from netbeans project
   (otherwise Netbeans will not use the ImageJ it compiled itself)
 - netbeans: exclude the classes found in src-plugins/ij/**/*.java from ImageJA/
