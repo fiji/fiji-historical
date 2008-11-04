@@ -491,6 +491,10 @@ public class Fake {
 			while (end < value.length() &&
 					isVarChar(value.charAt(end)))
 				end++;
+			if (end < value.length() && value.charAt(end) == '(')
+				for (int p = end; p < value.length(); p++)
+					if (value.charAt(p) == ')')
+						return p + 1;
 			return end;
 		}
 
@@ -617,8 +621,7 @@ public class Fake {
 
 		public boolean isVarChar(char c) {
 			return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-				|| (c >= '0' && c <= '9') || c == '_'
-				|| c == '(' || c == ')' || c == '.';
+				|| (c >= '0' && c <= '9') || c == '_';
 		}
 
 		public void checkVariableNames() throws FakeException {
