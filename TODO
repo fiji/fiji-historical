@@ -28,7 +28,6 @@ A loose TODO list for Fiji
 - GenericDialog.addTooltext()
 - add tests (test that all plugins are found, test which image types
   they support, add regression tests, if file importers return ImagePlus)
-- look into the ImageJUpdater (maybe we need to disable it)
 - maybe make a live CD from detaolb or some such
 - maybe change the path of IJ_Prefs.txt also on other platforms than Win32?
 - in ImageJA: add Experts- and Simplified views to the GenericDialog.
