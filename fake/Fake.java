@@ -804,6 +804,9 @@ public class Fake {
 				while (iter.hasNext()) {
 					String prereq = (String)iter.next();
 
+					if (prereq.endsWith(".jar/"))
+						prereq = stripSuffix(prereq,
+								"/");
 					if (!allRules.containsKey(prereq)) {
 						if (this instanceof All)
 							error("Unknown target: "
