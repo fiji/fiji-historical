@@ -1,6 +1,7 @@
-package org.imagearchive.lsm.toolbox;
+package org.imagearchive.lsm.toolbox.info;
 
 import org.imagearchive.lsm.toolbox.info.Event;
+
 
 public class EventList {
 

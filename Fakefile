@@ -169,10 +169,10 @@ plugins/Javascript_.jar <- src-plugins/Javascript/*.java $COMMON
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar
 CLASSPATH(plugins/lens_correction.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
-plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
+plugins/LSM_Toolbox.jar <- plugins/LSM_Reader.jar/ \
+	src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.png \
 	src-plugins/LSM_Toolbox/**/*.jpg \
-	src-plugins/LSM_Toolbox/**/*.html \
 	src-plugins/LSM_Toolbox/**/*.txt
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar

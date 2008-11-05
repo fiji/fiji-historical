@@ -9,16 +9,16 @@ import javax.swing.table.AbstractTableModel;
 
 public class LsmImageTableModel extends AbstractTableModel{
 
-    public ArrayList files;
+    public ArrayList<File> files;
  
     public String[] columnTitles = {"Filename","Size","Last modifed"};
     
-    public LsmImageTableModel(ArrayList files){
+    public LsmImageTableModel(ArrayList<File> files){
         this.files = files;
     }
     
     public LsmImageTableModel(){
-        files = new ArrayList();
+        files = new ArrayList<File>();
     }
     
     public int getRowCount() {
@@ -43,7 +43,7 @@ public class LsmImageTableModel extends AbstractTableModel{
     	return "N/A";
     }
     
-    public Class getColumnClass(int col){
+    public Class<String> getColumnClass(int col){
         return String.class;
     }
     
@@ -67,13 +67,13 @@ public class LsmImageTableModel extends AbstractTableModel{
     }
     
     public void setValueAt(Object object,int row, int col){
-        files.set(row*columnTitles.length+col,object);
+        files.set(row*columnTitles.length+col,(File)object);
         fireTableDataChanged();
         fireTableCellUpdated(row, col);
     }
     
     public void insertFile(Object object,int row, int col){
-        files.add(row*columnTitles.length+col,object);
+        files.add(row*columnTitles.length+col,(File)object);
         fireTableDataChanged();
     }
     
@@ -84,7 +84,7 @@ public class LsmImageTableModel extends AbstractTableModel{
         return (File)files.get(row*columnTitles.length+col);
     }
 
-    public ArrayList getFiles() {
+    public ArrayList<File> getFiles() {
         return files;
     }
 }

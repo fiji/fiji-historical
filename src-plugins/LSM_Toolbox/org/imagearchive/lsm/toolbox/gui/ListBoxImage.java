@@ -1,7 +1,6 @@
 package org.imagearchive.lsm.toolbox.gui;
 
-
-import org.imagearchive.lsm.toolbox.info.LsmFileInfo;
+import org.imagearchive.lsm.reader.info.LSMFileInfo;
 
 public class ListBoxImage {
 
@@ -13,9 +12,9 @@ public class ListBoxImage {
 	
 	public int imageIndex;
 
-	public LsmFileInfo lsmFi;
+	public LSMFileInfo lsmFi;
 	
-	public ListBoxImage(String title, LsmFileInfo lsmFi ,int imageIndex) {
+	public ListBoxImage(String title, LSMFileInfo lsmFi ,int imageIndex) {
 		this.title = title;
 		this.lsmFi = lsmFi;
 		this.imageIndex = imageIndex;

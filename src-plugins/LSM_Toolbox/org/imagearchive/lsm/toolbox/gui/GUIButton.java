@@ -1,7 +1,6 @@
 package org.imagearchive.lsm.toolbox.gui;
 
 import java.awt.Font;
-import java.awt.Insets;
 import java.awt.SystemColor;
 
 import javax.swing.ImageIcon;

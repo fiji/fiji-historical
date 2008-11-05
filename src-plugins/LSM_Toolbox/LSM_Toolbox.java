@@ -6,7 +6,7 @@
  * Created on february 2002 Copyright (C) 2002-2008 Patrick Pirrotte
  *
  * ImageJ plugin
- * Version	:      4.0d
+ * Version	:      4.0e
  * Authors  :      Patrick PIRROTTE, Jerome MUTTERER
  * Licence  :	   GPL 
  * 
@@ -52,21 +52,18 @@
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Macro;
-import ij.WindowManager;
-import ij.gui.ImageWindow;
+import ij.macro.Functions;
 import ij.plugin.PlugIn;
-
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 
 import javax.swing.JFrame;
 
 import org.imagearchive.lsm.toolbox.BatchConverter;
+import org.imagearchive.lsm.toolbox.DomXmlExporter;
+import org.imagearchive.lsm.toolbox.LSMMacroExtension;
 import org.imagearchive.lsm.toolbox.MasterModel;
 import org.imagearchive.lsm.toolbox.Reader;
 import org.imagearchive.lsm.toolbox.gui.AboutDialog;
 import org.imagearchive.lsm.toolbox.gui.ControlPanelFrame;
-import org.imagearchive.lsm.toolbox.info.LsmFileInfo;
 
 /*******************************************************************************
  * class : LSM_Reader, main class *
@@ -74,7 +71,7 @@ import org.imagearchive.lsm.toolbox.info.LsmFileInfo;
 
 public class LSM_Toolbox implements PlugIn {
 
-	public MasterModel masterModel;
+	public MasterModel masterModel = new MasterModel();
 
 	public final String infoMessage = "LSM_Toolbox" + MasterModel.VERSION
 			+ " Copyright (C) 2002-2008 P. Pirrotte, J. Mutterer\n\n"
@@ -88,84 +85,65 @@ public class LSM_Toolbox implements PlugIn {
 
 	public void run(String args) {
 		IJ.register(LSM_Toolbox.class);
-		IJ.debugMode = MasterModel.debugMode;
-		masterModel = getMasterModel();
-		
+		MasterModel.debugMode = IJ.debugMode;
+
 		if (args.equals("about")) {
 			new AboutDialog(new JFrame(), masterModel).setVisible(true);
 			return;
 		}
 		if (IJ.versionLessThan("1.41a"))
 			return;
+		 if (IJ.macroRunning()) {
+			 Functions.registerExtensions(new LSMMacroExtension());
+		      return;
+	    }
+
 		String fileName = "";
 		String macroOptions = Macro.getOptions();
 		if (!args.equals(""))
-			fileName = getPath(args);
+			fileName = getMacroOption("file=", args);
 		if (macroOptions != null && (!macroOptions.equals("")))
-			fileName = getPath(macroOptions).trim();
-			
-		if (!fileName.equals("") && fileName.endsWith(".lsm")){
+			fileName = getMacroOption("file=", macroOptions).trim();
+
+		if (!fileName.equals("") && fileName.endsWith(".lsm")) {
+
 			final String fn = fileName;
 			final Reader reader = new Reader(masterModel);
-			ImageWindow iwc = null;
-					try {
-						IJ.showStatus("Loading image");
-						ImagePlus imp = reader.open(fn,
-								true);
-						IJ.showStatus("Image loaded");
-						if (imp == null) return;
-						imp.setPosition(1, 1, 1);	
-						imp.show();
-							iwc = imp.getWindow();
-							final LsmFileInfo lsm = (LsmFileInfo) iwc
-									.getImagePlus().getOriginalFileInfo();
-							iwc.addFocusListener(new FocusListener() {
-								final LsmFileInfo lsmfi = lsm;
+			try {
+				IJ.showStatus("Loading image");
+				ImagePlus imp = reader.open(fn, true);
+				IJ.showStatus("Image loaded");
+				if (imp == null)
+					return;
+				imp.setPosition(1, 1, 1);
+				imp.show();
+			} catch (OutOfMemoryError e) {
+				IJ.outOfMemory("Could not load lsm image.");
+			}
 
-								public void focusGained(FocusEvent e) {
-									masterModel.setLSMFI(lsmfi);
-								}
+		} else if (fileName.endsWith(".csv")) {
+			BatchConverter converter = new BatchConverter(masterModel);
+			converter.convertBatchFile(args);
 
-								public void focusLost(FocusEvent e) {
-								}
-							});
-							masterModel.setLSMFI(lsm);
-							masterModel.fireLSMFileInfoChanged();
-					} catch (OutOfMemoryError e) {
-						IJ.outOfMemory("Could not load lsm image.");
-					}
-		} else
-			if (args.endsWith(".csv")) {
-				BatchConverter converter = new BatchConverter(masterModel);
-				converter.convertBatchFile(args);
-				
-		} else
-			if (args.equals("")) {
-				controlPanel = new ControlPanelFrame(masterModel);
-				controlPanel.initializeGUI();
+		} else if (args.equals("")) {
+			controlPanel = new ControlPanelFrame(masterModel);
+			controlPanel.initializeGUI();
 		}
 	}
-	
-	public String getPath(String options){
-		int index = options.indexOf("file=");
-		return options.substring(index+5,options.length());
+
+	public String getMacroOption(String tag, String options) {
+		int index = options.indexOf(tag);
+		if (index == -1)
+			return null;
+		return options.substring(index + 5, options.length());
 	}
-	
-	//Use this method to open from a macro
-	public static void open(String args){
+
+	// Use this method to open from a macro
+	public static void open(String args) {
 		new LSM_Toolbox().run(args);
 	}
-	
-	private MasterModel getMasterModel(){
-		int ids[] = WindowManager.getIDList();
-		if (ids!=null){
-			for (int i=0;i<ids.length;i++){
-				ImagePlus imp = WindowManager.getImage(ids[0]);
-				if (imp.getOriginalFileInfo() instanceof LsmFileInfo){
-					return  ((LsmFileInfo)imp.getOriginalFileInfo()).getMasterModel();
-				}
-			}
-		}
-		return new MasterModel();
+
+	public static String getXML(String filename, boolean filter) {
+		return new DomXmlExporter().getXML(filename, filter);
 	}
 }

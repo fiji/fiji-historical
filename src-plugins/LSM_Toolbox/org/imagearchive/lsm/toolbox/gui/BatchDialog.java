@@ -53,8 +53,6 @@ public class BatchDialog extends JDialog {
 		
 	private JTable sourceTable;
 
-	private TableModel sourceTableModel;
-
 	private JScrollPane sourcePane;
 
 	private JTextField outputTF;
@@ -102,7 +100,7 @@ public class BatchDialog extends JDialog {
 		dirCB = new JCheckBox("Output each image to separate directory");
 		buttonsPanel = new JPanel();
 		mainPanel = new JPanel();
-		sourceTableModel = new DefaultTableModel();
+		//sourceTableModel = new DefaultTableModel();
 	}
 
 	public void setGUI() {

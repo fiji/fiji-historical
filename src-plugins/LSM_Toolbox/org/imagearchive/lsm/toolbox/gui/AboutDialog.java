@@ -61,7 +61,7 @@ public class AboutDialog extends JDialog {
 			+ MasterModel.VERSION
 			+ " (C) 2008 Patrick Pirrotte </center></html>";
 
-	private HtmlPageLoader loader;
+	//private HtmlPageLoader loader;
 	
 	public AboutDialog(JFrame parent, MasterModel masterModel)
 			throws HeadlessException {
@@ -145,7 +145,7 @@ public class AboutDialog extends JDialog {
 	}
 
 	public void loadPages() {
-		Object[][] pages = new Object[][]{{about,"html/about.html"},{changelog,"html/changelog.html"},{iconset,"html/lgpl.txt"},{license,"html/licence.txt"},{help,"html/help.html"}};
+		Object[][] pages = new Object[][]{{about,"html/about.htm"},{changelog,"html/changelog.htm"},{iconset,"html/lgpl.txt"},{license,"html/licence.txt"},{help,"html/help.htm"}};
 		HtmlPageLoader loader = new HtmlPageLoader(this, pages);
 		loader.start();
 		
