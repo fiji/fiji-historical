@@ -113,6 +113,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Multi_Thresholder.jar \
 	plugins/Daltonize_.jar \
 	plugins/Stitching_.jar \
+	plugins/LSM_Reader.jar \
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
