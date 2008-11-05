@@ -24,9 +24,6 @@
    var brushWidth = 10; //call("ij.Prefs.get", "startup.brush", "10");
    var floodType =  "8-connected"; //call("ij.Prefs.get", "startup.flood", "8-connected");
 
-   // The macro named "AutoRun" runs when ImageJ starts.
-   // macro "AutoRun" {print("AutoRun");}
-
    // The macro named "AutoRunAndHide" runs when ImageJ starts
    // and the file containing it is not displayed when ImageJ opens it.
    // macro "AutoRunAndHide" {}
@@ -49,6 +46,8 @@ function UseHEFT {
 }
 
 UseHEFT();
+
+// The macro named "AutoRun" runs when ImageJ starts.
 
 // Generate the Jython menu listing of .py files as plugins
 // and same for JRuby .rb and Cloure .clj
