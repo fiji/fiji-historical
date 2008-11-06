@@ -1,6 +1,17 @@
 A loose TODO list for Fiji
 ==========================
 
+- win:
+	- does not find in PATH
+	- console does not stay open
+	- memory misdetection
+	- could not find Java
+- TrakEM2: use CommandListener to override the "File>Save" menu item
+- 3D viewer: Escape should activate the hand
+- try RecMaxSupressor (and apply it to 3d)
+- move Amira I/O into bio-formats already
+- make a JDK-less mirror of fiji.git
+- ImageJ: "write()" should fall back to stderr in headless mode
 - exclude ij.jar, headless.jar and precompiled/ij.jar from netbeans project
   (otherwise Netbeans will not use the ImageJ it compiled itself)
 - netbeans: exclude the classes found in src-plugins/ij/**/*.java from ImageJA/
