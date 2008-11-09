@@ -96,18 +96,8 @@ static char *get_win_error(void)
 static void *dlopen(const char *name, int flags)
 {
 	void *result = LoadLibrary(name);
-	DWORD error_code = GetLastError();
-	LPSTR buffer;
 
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			FORMAT_MESSAGE_FROM_SYSTEM |
-			FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL,
-			error_code,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			(LPSTR)&buffer,
-			0, NULL);
-	dlerror_value = buffer;
+	dlerror_value = get_win_error();
 
 	return result;
 }
@@ -252,6 +242,7 @@ static bool parse_bool(string &value)
 #endif
 
 const char *fiji_dir;
+char *main_argv0;
 char **main_argv;
 int main_argc;
 const char *main_class;
@@ -283,9 +274,12 @@ char *last_slash(const char *path)
 
 static const char *make_absolute_path(const char *path)
 {
-	static char bufs[2][PATH_MAX + 1], *buf = bufs[0], *next_buf = bufs[1];
+	static char bufs[2][PATH_MAX + 1], *buf = bufs[0];
 	char cwd[1024] = "";
+#ifndef WIN32
+	static char *next_buf = bufs[1];
 	int buf_index = 1, len;
+#endif
 
 	int depth = 20;
 	char *last_elem = NULL;
@@ -373,9 +367,38 @@ static bool is_absolute_path(const char *path)
 	return path[0] == '/';
 }
 
+bool file_exists(string path)
+{
+	ifstream test(path.c_str());
+	if (!test.is_open())
+		return false;
+	test.close();
+	return true;
+}
+
+static inline int suffixcmp(const char *string, int len, const char *suffix)
+{
+	int suffix_len = strlen(suffix);
+	if (len < suffix_len)
+		return -1;
+	return strncmp(string + len - suffix_len, suffix, suffix_len);
+}
+
 static string find_in_path(const char *path)
 {
 	const char *p = getenv("PATH");
+
+#ifdef WIN32
+	int len = strlen(path);
+	string path_with_suffix;
+	if (suffixcmp(path, len, ".exe")) {
+		path_with_suffix = string(path) + ".exe";
+		path = path_with_suffix.c_str();
+	}
+	string in_cwd = string(make_absolute_path(path));
+	if (file_exists(in_cwd))
+		return in_cwd;
+#endif
 
 	if (!p) {
 		cerr << "Could not get PATH" << endl;
@@ -383,7 +406,7 @@ static string find_in_path(const char *path)
 	}
 
 	for (;;) {
-		const char *colon = strchr(p, ':'), *orig_p = p;
+		const char *colon = strchr(p, PATH_SEP[0]), *orig_p = p;
 		int len = colon ? colon - p : strlen(p);
 		struct stat st;
 		char buffer[PATH_MAX];
@@ -406,14 +429,6 @@ static string find_in_path(const char *path)
 				(st.st_mode & S_IX))
 			return make_absolute_path(buffer);
 	}
-}
-
-static inline int suffixcmp(const char *string, int len, const char *suffix)
-{
-	int suffix_len = strlen(suffix);
-	if (len < suffix_len)
-		return -1;
-	return strncmp(string + len - suffix_len, suffix, suffix_len);
 }
 
 static const char *get_fiji_dir(const char *argv0)
@@ -502,9 +517,11 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 /* Windows specific stuff */
 
 #ifdef WIN32
+static bool console_opened = false;
+
 static void sleep_a_while(void)
 {
-	Sleep(60 * 1000);
+	sleep(60);
 }
 
 static void open_win_console(void)
@@ -524,6 +541,7 @@ static void open_win_console(void)
 			dlsym(kernel32_dll, "AttachConsole");
 	if (!attach_console || !attach_console((DWORD)-1)) {
 		AllocConsole();
+		console_opened = true;
 		atexit(sleep_a_while);
 	}
 
@@ -826,15 +844,6 @@ static void show_commandline(struct options& options)
 	cerr << endl;
 }
 
-bool file_exists(string path)
-{
-	ifstream test(path.c_str());
-	if (!test.is_open())
-		return false;
-	test.close();
-	return true;
-}
-
 bool file_is_newer(string path, string than)
 {
 	struct stat st1, st2;
@@ -962,6 +971,53 @@ static void /* no-return */ usage(void)
 #else
 #define MAX_32BIT_HEAP 1920
 #endif
+
+string make_memory_option(size_t memory_size)
+{
+	memory_size >>= 20;
+	if (sizeof(void *) == 4 && memory_size > MAX_32BIT_HEAP)
+		memory_size = MAX_32BIT_HEAP;
+	stringstream heap_size;
+	heap_size << "-Xmx"<< memory_size << "m";
+	return heap_size.str();
+}
+
+static void try_with_less_memory(struct options &options)
+{
+	char **new_argv = (char **)malloc((1
+				+ options.java_options.nr + 1
+				+ options.ij_options.nr + 1)
+			* sizeof(char *));
+
+	/* Find the last memory option */
+	int i;
+	for (i = options.java_options.nr - 1; i > 0; i--)
+		if (!strncmp(options.java_options.list[i], "-Xmx", 4))
+			break;
+	if (i < 0)
+		return;
+
+	/* Try again, with 25% less memory */
+	size_t memory_size = parse_memory(options.java_options.list[i] + 4);
+	int subtract = memory_size >> 2;
+	if (!subtract)
+		return;
+	memory_size -= subtract;
+	options.java_options.list[i] =
+		strdup(make_memory_option(memory_size).c_str());
+	cerr << "Trying with a smaller heap: "
+		<< options.java_options.list[i] << endl;
+
+	int j = 0;
+	new_argv[j++] = main_argv0;
+	for (i = 0; i < options.java_options.nr; i++)
+		new_argv[j++] = options.java_options.list[i];
+	new_argv[j++] = "--";
+	for (i = 0; i < options.ij_options.nr; i++)
+		new_argv[j++] = options.ij_options.list[i];
+	new_argv[j++] = NULL;
+	execv(new_argv[0], new_argv);
+}
 
 bool retrotranslator = false;
 
@@ -1150,14 +1206,8 @@ static int start_ij(void)
 		memory_size -= memory_size >> 2;
 	}
 
-	if (memory_size > 0) {
-		memory_size >>= 20;
-		if (sizeof(void *) == 4 && memory_size > MAX_32BIT_HEAP)
-			memory_size = MAX_32BIT_HEAP;
-		stringstream heap_size;
-		heap_size << "-Xmx"<< memory_size << "m";
-		add_option(options, heap_size, 0);
-	}
+	if (memory_size > 0)
+		add_option(options, make_memory_option(memory_size).c_str(), 0);
 
 	if (headless)
 		add_option(options, "-Djava.awt.headless=true", 0);
@@ -1257,15 +1307,22 @@ static int start_ij(void)
 
 	if (options.use_system_jvm)
 		env = NULL;
-	else if (create_java_vm(&vm, (void **)&env, &args)) {
-		cerr << "Warning: falling back to System JVM" << endl;
-		env = NULL;
-	} else {
-		stringstream java_home_path;
-		java_home_path << "-Djava.home=" << fiji_dir << "/"
-			<< relative_java_home;
-		prepend_string(options.java_options,
-			java_home_path.str().c_str());
+	else {
+		int result = create_java_vm(&vm, (void **)&env, &args);
+		if (result == JNI_ENOMEM) {
+			try_with_less_memory(options);
+			cerr << "Out of memory!" << endl;
+		}
+		if (result) {
+			cerr << "Warning: falling back to System JVM" << endl;
+			env = NULL;
+		} else {
+			stringstream java_home_path;
+			java_home_path << "-Djava.home=" << fiji_dir << "/"
+				<< relative_java_home;
+			prepend_string(options.java_options,
+				java_home_path.str().c_str());
+		}
 	}
 
 	if (env) {
@@ -1328,6 +1385,10 @@ static int start_ij(void)
 			java_binary += "bin/java";
 		}
 		cerr << "Using java binary: " << java_binary << endl;
+#ifdef WIN32
+		if (console_opened)
+			sleep(5); // sleep 5 seconds
+#endif
 		if (execvp(java_binary.c_str(), options.java_options.list))
 			cerr << "Could not launch system-wide Java" << endl;
 		exit(1);
@@ -1612,6 +1673,7 @@ int main(int argc, char **argv, char **e)
 		open_win_console();
 #endif
 	fiji_dir = get_fiji_dir(argv[0]);
+	main_argv0 = argv[0];
 	main_argv = argv;
 	main_argc = argc;
 	return start_ij();
