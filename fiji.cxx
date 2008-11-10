@@ -135,6 +135,14 @@ static int setenv(const char *name, const char *value, int overwrite)
 	return putenv(strdup(p.str().c_str()));
 }
 
+// Similarly we can do the same for unsetenv:
+static int unsetenv(const char *name)
+{
+	stringstream p;
+	p << name << "=";
+	return putenv(strdup(p.str().c_str()));
+}
+
 #else
 #include <dlfcn.h>
 #endif
@@ -144,6 +152,9 @@ void setenv_or_exit(const char *name, const char *value, int overwrite)
 {
 	int result;
 	if (!value) {
+#ifdef MACOSX
+		unsetenv(name);
+#else
 		result = unsetenv(name);
 		if (result) {
 			cerr << "Unsetting environment variable " <<
@@ -151,6 +162,7 @@ void setenv_or_exit(const char *name, const char *value, int overwrite)
 			exit(1);
 		}
 		return;
+#endif
 	}
 	result = setenv(name, value, overwrite);
 	if (result) {
