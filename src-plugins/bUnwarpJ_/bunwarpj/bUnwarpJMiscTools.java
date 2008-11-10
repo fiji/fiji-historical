@@ -23,7 +23,6 @@ package bunwarpj;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.ImageWindow;
 import ij.io.OpenDialog;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -1348,7 +1347,6 @@ public class bUnwarpJMiscTools
 
 			// Read width
 			line = br.readLine();
-			int lineN = 1;
 			StringTokenizer st = new StringTokenizer(line," ");
 			if (st.countTokens() != 6)
 			{
@@ -2006,8 +2004,8 @@ public class bUnwarpJMiscTools
 				fp.putPixelValue(j,i,array[ij]);
 		fp.resetMinAndMax();
 		final ImagePlus      ip=new ImagePlus(title, fp);
-		final ImageWindow    iw=new ImageWindow(ip);
 		ip.updateImage();
+		ip.show();
 	}
 
 	/*------------------------------------------------------------------*/
@@ -2030,8 +2028,8 @@ public class bUnwarpJMiscTools
 				fp.putPixelValue(j,i,array[i][j]);
 		fp.resetMinAndMax();
 		final ImagePlus      ip=new ImagePlus(title, fp);
-		final ImageWindow    iw=new ImageWindow(ip);
 		ip.updateImage();
+		ip.show();
 	}
 
 } /* End of MiscTools class */

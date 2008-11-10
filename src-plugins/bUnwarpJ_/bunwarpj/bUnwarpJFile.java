@@ -32,7 +32,6 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import java.awt.Button;
-import java.awt.CheckboxGroup;
 import java.awt.Dialog;
 import java.awt.Font;
 import java.awt.Frame;
@@ -77,8 +76,8 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 	 * Create a new instance of bUnwarpJFile.
 	 *
 	 * @param parentWindow pointer to the parent window
-	 * @param sourceImp pointer to the source image represantation
-	 * @param targetImp pointer to the target image represantation
+	 * @param sourceImp pointer to the source image representation
+	 * @param targetImp pointer to the target image representation
 	 * @param sourcePh point handler for the source image
 	 * @param targetPh point handler for the source image
 	 * @param dialog dialog for bUnwarpJ interface

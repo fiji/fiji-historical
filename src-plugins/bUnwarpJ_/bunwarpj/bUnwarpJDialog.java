@@ -125,7 +125,7 @@ public class bUnwarpJDialog extends GenericDialog
 	private int mode = 1;
 
 	// Transformation parameters
-	/** divergency weight */
+	/** divergence weight */
 	private double  divWeight                  = 0;
 	/** curl weight */
 	private double  curlWeight                 = 0;
@@ -170,7 +170,7 @@ public class bUnwarpJDialog extends GenericDialog
 	 * @param mode default registration mode (0 = Fast, 1 = Accurate)
 	 * @param min_scale_deformation default minimum scale deformation value
 	 * @param max_scale_deformation default maximum scale deformation value
-	 * @param divWeight default divergency weight
+	 * @param divWeight default divergence weight
 	 * @param curlWeight default curl weight
 	 * @param landmarkWeight default landmarks weight
 	 * @param imageWeight default image similarity weight
@@ -202,12 +202,12 @@ public class bUnwarpJDialog extends GenericDialog
 		this.min_scale_deformation 	= min_scale_deformation;
 		this.max_scale_deformation 	= max_scale_deformation;
 		this.divWeight 			   	= divWeight;
-		this.curlWeight 			   	= curlWeight;
+		this.curlWeight 			= curlWeight;
 		this.landmarkWeight        	= landmarkWeight;
 		this.imageWeight           	= imageWeight;
 		this.consistencyWeight     	= consistencyWeight;
 		this.stopThreshold         	= stopThreshold;
-		this.richOutput 			   	= richOutput;
+		this.richOutput 			= richOutput;
 		this.saveTransformation		= saveTransformation;
 
 
@@ -222,22 +222,22 @@ public class bUnwarpJDialog extends GenericDialog
 
 		// Registration Mode
 		String[] sRegistrationModes = { "Fast", "Accurate" };
-		addChoice("Registration Mode", sRegistrationModes, sRegistrationModes[mode]);
+		addChoice("Registration Mode", sRegistrationModes, sRegistrationModes[this.mode]);
 
 		// Advanced Options
 		addMessage("----- Advanced Options -----");
 		String[] sMinScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine" };
-		addChoice("Initial_Deformation :", sMinScaleDeformationChoices, sMinScaleDeformationChoices[min_scale_deformation]);	   
+		addChoice("Initial_Deformation :", sMinScaleDeformationChoices, sMinScaleDeformationChoices[this.min_scale_deformation]);	   
 		String[] sMaxScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine", "Super Fine" };
-		addChoice("Final_Deformation :", sMaxScaleDeformationChoices, sMaxScaleDeformationChoices[max_scale_deformation]);
-		addNumericField("Divergency_Weight :", divWeight, 1);
-		addNumericField("Curl_Weight :", curlWeight, 1);
-		addNumericField("Landmark_Weight :", landmarkWeight, 1);
-		addNumericField("Image_Weight :", imageWeight, 1);
-		addNumericField("Consistency_Weight :", consistencyWeight, 1);
-		addNumericField("Stop_Threshold :", stopThreshold, 2);
-		addCheckbox(" Verbose ", richOutput);
-		addCheckbox(" Save_Transformations ", saveTransformation);       	  
+		addChoice("Final_Deformation :", sMaxScaleDeformationChoices, sMaxScaleDeformationChoices[this.max_scale_deformation]);
+		addNumericField("Divergence_Weight :", this.divWeight, 1);
+		addNumericField("Curl_Weight :", this.curlWeight, 1);
+		addNumericField("Landmark_Weight :", this.landmarkWeight, 1);
+		addNumericField("Image_Weight :", this.imageWeight, 1);
+		addNumericField("Consistency_Weight :", this.consistencyWeight, 1);
+		addNumericField("Stop_Threshold :", this.stopThreshold, 2);
+		addCheckbox(" Verbose ", this.richOutput);
+		addCheckbox(" Save_Transformations ", this.saveTransformation);       	  
 
 		// Check if it is a macro call
 		this.bMacro = Macro.getOptions() != null;
