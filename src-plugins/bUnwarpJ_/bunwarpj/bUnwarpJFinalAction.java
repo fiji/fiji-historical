@@ -22,7 +22,6 @@ package bunwarpj;
  */
 
 import ij.ImagePlus;
-import ij.gui.ImageWindow;
 import ij.process.FloatProcessor;
 /**
  * Class to launch the registration in bUnwarpJ.
@@ -77,7 +76,7 @@ public class bUnwarpJFinalAction implements Runnable
     private int     outputLevel;
     /** flag to show the optimizer */
     private boolean showMarquardtOptim;
-    /** divergency weight */
+    /** divergence weight */
     private double  divWeight;
     /** curl weight */
     private double  curlWeight;
@@ -143,8 +142,8 @@ public class bUnwarpJFinalAction implements Runnable
         		}
         fp.resetMinAndMax();
         final ImagePlus      ip1 = new ImagePlus("Output Source-Target", fp);
-        final ImageWindow    iw1 = new ImageWindow(ip1);
         ip1.updateImage();
+        ip1.show();
 
         // Create output image (target-source)
         int Ydims = source.getHeight();
@@ -159,8 +158,8 @@ public class bUnwarpJFinalAction implements Runnable
                else fp2.putPixelValue(j, i, 0);
         fp2.resetMinAndMax();
         final ImagePlus      ip2 = new ImagePlus("Output Target-Source", fp2);
-        final ImageWindow    iw2 = new ImageWindow(ip2);
         ip2.updateImage();
+        ip2.show();
 
         // Perform the registration
         final bUnwarpJTransformation warp = new bUnwarpJTransformation(
@@ -196,7 +195,7 @@ public class bUnwarpJFinalAction implements Runnable
      * @param min_scale_image minimum image scale
      * @param outputLevel flag to specify the level of resolution in the output
      * @param showMarquardtOptim flag to show the optimizer
-     * @param divWeight divergency weight
+     * @param divWeight divergence weight
      * @param curlWeight curl weight
      * @param landmarkWeight landmark weight
      * @param imageWeight weight for image similarity

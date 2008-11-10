@@ -22,7 +22,7 @@
 
 /**
  * ====================================================================
- *  Version: November 3rd, 2008
+ *  Version: November 10th, 2008
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -56,7 +56,6 @@ import ij.plugin.PlugIn;
 
 import java.awt.Point;
 import java.util.Stack;
-import java.util.StringTokenizer;
 
 /*====================================================================
 |   bUnwarpJ_
@@ -76,7 +75,7 @@ import java.util.StringTokenizer;
  * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.0 11/03/2008
+ * @version 2.0 11/10/2008
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  * @author Jan Kybic
  */
@@ -99,7 +98,7 @@ public class bUnwarpJ_ implements PlugIn
     private static int mode = 1;
     
     // Transformation parameters
-    /** divergency weight */
+    /** divergence weight */
     private static double  divWeight                  = 0;
     /** curl weight */
     private static double  curlWeight                 = 0;
@@ -140,10 +139,10 @@ public class bUnwarpJ_ implements PlugIn
     		return;
     	}
 	
-    	final bUnwarpJDialog dialog = new bUnwarpJDialog(IJ.getInstance(), imageList, this.mode,
-    			this.min_scale_deformation, this.max_scale_deformation, this.divWeight, 
-    			this.curlWeight, this.landmarkWeight, this.imageWeight, this.consistencyWeight, 
-    			this.stopThreshold, this.richOutput, this.saveTransformation);
+    	final bUnwarpJDialog dialog = new bUnwarpJDialog(IJ.getInstance(), imageList, bUnwarpJ_.mode,
+    			bUnwarpJ_.min_scale_deformation, bUnwarpJ_.max_scale_deformation, bUnwarpJ_.divWeight, 
+    			bUnwarpJ_.curlWeight, bUnwarpJ_.landmarkWeight, bUnwarpJ_.imageWeight, bUnwarpJ_.consistencyWeight, 
+    			bUnwarpJ_.stopThreshold, bUnwarpJ_.richOutput, bUnwarpJ_.saveTransformation);
 	 	dialog.showDialog();
 	 	
 	 	// If canceled
@@ -164,24 +163,24 @@ public class bUnwarpJ_ implements PlugIn
 		this.targetImp = imageList[dialog.getNextChoiceIndex()];
 		  
 		// Fast or accurate mode
-		this.mode = dialog.getNextChoiceIndex();
+		bUnwarpJ_.mode = dialog.getNextChoiceIndex();
 		  
 		// Min and max scale deformation level
-		this.min_scale_deformation = dialog.getNextChoiceIndex();
-		this.max_scale_deformation = dialog.getNextChoiceIndex();
+		bUnwarpJ_.min_scale_deformation = dialog.getNextChoiceIndex();
+		bUnwarpJ_.max_scale_deformation = dialog.getNextChoiceIndex();
 				  
 		// Weights
-		this.divWeight  			= dialog.getNextNumber();
-		this.curlWeight 			= dialog.getNextNumber();
-		this.landmarkWeight 		= dialog.getNextNumber();
-		this.imageWeight			= dialog.getNextNumber();
-		this.consistencyWeight		= dialog.getNextNumber();
-		this.stopThreshold			= dialog.getNextNumber();
+		bUnwarpJ_.divWeight  			= dialog.getNextNumber();
+		bUnwarpJ_.curlWeight 			= dialog.getNextNumber();
+		bUnwarpJ_.landmarkWeight 		= dialog.getNextNumber();
+		bUnwarpJ_.imageWeight			= dialog.getNextNumber();
+		bUnwarpJ_.consistencyWeight		= dialog.getNextNumber();
+		bUnwarpJ_.stopThreshold			= dialog.getNextNumber();
 		  
 		// Verbose and save transformation options
-		this.richOutput 		   	= dialog.getNextBoolean();
-		this.saveTransformation 	= dialog.getNextBoolean();
-        dialog.setSaveTransformation(this.saveTransformation);
+		bUnwarpJ_.richOutput 		   	= dialog.getNextBoolean();
+		bUnwarpJ_.saveTransformation 	= dialog.getNextBoolean();
+        dialog.setSaveTransformation(bUnwarpJ_.saveTransformation);
 
         int outputLevel = 1;
 
@@ -378,9 +377,9 @@ public class bUnwarpJ_ implements PlugIn
        // Load landmarks
        if (fn_landmark.equals("") == false)
        {
-          Stack sourceStack = new Stack();
-          Stack targetStack = new Stack();
-          bUnwarpJMiscTools.loadPoints(fn_landmark,sourceStack,targetStack);
+          Stack<Point> sourceStack = new Stack<Point>();
+          Stack<Point> targetStack = new Stack<Point>();
+          bUnwarpJMiscTools.loadPoints(fn_landmark, sourceStack, targetStack);
 
           sourcePh  = new bUnwarpJPointHandler(sourceImp);
           targetPh  = new bUnwarpJPointHandler(targetImp);
@@ -603,22 +602,6 @@ public class bUnwarpJ_ implements PlugIn
        IJ.write("Adapt an elastic transformation to a new image size ");
        IJ.write("   bUnwarpj_ -adapt_transform target.jpg source.jpg input_transformation.txt output_transformation.txt 2");
     } /* end dumpSyntax */
-
-    /*------------------------------------------------------------------*/
-    /**
-     * Get tokens.
-     *
-     * @param options string to get the tokens from
-     * @return tokens
-     */
-    private String[] getTokens (final String options) 
-    {
-        StringTokenizer t = new StringTokenizer(options);
-        String[] token = new String[t.countTokens()];
-        for (int k = 0; k < token.length; k++) 
-                token[k] = t.nextToken();        
-        return(token);
-    } /* end getTokens */
 
     /*------------------------------------------------------------------*/
     /**

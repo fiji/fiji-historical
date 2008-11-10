@@ -174,7 +174,7 @@ public class bUnwarpJTransformation
 	private int     outputLevel;
 	/** flag to show the optimizer */
 	private boolean showMarquardtOptim;
-	/** divergency weight */
+	/** divergence weight */
 	private double  divWeight;
 	/** curl weight */
 	private double  curlWeight;
@@ -254,7 +254,7 @@ public class bUnwarpJTransformation
 	 * @param min_scale_deformation minimum scale deformation
 	 * @param max_scale_deformation maximum scale deformation
 	 * @param min_scale_image minimum image scale
-	 * @param divWeight divergency weight
+	 * @param divWeight divergence weight
 	 * @param curlWeight curl weight
 	 * @param landmarkWeight landmark weight
 	 * @param imageWeight weight for image similarity
@@ -2227,8 +2227,8 @@ public class bUnwarpJTransformation
 			grad[k] += vgrad[k];
 
 
-		this.partialDirectConsitencyError = f_direct;
-		this.partialInverseConsitencyError = f_inverse;
+		this.partialDirectConsitencyError = this.consistencyWeight * f_direct;
+		this.partialInverseConsitencyError = this.consistencyWeight * f_inverse;
 
 
 		double consistencyDirectError = (n_direct == 0) ? 1.0/FLT_EPSILON : (this.consistencyWeight * f_direct);
@@ -2527,7 +2527,7 @@ public class bUnwarpJTransformation
 			x1[p + halfM] = c[i + M];
 		}
 
-		// Source to Target evaluation
+		// Source to Target evaluation (Similarity + Landmarks + Regularization)
 		double f = evaluateSimilarity(x1, intervals, auxGrad1, only_image, show_error, false);		
 
 		double []x2 = new double [M];
@@ -2537,7 +2537,7 @@ public class bUnwarpJTransformation
 			x2[p + halfM] = c[i + M];
 		}
 
-		// Target to Source evaluation
+		// Target to Source evaluation (Similarity + Landmarks + Regularization)
 		f += evaluateSimilarity(x2, intervals, auxGrad2, only_image, show_error, true);		
 
 		// Gradient composition.
@@ -2551,6 +2551,7 @@ public class bUnwarpJTransformation
 
 		double f_consistency = 0;
 
+		// Consistency term
 		if(this.consistencyWeight != 0)
 		{
 			// Consistency gradient.
@@ -2564,6 +2565,8 @@ public class bUnwarpJTransformation
 		}
 
 		return f + f_consistency;
+
+		
 	}
 
 	/*--------------------------------------------------------------------------*/
@@ -2947,6 +2950,498 @@ public class bUnwarpJTransformation
 		return imageSimilarity + landmarkError + regularization;
 	}
 
+	/*--------------------------------------------------------------------------*/
+	/**
+	 * Evaluate the energy function in one direction (direct or inverse) and
+	 * calculates its gradient.
+	 * <p>Energy function:</p>
+	 * <p>E = w_i * E_similarity + w_l * E_landmarks + (w_r * E_rotational + w_d * E_divergence) + w_c * E_consistency</p>
+	 *
+	 * @param c Input: Deformation coefficients
+	 * @param intervals Input: Number of intervals for the deformation
+	 * @param grad_direct Output: Gradient of the energy function (direct direction)
+	 * @param grad_inverse Output: Gradient of the energy function (inverse direction)
+	 * @param only_image Input: if true, only the image term is considered and not the regularization
+	 * @param show_error Input: if true, an image is shown with the error
+	 * @param bIsReverse Input: flag to determine the transformation direction (target-source=FALSE or source-target=TRUE)
+	 * @return images similarity value
+	 */
+	private double evaluatePartialEnergy(
+			final double []c,
+			final int      intervals,
+			double []grad_direct,
+			double []grad_inverse,
+			final boolean  only_image,
+
+			final boolean  show_error,
+			boolean bIsReverse)
+	{
+
+		// Auxiliary variables for changing from source to target and inversely
+		bUnwarpJImageModel auxTarget = target;
+		bUnwarpJImageModel auxSource = source;
+
+		bUnwarpJMask auxTargetMsk = targetMsk;
+		bUnwarpJMask auxSourceMsk = sourceMsk;
+
+		bUnwarpJPointHandler auxTargetPh = targetPh;
+		bUnwarpJPointHandler auxSourcePh = sourcePh;
+
+		bUnwarpJImageModel swx = swxTargetToSource;
+		bUnwarpJImageModel swy = swyTargetToSource;
+		
+		bUnwarpJImageModel swx_inverse = swxSourceToTarget;
+		bUnwarpJImageModel swy_inverse = swySourceToTarget;
+
+		double auxFactorWidth = this.target.getFactorWidth();
+		double auxFactorHeight = this.target.getFactorHeight();
+
+		double P11[][] = this.P11_TargetToSource;
+		double P12[][] = this.P12_TargetToSource;
+		double P22[][] = this.P22_TargetToSource;
+
+		int auxTargetCurrentWidth = this.targetCurrentWidth;
+		int auxTargetCurrentHeight = this.targetCurrentHeight;
+
+		// Change if necessary
+		if(bIsReverse)
+		{
+			auxSource = target;
+			auxTarget = source;
+
+			auxSourceMsk = targetMsk;
+			auxTargetMsk = sourceMsk;
+
+			auxSourcePh = targetPh;
+			auxTargetPh = sourcePh;
+
+			swx = swxSourceToTarget;
+			swy = swySourceToTarget;
+			
+			swx_inverse = swxTargetToSource;
+			swy_inverse = swyTargetToSource;
+
+			auxFactorWidth = this.sourceFactorWidth;
+			auxFactorHeight = this.sourceFactorHeight;
+
+			P11 = this.P11_SourceToTarget;
+			P12 = this.P12_SourceToTarget;
+			P22 = this.P22_SourceToTarget;
+
+			auxTargetCurrentWidth = this.sourceCurrentWidth;
+			auxTargetCurrentHeight = this.sourceCurrentHeight;
+		}
+
+		int cYdim = intervals+3;
+		int cXdim = cYdim;
+		int Nk = cYdim * cXdim;
+		int twiceNk = 2 * Nk;
+		double []vgradimg = new double[twiceNk];
+		double []vgradcons = new double[twiceNk];
+		double []vgradreg = new double[twiceNk];
+		double []vgradland = new double[twiceNk];
+
+		// Set the transformation coefficients to the interpolator
+		swx.setCoefficients(c, cYdim, cXdim, 0);
+		swy.setCoefficients(c, cYdim, cXdim, Nk);
+
+		// Initialize gradient
+		for (int k=0; k<twiceNk; k++) 
+			vgradcons[k] = vgradreg[k] = vgradland[k] = vgradimg[k] = grad_direct[k] =grad_inverse[k] = 0.0F;
+
+		// Estimate the energy and gradient between both images
+		double imageSimilarity = 0.0;
+		double consistencyError = 0.0;
+		int Ydim = auxTarget.getCurrentHeight();
+		int Xdim = auxTarget.getCurrentWidth();
+
+		// Prepare to show
+		double [][]error_image = null;
+		double [][]div_error_image = null;
+		double [][]curl_error_image = null;
+		double [][]laplacian_error_image = null;
+		double [][]jacobian_error_image = null;
+		if (show_error)
+		{
+			error_image = new double[Ydim][Xdim];
+			div_error_image = new double[Ydim][Xdim];
+			curl_error_image = new double[Ydim][Xdim];
+			laplacian_error_image = new double[Ydim][Xdim];
+			jacobian_error_image = new double[Ydim][Xdim];
+			for (int v=0; v<Ydim; v++)
+				for (int u=0; u<Xdim; u++)
+					error_image[v][u]=div_error_image[v][u]=curl_error_image[v][u]=
+						laplacian_error_image[v][u]=jacobian_error_image[v][u]=-1.0;
+		}
+
+		// Loop over all points in the source image
+		int n = 0;
+		if (imageWeight!=0 || show_error)
+		{
+			double []xD2 = new double[3]; // Some space for the second derivatives
+			double []yD2 = new double[3]; // of the transformation
+			double []xD  = new double[2]; // Some space for the second derivatives
+			double []yD  = new double[2]; // of the transformation
+			double []I1D = new double[2]; // Space for the first derivatives of I1
+			double hx = (Xdim-1)/intervals;   // Scale in the X axis
+			double hy = (Ydim-1)/intervals;   // Scale in the Y axis
+
+			double []targetCurrentImage = auxTarget.getCurrentImage();
+
+
+			int uv=0;
+			for (int v=0; v<Ydim; v++)
+			{
+				for (int u=0; u<Xdim; u++, uv++)
+				{
+					// Compute similarity and consistency terms .....................................................
+
+					// Check if this point is in the target mask
+					if (auxTargetMsk.getValue(u/auxFactorWidth, v/auxFactorHeight))
+					{
+						// Compute value in the source image
+						double I2 = targetCurrentImage[uv];
+
+						// Compute the position of this point in the target
+						double x = swx.precomputed_interpolateI(u,v);
+						double y = swy.precomputed_interpolateI(u,v);
+						
+						final int ix = (int)Math.round(x);
+						final int iy = (int)Math.round(y);
+
+						// Check if this point is in the source mask
+						if (auxSourceMsk.getValue((double)ix/auxFactorWidth, (double)iy/auxFactorHeight))
+						{
+							// Similarity term: Compute the image value of the target at that point
+							auxSource.prepareForInterpolation(x, y, PYRAMID);
+							double I1 = auxSource.interpolateI();
+							auxSource.interpolateD(I1D);
+							double I1dx = I1D[0], I1dy = I1D[1];
+
+							double error = I2 - I1;
+							double error2 = error * error;
+							if (show_error) 
+								error_image[v][u] = error;
+							imageSimilarity += error2;
+
+							// Consistency term: Compute coordinate applying the inverse transformation.														
+							final double x2 = swx_inverse.precomputed_interpolateI(ix, iy);
+							final double y2 = swy_inverse.precomputed_interpolateI(ix, iy);
+							
+							double aux1 = u - x2;
+							double aux2 = v - y2;
+
+							consistencyError += aux1 * aux1 + aux2 * aux2;
+						
+							
+							// Compute the derivative with respect to all the c coefficients							
+							for (int l=0; l<4; l++)
+								for (int m=0; m<4; m++)
+								{
+									if (swx.prec_yIndex[v][l]==-1 || swx.prec_xIndex[u][m]==-1) continue;
+
+									// --- Similarity term derivative ---
+									
+									// Note: It's the same to take the indexes and weightI from swx as from swy
+									double weightI = swx.precomputed_getWeightI(l,m,u,v);
+
+									int k = swx.prec_yIndex[v][l] * cYdim + swx.prec_xIndex[u][m];
+
+									// Compute partial result
+									// There's also a multiplication by 2 that I will
+									// do later
+									double aux = -error * weightI;
+
+									// Derivative related to X deformation
+									vgradimg[k]   += aux*I1dx;
+
+									// Derivative related to Y deformation
+									vgradimg[k+Nk]+= aux*I1dy;
+									
+									// --- Consistency term derivative ---
+									// Compute the derivative with respect to all the c coefficients
+									// Derivatives from direct coefficients.
+									double dddx = weightI;
+									double dixx = swx_inverse.precomputed_getWeightDx(l, m, ix, iy);
+									double diyy = swy_inverse.precomputed_getWeightDy(l, m, ix, iy);
+
+									double weightIx = (dixx + diyy) * dddx;
+
+									double dddy = weightI;
+									double dixy = swx_inverse.precomputed_getWeightDy(l, m, ix, iy);
+									double diyx = swy_inverse.precomputed_getWeightDx(l, m, ix, iy);
+
+									double weightIy = (diyx + dixy) * dddy;
+
+									// Derivative related to X deformation
+									vgradcons[k]   += -aux1 * weightIx;
+
+									// Derivative related to Y deformation
+									vgradcons[k+Nk]+= -aux2 * weightIy;
+								}
+							
+							// Consistency term: Derivatives from inverse coefficients.
+							for (int l=0; l<4; l++)
+								for (int m=0; m<4; m++)
+								{
+									// d inverse(direct(x)) / d c_inverse
+									if (swx_inverse.prec_yIndex[iy][l]==-1 || swx_inverse.prec_xIndex[ix][m]==-1)
+										continue;
+
+									double weightI = swx_inverse.precomputed_getWeightI(l, m, ix, iy);
+
+									int k = swx_inverse.prec_yIndex[iy][l] * cYdim + swx_inverse.prec_xIndex[ix][m];
+
+									// Derivative related to X deformation
+									grad_inverse[k]    += -aux1 * weightI;
+
+									// Derivative related to Y deformation
+									grad_inverse[k+Nk] += -aux2 * weightI;
+								}
+							
+							n++; // Another point has been successfully evaluated
+						}
+					}
+
+					// Show regularization images ...........................................
+					if (show_error)
+					{
+						double gradcurlx=0.0, gradcurly=0.0;
+						double graddivx =0.0, graddivy =0.0;
+						double xdx  =0.0, xdy  =0.0,
+						ydx  =0.0, ydy  =0.0,
+						xdxdy=0.0, xdxdx=0.0, xdydy=0.0,
+						ydxdy=0.0, ydxdx=0.0, ydydy=0.0;
+
+						// Compute the first derivative terms
+						swx.precomputed_interpolateD(xD,u,v); xdx=xD[0]/hx; xdy=xD[1]/hy;
+						swy.precomputed_interpolateD(yD,u,v); ydx=yD[0]/hx; ydy=yD[1]/hy;
+
+						// Compute the second derivative terms
+						swx.precomputed_interpolateD2(xD2,u,v);
+						xdxdy=xD2[0]; xdxdx=xD2[1]; xdydy=xD2[2];
+						swy.precomputed_interpolateD2(yD2,u,v);
+						ydxdy=yD2[0]; ydxdx=yD2[1]; ydydy=yD2[2];
+
+						// Error in the divergence
+						graddivx=xdxdx+ydxdy;
+						graddivy=xdxdy+ydydy;
+
+						double graddiv = graddivx*graddivx + graddivy*graddivy;
+						double errorgraddiv = divWeight*graddiv;
+
+						if (divWeight!=0) div_error_image [v][u]=errorgraddiv;
+						else              div_error_image [v][u]=graddiv;
+
+						// Compute error in the curl
+						gradcurlx = -xdxdy+ydxdx;
+						gradcurly = -xdydy+ydxdy;
+						double gradcurl = gradcurlx*gradcurlx + gradcurly*gradcurly;
+						double errorgradcurl = curlWeight*gradcurl;
+
+						if (curlWeight!=0) curl_error_image[v][u]=errorgradcurl;
+						else               curl_error_image[v][u]=gradcurl;
+
+						// Compute Laplacian error
+						laplacian_error_image[v][u] =xdxdx*xdxdx;
+						laplacian_error_image[v][u]+=xdxdy*xdxdy;
+						laplacian_error_image[v][u]+=xdydy*xdydy;
+						laplacian_error_image[v][u]+=ydxdx*ydxdx;
+						laplacian_error_image[v][u]+=ydxdy*ydxdy;
+						laplacian_error_image[v][u]+=ydydy*ydydy;
+
+						// Compute jacobian error
+						jacobian_error_image[v][u] =xdx*ydy-xdy*ydx;
+					}
+										
+				}
+			}
+		}
+
+				
+		
+		if (n!=0)
+		{
+			// Average the consistency related terms
+			consistencyError *= this.consistencyWeight / n;
+
+			// Average the image related terms
+			double aux = this.consistencyWeight * 2.0 / n;  // This is the 2 coming from the
+															 // derivative that I would do later
+			for (int k=0; k<vgradcons.length; k++)
+			{
+				vgradcons[k] *= aux;
+				grad_inverse[k] *= aux;
+			}
+		
+			
+			// Average the image related terms
+			imageSimilarity *= this.imageWeight/n;
+			aux = imageWeight * 2.0/n; 	// This is the 2 coming from the
+												// derivative that I would do later
+			for (int k=0; k<twiceNk; k++) 
+				vgradimg[k]*=aux;
+		} 
+		else
+		{
+			if (this.imageWeight==0) 
+				imageSimilarity = 0;
+			else                
+				imageSimilarity = 1/FLT_EPSILON;
+			
+			if(this.consistencyWeight == 0) 
+				consistencyError = 0;
+			else 
+				consistencyError = 1/FLT_EPSILON;
+		}
+
+		// Compute regularization term ..............................................
+		double regularization = 0.0;
+		if (!only_image)
+		{
+			for (int i=0; i<Nk; i++)
+				for (int j=0; j<Nk; j++) 
+				{
+					regularization += c[   i]*P11[i][j]*c[   j]+// c1^t P11 c1
+									  c[Nk+i]*P22[i][j]*c[Nk+j]+// c2^t P22 c2
+									  c[   i]*P12[i][j]*c[Nk+j];// c1^t P12 c2
+					vgradreg[   i] += 2*P11[i][j]*c[j];         // 2 P11 c1
+					vgradreg[Nk+i] += 2*P22[i][j]*c[Nk+j];      // 2 P22 c2
+					vgradreg[   i] +=  P12[i][j]*c[Nk+j];      //   P12 c2
+					vgradreg[Nk+i] +=  P12[j][i]*c[   j];      //   P12^t c1
+				}
+			regularization *= 1.0/(Ydim*Xdim);
+			
+			for (int k=0; k<twiceNk; k++) 
+				vgradreg [k] *= 1.0/(Ydim*Xdim);
+		}
+
+		// Compute landmark error and derivative ...............................
+		// Get the list of landmarks
+		double landmarkError=0.0;
+		int K = 0;
+		if (auxTargetPh!=null) K = auxTargetPh.getPoints().size();
+		if (landmarkWeight != 0)
+		{
+			Vector <Point> sourceVector=null;
+			if (auxSourcePh!=null) sourceVector = auxSourcePh.getPoints();
+			else                   sourceVector = new Vector <Point> ();
+			Vector <Point> targetVector = null;
+			if (auxTargetPh!=null) targetVector = auxTargetPh.getPoints();
+			else                   targetVector = new Vector <Point> ();
+
+			for (int kp=0; kp<K; kp++)
+			{
+				// Get the landmark coordinate in the target image
+				final Point sourcePoint = (Point)sourceVector.elementAt(kp);
+				final Point targetPoint = (Point)targetVector.elementAt(kp);
+				double u = auxFactorWidth *(double)targetPoint.x;
+				double v = auxFactorHeight*(double)targetPoint.y;
+
+				// Express it in "spline" units
+				double tu = (double)(u * intervals) / (double)(auxTargetCurrentWidth  - 1) + 1.0F;
+				double tv = (double)(v * intervals) / (double)(auxTargetCurrentHeight - 1) + 1.0F;
+
+				// Transform this coordinate to the source image
+				swx.prepareForInterpolation(tu, tv, false);
+				double x=swx.interpolateI();
+				swy.prepareForInterpolation(tu, tv, false);
+				double y=swy.interpolateI();
+
+				// Substract the result from the residual
+				double dx=auxFactorWidth *(double)sourcePoint.x - x;
+				double dy=auxFactorHeight*(double)sourcePoint.y - y;
+
+				// Add to landmark error
+				landmarkError += dx*dx + dy*dy;
+
+				// Compute the derivative with respect to all the c coefficients
+				for (int l=0; l<4; l++)
+					for (int m=0; m<4; m++)
+					{
+						if (swx.yIndex[l]==-1 || swx.xIndex[m]==-1) continue;
+						int k=swx.yIndex[l]*cYdim+swx.xIndex[m];
+
+						// There's also a multiplication by 2 that I will do later
+						// Derivative related to X deformation
+						vgradland[k]   -=dx*swx.getWeightI(l,m);
+
+						// Derivative related to Y deformation
+						vgradland[k+Nk]-=dy*swy.getWeightI(l,m);
+					}
+			}
+		}
+
+		if (K!=0)
+		{
+			landmarkError *= landmarkWeight/K;
+			double aux = 2.0 * landmarkWeight/K;
+			// This is the 2 coming from the derivative
+			// computation that I would do at the end
+			for (int k=0; k<twiceNk; k++) 
+				vgradland[k] *= aux;
+		}
+		if (only_image) landmarkError = 0;
+
+		// Finish computations .............................................................
+		// Add all gradient terms
+		for (int k=0; k<twiceNk; k++)
+			grad_direct[k] += vgradimg[k] +  + vgradcons[k] + vgradreg[k] + vgradland[k];
+
+		if (show_error)
+		{
+			bUnwarpJMiscTools.showImage("Error",error_image);
+			bUnwarpJMiscTools.showImage("Divergence Error",div_error_image);
+			bUnwarpJMiscTools.showImage("Curl Error",curl_error_image);
+			bUnwarpJMiscTools.showImage("Laplacian Error",laplacian_error_image);
+			bUnwarpJMiscTools.showImage("Jacobian Error",jacobian_error_image);
+		}
+
+		if (showMarquardtOptim)
+		{
+			String s = bIsReverse ? new String("(t-s)") : new String("(s-t)");
+			if (imageWeight != 0) 
+			{
+				IJ.write("    Image          error " + s + ": " + imageSimilarity);
+				if(bIsReverse)
+					this.partialInverseSimilarityError = imageSimilarity;
+				else
+					this.partialDirectSimilarityError = imageSimilarity;
+
+			}
+			if (consistencyWeight != 0) 
+			{
+				IJ.write("    Consistency          error " + s + ": " + consistencyError);
+				if(bIsReverse)
+					this.partialInverseConsitencyError = consistencyError;
+				else
+					this.partialDirectConsitencyError = consistencyError;
+
+			}
+			if (landmarkWeight != 0)               
+			{
+				IJ.write("    Landmark       error " + s + ": " + landmarkError);
+				if(bIsReverse)
+					this.partialInverseLandmarkError = landmarkError;
+				else
+					this.partialDirectLandmarkError = landmarkError;
+			}
+			if (divWeight != 0 || curlWeight != 0)
+			{
+				IJ.write("    Regularization error " + s + ": " + regularization);
+				if(bIsReverse)
+					this.partialInverseRegularizationError = regularization;
+				else
+					this.partialDirectRegularizationError = regularization;
+					
+			}
+		}
+		
+		return imageSimilarity + consistencyError + landmarkError + regularization;
+		
+	} /* end evaluatePartialEnergy */
+	
+	
 	/*--------------------------------------------------------------------------*/
 	/**
 	 * In this function the system (H+lambda*Diag(H))*update=gradient
