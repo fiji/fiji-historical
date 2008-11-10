@@ -36,7 +36,7 @@ function doItMultithreaded(start, end) {
 		run: function() {
 			for (var i = ai.getAndIncrement(); i <= end; i = ai.getAndIncrement()) {
 				IJ.log("i is " + i);
-				Thread.sleep(100);
+				Thread.sleep(100); // NOT NEEDED, just to pretend we are doing something!
 			}
 		}
 	}
@@ -75,7 +75,6 @@ function multithreader(fun, start, end) {
 				// Execute the function given as argument,
 				// passing to it all optional arguments:
 				fun(i, args);
-				Thread.sleep(100);
 			}
 		}
 	}
