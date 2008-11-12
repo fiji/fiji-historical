@@ -190,11 +190,6 @@ public class Open_MRC_Leginon extends ImagePlus implements PlugIn {
 			if (directory.startsWith("http:/")) directory = "http://" + directory.substring(6); // the double '//' has been eliminated by the File object call to getParent()
 		}
 
-		if (!filename.toLowerCase().endsWith(".mrc")) {
-			this.width = this.height = -1;
-			return;
-		}
-
 		if (!directory.endsWith("/")) directory += "/"; // works in windows too
 
 		InputStream is;
