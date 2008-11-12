@@ -1,9 +1,15 @@
+fiji (20081112.2) unstable; urgency=low
+
+  * Remove the old Fiji logos.
+
+ -- Mark Longair <mhl@pobox.com>  Thu, 12 Oct 2008 19:55:00 +0000
+
 fiji (20081112.1) unstable; urgency=low
 
   * Update to upstream 722bc36b6ff961a306329f for the Luxembourg
     release.
 
- -- Mark Longair <mhl@pobox.com>  Thu, 30 Oct 2008 10:34:00 +0000
+ -- Mark Longair <mhl@pobox.com>  Thu, 12 Oct 2008 18:00:00 +0000
 
 fiji (20081030.0) unstable; urgency=low
 
