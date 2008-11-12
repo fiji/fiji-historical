@@ -1304,7 +1304,7 @@ static int start_ij(void)
 	if (!strcmp(main_class, "ij.ImageJ")) {
 		update_files();
 		stringstream icon_option;
-		icon_option << "-icon=" << fiji_dir << "/images/icon.png";
+		icon_option << "-icon=/usr/share/fiji/images/icon.png";
 		add_option(options, icon_option, 1);
 		add_option(options, "-title=Fiji", 1);
 	}
