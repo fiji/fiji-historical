@@ -198,22 +198,26 @@ public class Open_MRC_Leginon extends ImagePlus implements PlugIn {
 		if (!directory.endsWith("/")) directory += "/"; // works in windows too
 
 		InputStream is;
-		byte[] buf = new byte[136];
+		byte[] buf = new byte[0xd5];
 		try {
 			if (0 == path.indexOf("http://")) {
 				is = new java.net.URL(path).openStream();
 			} else {
 				is = new FileInputStream(path);
 			}
-			is.read(buf, 0, 136);
+			is.read(buf, 0, buf.length);
 			is.close();
 		} catch (IOException e) {
 			return;
 		}
-		int w = readIntLittleEndian(buf, 0);
-		int h = readIntLittleEndian(buf, 4);
-		int n = readIntLittleEndian(buf, 8);
-		int dtype = getType(readIntLittleEndian(buf, 12));
+		bigEndian = false;
+		if (readInt(buf, 0xd0) == 0x2050414d /* "MAP " */ &&
+				buf[0xd4] == 17)
+			bigEndian = true;
+		int w = readInt(buf, 0);
+		int h = readInt(buf, 4);
+		int n = readInt(buf, 8);
+		int dtype = getType(readInt(buf, 12));
 		if (-1 == dtype) return;
 		ImagePlus imp = openRaw(
 					dtype,
@@ -252,8 +256,17 @@ public class Open_MRC_Leginon extends ImagePlus implements PlugIn {
 		return -1;
 	}
 
-	private final int readIntLittleEndian(byte[] buf, int start) {
-		return (buf[start]) + (buf[start+1]<<8) + (buf[start+2]<<16) + (buf[start+3]<<24);
+	private boolean bigEndian;
+
+	private final int readInt(byte[] buf, int start) {
+		/* need to expand without the sign */
+		int b0 = buf[start] & 0xff;
+		int b1 = buf[start + 1] & 0xff;
+		int b2 = buf[start + 2] & 0xff;
+		int b3 = buf[start + 3] & 0xff;
+		if (bigEndian)
+			return b3 | (b2 << 8) | (b1 << 16) | (b0 << 24);
+		return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
 	}
 
 	/** Copied and modified from ij.io.ImportDialog. @param imageType must be a static field from FileInfo class. */
