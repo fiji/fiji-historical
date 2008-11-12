@@ -7,6 +7,6 @@ loci_tools.jar <- \
 	jar/mdbtools-java.jar/ jar/poi-loci.jar/ jar/slf4j-jdk14.jar/ \
 	jar/bufr-1.1.00.jar/ jar/grib-5.1.03.jar/ jar/netcdf-4.0.jar/ \
 	jar/visad-lite.jar/ \
-	loci/formats/**/*.java loci/plugins/**/*.java \
+	loci/formats/**/*.java loci/formats/*.txt loci/plugins/**/*.java \
 	loci/ome/**/*.java
 
