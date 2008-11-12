@@ -108,7 +108,7 @@ import ij.measure.*;
 //   + of less than 256 bytes 
 // ------------------------------------
 // v 1.3.4 051213 (Yes the 2nd v1.3.4 - hadn't noticed a branch!)
-// - Fixed a bug which prevented units other than µm or nm being passed to
+// - Fixed a bug which prevented units other than Âµm or nm being passed to
 //   calibration object.  Occasioned by a file with units 1/nm
 // ------------------------------------
 // v 1.3.5 051213
@@ -543,14 +543,14 @@ public class DM3_Reader extends ImagePlus implements PlugIn
 
 		// Figure out what the units are - need to check if nm is correct and
 		// if other units are likely
-		// also will µm get corrupted? may be necessary to do a unicode comparison
+		// also will Âµm get corrupted? may be necessary to do a unicode comparison
 		String unit = (String) tagHash.get(IMGLIST+chosenImage+".ImageData.Calibrations.Dimension.0.Units");
 
 		// Reciprocal space images - return the original unit - reciprocal
 		// space will be handled by setting the FHT image property		
 		if (unit.startsWith("1/")) unit=unit.substring(2);
 
-		if (unit.equals("µm")){
+		if (unit.equals("Âµm")){
 			cal.setUnit("micron");
 		} else {
 			cal.setUnit(unit);
