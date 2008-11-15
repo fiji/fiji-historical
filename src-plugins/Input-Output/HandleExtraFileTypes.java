@@ -243,6 +243,10 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("io.PDF_Viewer", path);
 		}
 
+		// Johannes Schindelin: open one or more images in a .ico file
+		if (name.endsWith(".ico"))
+			return tryPlugIn("io.ICO_Reader", path);
+
 		// Johannes Schindelin: handle scripts
 		if (name.endsWith(".py"))
 			return tryPlugIn("Jython.Refresh_Jython_Scripts", path);
