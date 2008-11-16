@@ -27,14 +27,13 @@ public class ICO_Writer implements PlugIn {
 			return;
 		}
 
-System.err.println("arg: " + arg);
 		// TODO: support saving more than one image
 
 		String path = arg;
-path = "/tmp/a1.ico";
 		if (path == null || path.length() < 1) {
 			String name = image.getTitle();
-			SaveDialog sd = new SaveDialog("Save as ICO", name, ".ico");
+			SaveDialog sd = new SaveDialog("Save as ICO",
+					name, ".ico");
 			String directory = sd.getDirectory();
 			if (directory == null)
 				return;
