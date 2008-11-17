@@ -43,3 +43,6 @@
 [submodule "tcljava"]
 	path = tcljava
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/tcljava
+[submodule "batik"]
+	path = batik
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/batik/.git

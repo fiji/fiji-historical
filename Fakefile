@@ -86,6 +86,7 @@ SUBMODULE_TARGETS=\
 	plugins/loci_tools.jar \
 	plugins/ij-ImageIO_.jar \
 	jars/jacl.jar \
+	jars/batik.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -156,6 +157,7 @@ jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
+jars/batik.jar <- batik/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.3
@@ -280,10 +282,12 @@ precompile-submodules[] <- \
 	precompiled/loci_tools.jar \
 	precompiled/ij-ImageIO_.jar \
 	precompiled/jacl.jar \
+	precompiled/batik.jar \
 
 precompiled/ij.jar <- ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
 precompiled/jacl.jar <- jars/jacl.jar
+precompiled/batik.jar <- jars/batik.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules
