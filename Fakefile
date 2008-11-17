@@ -85,6 +85,7 @@ SUBMODULE_TARGETS=\
 	jars/clojure.jar \
 	plugins/loci_tools.jar \
 	plugins/ij-ImageIO_.jar \
+	jars/jacl.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -154,6 +155,7 @@ plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugins/mpicbg_.jar TrakEM2/
 jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
 plugins/ij-ImageIO_.jar <- ij-plugins/
+jars/jacl.jar <- tcljava/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.3
@@ -277,9 +279,11 @@ precompile-submodules[] <- \
 	precompiled/clojure.jar \
 	precompiled/loci_tools.jar \
 	precompiled/ij-ImageIO_.jar \
+	precompiled/jacl.jar \
 
 precompiled/ij.jar <- ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
+precompiled/jacl.jar <- jars/jacl.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules

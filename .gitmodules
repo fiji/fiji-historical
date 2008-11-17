@@ -40,3 +40,6 @@
 [submodule "Retrotranslator"]
 	path = Retrotranslator
 	url = git://pacific.mpi-cbg.de/Retrotranslator
+[submodule "tcljava"]
+	path = tcljava
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/tcljava
