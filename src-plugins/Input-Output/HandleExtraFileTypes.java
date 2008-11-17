@@ -251,6 +251,10 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		if (name.endsWith(".icns"))
 			return tryPlugIn("io.Icns_Reader", path);
 
+		// Johannes Schindelin: render an .svg image into an ImagePlus
+		if (name.endsWith(".svg"))
+			return tryPlugIn("io.SVG_Reader", path);
+
 		// Johannes Schindelin: handle scripts
 		if (name.endsWith(".py"))
 			return tryPlugIn("Jython.Refresh_Jython_Scripts", path);
