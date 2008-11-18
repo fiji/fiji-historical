@@ -315,6 +315,10 @@ all-zips[] <- fiji-linux.zip fiji-linux64.zip fiji-win32.zip fiji-win64.zip \
 fiji-*.zip[scripts/make-zip.py $TARGET Fiji.app] <- app-* Fiji.app
 zip[] <- fiji-$PLATFORM.zip
 
+all-isos[] <- fiji-linux.iso fiji-linux64.iso fiji-win32.iso fiji-win64.iso \
+	fiji-macosx.iso fiji-all.iso fiji-nojre.iso
+fiji-*.iso[genisoimage -J -V Fiji -o $TARGET Fiji.app] <- app-*
+
 # Checks
 
 check[] <- check-class-versions check-launchers check-submodules
