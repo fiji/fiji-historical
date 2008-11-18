@@ -139,12 +139,9 @@ public class IcnsCodec {
 
         int width = image.getWidth();
         int height = image.getHeight();
-        byte[] rgb = new byte[width * height * 3];
-
-        int rOffset = 0;
-        int gOffset = width * height;
-        int bOffset = width * height * 2;
-
+        byte[] bytesR = new byte[width * height];
+        byte[] bytesG = new byte[width * height];
+        byte[] bytesB = new byte[width * height];
         byte[] mask = new byte[width * height];
 
         for (int y = 0; y < height; y++) {
@@ -157,23 +154,28 @@ public class IcnsCodec {
 
                 int pixelOffset = (y * width) + x;
                 mask[pixelOffset] = a;
-                rgb[rOffset + pixelOffset] = r;
-                rgb[gOffset + pixelOffset] = g;
-                rgb[bOffset + pixelOffset] = b;
+                bytesR[pixelOffset] = r;
+                bytesG[pixelOffset] = g;
+                bytesB[pixelOffset] = b;
             }
         }
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        byte[] packedRgb = RunLengthEncoding.packIconData(rgb);
-        int resourceSize = rgbPrefixSize + packedRgb.length + 2 * IOSupport.LONG_INT_SIZE;
+        byte[] packedR = RunLengthEncoding.packIconData(bytesR);
+        byte[] packedG = RunLengthEncoding.packIconData(bytesG);
+        byte[] packedB = RunLengthEncoding.packIconData(bytesB);
+        int packedLength = packedR.length + packedG.length + packedB.length;
+        int resourceSize = rgbPrefixSize + packedLength + 2 * IOSupport.LONG_INT_SIZE;
 
         IOSupport.writeLiteralLongInt(out, rgbHeader);
         IOSupport.writeLongInt(out, resourceSize);
         // The rgbPrefixSize allows the unknown value at the beginning of
         // the thumbnail icons to be added.
         out.write(new byte[rgbPrefixSize]);
-        out.write(packedRgb);
+        out.write(packedR);
+        out.write(packedG);
+        out.write(packedB);
 
         IOSupport.writeLiteralLongInt(out, maskHeader);
         IOSupport.writeLongInt(out, mask.length + 2 * IOSupport.LONG_INT_SIZE);
