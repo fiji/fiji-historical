@@ -37,8 +37,10 @@ import ij.process.ImageProcessor;
  * Image Processing, 56(6):462–478, 1994." Based on the ITK version from
  * Hanno Homann <a href="http://hdl.handle.net/1926/1292"> http://hdl.handle.net/1926/1292</a>
  * <p>
+ *  More information at Skeletonize3D homepage:
+ *  http://imagejdocu.tudor.lu/doku.php?id=plugin:morphology:skeletonize3d:start
  *
- * @version 1.0 11/14/2008
+ * @version 1.0 11/19/2008
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  *
  */
@@ -87,7 +89,7 @@ public class Skeletonize3D_ implements PlugInFilter
 		
 		this.width = this.imRef.getWidth();
 		this.height = this.imRef.getHeight();
-		this.depth =this.imRef.getStackSize();
+		this.depth = this.imRef.getStackSize();
 		this.inputImage = this.imRef.getStack();
 							
 		// Prepare data
@@ -96,9 +98,10 @@ public class Skeletonize3D_ implements PlugInFilter
 		// Compute Thinning	
 		computeThinImage(this.inputImage);
 		
-		// Set minimum pixel value to 0 and maximum to 1
-		ip.setMinAndMax(0, 1);
-
+		// Convert image to binary 0-255
+		for(int i = 1; i <= this.inputImage.getSize(); i++)
+			this.inputImage.getProcessor(i).multiply(255);
+		
 		this.inputImage.update(ip);
 		
 
