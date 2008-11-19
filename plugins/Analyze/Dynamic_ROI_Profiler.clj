@@ -11,7 +11,8 @@
 (ns roi.profiler.dynamic
   (:import (ij IJ)
            (ij.gui Plot ProfilePlot Roi)
-           (java.awt.event MouseMotionAdapter WindowAdapter)))
+           (java.awt.event MouseMotionAdapter WindowAdapter)
+           (java.util.concurrent Executors)))
 
 ; All functions declared with defn- (notice the minus sign) are private to this namespace.
 
@@ -62,13 +63,21 @@
   "Creates a plot window that monitors the line ROI of the image as it changes"
   (let [canvas (.getCanvas (.getWindow imp))
         plot-win (.show (create-profile-plot imp))
+        exec (Executors/newFixedThreadPool 1)   ; An executor thread pool of 1 thread to run the plot updates
         canvas-listener (proxy [MouseMotionAdapter] []
-                          (mouseDragged [event] (update plot-win imp)))]
+                          (mouseDragged [event]
+                                        ; Submit an update job to the executor thread.
+                                        ; The job is a function with no arguments, created on the fly with #(...)
+                                        ; which executes the 'update' function with args plot-win and imp:
+                                        (.submit exec #(update plot-win imp) nil)))]
     (.addMouseMotionListener canvas canvas-listener)
     ; Remove the mouse listener when the plot window is closed:
     (.addWindowListener plot-win (proxy [WindowAdapter] []
                                    (windowClosing [event]
-                                                  (.removeMouseMotionListener canvas canvas-listener))))))
+                                                  ; Tell the canvas to forget our mouse listener
+                                                  (.removeMouseMotionListener canvas canvas-listener)
+                                                  ; Quit the executor pool
+                                                  (.shutdown exec))))))
 
 ; Execute on the current image if any
 (let [imp (IJ/getImage)]
