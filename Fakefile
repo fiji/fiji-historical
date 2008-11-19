@@ -90,6 +90,7 @@ SUBMODULE_TARGETS=\
 	jars/jcifs.jar \
 	jars/yanfs.jar \
 	jars/j2ssh.jar \
+	jars/jftp.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -164,6 +165,7 @@ jars/batik.jar <- batik/
 jars/jcifs.jar <- jcifs/
 jars/yanfs.jar <- yanfs/
 jars/j2ssh.jar <- sshtools/
+jars/jftp.jar <- j-ftp/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.3
@@ -292,6 +294,7 @@ precompile-submodules[] <- \
 	precompiled/jcifs.jar \
 	precompiled/yanfs.jar \
 	precompiled/j2ssh.jar \
+	precompiled/jftp.jar \
 
 precompiled/ij.jar <- ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
@@ -300,6 +303,7 @@ precompiled/batik.jar <- jars/batik.jar
 precompiled/jcifs.jar <- jars/jcifs.jar
 precompiled/yanfs.jar <- jars/yanfs.jar
 precompiled/j2ssh.jar <- jars/j2ssh.jar
+precompiled/jftp.jar <- jars/jftp.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules

@@ -55,3 +55,6 @@
 [submodule "sshtools"]
 	path = sshtools
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/sshtools/.git
+[submodule "j-ftp"]
+	path = j-ftp
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/j-ftp/.git
