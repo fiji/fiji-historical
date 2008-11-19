@@ -40,6 +40,7 @@ has_rule = dict()
 last_rule_line = -1
 precompileds = dict()
 last_precompiled_line = -1
+precompile_rule_line = -1
 for i in range(0, len(fakefile)):
 	if fakefile[i].startswith('SUBMODULE_TARGETS='):
 		while i < len(fakefile) and fakefile[i] != "\n":
@@ -63,6 +64,8 @@ for i in range(0, len(fakefile)):
 				last_precompiled_line = i
 				precompileds[fakefile[i]] = i
 			i += 1
+	elif fakefile[i] == "precompiled/* <- plugins/*\n":
+		precompile_rule_line = i
 
 if len(sys.argv) == 2:
 	if submodule in has_rule.keys():
@@ -106,6 +109,9 @@ write_fakefile = False
 slash = target.rfind('/')
 precompiled_target = 'precompiled/' + target[slash + 1:]
 precompile_line = "\t" + precompiled_target + " \\\n"
+if len(sys.argv) == 3 and not target.startswith('plugins/'):
+	fakefile[precompile_rule_line] = precompiled_target + ' <- ' + \
+		target + "\n" + fakefile[precompile_rule_line]
 if not precompile_line in precompileds.keys():
 	fakefile.insert(last_precompiled_line + 1, precompile_line)
 	write_fakefile = True

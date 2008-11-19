@@ -1482,11 +1482,14 @@ public class Fake {
 			String path = parentPath + names[i];
 			if (starstar && names[i].startsWith("."))
 				continue;
+			File file = new File(makePath(cwd, path));
 			if (nextSlash < 0) {
+				if (file.isDirectory())
+					continue;
 				list.add(path);
 				count++;
 			}
-			else if (new File(makePath(cwd, path)).isDirectory())
+			else if (file.isDirectory())
 				count += expandGlob(path + "/" + remainder,
 						list, cwd, newerThan);
 		}
