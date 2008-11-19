@@ -162,7 +162,7 @@ execute('git add ' + precompiled_target + ' ' + submodule[:-1])
 # commit it
 
 action = 'Add'
-if submodule in has_rule.keys():
+if len(sys.argv) == 2:
 	action = 'Update'
 f = open('.msg', 'w')
 f.write(action + ' the submodule "' + submodule[:-1] + '"')
