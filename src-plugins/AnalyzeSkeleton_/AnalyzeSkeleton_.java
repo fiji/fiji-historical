@@ -30,9 +30,12 @@ import ij.process.ImageProcessor;
  * Main class.
  * This class is a plugin for the ImageJ interface for analyzing
  * 2D/3D skeleton images.
+ * 
+ * For more information, visit the AnalyzeSkeleton_ homepage:
+ * http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:analyzeskeleton:start
  *
  *
- * @version 1.0 11/14/2008
+ * @version 1.0 11/18/2008
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  *
  */
@@ -71,6 +74,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	private int numberOfBranches = 0;
 	/** number of junctions */
 	private int numberOfJunctions = 0;
+	/** number of triple points */
+	private int numberOfTriplePoints = 0;
 	
 	/** average branch length */
 	private double averageBranchLength = 0;
@@ -79,10 +84,12 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	private ArrayList <int[]> listOfEndPoints = new ArrayList<int[]>();
 	/** list of junction coordinates */
 	private ArrayList <int[]> listOfJunctionVoxels = new ArrayList<int[]>();
+	/** list of groups of junction voxels that belong to the same tree junction */
+	private ArrayList < ArrayList <int[]> > listOfSingleJunctions = new ArrayList < ArrayList <int[]> >();
 	
 	/** stack image containing the corresponding skeleton tags (end point, junction or slab) */
 	private ImageStack taggedImage = null;
-	
+		
 	
 	/* -----------------------------------------------------------------------*/
 	/**
@@ -137,7 +144,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		visitSkeleton(taggedImage);
 		
 		// Calculate number of junctions (skipping neighbor junction voxels)
-		calculateJunctions();
+		groupJunctions();
+		
+		// Calculate triple points (junctions with exactly 3 branches)
+		calculateTriplePoints();
 		
 		// Show results table
 		showResults();
@@ -153,7 +163,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		ResultsTable rt = new ResultsTable();
 		
 		String[] head = {"Skeleton", "# Branches","# Junctions", "# End-point voxels",
-						 "# Junction voxels","# Slab voxels","Average Branch Length"};
+						 "# Junction voxels","# Slab voxels","Average Branch Length", "# Triple points"};
 		
 		for (int i = 0; i < head.length; i++)
 			rt.setHeading(i,head[i]);	
@@ -166,6 +176,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
         rt.addValue(4, this.numberOfJunctionVoxels);
         rt.addValue(5, this.numberOfSlabs);
         rt.addValue(6, this.averageBranchLength);
+        rt.addValue(7, this.numberOfTriplePoints);
 	
 		rt.show("Results");
 	}
@@ -308,34 +319,89 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	/**
 	 * Calculate number of junction skipping neighbor junction voxels
 	 */
-	private void calculateJunctions() 
+	private void groupJunctions() 
 	{
-		// Copy list of junction voxels
-		ArrayList <int[]> listOfSingleJunctions = new ArrayList <int[]>();
-				
-		
-		for(int i = 0; i < this.listOfJunctionVoxels.size(); i ++)
-			listOfSingleJunctions.add(this.listOfJunctionVoxels.get(i));
-		
-		
+					
+		// Visit list of junction voxels
 		for(int i = 0; i < this.listOfJunctionVoxels.size(); i ++)
 		{
 			int[] pi = this.listOfJunctionVoxels.get(i);
-			for(int j = i+1; j < this.listOfJunctionVoxels.size(); j++)
+			boolean grouped = false;
+			
+			for(int j = 0; j < this.listOfSingleJunctions.size(); j++)
 			{
-				int[] pj = this.listOfJunctionVoxels.get(j);				
-				
-				// We remove the neighbor junctions from the list
-				if(isNeighbor(pi, pj))
-					listOfSingleJunctions.remove(pj);
+				ArrayList <int[]> groupOfJunctions = this.listOfSingleJunctions.get(j);
+				for(int k = 0; k < groupOfJunctions.size(); k++)
+				{
+					int[] pk = groupOfJunctions.get(k);				
 
-			}			
-		}
+					// If two junction voxels are neigbors, we group them
+					// in the same list
+					if(isNeighbor(pi, pk))
+					{
+						groupOfJunctions.add(pi);
+						grouped = true;
+						break;
+					}
+
+				}
 				
-		this.numberOfJunctions = listOfSingleJunctions.size();
+				if(grouped)
+					break;					
+			}
+			
+			if(!grouped)
+			{
+				ArrayList <int[]> newGroup = new ArrayList<int[]>();
+				newGroup.add(pi);
+				this.listOfSingleJunctions.add(newGroup);
+			}
+		}
 		
-	}
+				
+		this.numberOfJunctions = this.listOfSingleJunctions.size();
+		
+	}	
+
+	/* -----------------------------------------------------------------------*/
+	/**
+	 * Calculate number of triple points in the skeleton. Triple points are
+	 * junctions with exactly 3 branches.
+	 */
+	private void calculateTriplePoints() 
+	{
+					
+		// Visit the groups of junction voxels
+		for(int i = 0; i < this.numberOfJunctions; i ++)
+		{
+			
+			ArrayList <int[]> groupOfJunctions = this.listOfSingleJunctions.get(i);
+			
+			// Count the number of slab neighbors of every voxel in the group
+			int nSlab = 0;
+			for(int j = 0; j < groupOfJunctions.size(); j++)
+			{
+				int[] pj = groupOfJunctions.get(j);
+				
+				// Get neighbors and check the slabs
+				byte[] neighborhood = this.getNeighborhood(this.taggedImage, pj[0], pj[1], pj[2]);
+				for(int k = 0; k < 27; k++)
+					if (neighborhood[k] == AnalyzeSkeleton_.SLAB)
+						nSlab++;
+			}
+			// If the junction has only 3 slab neighbors, then it is a triple point
+			if (nSlab == 3)	
+				this.numberOfTriplePoints ++;
+			
+		}
+		
+				
+		this.numberOfJunctions = this.listOfSingleJunctions.size();
+		
+	}	
 	
+
+	/* -----------------------------------------------------------------------*/
 	/**
 	 * Calculate if two points are neighbors
 	 * 
