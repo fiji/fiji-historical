@@ -88,6 +88,7 @@ SUBMODULE_TARGETS=\
 	jars/jacl.jar \
 	jars/batik.jar \
 	jars/jcifs.jar \
+	jars/yanfs.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -160,6 +161,7 @@ plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
 jars/batik.jar <- batik/
 jars/jcifs.jar <- jcifs/
+jars/yanfs.jar <- yanfs/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.3
@@ -286,12 +288,14 @@ precompile-submodules[] <- \
 	precompiled/jacl.jar \
 	precompiled/batik.jar \
 	precompiled/jcifs.jar \
+	precompiled/yanfs.jar \
 
 precompiled/ij.jar <- ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
 precompiled/jacl.jar <- jars/jacl.jar
 precompiled/batik.jar <- jars/batik.jar
 precompiled/jcifs.jar <- jars/jcifs.jar
+precompiled/yanfs.jar <- jars/yanfs.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules

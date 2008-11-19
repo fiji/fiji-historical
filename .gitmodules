@@ -49,3 +49,6 @@
 [submodule "jcifs"]
 	path = jcifs
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/jcifs.git/
+[submodule "yanfs"]
+	path = yanfs
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/yanfs/.git
