@@ -5,6 +5,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.PlugInFilter;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
 /**
@@ -30,7 +31,7 @@ import ij.process.ImageProcessor;
  * Main class.
  * This class is a plugin for the ImageJ interface for analyzing
  * 2D/3D skeleton images.
- * 
+ * <p>
  * For more information, visit the AnalyzeSkeleton_ homepage:
  * http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:analyzeskeleton:start
  *
@@ -131,15 +132,22 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 							
 		// Prepare data: classify voxels and tag them.
-		this.taggedImage = tagImage(this.inputImage);
+		this.taggedImage = tagImage(this.inputImage);		
 		
 		// Show tags image.
-		(new ImagePlus("Tagged skeleton", taggedImage)).show();
+		ImagePlus tagIP = new ImagePlus("Tagged skeleton", taggedImage);
+		tagIP.show();
+		
+		// Set same calibration as the input image
+		tagIP.setCalibration(this.imRef.getCalibration());
 		
 		// We apply the Fire LUT and reset the min and max to be between 0-255.
 		IJ.run("Fire");
-		IJ.resetMinAndMax();
-				
+		
+		//IJ.resetMinAndMax();
+		tagIP.resetDisplayRange();
+		tagIP.updateAndDraw();
+		
 		// Visit skeleton and measure distances.
 		visitSkeleton(taggedImage);
 		
@@ -189,12 +197,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	 */
 	private void visitSkeleton(ImageStack taggedImage) 
 	{
-		/*
-		System.out.println("Number of end-point voxels = " + this.numberOfEndPoints);
-		System.out.println("Number of junction voxels = " + this.numberOfJunctionVoxels);
-		System.out.println("Number of slab voxels = " + this.numberOfSlabs);
-		*/
-		
+	
 		// length of branches
 		double branchLength = 0;
 	
@@ -241,11 +244,6 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			}					
 		}
 
-		/*
-		System.out.println("Number of branches = " + this.numberOfBranches);
-		System.out.println("Total length of branches = " + branchLength); 
-		*/
-		
 		// Average length
 		this.averageBranchLength = branchLength / this.numberOfBranches;
 		
@@ -519,11 +517,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	{
 		// Create output image
 		ImageStack outputImage = new ImageStack(this.width, this.height, inputImage2.getColorModel());
-		
+			
 		// Tag voxels
 		for (int z = 0; z < depth; z++)
 		{
-			outputImage.addSlice(inputImage2.getSliceLabel(z+1), inputImage2.getProcessor(z+1));
+			outputImage.addSlice(inputImage2.getSliceLabel(z+1), new ByteProcessor(this.width, this.height));			
 			for (int x = 0; x < width; x++) 
 				for (int y = 0; y < height; y++)
 				{
@@ -674,8 +672,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	void showAbout() 
 	{
 		IJ.showMessage(
-						"About Analyze3DSkeleton...",
-						"This plug-in filter analyzes a 3D image skeleton.\n");
+						"About AnalyzeSkeleton...",
+						"This plug-in filter analyzes a 2D/3D image skeleton.\n");
 	} /* end showAbout */
 
 }
