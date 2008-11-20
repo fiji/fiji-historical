@@ -1304,6 +1304,26 @@ public class Fake {
 				this.program = program;
 			}
 
+			boolean upToDate() {
+				boolean result = super.upToDate();
+
+				if (!result)
+					return result;
+
+				/*
+				 * Ignore prerequisites if none of them
+				 * exist as files.
+				 */
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String prereq = (String)iter.next();
+					if (new File(makePath(cwd,
+							prereq)).exists())
+						return true;
+				}
+				return false;
+			}
+
 			void action() throws FakeException {
 				if (program.equals(""))
 					return;
