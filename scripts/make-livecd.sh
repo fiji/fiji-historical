@@ -2,10 +2,9 @@
 
 # TODO: make use of user "fiji"
 # TODO: generate /etc/{passwd,shadow,group,sudoers,hosts}
-# TODO: name chroot-* differently (indicate this is for the live CD)
 
 NAME=gutsy
-CHROOT=chroot-$NAME-i386
+CHROOT=livecd-chroot-$NAME-i386
 CHROOT_HOME=/home/$USER
 DCHROOT="dchroot -c $NAME"
 
