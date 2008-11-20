@@ -21,3 +21,22 @@ jna.jar <- \
 	$PACKAGE/win32-x86/$DLL[$DIST/win32-x86.jar!/$DLL] \
 	\
 	jnalib/src/**/*.java
+
+bundle-linux[] <- cross-linux jnalib/dist/linux-i386.jar
+bundle-win32[] <- cross-win32 jnalib/dist/win32-x86.jar
+
+DIST=jnalib/dist
+jnalib/dist/darwin.jar <- $JNILIB[$DIST/darwin/$JNILIB]
+jnalib/dist/freebsd-amd64.jar <- $SO[$DIST/freebsd-amd64/$SO]
+jnalib/dist/freebsd-i386.jar <- $SO[$DIST/freebsd-i386/$SO]
+jnalib/dist/linux-amd64.jar <- $SO[$DIST/linux-amd64/$SO]
+jnalib/dist/linux-i386.jar <- $SO[$DIST/linux-i386/$SO]
+jnalib/dist/openbsd-i386.jar <- $SO[$DIST/openbsd-i386/$SO]
+jnalib/dist/sunos-amd64.jar <- $SO[$DIST/sunos-amd64/$SO]
+jnalib/dist/sunos-sparc.jar <- $SO[$DIST/sunos-sparc/$SO]
+jnalib/dist/sunos-sparcv9.jar <- $SO[$DIST/sunos-sparcv9/$SO]
+jnalib/dist/sunos-x86.jar <- $SO[$DIST/sunos-x86/$SO]
+jnalib/dist/win32-amd64.jar <- $DLL[$DIST/win32-amd64/$DLL]
+jnalib/dist/win32-x86.jar <- $DLL[$DIST/win32-x86/$DLL]
+
+cross-*[../scripts/build-jna.sh *] <-
