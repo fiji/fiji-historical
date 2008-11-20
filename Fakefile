@@ -218,7 +218,7 @@ CXXFLAGS(*)=-Wall -Iincludes \
 	-DJAVA_HOME='"$JAVA_HOME"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
 CXXFLAGS(win32)=$CXXFLAGS $WINOPTS
-CXXFLAGS(win64)=$CXXFLAGS $WINOPTS -mconsole
+CXXFLAGS(win64)=$CXXFLAGS $WINOPTS
 
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
 # and only on MacOSX
