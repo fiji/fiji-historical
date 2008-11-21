@@ -26,9 +26,10 @@ bundle-linux[] <- cross-linux jnalib/dist/linux-i386.jar
 bundle-win32[] <- cross-win32 jnalib/dist/win32-x86.jar
 bundle-linux64[] <- cross-linux64 jnalib/dist/linux-amd64.jar
 bundle-win64[] <- cross-win64 jnalib/dist/win32-amd64.jar
+bundle-macosx[] <- cross-macosx jnalib/dist/darwin.jar
 
 DIST=jnalib/dist
-jnalib/dist/darwin.jar <- $JNILIB[$DIST/darwin/$JNILIB]
+jnalib/dist/darwin.jar <- $JNILIB[$DIST/darwin/libjnidispatch.dylib]
 jnalib/dist/freebsd-amd64.jar <- $SO[$DIST/freebsd-amd64/$SO]
 jnalib/dist/freebsd-i386.jar <- $SO[$DIST/freebsd-i386/$SO]
 jnalib/dist/linux-amd64.jar <- $SO[$DIST/linux-amd64/$SO]
