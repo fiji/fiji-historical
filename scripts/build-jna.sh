@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PLATFORMS="$@"
-test -z "$PLATFORMS" && PLATFORMS="linux win32"
+test -z "$PLATFORMS" && PLATFORMS="linux win32 linux64 win64"
 
 NAME=dapper
 CHROOT=../chroot-$NAME-i386
@@ -30,6 +30,8 @@ test -z "$VERSION" || eval $VERSION
 
 for PLATFORM in $PLATFORMS
 do
+	NEED_CHROOT=false
+	unset CFLAGS
 	case $PLATFORM in
 	win32)
 		TARGET_PLATFORM=i386-mingw32
@@ -37,6 +39,7 @@ do
 		MAKE_RESOURCE="i386-mingw32-windres -i jnidispatch.rc -o tmp.o"
 		RESOURCE_OBJECT=tmp.o
 		LIBRARY=jnidispatch.dll
+		NEED_CHROOT=true
 		TARGET_DIRECTORY=win32-x86
 	;;
 	linux)
@@ -47,22 +50,47 @@ do
 		MAKE_RESOURCE=echo
 		RESOURCE_OBJECT=
 		LIBRARY=libjnidispatch.so
+		NEED_CHROOT=true
 		TARGET_DIRECTORY=linux-i386
 	;;
+	win64)
+		TARGET_PLATFORM=x86_64-pc-mingw32
+		ROOTWIN64=$(pwd)/../root-x86_64-pc-linux/bin
+		export PATH=$PATH:$ROOTWIN64
+		CC="$ROOTWIN64/x86_64-pc-mingw32-gcc"
+		MAKE_RESOURCE="$ROOTWIN64/x86_64-pc-mingw32-windres \
+			-i jnidispatch.rc -o tmp.o"
+		RESOURCE_OBJECT=tmp.o
+		LIBRARY=jnidispatch.dll
+		TARGET_DIRECTORY=win32-amd64
+	;;
+	linux64)
+		TARGET_PLATFORM=x86_64-linux
+		CC="gcc -W -Wall -Wno-unused -Wno-parentheses -fPIC \
+			-fno-omit-frame-pointer -fno-strict-aliasing \
+			-D_REENTRANT -DHAVE_PROTECTION"
+		MAKE_RESOURCE=echo
+		RESOURCE_OBJECT=
+		LIBRARY=libjnidispatch.so
+		export CFLAGS="-fPIC -dPIC"
+		TARGET_DIRECTORY=linux-amd64
+	;;
 	esac
 
-	case $PLATFORM in
-	linux|win32)
+	case $NEED_CHROOT in
+	true)
 		DCHROOT=dchroot
-		#JNA=$CHROOT_HOME/jna-native
-		#DCHROOT_JNA=$CHROOT$JNA
+		SOURCE_PATH=$JNA
+		REAL_SOURCE_PATH=$CHROOT_JNA
 	;;
 	*)
-		DCHROOT="sh -c"
+		DCHROOT="sh -x -c"
+		SOURCE_PATH=$(pwd)/$CHROOT_JNA
+		REAL_SOURCE_PATH=$CHROOT_JNA
 	;;
 	esac
 
-	BUILD_LIBFFI="(cd $JNA/libffi && \
+	BUILD_LIBFFI="(cd $SOURCE_PATH/libffi && \
 		./configure --host=$TARGET_PLATFORM && \
 		make clean && \
 		make)"
@@ -70,10 +98,10 @@ do
 	CC="$CC \
 		-DVERSION='\"$VERSION\"' \
 		-DCHECKSUM='\"$MD5\"' \
-		-I$JNA/includes \
-		-I$JNA/libffi/include"
+		-I$SOURCE_PATH/includes \
+		-I$SOURCE_PATH/libffi/include"
 
-	BUILD_LIBJNIDISPATCH="(cd $JNA &&
+	BUILD_LIBJNIDISPATCH="(cd $SOURCE_PATH &&
 		$MAKE_RESOURCE && \
 		$CC -c -o dispatch.o dispatch.c && \
 		$CC -c -o callback.o callback.c && \
@@ -83,5 +111,5 @@ do
 	$DCHROOT "$BUILD_LIBFFI && $BUILD_LIBJNIDISPATCH" || exit
 
 	mkdir -p jnalib/dist/$TARGET_DIRECTORY &&
-	mv $CHROOT_JNA/$LIBRARY jnalib/dist/$TARGET_DIRECTORY/ || exit
+	mv $REAL_SOURCE_PATH/$LIBRARY jnalib/dist/$TARGET_DIRECTORY/ || exit
 done
