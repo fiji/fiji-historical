@@ -1103,6 +1103,24 @@ public class Fake {
 			}
 
 			boolean upToDate() {
+				// handle xyz[from/here] targets
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String path = (String)iter.next();
+					int bracket = path.indexOf('[');
+					if (bracket < 0 || !path.endsWith("]"))
+						continue;
+					path = path.substring(bracket + 1,
+						path.length() - 1);
+					if (path.startsWith("jar:file:")) {
+						int exclamation =
+							path.indexOf('!');
+						path = path.substring(9,
+								exclamation);
+					}
+					if (!upToDate(path))
+						return false;
+				}
 				return super.upToDate() && upToDate(configPath);
 			}
 
@@ -1740,6 +1758,12 @@ public class Fake {
 					continue;
 				}
 				String name = realName;
+				int bracket = name.indexOf('[');
+				if (bracket >= 0 && name.endsWith("]")) {
+					realName = name.substring(bracket + 1,
+						name.length() - 1);
+					name = name.substring(0, bracket);
+				}
 				byte[] buffer = readFile(makePath(cwd,
 								realName));
 				if (buffer == null)
@@ -1822,6 +1846,10 @@ public class Fake {
 
 	static byte[] readFile(String fileName) {
 		try {
+			if (fileName.startsWith("jar:file:")) {
+				URL url = new URL(fileName);
+				return readStream(url.openStream());
+			}
 			File file = new File(fileName);
 			if (!file.exists())
 				return null;
@@ -2167,13 +2195,20 @@ public class Fake {
 	}
 
 	public static String makePath(File cwd, String path) {
+		String prefix = "", suffix = "";
+		if (path.startsWith("jar:file:")) {
+			prefix = "jar:file:";
+			int exclamation = path.indexOf('!');
+			suffix = path.substring(exclamation);
+			path = path.substring(prefix.length(), exclamation);
+		}
 		if (isAbsolutePath(path))
-			return path;
+			return prefix + path + suffix;
 		if (path.equals("."))
-			return cwd.toString();
+			return prefix + cwd.toString() + suffix;
 		if (cwd.toString().equals("."))
-			return path.equals("") ? "." : path;
-		return new File(cwd, path).toString();
+			return prefix + (path.equals("") ? "." : path) + suffix;
+		return prefix + new File(cwd, path).toString() + suffix;
 	}
 
 	static class ByteCodeAnalyzer {
