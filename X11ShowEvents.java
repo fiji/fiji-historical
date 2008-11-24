@@ -2,6 +2,9 @@ import com.sun.jna.NativeLong;
 
 import com.sun.jna.examples.unix.X11;
 
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.PointerByReference;
+
 public class X11ShowEvents {
 	protected final X11 x11 = X11.INSTANCE;
 	protected X11.Display display;
@@ -9,6 +12,8 @@ public class X11ShowEvents {
 	protected X11.XSetWindowAttributes attributes;
 
 	public X11ShowEvents() {
+		// make sure that the JAWT library is loaded
+		// TODO: only 32-bit? System.loadLibrary("jawt");
 		long mask = X11.KeyPressMask | X11.KeyReleaseMask |
 			X11.ButtonPressMask | X11.ButtonReleaseMask |
 			X11.PointerMotionMask;
@@ -27,13 +32,30 @@ public class X11ShowEvents {
 		x11.XSelectInput(display, window, new NativeLong(event_mask));
 	}
 
+	public void listenOnWindowRecursively(X11.Window window) {
+		listenOnWindow(window);
+
+		X11.WindowByReference root = new X11.WindowByReference();
+		X11.WindowByReference parent = new X11.WindowByReference();
+		PointerByReference children = new PointerByReference();
+		IntByReference childrenCount = new IntByReference();
+		if (x11.XQueryTree(display, window, root, parent,
+				children, childrenCount) == 0)
+			return;
+		if (childrenCount.getValue() == 0)
+			return;
+		// we cheat here; we know that a "Window" is a "long".
+		long[] longs = new long[childrenCount.getValue()];
+		children.getValue().read(0, longs, 0, longs.length);
+		for (int i = 0; i < longs.length; i++)
+			listenOnWindowRecursively(new X11.Window(longs[i]));
+	}
+
 	public void listen() {
 		display = x11.XOpenDisplay(null);
 		root = x11.XDefaultRootWindow(display);
-		root = new X11.Window(0x100000a); //0x1e000be); //0x3200007);
 
-		listenOnWindow(root);
-		// TODO: recursively register for all windows
+		listenOnWindowRecursively(root);
 		// TODO: listen for Creation and Destroy events (and listen/unlisten)
 		// TODO: add KeyboardListener and MouseListener listeners
 
@@ -43,13 +65,6 @@ public class X11ShowEvents {
 			switch (event.type) {
 			case X11.KeyPress:
 			case X11.KeyRelease:
-				/*
-				X11.KeySym keySym;
-				char[] string = new char[257];
-				int count = x11.XLookupString(event.xkey,
-					string, 256, keySym, null);
-				*/
-				//System.err.println("key press: " + event.xkey.keycode + " " + new String(string));
 				event.setType(X11.XKeyEvent.class);
 				System.err.println("key " + (event.type == X11.KeyPress ? "press" : "release") + ": " + event.xkey.keycode + ", " + event.xkey.state + ", (" + event.xkey.x + ", " + event.xkey.y + "), ("  + event.xkey.x_root + ", " + event.xkey.y_root + ") " + x11.XKeycodeToKeysym(display, (byte)event.xkey.keycode, event.xkey.state));
 				break;
