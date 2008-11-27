@@ -129,9 +129,9 @@ EOF
 #!/bin/sh
 
 sudo sh -c 'cat >> /etc/skel/.profile << EOF
-test 6 = \$(stat -c %T -L /proc/self/fd/0) && {
-	mkdir -p \$HOME/.kde/Autostart &&
-	ln -s /usr/share/applications/Fiji.desktop \$HOME/.kde/Autostart &&
+test 6 = \\\$(stat -c %T -L /proc/self/fd/0) && {
+	mkdir -p \\\$HOME/.kde/Autostart &&
+	ln -s /usr/share/applications/Fiji.desktop \\\$HOME/.kde/Autostart &&
 	startx
 }
 '
