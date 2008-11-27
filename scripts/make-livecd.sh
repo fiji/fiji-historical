@@ -44,24 +44,28 @@ die "Could not make Fiji for Linux/i386"
 
 # make the logos
 
+WIDTH=640; HEIGHT=400
 upToDate $LSS16 $SVG ||
-./fiji -eval 'run("SVG...", "choose='$SVG' width=320 height=320");
-	run("Canvas Size...", "width=640 height=320 position=Center zero");
+./fiji -eval 'run("SVG...", "choose='$SVG' width='$HEIGHT' height='$HEIGHT'");
+	run("Canvas Size...", "width='$WIDTH' height='$HEIGHT' position=Center zero");
 	run("8-bit Color", "number=16");
 	run("LSS16 ...", "save='$LSS16'");' -batch ||
 die "Could not make $LSS16"
 
+
+WIDTH=640; HEIGHT=480
 upToDate $PNG16 $SVG ||
-./fiji -eval 'run("SVG...", "choose='$SVG' width=480 height=480");
-	run("Canvas Size...", "width=640 height=480 position=Center zero");
+./fiji -eval 'run("SVG...", "choose='$SVG' width='$HEIGHT' height='$HEIGHT'");
+	run("Canvas Size...", "width='$WIDTH' height='$HEIGHT' position=Center zero");
 	run("8-bit Color", "number=16");
 	saveAs("PNG ...", "'$PNG16'");' -batch ||
 die "Could not make $PNG16"
 
+WIDTH=640; HEIGHT=320
 upToDate $XPM $SVG || {
 XPM2=$(dirname $XPM)/$(basename $XPM .gz)
-./fiji -eval 'run("SVG...", "choose='$SVG' width=320 height=320");
-	run("Canvas Size...", "width=640 height=320 position=Center zero");
+./fiji -eval 'run("SVG...", "choose='$SVG' width='$HEIGHT' height='$HEIGHT'");
+	run("Canvas Size...", "width='$WIDTH' height='$HEIGHT' position=Center zero");
 	run("8-bit Color", "number=92");
 	run("XPM ...", "save='$XPM2'");' -batch &&
 gzip -9 $XPM2
@@ -113,10 +117,7 @@ mkdir -p $LIVECD &&
  cat > config/chroot_local-hooks/splash << EOF &&
 #!/bin/sh
 
-sudo update-alternatives --install /usr/lib/usplash/usplash-fiji.so \
-	usplash-artwork.so $USPLASH/usplash-fiji.so 99 &&
-sudo update-alternatives --config usplash-artwork.so &&
-echo TODO: remove sudo dpkg-reconfigure linux-image-$(uname -r)
+sudo ln -sf $USPLASH/usplash-fiji.so /usr/lib/usplash/usplash-artwork.so
 EOF
  cat > config/chroot_local-hooks/names << EOF &&
 #!/bin/sh
