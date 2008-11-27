@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# TODO: nvidia stuff
+
 LIVECD=livecd
 SVG=images/fiji-logo-1.0.svg
 XPM=images/fiji.xpm.gz
@@ -66,6 +68,9 @@ gzip -9 $XPM2
 } ||
 die "Could not make $XPM"
 
+# cp  /usr/share/live-helper/examples/hooks/nvidia-legacy.sh \
+#	config/chroot_local-hooks/ &&
+
 mkdir -p $LIVECD &&
 (cd $LIVECD &&
  for i in dev/pts proc sys
@@ -98,8 +103,6 @@ mkdir -p $LIVECD &&
 	--packages "kdebase-workspace-bin xinit xserver-xorg usplash" &&
  perl -pi.bak -e 's/LIVE_ENTRY=.*/LIVE_ENTRY="Start Fiji Live"/' \
 	config/binary &&
- cp  /usr/share/live-helper/examples/hooks/nvidia-legacy.sh \
-	config/chroot_local-hooks/ &&
  INCLUDES=config/chroot_local-includes &&
  USPLASH=/usr/local/lib/usplash &&
  mkdir -p $INCLUDES$USPLASH &&
