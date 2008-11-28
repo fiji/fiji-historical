@@ -183,6 +183,6 @@ Terminal=false
 Categories=Graphics
 EOF
  sudo lh_build &&
- mv binary.iso "$FIJIROOT"fiji-live.iso) ||
+ mv -f binary.iso "$FIJIROOT"fiji-live.iso) ||
 die "Building LiveCD failed"
 
