@@ -34,9 +34,6 @@ FIJIROOT="$(pwd)"/
 sudo apt-get install live-helper ||
 die "live-helper package is not available"
 
-sudo apt-get install libbogl-dev ||
-die "libbogl-dev package is not available"
-
 # TODO: this depends on i386
 test -x Fiji.app/fiji-linux ||
 sh Fake.sh app-linux ||
@@ -110,14 +107,44 @@ mkdir -p $LIVECD &&
  INCLUDES=config/chroot_local-includes &&
  USPLASH=/usr/local/lib/usplash &&
  mkdir -p $INCLUDES$USPLASH &&
- pngtobogl "$FIJIROOT"$PNG16 > usplash-fiji.c &&
- gcc -I/usr/include/bogl -Os -g -fPIC -c usplash-fiji.c -o usplash-fiji.o &&
- gcc -shared -Wl,-soname,usplash-fiji.so usplash-fiji.o -o usplash-fiji.so &&
- sudo mv usplash-fiji.so $INCLUDES$USPLASH/ &&
+ cp "$FIJIROOT"$PNG16 $INCLUDES$USPLASH/usplash-artwork.png &&
  cat > config/chroot_local-hooks/splash << EOF &&
 #!/bin/sh
 
-sudo ln -sf $USPLASH/usplash-fiji.so /usr/lib/usplash/usplash-artwork.so
+apt-get install -q -y --force-yes libusplash-dev gcc &&
+(cd $USPLASH &&
+ cat > usplash-fiji.c << 2EOF &&
+#include <usplash-theme.h>
+#include <usplash_backend.h>
+2EOF
+ pngtousplash usplash-artwork.png >> usplash-fiji.c &&
+ cat >> usplash-fiji.c << 2EOF &&
+struct usplash_theme usplash_theme = {
+	.version = THEME_VERSION,
+	.next = NULL,
+	.ratio = USPLASH_4_3,
+
+	.pixmap = &pixmap_usplash_artwork,
+
+	.background             = 0x0,
+	.progressbar_background = 0x7,
+	.progressbar_foreground = 0x156,
+
+	/* Progress bar position and size in pixels */
+	.progressbar_x      = 50,
+	.progressbar_y      = 440,
+	.progressbar_width  = 540,
+	.progressbar_height = 20,
+};
+2EOF
+ gcc -I/usr/include/bogl -Os -g -fPIC -c usplash-fiji.c -o usplash-fiji.o &&
+ gcc -shared -Wl,-soname,usplash-fiji.so usplash-fiji.o -o usplash-fiji.so &&
+ rm usplash-fiji.[co]) &&
+apt-get remove -q -y --force-yes libusplash-dev gcc &&
+apt-get autoremove -q -y --force-yes &&
+sudo ln -sf $USPLASH/usplash-fiji.so /usr/lib/usplash/usplash-artwork.so &&
+echo xres=640 >> /etc/usplash.conf &&
+echo yres=480 >> /etc/usplash.conf
 EOF
  cat > config/chroot_local-hooks/names << EOF &&
 #!/bin/sh
