@@ -127,14 +127,14 @@ struct usplash_theme usplash_theme = {
 	.pixmap = &pixmap_usplash_artwork,
 
 	.background             = 0x0,
-	.progressbar_background = 0x1,
+	.progressbar_background = 0x7,
 	.progressbar_foreground = 0x0,
 
 	/* Progress bar position and size in pixels */
-	.progressbar_x      = 50,
-	.progressbar_y      = 448,
-	.progressbar_width  = 540,
-	.progressbar_height = 12,
+	.progressbar_x      = 5,
+	.progressbar_y      = 479,
+	.progressbar_width  = 630,
+	.progressbar_height = 1,
 };
 2EOF
  gcc -I/usr/include/bogl -Os -g -fPIC -c usplash-fiji.c -o usplash-fiji.o &&
