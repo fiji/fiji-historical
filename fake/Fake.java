@@ -941,18 +941,8 @@ public class Fake {
 					}
 					byte[] buf = readStream(in);
 					in.closeEntry();
-					try {
-						entry.setCompressedSize(-1);
-						out.putNextEntry(entry);
-						out.write(buf);
-						out.closeEntry();
-					} catch (ZipException e) {
-						String msg = e.getMessage();
-						if (!msg.startsWith("duplicat"))
-							throw e;
-						System.err.println("ignoring "
-							+ msg);
-					}
+					entry.setCompressedSize(-1);
+					writeJarEntry(entry, out, buf);
 				}
 				in.close();
 				out.close();
@@ -1774,9 +1764,7 @@ public class Fake {
 						.substring(lastBase.length());
 
 				JarEntry entry = new JarEntry(name);
-				jar.putNextEntry(entry);
-				jar.write(buffer, 0, buffer.length);
-				jar.closeEntry();
+				writeJarEntry(entry, jar, buffer);
 			}
 
 			jar.close();
@@ -1809,22 +1797,27 @@ public class Fake {
 			}
 			byte[] buf = readStream(in);
 			in.closeEntry();
-			try {
-				entry.setCompressedSize(-1);
-				out.putNextEntry(entry);
-				out.write(buf, 0, buf.length);
-				out.closeEntry();
-			} catch (ZipException e) {
-				String msg = e.getMessage();
-				if (!msg.startsWith("duplicat")) {
-					System.err.println("Error writing "
-						+ name);
-					throw e;
-				}
-				System.err.println("ignoring " + msg);
-			}
+			entry.setCompressedSize(-1);
+			writeJarEntry(entry, out, buf);
 		}
 		in.close();
+	}
+
+	static void writeJarEntry(JarEntry entry, JarOutputStream out,
+			byte[] buf) throws ZipException, IOException {
+		try {
+			out.putNextEntry(entry);
+			out.write(buf, 0, buf.length);
+			out.closeEntry();
+		} catch (ZipException e) {
+			String msg = e.getMessage();
+			if (!msg.startsWith("duplicate entry: ")) {
+				System.err.println("Error writing "
+						+ entry.getName());
+				throw e;
+			}
+			System.err.println("ignoring " + msg);
+		}
 	}
 
 	static byte[] readFile(String fileName) {
