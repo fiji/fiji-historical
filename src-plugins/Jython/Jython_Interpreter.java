@@ -48,7 +48,7 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		super.prompt.setEnabled(false);
 		IJ.showStatus("Loading classes ...");
 		// Create a python interpreter that can load classes from plugin jar files.
-		PySystemState.initialize(System.getProperties(), System.getProperties(), IJ.getInstance().getArgs(), IJ.getClassLoader());
+		PySystemState.initialize(System.getProperties(), System.getProperties(), new String[] { }, IJ.getClassLoader());
 		PySystemState pystate = new PySystemState();
 		pystate.setClassLoader(IJ.getClassLoader());
 		pystate.add_extdir(ij.Menus.getPlugInsPath()); // without this line, the class loader doesn't find plugin jars.
