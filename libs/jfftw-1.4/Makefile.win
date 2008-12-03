@@ -1,0 +1,68 @@
+CLASSES = \
+jfftw\complex\nd\Plan.class \
+jfftw\complex\Plan.class \
+jfftw\Plan.class \
+jfftw\real\nd\Plan.class \
+jfftw\real\Plan.class \
+jfftw\Wisdom.class
+
+HEADERS = \
+c\jfftw_complex_nd_Plan.h \
+c\jfftw_complex_Plan.h \
+c\jfftw_real_nd_Plan.h \
+c\jfftw_real_Plan.h \
+c\jfftw_Wisdom.h
+
+JAVASOURCE = \
+java\jfftw\complex\nd\Plan.java \
+java\jfftw\complex\Plan.java \
+java\jfftw\Plan.java \
+java\jfftw\real\nd\Plan.java \
+java\jfftw\real\Plan.java \
+java\jfftw\Wisdom.java
+
+CSOURCE = \
+c\jfftw_complex_nd_Plan.c \
+c\jfftw_complex_Plan.c \
+c\jfftw_real_nd_Plan.c \
+c\jfftw_real_Plan.c \
+c\jfftw_Wisdom.c
+
+all: $(CLASSES) dll doc
+
+jfftw\complex\nd\Plan.class: java\jfftw\complex\nd\Plan.java
+	javac -d . -sourcepath java java\jfftw\complex\nd\Plan.java
+
+jfftw\complex\Plan.class: java\jfftw\complex\Plan.java
+	javac -d . -sourcepath java java\jfftw\complex\Plan.java
+
+jfftw\Plan.class: java\jfftw\Plan.java
+	javac -d . -sourcepath java java\jfftw\Plan.java
+
+jfftw\real\nd\Plan.class: java\jfftw\real\nd\Plan.java
+	javac -d . -sourcepath java java\jfftw\real\nd\Plan.java
+
+jfftw\real\Plan.class: java\jfftw\real\Plan.java
+	javac -d . -sourcepath java java\jfftw\real\Plan.java
+
+jfftw\Wisdom.class: java\jfftw\Wisdom.java
+	javac -d . -sourcepath java java\jfftw\Wisdom.java
+
+c\jfftw_complex_nd_Plan.h: jfftw\complex\nd\Plan.class
+	javah -d c jfftw.complex.nd.Plan
+c\jfftw_complex_Plan.h: jfftw\complex\Plan.class
+	javah -d c jfftw.complex.Plan
+c\jfftw_real_nd_Plan.h: jfftw\real\nd\Plan.class
+	javah -d c jfftw.real.nd.Plan
+c\jfftw_real_Plan.h: jfftw\real\Plan.class
+	javah -d c jfftw.real.Plan
+c\jfftw_Wisdom.h: jfftw\Wisdom.class
+	javah -d c jfftw.Wisdom
+
+dll: $(HEADERS) $(CSOURCE)
+	cl /D WIN32 /LD /GD /I . /I c /I $(JAVA_HOME)\include /I $(JAVA_HOME)\include\win32 /I $(FFTW_INCLUDE) /I $(RFFTW_INCLUDE) /Fejfftw.dll c\jfftw_*.c /link /LIBPATH:$(FFTW_LIB) /LIBPATH:$(RFFTW_LIB) fftw.lib rfftw.lib /NODEFAULTLIB:libc
+
+doc: $(CLASSES)
+	javadoc jfftw -d doc -sourcepath java -subpackages jfftw.complex:jfftw.complex.nd:jfftw.real:jfftw.real.nd
+
+

@@ -1,0 +1,52 @@
+
+ON WINDOWS SYSTEMS
+
+To compile jfftw-1.4 you will need Microsoft Visual Studio (I use 6.0 service pack 5).
+You can probably use other (free) compilers. The only requirement is to be able to
+create a DLL.
+
+Step 1.
+	Set your environment variables:
+
+	set JAVA_HOME=c:\devel\j2sdk1.4.0
+	set FFTW_INCLUDE=c:\devel\fftw-2.1.3\fftw
+	set FFTW_LIB=c:\devel\java\fftw-2.1.3\fftw
+	set RFFTW_INCLUDE=c:\devel\fftw-2.1.3\rfftw
+	set RFFTW_LIB=c:\devel\fftw-2.1.3\rfftw
+
+	(These are my paths, you should set your own. JAVA_HOME should point to where
+	you can find jni.h as %JAVA_HOME%\include\jni.h, FFTW_INCLUDE is the path to
+	fftw.h, FFTW_LIB is the path to fftw.lib, RFFTW_INCLUDE is the path to rfftw.h
+	and RFFTW_LIB is the path to rfftw.lib.)
+
+Step 2.
+	Execute makefile.win:
+
+	nmake /f makefile.win
+
+	Or:
+
+	move makefile.win Makefile
+	nmake
+
+Note: makefile.win is still in a bad shape. If you can do better, and you mail it to me,
+you are helping people.
+
+
+ON UNIX SYSTEMS
+
+The principle is the same: compile the c/jfftw_*.c files, and link them into libjfftw.so.
+This is probable done like
+
+	gcc -shared -o libjfftw.so c/jfftw_*.c -lfftw -lrfftw
+
+Make sure you have jni.h and jni_md.h in your include path and the FFTW libraries in your
+library path. If compilation fails, try creating the jfftw headers yourself with javah
+(you could even use makefile.win if not for the path separating backslash). Maybe they
+are different on unix. Also make sure you have a recent Java SDK (1.3 or above).
+
+If it doesn't work out, mail me and I'll help figure it out.
+If you can write a decent makefile for jfftw, or even an autoconf system, your help
+would be very much appreciated.
+
+Send questions and comments to: darabos@mit.bme.hu
