@@ -227,6 +227,9 @@ MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386
 MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch ppc64 -arch x86_64
 
+CXXFLAGS(linux)=$CXXFLAGS -DIPV6_MAYBE_BROKEN
+CXXFLAGS(linux64)=$CXXFLAGS -DIPV6_MAYBE_BROKEN
+
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
 
 CXXFLAGS(fiji)=$CXXFLAGS $MACOPTS
