@@ -186,6 +186,9 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.txt
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar
+plugins/ffmpeg_ij.jar <- precompiled/ffmpeg-linux.jar/ \
+	precompiled/ffmpeg-macosx.jar/ \
+	src-plugins/ffmpeg_ij/**/*.java
 
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
