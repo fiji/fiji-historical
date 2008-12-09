@@ -99,10 +99,9 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 				new AVStream(formatCtx.getStreams()[i]);
 			final AVCodecContext codecCtx =
 				new AVCodecContext(stream.codec);
-			//System.out.println("codecCtx " + i + ": " + codecCtx);
 			if (codecCtx.codec_type ==
 					AVCodecLibrary.CODEC_TYPE_VIDEO) {
-				videoStream=i;
+				videoStream = i;
 				break;
 			}
 		}
