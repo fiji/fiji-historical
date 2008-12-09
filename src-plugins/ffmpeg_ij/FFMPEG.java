@@ -81,7 +81,6 @@ public class FFMPEG {
 			if (!copyTempFile(getClass().getResource(libs[i]), tmp))
 				return true;
 		System.setProperty("jna.library.path", tmp.getAbsolutePath());
-		tmp.deleteOnExit();
 		if (IJ.isMacOSX()) {
 			String[] names = { "util", "codec", "format" };
 			for (int i = 0; i < names.length; i++)
@@ -97,6 +96,7 @@ public class FFMPEG {
 			File tmp = File.createTempFile("ffmpeg", "");
 			if (!tmp.delete() || !tmp.mkdirs())
 				return null;
+			tmp.deleteOnExit();
 			return tmp;
 		} catch (IOException e) {
 			return null;
