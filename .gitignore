@@ -73,4 +73,5 @@
 /jars/jacl.jar
 /jars/batik.jar
 /jars/ffmpeg-java.jar
+/jars/jna.jar
 /plugins/ffmpeg_ij.jar

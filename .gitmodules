@@ -46,6 +46,9 @@
 [submodule "batik"]
 	path = batik
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/batik/.git
+[submodule "jna"]
+	path = jna
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/jna/.git/
 [submodule "ffmpeg-java"]
 	path = ffmpeg-java
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/ffmpeg-java
