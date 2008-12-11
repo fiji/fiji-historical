@@ -772,7 +772,8 @@ public class Distortion_Correction implements PlugIn{
 			    imps.setProcessor(imps.getTitle(), imps.getProcessor().convertToFloat());
 						
 			    FloatArray2DSIFT sift = new FloatArray2DSIFT( sp.fdsize, sp.fdbins );
-			    FloatArray2D fa = ImageArrayConverter.ImageToFloatArray2D( imps.getProcessor() );
+			    FloatArray2D fa = new FloatArray2D(imps.getWidth(), imps.getHeight());
+					ImageArrayConverter.imageProcessorToFloatArray2D( imps.getProcessor(), fa);
 			    Filter.enhance( fa, 1.0f );
 						
 			    float[] initial_kernel;
