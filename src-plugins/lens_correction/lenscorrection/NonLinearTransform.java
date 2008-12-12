@@ -185,6 +185,7 @@ public class NonLinearTransform implements mpicbg.trakem2.CoordinateTransform{
 		}
 
 		public float[] apply( float[] location ){
+
 				double[] position = {(double) location[0], (double) location[1]};
 				double[] featureVector = kernelExpand(position);
 				double[] newPosition = multiply(beta, featureVector);
