@@ -96,58 +96,6 @@ public class Distortion_Correction implements PlugIn{
 	
     public void run(String arg) {
 				
-				//just testing NonLinearTransform interface
-				System.out.println("TEST *** TEST *** TEST");
-
-				ImagePlus imp = IJ.openImage("/home/vkaynig/data/Distcorr/small/smaller/test.tif");
-				imp.show();
-
-				nlt.load("/home/vkaynig/data/Distcorr/small/smaller/distCorr.txt");
-				ImageProcessor[] ipt = nlt.transform(imp.getProcessor());
-				ImagePlus impt = imp.createImagePlus();
-				impt.setProcessor(null, ipt[0]);
-				impt.show();
-
-				String test = nlt.toDataString();
-				System.out.println("TEST *** TEST *** TEST");
-				System.out.println("TEST *** TEST *** TEST");
-				System.out.println(test);
-				NonLinearTransform nlt2 = new NonLinearTransform();
-				nlt2.init(test);
-
-				ImageProcessor[] ipt2 = nlt2.transform(imp.getProcessor());
-				ImagePlus impt2 = imp.createImagePlus();
-				impt2.setProcessor(null, ipt2[0]);
-				impt2.show();
-
-				float[] tpos = {100.0f,100.0f};
-				tpos = nlt.apply(tpos);
-				System.out.println("APPLY: " + tpos[0] + " " + tpos[1]);
-				
-				float[] tpos2 = {100.0f,100.0f};
-				nlt.applyInPlace(tpos2);
-				System.out.println("APPLY: " + tpos2[0] + " " + tpos2[1]);
-
-				ImageProcessor ip = imp.getProcessor();
-				ImageProcessor newIp = ip.createProcessor(ip.getWidth(), ip.getHeight());
-		
-				for (float x=0.0f; x < ip.getWidth(); x++){
-						for (float y=0.0f; y < ip.getHeight(); y++){
-								float[] pos = {x,y};
-								float[] newpos = nlt.apply(pos);
-								if (newpos[0]>=0 & newpos[0]<=ip.getWidth() & newpos[1]>=0 & newpos[1]<=ip.getHeight()) 
-										newIp.set((int)x, (int)y, (int) ip.getInterpolatedPixel((int)newpos[0],(int)newpos[1]));
-						}
-				}
-
-				ImagePlus impt3 = imp.createImagePlus();
-				impt3.setProcessor(null, newIp);
-				impt3.show();
-
-
-				return;
-
-				/*
 	//taken from Alberts registration plugin
 		
 	if (source_dir == ""){
@@ -911,7 +859,6 @@ public class Distortion_Correction implements PlugIn{
 	}
 	MultiThreading.startAndJoin(threads);	
 
-				*/
     }
 
 }
