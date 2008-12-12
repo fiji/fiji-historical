@@ -206,7 +206,13 @@ public class bUnwarpJ_ implements PlugIn
         dialog.setFinalActionLaunched(true);
         dialog.setToolbarAllUp();
         dialog.repaintToolbar();
-        finalAction.getThread().start();
+        Thread fa = finalAction.getThread();
+	fa.start();
+	try {
+		fa.join();
+	} catch (InterruptedException e) {
+		e.printStackTrace();
+	}
 
     } /* end run */
 
