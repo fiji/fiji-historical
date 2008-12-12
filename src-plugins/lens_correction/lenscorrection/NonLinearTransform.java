@@ -156,8 +156,8 @@ public class NonLinearTransform implements mpicbg.trakem2.CoordinateTransform{
 
 
 
-		public String toXML(){
-				return "<ict_transform class=\"" + this.getClass().getCanonicalName() + "\" data=\"" + toDataString() + "\"/>";
+		public String toXML(final String indent){
+				return new StringBuffer(indent).append("<ict_transform class=\"").append(this.getClass().getCanonicalName()).append("\" data=\"").append(toDataString()).append("\"/>").toString();
 		}
 
 		public String toDataString(){
