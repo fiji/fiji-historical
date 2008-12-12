@@ -12,11 +12,13 @@ import com.sun.jna.ptr.PointerByReference;
 
 import ij.IJ;
 
+import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 
 import java.net.URL;
 
@@ -35,6 +37,13 @@ public class FFMPEG {
 		return loadFFMPEG(true);
 	}
 
+	public static void showException(Throwable e) {
+		CharArrayWriter charArray = new CharArrayWriter();
+		PrintWriter writer = new PrintWriter(charArray);
+		e.printStackTrace(writer);
+		IJ.log(charArray.toString());
+	}
+
 	public boolean loadFFMPEG(boolean addSearchPath) {
 
 		if (AVFORMAT != null)
@@ -48,7 +57,7 @@ public class FFMPEG {
 			AVCODEC = AVCodecLibrary.INSTANCE;
 			AVFORMAT = AVFormatLibrary.INSTANCE;
 		} catch (UnsatisfiedLinkError e) {
-			e.printStackTrace();
+			showException(e);
 			return false;
 		}
 		return true;
@@ -143,6 +152,7 @@ public class FFMPEG {
 			out.close();
 			return true;
 		} catch (IOException e) {
+			showException(e);
 			return false;
 		}
 	}
