@@ -24,6 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * 	- make different kernels available
  * 	- inverse transform for visualization
  *  - improve image interpolation 				
+ *  - apply and applyInPlace should use precalculated transform?
+ *    (What about out of image range pixels?)
  *  																
  *  Author: Verena Kaynig						
  *  Kontakt: verena.kaynig@inf.ethz.ch	
@@ -115,12 +117,15 @@ public class NonLinearTransform implements mpicbg.trakem2.CoordinateTransform{
 
 		//implements mpicbg.trakem2
 		public void init( String data ) throws NumberFormatException{
-				final String[] fields = data.split( "\\s+" );
-
+				final String[] fields = data.split( " " );
 				int c = 0;
 
 				dimension = Integer.parseInt(fields[c]); c++;
 				length = Integer.parseInt(fields[c]); c++;
+
+				beta = new double[length][2];
+				normMean = new double[length];
+				normVar = new double[length];
 
 				if ( fields.length == 4 + 4*length )
 						{
@@ -129,16 +134,21 @@ public class NonLinearTransform implements mpicbg.trakem2.CoordinateTransform{
 										beta[i][1] = Double.parseDouble(fields[c]); c++;
 								}
 								
+								System.out.println("c: " + c); 
+
 								for (int i=0; i < length; i++){
 										normMean[i] = Double.parseDouble(fields[c]); c++;
 								}
 								
+								System.out.println("c: " + c); 
+
 								for (int i=0; i < length; i++){
 										normVar[i] = Double.parseDouble(fields[c]); c++;
 								}
 
 								width = Integer.parseInt(fields[c]); c++;				
 								height = Integer.parseInt(fields[c]); c++;
+								System.out.println("c: " + c); 
 								
 						}
 				else throw new NumberFormatException( "Inappropriate parameters for " + this.getClass().getCanonicalName() );
