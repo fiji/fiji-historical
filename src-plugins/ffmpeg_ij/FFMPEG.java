@@ -48,22 +48,45 @@ public class FFMPEG {
 			AVCODEC = AVCodecLibrary.INSTANCE;
 			AVFORMAT = AVFormatLibrary.INSTANCE;
 		} catch (UnsatisfiedLinkError e) {
+			e.printStackTrace();
 			return false;
 		}
 		return true;
 	}
 
 	private boolean addSearchPath() {
-		String[] libs = { "/macosx/libffmpeg.dylib" };
-		if (!IJ.isMacOSX()) {
-			String extension = IJ.isWindows() ? "dll" : "so";
-			String platform = (IJ.isWindows() ? "win" : "linux")
-				+ (IJ.is64Bit() ? "64" : "");
-			libs = new String[3];
-			libs[0] = "/" + platform + "/libavutil." + extension;
-			libs[1] = "/" + platform + "/libavcodec." + extension;
-			libs[2] = "/" + platform + "/libavformat." + extension;
+		String platform = (IJ.isMacOSX() ? "macosx" :
+				(IJ.isWindows() ? "win"
+					+ (IJ.is64Bit() ? "64" : "32")
+				 : "linux" + (IJ.is64Bit() ? "64" : "")));
+		String extension = IJ.isMacOSX() ? "dylib" :
+			IJ.isWindows() ? "dll" : "so";
+		String[] libs = null;
+		String[] versions = null;
+		if (IJ.isMacOSX()) {
+			libs = new String[] { "libffmpeg" };
+		} else if (IJ.isWindows()) {
+			libs = new String[] {
+				"avutil", "avcodec", "avformat"
+			};
+			versions = new String[] { "-49", "-52", "-52" };
+		} else {
+			libs = new String[] {
+				"libavutil", "libavcodec", "libavformat"
+			};
 		}
+
+		String[] targets = new String[libs.length];
+		for (int i = 0; i < libs.length; i++) {
+			if (versions == null)
+				targets[i] = libs[i] + "." + extension;
+			else
+				targets[i] = libs[i] + versions[i]
+					+ "." + extension;
+			libs[i] = "/" + platform + "/" + libs[i]
+				+ "." + extension;
+		}
+
 		URL location = getClass().getResource(libs[0]);
 		if (location == null) {
 			String dir = IJ.getDirectory("imagej");
@@ -75,10 +98,11 @@ public class FFMPEG {
 		File tmp = getTempDirectory();
 		if (tmp == null)
 			return false;
-		if (!copyTempFile(location, tmp))
+		if (!copyTempFile(location, new File(tmp, targets[0])))
 			return true;
 		for (int i = 1; i < libs.length; i++)
-			if (!copyTempFile(getClass().getResource(libs[i]), tmp))
+			if (!copyTempFile(getClass().getResource(libs[i]),
+					new File(tmp, targets[i])))
 				return true;
 		System.setProperty("jna.library.path", tmp.getAbsolutePath());
 		if (IJ.isMacOSX()) {
@@ -103,11 +127,9 @@ public class FFMPEG {
 		}
 	}
 
-	protected static boolean copyTempFile(URL source, File directory) {
+	protected static boolean copyTempFile(URL source, File target) {
 		try {
 			InputStream in = source.openStream();
-			String baseName = new File(source.getFile()).getName();
-			File target = new File(directory, baseName);
 			target.deleteOnExit();
 			OutputStream out = new FileOutputStream(target);
 			byte[] buffer = new byte[1<<16];
