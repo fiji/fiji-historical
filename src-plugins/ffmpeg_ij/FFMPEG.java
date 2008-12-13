@@ -165,7 +165,7 @@ public class FFMPEG {
 
 	public static int symlink(String source, String target) {
 		if (libc == null)
-			libc = (libc)Native.loadLibrary("libc", libc.class);
+			libc = (libc)Native.loadLibrary("c", libc.class);
 		return libc.symlink(source, target);
 	}
 }
