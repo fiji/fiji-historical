@@ -43,11 +43,21 @@ import common.AbstractInterpreter;
 public class Clojure_Interpreter extends AbstractInterpreter {
 
 	static final Symbol USER = Symbol.create("user");
-	static final Symbol CLOJURE = Symbol.create("clojure");
-	static final Var in_ns = RT.var("clojure", "in-ns");
-	static final Var refer = RT.var("clojure", "refer");
-	static final Var ns = RT.var("clojure", "*ns*");
-	static final Var warn_on_reflection = RT.var("clojure", "*warn-on-reflection*");
+	static final Symbol CLOJURE = Symbol.create("clojure.core");
+
+	static final Var in_ns = RT.var("clojure.core", "in-ns");
+	static final Var refer = RT.var("clojure.core", "refer");
+	static final Var ns = RT.var("clojure.core", "*ns*");
+	static final Var compile_path = RT.var("clojure.core", "*compile-path*");
+	static final Var warn_on_reflection = RT.var("clojure.core", "*warn-on-reflection*");
+	static final Var print_meta = RT.var("clojure.core", "*print-meta*");
+	static final Var print_length = RT.var("clojure.core", "*print-length*");
+	static final Var print_level = RT.var("clojure.core", "*print-level*");
+	static final Var star1 = RT.var("clojure.core", "*1");
+	static final Var star2 = RT.var("clojure.core", "*2");
+	static final Var star3 = RT.var("clojure.core", "*3");
+	static final Var stare = RT.var("clojure.core", "*e");
+
 	static final Object EOF = new Object();
 
 	static private boolean loaded = false;
@@ -113,7 +123,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	}
 
 	/** Calls eval(text) on the LispThread, which is then not destroyed. See the Refresh_Clojure_Scripts for an example.
-	* Parses in the context of (binding [*out* (.getStdOut Clojure.Clojure_Interpreter)] &amp; body) if the PrintWriter out is not null.*/ // Overrides super method
+	* Parses in the context of (binding [*out* (Clojure.Clojure_Interpreter/getStdOut)] &amp; body) if the PrintWriter out is not null.*/ // Overrides super method
 	static public Object evaluate(final String text) throws Throwable {
 		LispThread thread = LispThread.getInstance();
 		Object ret = thread.eval(text);
@@ -209,7 +219,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 				RUN.notifyAll();
 			}
 		}
-		/** Parsing in the context of (binding [*out* (.getStdOut Clojure.Clojure_Interpreter)] &amp; body) if this.out is not null.*/
+		/** Parsing in the context of (binding [*out* (Clojure.Clojure_Interpreter/getStdOut)] &amp; body) if this.out is not null.*/
 		String eval(String text) {
 			String res = null;
 			try {
@@ -229,7 +239,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 					}
 					*/
 					if (null != out) {
-						text = "(binding [*out* (.getStdOut Clojure.Clojure_Interpreter)]\n" + text + ")\n";
+						text = "(binding [*out* (Clojure.Clojure_Interpreter/getStdOut)]\n" + text + ")\n";
 					}
 					this.text = text;
 					working = true;
@@ -300,14 +310,22 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		}
 		private void init() throws Throwable {
 			// Copying nearly literally from the clojure.lang.Repl class by Rich Hickey
-			RT.init();
+			// RT.init();
 
 			//*ns* must be thread-bound for in-ns to work
 			//thread-bind *warn-on-reflection* so it can be set!
 			//must have corresponding popThreadBindings in finally clause
 			Var.pushThreadBindings(
-					RT.map(new Object[]{ns, ns.get(),
-					       warn_on_reflection, warn_on_reflection.get()}));
+				RT.map(ns, ns.get(),
+				       warn_on_reflection, warn_on_reflection.get(),
+				       print_meta, print_meta.get(),
+				       print_length, print_length.get(),
+				       print_level, print_level.get(),
+				       compile_path, "classes",
+				       star1, null,
+				       star2, null,
+				       star3, null,
+				       stare, null));
 
 			//create and move into the user namespace
 			in_ns.invoke(USER);
