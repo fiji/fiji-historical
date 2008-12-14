@@ -54,7 +54,6 @@ Name					File					Author(s)						Contact	(2008)							License
 * Multiple Image Processor 		M_I_P.jar				Nathaniel Gonzalez Santiago				http://ciar.rcm.upr.edu/projects/imageprocessor/multiples/	GPL
 * PDF Viewer 				PDF_Viewer.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * PostgreSQL JDBC 			postgresql-8.2-506.jdbc3.jar 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
-* Quick3DApplet 			Quick3dApplet-1.0.8.jar 									info@proudman51.freeserve.co.uk 				?
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Substack Maker 			Substack_Maker.class 			Wayne Rasband 						http://rsb.info.nih.gov/ij/plugins/reverser.html 		PD
 * Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD			
@@ -67,11 +66,9 @@ Name					File					Author(s)						Contact	(2008)							License
 
 Unresolved (TODO):
 * Example/ scripts folder
-* Get_Class_Versions.class
 * Graphics/Example_Plot.class   Wayne Rasband, PD ?
 * Java Advanced Imaging jai_codec.jar, jai_core.jar, jai_imageio.jar
 * ij-ImageIO
-* Quick3DApplet
 
 
 Problematic:
