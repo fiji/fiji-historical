@@ -128,6 +128,8 @@ if getMenuEntry('Image>Color>Hello>Bello') is None:
 
 def isSorted(path, onlyAfterSeparator):
 	menu = getMenuEntry(path)
+	if menu is None:
+		return False
 	for i in range(0, menu.getItemCount() - 1):
 		if onlyAfterSeparator:
 			if menu.getItem(i).getLabel() == '-':
