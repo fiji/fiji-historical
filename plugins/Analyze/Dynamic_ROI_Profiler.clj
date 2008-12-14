@@ -25,10 +25,10 @@
         indices (double-array (range (count data)))
         plot (Plot. "Profile" "Index" "Pixel value" indices data)]
     (doto plot
-      (setLineWidth 2)
-      (setLimits 0 (count data)
+      (.setLineWidth 2)
+      (.setLimits 0 (count data)
                  (.getMin pp) (.getMax pp))
-      (setSize *plot-width* *plot-height*))
+      (.setSize *plot-width* *plot-height*))
     plot))
 
 (defn- create-empty-plot []
@@ -36,8 +36,8 @@
         indices (float-array 1)
         plot (Plot. "Profile" "Index" "Pixel value" indices data)]
     (doto plot
-      (setLimits 0 1 0 1)
-      (setSize *plot-width* *plot-height*))
+      (.setLimits 0 1 0 1)
+      (.setSize *plot-width* *plot-height*))
     plot))
 
 (let [valid [Roi/LINE Roi/POLYLINE Roi/FREELINE Roi/RECTANGLE]]
