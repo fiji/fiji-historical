@@ -1,7 +1,7 @@
 # Test that ImageJ(A) can add to any menu, and that the result is
 # appropriately separated by a separator, and sorted alphabetically.
 
-from ij import IJ, ImageJ, Menus, WindowManager
+from ij import IJ, ImageJ, Menus, Prefs, WindowManager
 
 from java.awt import Menu, MenuBar
 from java.lang import System
@@ -28,6 +28,14 @@ def fake_plugin_jar(name, plugins_config):
 	zip.write(plugins_config)
 	zip.closeEntry()
 	zip.close()
+
+def fake_plugin_class(name):
+	slash = name.rfind('/')
+	if slash > 0 and not os.path.isdir(name[:slash]):
+		os.makedirs(name[:slash])
+	f = open(name + '.class', 'w')
+	f.write('Invalid class')
+	f.close()
 
 def update_menus():
 	try:
@@ -163,6 +171,24 @@ if not getMenuEntry('Image>Color>Hello>Bello') is None:
 
 if getMenuEntry('Image>Color>Hello>Zuerich') is None:
 	print 'Update Menus did not insert Zuerich'
+	error += 1
+
+fake_plugin_class(temporary_folder + '/Some_Isolated_Class')
+fake_plugin_class(temporary_folder + '/Another/Isolated_Class')
+Prefs.moveToMisc = True
+
+update_menus()
+
+if getMenuEntry('Plugins>Some Isolated Class') is None:
+	print 'Isolated class not put into toplevel'
+	error += 1
+
+if not getMenuEntry('Plugins>Another>Isolated Class') is None:
+	print 'Isolated class in subdirectory put into toplevel'
+	error += 1
+
+if getMenuEntry('Plugins>Miscellaneous>Isolated Class') is None:
+	print 'Isolated class in subdirectory not put into misc menu'
 	error += 1
 
 ij.exitWhenQuitting(True)
