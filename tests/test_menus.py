@@ -29,6 +29,21 @@ def fake_plugin_jar(name, plugins_config):
 	zip.closeEntry()
 	zip.close()
 
+def update_menus():
+	try:
+		IJ.redirectErrorMessages()
+		IJ.run('Update Menus')
+	except:
+		error_message = 'Error updating menus'
+		logWindow = WindowManager.getFrame("Log")
+		if not logWindow is None:
+			error_message = error_message + ': ' \
+				+ logWindow.getTextPanel().getText()
+			logWindow.close()
+		print error_message
+		global error
+		error += 1
+
 fake_plugin_jar(temporary_folder + '/test_.jar',
 	'Image>Color>Hello, "Cello", Cello')
 fake_plugin_jar(temporary_folder + '/test_2.jar',
@@ -132,6 +147,20 @@ if not isSorted('Plugins', True):
 
 if not isSorted('Plugins>bla>blub', True):
 	print 'Plugins>bla>blub was not sorted'
+	error += 1
+
+os.remove(temporary_folder + '/test_2.jar')
+fake_plugin_jar(temporary_folder + '/test_3.jar',
+	'Image>Color>Hello, "Zuerich", Zuerich')
+
+update_menus()
+
+if not getMenuEntry('Image>Color>Hello>Bello') is None:
+	print 'Update Menus kept Bello'
+	error += 1
+
+if getMenuEntry('Image>Color>Hello>Zuerich') is None:
+	print 'Update Menus did not insert Zuerich'
 	error += 1
 
 ij.exitWhenQuitting(True)
