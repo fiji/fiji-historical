@@ -4,6 +4,7 @@
 /fiji-tiger
 /fiji-panther
 /fiji-macosx.dmg
+/tests/plugins
 /jvm.cfg
 *.swp
 /IJ_Prefs.txt

@@ -12,7 +12,12 @@ import os
 
 # make a temporary directory, and put two fake .jar files in it
 
+# Warning: Jython does not support removedirs() yet
+def removedirs(dir):
+	os.system('rm -rf ' + dir)
+
 temporary_folder = 'tests/plugins'
+removedirs(temporary_folder)
 os.makedirs(temporary_folder)
 
 def fake_plugin_jar(name, plugins_config):
@@ -128,12 +133,6 @@ if not isSorted('Plugins', True):
 if not isSorted('Plugins>bla>blub', True):
 	print 'Plugins>bla>blub was not sorted'
 	error += 1
-
-# Warning: Jython does not support removedirs() yet
-def removedirs(dir):
-	os.system('rm -rf ' + dir)
-
-removedirs(temporary_folder)
 
 ij.exitWhenQuitting(True)
 ij.quit()
