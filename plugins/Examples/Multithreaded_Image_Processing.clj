@@ -66,12 +66,12 @@
 
 (defn do-it-iterating [start end]
   "Print all numbers from start to end (inclusive)"
-  (doseq i (range start (+ 1 end))
+  (doseq [i (range start (+ 1 end))]
     (println i)))
 
 (defn do-times [start end]
   "Print all numbers from start to end (exclusive)"
-  (dotimes i (range start end)
+  (dotimes [i (range start end)]
     (println i)))
 
 ; Invoke like
@@ -104,7 +104,7 @@
               (Thread/sleep 100)
               (catch Exception e (.printStackTrace e)))
             (recur (.getAndIncrement ai))))))
-    (dotimes i (.availableProcessors (Runtime/getRuntime))
+    (dotimes [i (.availableProcessors (Runtime/getRuntime))]
       (.start (Thread. looper)))))
 
 ; Invoke like
@@ -137,10 +137,10 @@
     (let [threads# (map (fn [x#] (Thread. looper (str "Looper-" x#)))
                        (range (.availableProcessors (Runtime/getRuntime))))]
       ; Start all threads
-      (doseq t# threads#
+      (doseq [t# threads#]
         (.start t#))
       ; Wait until all threads are done
-      (doseq t# threads#
+      (doseq [t# threads#]
         (.join t#)))))
 
 ; Invoke like:
@@ -160,7 +160,7 @@
   (defn line-randomizer [row #^floats pixels width]
     "Randomize the value of all pixels in the given row of the image contained in the unidimensional array of pixels"
     (let [offset (int (* width row))]
-      (dotimes i width
+      (dotimes [i width]
         (aset pixels (+ i offset) (.nextFloat r))))))
 
 ; Execute like

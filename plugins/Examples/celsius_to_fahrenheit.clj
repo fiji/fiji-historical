@@ -22,10 +22,10 @@
            (proxy [ActionListener] []
 	        (actionPerformed [evt]
 		    ; check that the entered string length is > 0
-		    (let [snum (. temp-text (getText))]
-		      (if (> (. snum (length)) 0)
+		    (let [snum (.getText temp-text)]
+		      (if (> (.length snum) 0)
 			; check if the string is a number at all
-			(try (let [num (. Double (parseDouble snum))]
+			(try (let [num (Double/parseDouble snum)]
 			       (. fahrenheit-label
 				  (setText (str (+ 32 (* 1.8 num)) " Fahrenheit"))))
                           (catch java.lang.NumberFormatException e
@@ -41,12 +41,12 @@
    ; On the frame, call all the following methods
    ; It could be done with many blocks like (. frame (add celsius-label)) etc.
    (doto frame
-              (setLayout (new GridLayout 2 2 3 3))
-	      (add temp-text)
-	      (add celsius-label)
-	      (add convert-button)
-	      (add fahrenheit-label)
-	      (setSize 300 80)
-	      (setVisible true))))
+              (.setLayout (new GridLayout 2 2 3 3))
+	      (.add temp-text)
+	      (.add celsius-label)
+	      (.add convert-button)
+	      (.add fahrenheit-label)
+	      (.setSize 300 80)
+	      (.setVisible true))))
 ; Execute the function
 (celsius)
