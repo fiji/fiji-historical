@@ -265,6 +265,26 @@ abstract public class RefreshScripts implements PlugIn {
 		}
 	}
 
+	// Removes all entries that refer to scripts with the current extension
+	private void removeFromMenu(Menu menu) {
+		int count = menu.getItemCount();
+		for (int i = count - 1; i >= 0; i--) {
+			MenuItem item = menu.getItem(i);
+			if (item instanceof Menu) {
+				removeFromMenu((Menu)item);
+				continue;
+			}
+			String label = item.getLabel();
+			String command = (String)Menus.getCommands().get(label);
+			if (command == null ||
+			    !command.startsWith(getClass().getName() + "(\"") ||
+			    !command.endsWith(scriptExtension + "\")"))
+				continue;
+			menu.remove(i);
+			Menus.getCommands().remove(label);
+		}
+	}
+
 	public void run(String arg) {
 
 		if( arg != null && ! arg.equals("") ) {
@@ -295,6 +315,7 @@ abstract public class RefreshScripts implements PlugIn {
 			}
 		}
 
+		removeFromMenu( pluginsMenu );
 		addFromDirectory( Menus.getPlugInsPath(), -1 );
 	}
 
