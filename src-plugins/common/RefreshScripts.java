@@ -117,19 +117,41 @@ abstract public class RefreshScripts implements PlugIn {
 			items[i] = m.getItem(i);
 		}
 		String newLabel = strip(filename);
-		String newCommand = getClass().getName() + "(\""
-			+ topLevelDirectory + File.separator
+		String fullPath = topLevelDirectory + File.separator
 			+ (0 == subDirectory.length() ?
 				"" : subDirectory + File.separator)
-			+ filename + "\")";
+			+ filename;
+		if (!addMenuItem(m, newLabel, filename))
+			return;
 
-		// Now add the command:
-		MenuItem item = new MenuItem(newLabel);
-		// storing the name of the script file as the action command. The label is stripped!
-		m.add(item);
-		item.addActionListener(IJ.getInstance());
-
+		String newCommand = getClass().getName() + "(\""
+			+ fullPath + "\")";
 		Menus.getCommands().put(newLabel, newCommand);
+	}
+
+	protected boolean addMenuItem(Menu m, String label, String filename) {
+		String command = (String)Menus.getCommands().get(label);
+		if (command == null) {
+			// Now add the command:
+			MenuItem item = new MenuItem(label);
+			// storing the name of the script file as the action
+			// command. The label is stripped!
+			m.add(item);
+			item.addActionListener(IJ.getInstance());
+
+			return true;
+		}
+
+		// Allow overriding JavaScripts added by ImageJ
+		if (scriptExtension.equals(".js") &&
+				command.endsWith(".js\")") &&
+				command.startsWith("ij.plugin.Macro_Runner("))
+			return true;
+
+		IJ.log("The script " + filename + " would override "
+			+ "an existing menu entry; skipping");
+
+		return false;
 	}
 
 	/** Split subDirectory by File.separator and make sure submenus
