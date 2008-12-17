@@ -92,12 +92,14 @@ public class UpdateFiji implements PlugIn {
 		path = path.substring(0, path.length() - name.length());
 		if (path.startsWith("jar:") && path.endsWith("!"))
 			path = path.substring(4, path.length() - 5);
-		if (path.startsWith("file:"))
+		if (path.startsWith("file:")) {
 			path = path.substring(5);
-		int slash = path.lastIndexOf(File.separator);
+			if (File.separator.equals("\\") && path.startsWith("/"))
+				path = path.substring(1);
+		}
+		int slash = path.lastIndexOf('/');
 		if (slash > 0) {
-			slash = path.lastIndexOf(File.separator,
-					slash - 1);
+			slash = path.lastIndexOf('/', slash - 1);
 			if (slash > 0)
 				path = path.substring(0, slash);
 		}
