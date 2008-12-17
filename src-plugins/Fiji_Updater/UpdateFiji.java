@@ -447,9 +447,7 @@ public class UpdateFiji implements PlugIn {
 			 * Try to have at most 6 columns, and if possible
 			 * less than 20 rows.
 			 */
-			columns = (ticks.length - 1) / 20 + 1;
-			if (columns > 6)
-				columns = 6;
+			columns = Math.min(3, (int)Math.sqrt(ticks.length));
 			rows = (ticks.length - 1) / columns + 1;
 			fullColumns = columns -
 				(rows * columns - ticks.length);
