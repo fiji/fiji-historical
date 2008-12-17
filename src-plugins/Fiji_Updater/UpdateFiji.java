@@ -237,6 +237,8 @@ public class UpdateFiji implements PlugIn {
 			String digest = getDigest(path, fullPath);
 			long modified = new File(fullPath).lastModified();
 			dates.put(path, timestamp(modified));
+			if (File.separator.equals("\\"))
+				path = path.replace("\\", "/");
 			digests.put(path, digest);
 		} catch (Exception e) {
 			if (e instanceof FileNotFoundException &&
