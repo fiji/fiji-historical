@@ -428,6 +428,8 @@ public class UpdateFiji implements PlugIn {
 			IJ.showMessage("Updated Fiji"
 					+ (errors > 0 ? " with errors" : "")
 					+ ". Please restart Fiji!");
+		else if (errors > 0)
+			IJ.error("Could not update Fiji!");
 	}
 
 	protected static class SelectPackages implements ActionListener {
