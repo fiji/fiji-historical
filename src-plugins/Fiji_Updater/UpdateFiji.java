@@ -5,6 +5,13 @@ import ij.gui.GenericDialog;
 
 import ij.plugin.PlugIn;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.Button;
+import java.awt.Checkbox;
+import java.awt.FlowLayout;
+import java.awt.Panel;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -320,20 +327,6 @@ public class UpdateFiji implements PlugIn {
 		}
 	}
 
-	/*
-	 * Given a two-dimensional list which is indexed row-by-row,
-	 * column-by-column, this function outputs the index for
-	 * column-by-column row-by-row, indexing. */
-	public int mirrorIndex(int i, int total, int rows, int columns) {
-		int fullColumns = columns - (rows * columns - total);
-		int column = i % columns;
-		int row = i / columns;
-		if (column < fullColumns)
-			return row + column * rows;
-		else
-			return row + column * (rows - 1);
-	}
-
 	public void update(URL listFile) {
 		UpdateFiji remote = new UpdateFiji();
 		try {
@@ -380,32 +373,8 @@ public class UpdateFiji implements PlugIn {
 		for (int i = 0; i < ticks.length; i++)
 			ticks[i] = true;
 
-		if (hasGUI) {
-			/*
-			 * Try to have at most 6 columns, and if possible
-			 * less than 20 rows.
-			 */
-			int columns = (ticks.length - 1) / 20 + 1;
-			if (columns > 6)
-				columns = 6;
-			int rows = (ticks.length - 1) / columns + 1;
-
-			String[] labels = new String[ticks.length];
-			for (int i = 0; i < labels.length; i++)
-				labels[i] = (String)list.get(mirrorIndex(i,
-					labels.length, rows, columns));
-
-			GenericDialog gd = new GenericDialog("Update Fiji");
-			gd.addMessage("Available updates:");
-			gd.addCheckboxGroup(rows, columns, labels, ticks);
-			gd.showDialog();
-			if (gd.wasCanceled())
-				return;
-
-			for (int i = 0; i < ticks.length; i++)
-				ticks[mirrorIndex(i, labels.length,
-					rows, columns)] = gd.getNextBoolean();
-		}
+		if (hasGUI && !new SelectPackages(list, ticks).getTicks())
+			return;
 
 		int updated = 0, errors = 0;
 		for (int i = 0; i < ticks.length; i++) {
@@ -456,6 +425,95 @@ public class UpdateFiji implements PlugIn {
 			IJ.showMessage("Updated Fiji"
 					+ (errors > 0 ? " with errors" : "")
 					+ ". Please restart Fiji!");
+	}
+
+	protected static class SelectPackages implements ActionListener {
+		protected String[] labels;
+		protected boolean[] ticks;
+
+		protected GenericDialog gd;
+		protected int rows, columns, fullColumns;
+		protected Button selectAll, selectNone;
+
+		SelectPackages(List list, boolean[] ticks) {
+			this.ticks = ticks;
+
+			/*
+			 * Try to have at most 6 columns, and if possible
+			 * less than 20 rows.
+			 */
+			columns = (ticks.length - 1) / 20 + 1;
+			if (columns > 6)
+				columns = 6;
+			rows = (ticks.length - 1) / columns + 1;
+			fullColumns = columns -
+				(rows * columns - ticks.length);
+
+			labels = new String[ticks.length];
+			for (int i = 0; i < labels.length; i++)
+				labels[i] = (String)list.get(mirror(i));
+		}
+
+		boolean getTicks() {
+			gd = new GenericDialog("Update Fiji Packages");
+			gd.addMessage("Available updates:");
+			gd.addCheckboxGroup(rows, columns, labels, ticks);
+
+			// add the "Select all/none" buttons
+			Panel buttons = new Panel();
+			//buttons.setLayout(new FlowLayout(FlowLayout.CENTER,
+			//			5, 0));
+			selectNone = new Button(" Select none ");
+			selectNone.addActionListener(this);
+
+			selectAll = new Button(" Select all ");
+			selectAll.addActionListener(this);
+
+			buttons.add(selectNone);
+			buttons.add(selectAll);
+			gd.add(buttons);
+
+			gd.showDialog();
+			if (gd.wasCanceled())
+				return false;
+
+			for (int i = 0; i < ticks.length; i++)
+				ticks[mirror(i)] = gd.getNextBoolean();
+			return true;
+		}
+
+		public void actionPerformed(ActionEvent e) {
+			Object source = e.getSource();
+			if (source != selectAll && source != selectNone)
+				return;
+			Iterator iter = gd.getCheckboxes().iterator();
+			while (iter.hasNext())
+				((Checkbox)iter.next()).setState(source
+								 == selectAll);
+		}
+
+		/*
+		 * Given a two-dimensional list which is indexed row-by-row,
+		 * column-by-column, this function outputs the index for
+		 * column-by-column row-by-row, indexing. */
+		int mirror(int i) {
+			int column = i % columns;
+			int row = i / columns;
+			if (column < fullColumns)
+				return row + column * rows;
+			return row + column * (rows - 1) + fullColumns;
+		}
+
+		int unmirror(int i) {
+			int column = i / rows;
+			int row = i % rows;
+			if (column >= fullColumns) {
+				i -= rows * fullColumns;
+				column = fullColumns + (i / (rows - 1));
+				row = i % (rows - 1);
+			}
+			return column + row * columns;
+		}
 	}
 
 	public void update(URL baseURL, String fileName, String suffix,
