@@ -237,6 +237,9 @@ public class UpdateFiji implements PlugIn {
 			dates.put(path, timestamp(modified));
 			digests.put(path, digest);
 		} catch (Exception e) {
+			if (e instanceof FileNotFoundException &&
+					path.startsWith("fiji-"))
+				return;
 			System.err.println("Could not get digest: "
 					+ prefix(path) + " (" + e + ")");
 			e.printStackTrace();
