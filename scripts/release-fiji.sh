@@ -45,7 +45,7 @@ COMMIT_MESSAGE="Precompile Fiji and Fake for $RELEASE"
 
 ssh macosx10.5 "$clone_and_check &&
 	(test ! -z \"\$(git rev-parse --verify mactmp-$RELEASE 2>/dev/null)\" ||
-	 (./Fake.sh precompile-fiji precompile-fake dmg &&
+	 (./Build.sh precompile-fiji precompile-fake dmg &&
 	  git checkout -b mactmp-$RELEASE &&
 	  (git commit -a -s -m \"$COMMIT_MESSAGE\" ||
 	   true)))" &&
@@ -53,7 +53,7 @@ ssh macosx10.5 "$clone_and_check &&
 eval "$clone_and_check" &&
 ! git rev-parse --verify refs/tags/Fiji-$RELEASE &&
 git pull macosx10.5:release-fiji mactmp-$RELEASE &&
-./Fake.sh all-cross precompile-fiji all-tars all-zips &&
+./Build.sh all-cross precompile-fiji all-tars all-zips &&
 if test "$COMMIT_MESSAGE" = "$(git log -1 --pretty=format:%s HEAD)"
 then
 	GIT_EDITOR=: git commit --amend -a
