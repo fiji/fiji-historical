@@ -767,7 +767,7 @@ public class Fake {
 
 					if (upToDate())
 						return;
-					System.err.println("Faking " + this);
+					System.err.println("Building " + this);
 					action();
 				} catch (Exception e) {
 					if (!(e instanceof FakeException))
