@@ -617,8 +617,10 @@ public class UpdateFiji implements PlugIn {
 			String name = (String)iter.next();
 			Object localDigest = local.digests.get(name);
 			Object remoteDigest = remote.digests.get(name);
-			if (localDigest.equals(remoteDigest))
+			if (localDigest.equals(remoteDigest)) {
+				local.dates.put(name, remote.dates.get(name));
 				continue;
+			}
 			String localDate = (String)local.dates.get(name);
 			String remoteDate = (String)remote.dates.get(name);
 			if (remoteDate != null &&
