@@ -1145,6 +1145,12 @@ public class Fake {
 					if (!upToDate(path))
 						return false;
 				}
+				// check the classpath
+				String[] paths = split(getVar("CLASSPATH"),
+						File.pathSeparator);
+				for (int i = 0; i < paths.length; i++)
+					if (!upToDate(paths[i]))
+						return false;
 				return super.checkUpToDate() &&
 					upToDate(configPath);
 			}
@@ -2568,6 +2574,26 @@ public class Fake {
 		String result = iter.hasNext() ? iter.next().toString() : "";
 		while (iter.hasNext())
 			result += separator + iter.next();
+		return result;
+	}
+
+	public static String[] split(String string, String delimiter) {
+		if (string == null || string.equals(""))
+			return new String[0];
+		List list = new ArrayList();
+		int offset = 0;
+		for (;;) {
+			int nextOffset = string.indexOf(delimiter, offset);
+			if (nextOffset < 0) {
+				list.add(string.substring(offset));
+				break;
+			}
+			list.add(string.substring(offset, nextOffset));
+			offset = nextOffset + 1;
+		}
+		String[] result = new String[list.size()];
+		for (int i = 0; i < result.length; i++)
+			result[i] = (String)list.get(i);
 		return result;
 	}
 
