@@ -60,6 +60,9 @@ public class UpdateFiji implements PlugIn {
 		"/var/www/update/current.txt";
 	public static final String updateDirectory = "update";
 
+	protected final String macPrefix = "Contents/MacOS/";
+	protected boolean useMacPrefix = false;
+
 	public UpdateFiji() {
 		dates = new TreeMap();
 		digests = new TreeMap();
@@ -236,6 +239,8 @@ public class UpdateFiji implements PlugIn {
 			String fullPath = prefix(path);
 			String digest = getDigest(path, fullPath);
 			long modified = new File(fullPath).lastModified();
+			if (useMacPrefix && path.startsWith(macPrefix))
+				path = path.substring(macPrefix.length());
 			dates.put(path, timestamp(modified));
 			if (File.separator.equals("\\"))
 				path = path.replace("\\", "/");
@@ -277,9 +282,16 @@ public class UpdateFiji implements PlugIn {
 
 		if (only == null || only.length == 0) {
 			String platform = getPlatform();
-			queue.add("fiji-" + platform);
-			if (platform.equals("macosx"))
-				queue.add("fiji-tiger");
+			if (platform.equals("macosx")) {
+				String macLauncher = macPrefix + "fiji-macosx";
+				if (new File(prefix(macLauncher)).exists())
+					useMacPrefix = true;
+				queue.add((useMacPrefix ? macPrefix : "")
+						+ "fiji-macosx");
+				queue.add((useMacPrefix ? macPrefix : "")
+						+ "fiji-tiger");
+			} else
+				queue.add("fiji-" + platform);
 
 			queue.add("ij.jar");
 			queueDirectory(queue, "plugins");
@@ -376,6 +388,25 @@ public class UpdateFiji implements PlugIn {
 			return;
 		}
 
+		boolean someAreNotWritable = false;
+		for (int i = 0; i < list.size(); i++) {
+			File file = new File((String)list.get(i));
+			if (!file.exists() || file.canWrite())
+				continue;
+			IJ.log("Read-only file: " + list.get(i));
+			someAreNotWritable = true;
+			list.remove(i--);
+		}
+
+		if (someAreNotWritable) {
+			String msg = " of the updateable files are writable.";
+			if (list.size() == 0) {
+				IJ.error("None" + msg);
+				return;
+			}
+			IJ.showMessage("Some" + msg);
+		}
+
 		boolean[] ticks = new boolean[list.size()];
 		for (int i = 0; i < ticks.length; i++)
 			ticks[i] = true;
@@ -394,7 +425,8 @@ public class UpdateFiji implements PlugIn {
 						File.separator + name);
 			try {
 				if (name.startsWith("fiji-")) {
-					fullPath = prefix(name);
+					fullPath = prefix((useMacPrefix ?
+						macPrefix : "") + name);
 					File orig = new File(fullPath);
 					orig.renameTo(new File(fullPath
 								+ ".old"));
@@ -617,8 +649,10 @@ public class UpdateFiji implements PlugIn {
 			String name = (String)iter.next();
 			Object localDigest = local.digests.get(name);
 			Object remoteDigest = remote.digests.get(name);
-			if (localDigest.equals(remoteDigest))
+			if (localDigest.equals(remoteDigest)) {
+				local.dates.put(name, remote.dates.get(name));
 				continue;
+			}
 			String localDate = (String)local.dates.get(name);
 			String remoteDate = (String)remote.dates.get(name);
 			if (remoteDate != null &&

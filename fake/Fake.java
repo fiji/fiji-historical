@@ -701,8 +701,16 @@ public class Fake {
 		abstract class Rule {
 			protected String target;
 			protected List prerequisites, nonUpToDates;
-			boolean wasAlreadyInvoked;
-			boolean wasAlreadyChecked;
+			protected boolean wasAlreadyInvoked;
+			protected boolean wasAlreadyChecked;
+
+			/*
+			 * 0 means upToDate() was not yet run,
+			 * 1 means upToDate() is in the process of being run,
+			 * 2 means upToDate() returns true
+			 * 3 means upToDate() returns false
+			 */
+			protected int upToDateStage;
 
 			Rule(String target, List prerequisites) {
 				this.target = target;
@@ -720,7 +728,19 @@ public class Fake {
 
 			abstract void action() throws FakeException;
 
-			boolean upToDate() {
+			final boolean upToDate() {
+				if (upToDateStage == 1)
+					throw new RuntimeException("Circular "
+						+ "dependency detected in rule "
+						+ this);
+				if (upToDateStage > 0)
+					return upToDateStage == 2;
+				upToDateStage = 1;
+				upToDateStage = checkUpToDate() ? 2 : 3;
+				return upToDateStage == 2;
+			}
+
+			boolean checkUpToDate() {
 				// this implements the mtime check
 				File file = new File(makePath(cwd, target));
 				if (!file.exists()) {
@@ -960,7 +980,7 @@ public class Fake {
 			public void action() throws FakeException {
 			}
 
-			public boolean upToDate() {
+			public boolean checkUpToDate() {
 				return false;
 			}
 		}
@@ -970,7 +990,7 @@ public class Fake {
 				super(target, new ArrayList());
 			}
 
-			boolean upToDate() {
+			boolean checkUpToDate() {
 				return false;
 			}
 		}
@@ -988,7 +1008,7 @@ public class Fake {
 				configPath = getPluginsConfig();
 			}
 
-			boolean upToDate() {
+			boolean checkUpToDate() {
 				return false;
 			}
 
@@ -1058,8 +1078,9 @@ public class Fake {
 				copyJar(source, target, cwd, configPath);
 			}
 
-			boolean upToDate() {
-				if (super.upToDate() && upToDate(configPath))
+			boolean checkUpToDate() {
+				if (super.checkUpToDate() &&
+						upToDate(configPath))
 					return true;
 
 				return jarUpToDate(source, target);
@@ -1105,7 +1126,7 @@ public class Fake {
 					configPath, getVarBool("VERBOSE"));
 			}
 
-			boolean upToDate() {
+			boolean checkUpToDate() {
 				// handle xyz[from/here] targets
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
@@ -1124,7 +1145,14 @@ public class Fake {
 					if (!upToDate(path))
 						return false;
 				}
-				return super.upToDate() && upToDate(configPath);
+				// check the classpath
+				String[] paths = split(getVar("CLASSPATH"),
+						File.pathSeparator);
+				for (int i = 0; i < paths.length; i++)
+					if (!upToDate(paths[i]))
+						return false;
+				return super.checkUpToDate() &&
+					upToDate(configPath);
 			}
 
 			String getMainClass() {
@@ -1315,8 +1343,8 @@ public class Fake {
 				this.program = program;
 			}
 
-			boolean upToDate() {
-				boolean result = super.upToDate();
+			boolean checkUpToDate() {
+				boolean result = super.checkUpToDate();
 
 				if (!result)
 					return result;
@@ -2546,6 +2574,26 @@ public class Fake {
 		String result = iter.hasNext() ? iter.next().toString() : "";
 		while (iter.hasNext())
 			result += separator + iter.next();
+		return result;
+	}
+
+	public static String[] split(String string, String delimiter) {
+		if (string == null || string.equals(""))
+			return new String[0];
+		List list = new ArrayList();
+		int offset = 0;
+		for (;;) {
+			int nextOffset = string.indexOf(delimiter, offset);
+			if (nextOffset < 0) {
+				list.add(string.substring(offset));
+				break;
+			}
+			list.add(string.substring(offset, nextOffset));
+			offset = nextOffset + 1;
+		}
+		String[] result = new String[list.size()];
+		for (int i = 0; i < result.length; i++)
+			result[i] = (String)list.get(i);
 		return result;
 	}
 
