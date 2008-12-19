@@ -376,6 +376,25 @@ public class UpdateFiji implements PlugIn {
 			return;
 		}
 
+		boolean someAreNotWritable = false;
+		for (int i = 0; i < list.size(); i++) {
+			File file = new File((String)list.get(i));
+			if (!file.exists() || file.canWrite())
+				continue;
+			IJ.log("Read-only file: " + list.get(i));
+			someAreNotWritable = true;
+			list.remove(i--);
+		}
+
+		if (someAreNotWritable) {
+			String msg = " of the updateable files are writable.";
+			if (list.size() == 0) {
+				IJ.error("None" + msg);
+				return;
+			}
+			IJ.showMessage("Some" + msg);
+		}
+
 		boolean[] ticks = new boolean[list.size()];
 		for (int i = 0; i < ticks.length; i++)
 			ticks[i] = true;
