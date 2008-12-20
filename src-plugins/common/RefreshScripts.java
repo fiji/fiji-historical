@@ -184,6 +184,10 @@ abstract public class RefreshScripts implements PlugIn {
 
 		String [] parts = subDirectory.split(separatorRegularExpression);
 
+		for (int i=0; i<parts.length; i++) {
+			parts[i] = parts[i].replace('_', ' ');
+		}
+
 		Menu m = pluginsMenu;
 
 		for( int i = 0; i < parts.length; ++i ) {
