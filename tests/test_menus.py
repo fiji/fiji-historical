@@ -173,6 +173,8 @@ if getMenuEntry('Image>Color>Hello>Zuerich') is None:
 	print 'Update Menus did not insert Zuerich'
 	error += 1
 
+# Test isolated classes
+
 fake_plugin_class(temporary_folder + '/Some_Isolated_Class')
 fake_plugin_class(temporary_folder + '/Another/Isolated_Class')
 Prefs.moveToMisc = True
@@ -189,6 +191,25 @@ if not getMenuEntry('Plugins>Another>Isolated Class') is None:
 
 if getMenuEntry('Plugins>Miscellaneous>Isolated Class') is None:
 	print 'Isolated class in subdirectory not put into misc menu'
+	error += 1
+
+# Test that 'Quit' is always last item in the File menu
+
+fake_plugin_jar(temporary_folder + '/test_4.jar',
+	'File, "Something", Wuerzburg')
+
+update_menus()
+
+if getMenuEntry('File>Something') is None:
+	print 'File>Something is missing'
+	error += 1
+
+file = getMenuEntry('File')
+if file is None:
+	print 'Huh? File menu is missing!'
+	error += 1
+elif file.getItem(file.getItemCount() - 1).getLabel() != 'Quit':
+	print 'Last item in File menu is not Quit!'
 	error += 1
 
 ij.exitWhenQuitting(True)
