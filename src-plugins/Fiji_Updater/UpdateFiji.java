@@ -297,6 +297,7 @@ public class UpdateFiji implements PlugIn {
 			queueDirectory(queue, "plugins");
 			queueDirectory(queue, "jars");
 			queueDirectory(queue, "retro");
+			queueDirectory(queue, "misc");
 		} else
 			for (int i = 0; i < only.length; i++)
 				queue.add(only[i]);
