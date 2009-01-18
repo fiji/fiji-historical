@@ -46,7 +46,7 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		super.run(arg);
 		super.window.setTitle("Jython Interpreter");
 		super.prompt.setEnabled(false);
-		IJ.showStatus("Loading classes ...");
+		print_out.print("Starting Jython ...");
 		// Create a python interpreter that can load classes from plugin jar files.
 		PySystemState.initialize(System.getProperties(), System.getProperties(), new String[] { }, IJ.getClassLoader());
 		PySystemState pystate = new PySystemState();
@@ -69,6 +69,8 @@ public class Jython_Interpreter extends AbstractInterpreter {
 			}
 		);
 		super.prompt.setEnabled(true);
+		super.prompt.requestFocus();
+		print_out.println("... done.");
 	}
 
 	/** Evaluate python code. */
