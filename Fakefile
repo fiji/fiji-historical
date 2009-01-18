@@ -164,12 +164,18 @@ javaVersion(misc/Fiji.jar)=1.3
 misc/Fiji.jar <- src-plugins/fiji/*.java src-plugins/ij/**/*.java
 
 # These classes are common
-COMMON=src-plugins/common/**/*.java
-plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java $COMMON
-plugins/Clojure_Interpreter.jar <- src-plugins/Clojure/*.java $COMMON
-plugins/JRuby_Interpreter.jar <- src-plugins/JRuby/*.java $COMMON
-plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java $COMMON
-plugins/Javascript_.jar <- src-plugins/Javascript/*.java $COMMON
+jars/fiji-scripting.jar <- src-plugins/common/**/*.java
+
+CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar
+plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java
+CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar
+plugins/Clojure_Interpreter.jar <- src-plugins/Clojure/*.java
+CLASSPATH(plugins/JRuby_Interpreter.jar)=jars/fiji-scripting.jar
+plugins/JRuby_Interpreter.jar <- src-plugins/JRuby/*.java
+CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
+plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java
+CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
+plugins/Javascript_.jar <- src-plugins/Javascript/*.java
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar
 CLASSPATH(plugins/lens_correction.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar
