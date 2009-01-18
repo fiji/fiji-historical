@@ -49,4 +49,8 @@ public class BSH_Interpreter extends AbstractInterpreter {
 		Object ret = interp.eval(text);
 		return ret;
 	}
+
+	protected String getLineCommentMark() {
+		return "//";
+	}
 }

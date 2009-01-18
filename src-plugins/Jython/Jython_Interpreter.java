@@ -112,4 +112,8 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		} catch (Exception e) { /*fail silently*/ }
 		return msg + " classes imported.\n";
 	}
+
+	protected String getLineCommentMark() {
+		return "#";
+	}
 }

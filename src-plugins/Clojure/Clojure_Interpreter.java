@@ -365,4 +365,8 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			if (!loaded && null != thread) thread.quit();
 		}
 	}
+
+	protected String getLineCommentMark() {
+		return ";";
+	}
 }

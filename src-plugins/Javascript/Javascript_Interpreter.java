@@ -80,4 +80,8 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 		}
 		return null;
 	}
+
+	protected String getLineCommentMark() {
+		return "//";
+	}
 }
