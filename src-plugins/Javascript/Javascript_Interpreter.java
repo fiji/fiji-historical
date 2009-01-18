@@ -27,8 +27,25 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 			scope = new ImporterTopLevel(cx);
 			print_out.println(" done.");
 			if (null != imports(cx, scope)) print_out.println("All ImageJ and java.lang.* classes imported.");
+			createBuiltInFunctions();
 		} catch (Throwable t) {
 			t.printStackTrace(print_out);
+		}
+	}
+
+	protected void createBuiltInFunctions() {
+		StringBuffer fns = new StringBuffer();
+		// 1 - "print" as a shortcut for IJ.log:
+		try {
+			eval("function print(x) { IJ.log(null == x ? null : x.toString()); return x; }");
+			fns.append("print,");
+		} catch (Throwable e) {}
+		// -- other functions here
+		// ...
+
+		if (fns.length() > 0) {
+			fns.setLength(fns.length()-1); // remove last comma
+			print_out.println("Created built-in functions: "+ fns);
 		}
 	}
 
