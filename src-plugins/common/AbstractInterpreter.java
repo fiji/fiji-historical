@@ -133,7 +133,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 	protected void makeGUI() {
 		//JPanel panel = new JPanel();
 		//panel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
-		//screen.setEditable(false);
+		screen.setEditable(false);
 		screen.setLineWrap(true);
 		Font font = new Font("Courier", Font.PLAIN, 12);
 		screen.setFont(font);
