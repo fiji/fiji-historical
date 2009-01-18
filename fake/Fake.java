@@ -789,6 +789,8 @@ public class Fake {
 						return;
 					System.err.println("Building " + this);
 					action();
+					// by definition, it's up-to-date now
+					upToDateStage = 2;
 				} catch (Exception e) {
 					if (!(e instanceof FakeException))
 						e.printStackTrace();
@@ -1119,6 +1121,15 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
+				// check the classpath
+				String[] paths = split(getVar("CLASSPATH"),
+						File.pathSeparator);
+				for (int i = 0; i < paths.length; i++) {
+					Rule rule = (Rule)allRules.get(paths[i]);
+					if (rule != null && !rule.upToDate())
+						rule.make();
+				}
+
 				compileJavas(prerequisites);
 				List files =
 					java2classFiles(prerequisites, cwd);
@@ -1148,9 +1159,13 @@ public class Fake {
 				// check the classpath
 				String[] paths = split(getVar("CLASSPATH"),
 						File.pathSeparator);
-				for (int i = 0; i < paths.length; i++)
+				for (int i = 0; i < paths.length; i++) {
 					if (!upToDate(paths[i]))
 						return false;
+					Rule rule = (Rule)allRules.get(paths[i]);
+					if (rule != null && !rule.upToDate())
+						return false;
+				}
 				return super.checkUpToDate() &&
 					upToDate(configPath);
 			}
