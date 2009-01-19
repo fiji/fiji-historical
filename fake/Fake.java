@@ -693,7 +693,7 @@ public class Fake {
 		public boolean getBool(String string) {
 			return string != null &&
 				(string.equalsIgnoreCase("true") ||
-				 string.equals("1"));
+				 string.equals("1") || string.equals("2"));
 		}
 
 		// the different rule types
@@ -848,7 +848,8 @@ public class Fake {
 			}
 
 			public String toString() {
-				return toString(getVarBool("VERBOSE") ? 0 : 60);
+				return toString(getVar("VERBOSE") == "2" ?
+						0 : 60);
 			}
 
 			public String toString(int maxCharacters) {
