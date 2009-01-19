@@ -808,6 +808,9 @@ public class Fake {
 			}
 
 			protected void clean(String path, boolean dry_run) {
+				String precomp = getVar("PRECOMPILEDDIRECTORY");
+				if (precomp != null && path.startsWith(precomp))
+					return;
 				File file = new File(path);
 				if (file.exists() && !file.isDirectory()) {
 					if (dry_run)
