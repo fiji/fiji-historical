@@ -780,9 +780,8 @@ public class Fake {
 					error("Dependency cycle detected!");
 				wasAlreadyInvoked = true;
 				try {
-					if (getVarBool("DEBUG"))
-						System.err.println("Checking "
-							+ this);
+					verbose("Checking prerequisites of "
+						+ this);
 					makePrerequisites();
 
 					if (upToDate())
@@ -819,6 +818,18 @@ public class Fake {
 					throws FakeException {
 				throw new FakeException(message
 						+ "\n\tin rule " + this);
+			}
+
+			protected void debugLog(String message) {
+				if (!getVarBool("DEBUG"))
+					return;
+				System.err.println(message);
+			}
+
+			protected void verbose(String message) {
+				if (!getVarBool("VERBOSE"))
+					return;
+				System.err.println(message);
 			}
 
 			public void makePrerequisites() throws FakeException {
@@ -1034,8 +1045,7 @@ public class Fake {
 				}
 
 				if (target.indexOf('.') >= 0)
-					copyJar(source, target, cwd,
-							configPath);
+					copyJar(source, target, cwd, configPath);
 			}
 
 			void action(String directory) throws FakeException {
@@ -1125,17 +1135,30 @@ public class Fake {
 				// check the classpath
 				String[] paths = split(getVar("CLASSPATH"),
 						File.pathSeparator);
-				for (int i = 0; i < paths.length; i++) {
-					Rule rule = (Rule)allRules.get(paths[i]);
-					if (rule != null && !rule.upToDate())
-						rule.make();
-				}
+				for (int i = 0; i < paths.length; i++)
+					maybeMake((Rule)allRules.get(paths[i]));
 
 				compileJavas(prerequisites);
 				List files =
 					java2classFiles(prerequisites, cwd);
 				makeJar(target, getMainClass(), files, cwd,
 					configPath, getVarBool("VERBOSE"));
+			}
+
+			void maybeMake(Rule rule) throws FakeException {
+				if (rule == null || rule.upToDate())
+					return;
+				verbose("Making " + rule
+					+ " because it is in the CLASSPATH of "
+					+ this);
+				rule.make();
+			}
+
+			boolean notUpToDate(String reason) {
+				verbose("" + this
+					+ " is not up-to-date because of "
+					+ reason);
+				return false;
 			}
 
 			boolean checkUpToDate() {
@@ -1155,17 +1178,18 @@ public class Fake {
 								exclamation);
 					}
 					if (!upToDate(path))
-						return false;
+						return notUpToDate(path);
 				}
 				// check the classpath
 				String[] paths = split(getVar("CLASSPATH"),
 						File.pathSeparator);
 				for (int i = 0; i < paths.length; i++) {
-					if (!upToDate(paths[i]))
-						return false;
+					if (!paths[i].equals(".") &&
+							!upToDate(paths[i]))
+						return notUpToDate(paths[i]);
 					Rule rule = (Rule)allRules.get(paths[i]);
 					if (rule != null && !rule.upToDate())
-						return false;
+						return notUpToDate("" + rule);
 				}
 				return super.checkUpToDate() &&
 					upToDate(configPath);
@@ -2117,6 +2141,8 @@ public class Fake {
 			if (tryFake) {
 				// Try "Fake"
 				Parser parser = new Parser(fakeFile);
+				if (verbose)
+					parser.setVariable("VERBOSE", "true");
 				if (toolsPath != null)
 					parser.setVariable("TOOLSPATH",
 							toolsPath);
