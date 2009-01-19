@@ -22,6 +22,7 @@ import java.net.URLDecoder;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -765,11 +766,14 @@ public class Fake {
 			boolean upToDate(String path) {
 				if (path == null)
 					return true;
-				long targetModified =
-					new File(cwd, target).lastModified();
-				long pathModified =
-					new File(path).lastModified();
-				return targetModified > pathModified;
+				return upToDate(new File(path),
+					new File(cwd, target));
+			}
+
+			boolean upToDate(File source, File target) {
+				long targetModified = target.lastModified();
+				long sourceModified = source.lastModified();
+				return targetModified > sourceModified;
 			}
 
 			void make() throws FakeException {
@@ -935,11 +939,16 @@ public class Fake {
 				return path;
 			}
 
+			/* Copy source to target if target is not up-to-date */
 			void copyJar(String source, String target, File cwd,
 					String configPath)
 					throws FakeException {
-				if (configPath == null)
+				if (configPath == null) {
+					if (upToDate(new File(cwd, source),
+							new File(cwd, target)))
+						return;
 					copyFile(source, target, cwd);
+				}
 				else try {
 					copyJarWithPluginsConfig(source, target,
 						cwd, configPath);
@@ -954,6 +963,18 @@ public class Fake {
 			void copyJarWithPluginsConfig(String source,
 					String target, File cwd,
 					String configPath) throws Exception {
+				if (upToDate(source))
+					return;
+				if (jarUpToDate(source, target,
+						getVarBool("VERBOSE"))) {
+					if (upToDate(configPath)) {
+						touchFile(target);
+						return;
+					}
+					verbose(source + " is not up-to-date "
+						+ " because of " + configPath);
+				}
+
 				File file = new File(cwd, source);
 				InputStream input = new FileInputStream(file);
 				JarInputStream in = new JarInputStream(input);
@@ -1096,7 +1117,8 @@ public class Fake {
 						upToDate(configPath))
 					return true;
 
-				return jarUpToDate(source, target);
+				return jarUpToDate(source, target,
+					getVarBool("VERBOSE"));
 			}
 		}
 
@@ -1821,7 +1843,8 @@ public class Fake {
 				String realName = (String)iter.next();
 				if (realName.endsWith(".jar/")) {
 					copyJar(stripSuffix(makePath(cwd,
-						realName), "/"), jar);
+						realName), "/"), jar,
+						verbose);
 					continue;
 				}
 				if (realName.endsWith("/")) {
@@ -1877,7 +1900,12 @@ public class Fake {
 		}
 	}
 
-	static void copyJar(String inJar, JarOutputStream out)
+	static void touchFile(String target) throws IOException {
+		long now = new Date().getTime();
+		new File(target).setLastModified(now);
+	}
+
+	static void copyJar(String inJar, JarOutputStream out, boolean verbose)
 			throws Exception {
 		File file = new File(inJar);
 		InputStream input = new FileInputStream(file);
@@ -2165,12 +2193,16 @@ public class Fake {
 		System.err.println("Leaving " + directory);
 	}
 
-	protected static boolean jarUpToDate(String source, String target) {
+	protected static boolean jarUpToDate(String source, String target,
+			boolean verbose) {
 		JarFile targetJar, sourceJar;
 
 		try {
 			targetJar = new JarFile(target);
 		} catch(IOException e) {
+			if (verbose)
+				System.err.println(target
+						+ " does not exist yet");
 			return false;
 		}
 		try {
@@ -2184,10 +2216,20 @@ public class Fake {
 			JarEntry entry = (JarEntry)iter.nextElement();
 			JarEntry other =
 				(JarEntry)targetJar.getEntry(entry.getName());
-			if (other == null)
+			if (other == null) {
+				if (verbose)
+					System.err.println(target
+						+ " lacks the file "
+						+ entry.getName());
 				return false;
-			if (entry.hashCode() != other.hashCode())
+			}
+			if (entry.hashCode() != other.hashCode()) {
+				if (verbose)
+					System.err.println(target + " is not "
+						+ "up-to-date because of "
+						+ entry.getName());
 				return false;
+			}
 		}
 		try {
 			targetJar.close();
