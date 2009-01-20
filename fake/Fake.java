@@ -84,6 +84,7 @@ public class Fake {
 		variableNames.add("CXXFLAGS");
 		variableNames.add("LDFLAGS");
 		variableNames.add("MAINCLASS");
+		variableNames.add("INCLUDESOURCE");
 		fijiHome = discoverFijiHome();
 	}
 
@@ -1166,8 +1167,19 @@ public class Fake {
 				compileJavas(prerequisites);
 				List files =
 					java2classFiles(prerequisites, cwd);
+				if (getVarBool("includeSource"))
+					addSources(files);
 				makeJar(target, getMainClass(), files, cwd,
 					configPath, getVarBool("VERBOSE"));
+			}
+
+			void addSources(List files) {
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String file = (String)iter.next();
+					if (file.endsWith(".java"))
+						files.add(file);
+				}
 			}
 
 			void maybeMake(Rule rule) throws FakeException {
