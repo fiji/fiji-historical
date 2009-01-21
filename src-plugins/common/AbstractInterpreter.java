@@ -707,8 +707,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 			IJ.log("Could not save history for " + getClass().getName() + "\nat path: " + path);
 			return;
 		}
+		Writer writer = null;
 		try {
-			Writer writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(f)), "8859_1");
+			writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(f)), "8859_1");
 
 			final int MAX_LINES = 2000;
 
@@ -733,6 +734,12 @@ public abstract class AbstractInterpreter implements PlugIn {
 		} catch (Throwable e) {
 			IJ.log("Could NOT save history log file!");
 			IJ.log(e.toString());
+		} finally {
+			try {
+				writer.close();
+			} catch (java.io.IOException ioe) {
+				ioe.printStackTrace();
+			}
 		}
 	}
 
@@ -746,8 +753,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 			return new ArrayList[]{blocks, valid};
 		}
 		final String sep = getLineCommentMark() + "\n";
+		Scanner scanner = null;
 		try {
-			Scanner scanner = new Scanner(new File(path), "8859_1").useDelimiter(sep);
+			scanner = new Scanner(new File(path), "8859_1").useDelimiter(sep);
 			while (scanner.hasNext()) {
 				String block = scanner.next();
 				int inl = block.lastIndexOf('\n');
@@ -760,6 +768,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 		} catch (Throwable e) {
 			IJ.log("Could NOT read history log file!");
 			IJ.log(e.toString());
+		} finally {
+			scanner.close();
 		}
 		return new ArrayList[]{blocks, valid};
 	}
