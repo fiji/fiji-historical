@@ -189,7 +189,7 @@ public class Nrrd_Writer implements PlugIn {
 		String units;
 		if(cal!=null) units=cal.getUnit();
 		else units=fi.unit;
-		if(units.equals("µm")) units="microns";
+		if(units.equals("Âµm")) units="microns";
 		if(!units.equals("")) out.write(dimmedQuotedLine("units",dimension,units,units,units));		
 
 		// Only write axis mins if origin info has at least one non-zero
