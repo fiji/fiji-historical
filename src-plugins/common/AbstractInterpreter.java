@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.Iterator;
 import java.util.Collections;
 import java.util.regex.Pattern;
@@ -70,7 +71,17 @@ public abstract class AbstractInterpreter implements PlugIn {
 	String last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
 	protected ExecuteCode runner;
 
-	static protected Hashtable<Class,AbstractInterpreter> instances = new Hashtable<Class,AbstractInterpreter>();
+	static final protected Hashtable<Class,AbstractInterpreter> instances = new Hashtable<Class,AbstractInterpreter>();
+
+	static {
+		// Save history of all open interpreters even in the case of a call to System.exit(0),
+		// which doesn't spawn windowClosing events.
+		Runtime.getRuntime().addShutdownHook(new Thread() { public void run() {
+			for (Map.Entry<Class,AbstractInterpreter> e : instances.entrySet()) {
+				e.getValue().closingWindow();
+			}
+		}});
+	}
 
 	/** Convenient System.out.prinln(text); */
 	protected void p(String msg) {
@@ -95,6 +106,12 @@ public abstract class AbstractInterpreter implements PlugIn {
 			return;
 		}
 		instances.put(getClass(), this);
+
+		System.out.println("Open interpreters:");
+		for (Map.Entry<Class,AbstractInterpreter> e : instances.entrySet()) {
+			System.out.println(e.getKey() + " -> " + e.getValue());
+		}
+
 		ArrayList[] hv = readHistory();
 		al_lines.addAll(hv[0]);
 		valid_lines.addAll(hv[1]);
@@ -354,14 +371,10 @@ public abstract class AbstractInterpreter implements PlugIn {
 		window.addWindowListener(
 				new WindowAdapter() {
 					public void windowClosing(WindowEvent we) {
-						// Before any chance to fail, remove from hashtable of instances:
-						instances.remove(AbstractInterpreter.this.getClass());
-						// ... and store history
-						saveHistory();
-						//
-						AbstractInterpreter.this.windowClosing();
-						runner.quit();
-						reader_run = false;
+						closingWindow();
+					}
+					public void windowClosed(WindowEvent we) {
+						closingWindow();
 					}
 				}
 		);
@@ -369,6 +382,21 @@ public abstract class AbstractInterpreter implements PlugIn {
 		window.setVisible(true);
 		//set the focus to the input prompt
 		prompt.requestFocus();
+	}
+
+	private void closingWindow() {
+		// Check if not closed already
+		if (!instances.containsKey(getClass())) {
+			return;
+		}
+		// Before any chance to fail, remove from hashtable of instances:
+		instances.remove(getClass());
+		// ... and store history
+		saveHistory();
+		//
+		AbstractInterpreter.this.windowClosing();
+		runner.quit();
+		reader_run = false;
 	}
 
 	void addMenuItem(JPopupMenu menu, String label, ActionListener listener) {
