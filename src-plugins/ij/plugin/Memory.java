@@ -60,6 +60,9 @@ public class Memory implements PlugIn {
 			IJ.error("Could not find Fiji directory");
 			return;
 		}
+		if (dir.endsWith(File.separator + "plugins" + File.separator) ||
+				dir.endsWith(File.separator + "plugins"))
+			dir = new File(dir).getParent();
 
 		if (IJ.isMacOSX())
 			fileName = dir + "../Contents/Info.plist";

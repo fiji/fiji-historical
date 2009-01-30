@@ -44,7 +44,7 @@ build : build-arch build-indep
 build-arch : build-arch-stamp
 
 build-arch-stamp : configure-stamp
-	sh Fake.sh
+	sh Build.sh
 	touch $@
 
 build-indep : build-indep-stamp
@@ -57,7 +57,7 @@ clean :
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp install-arch-stamp install-indep-stamp
 	rm -f $(INDEP_STAMPS) $(ARCH_STAMPS)
-	sh Fake.sh clean
+	sh Build.sh clean
 	rm -f fjij fiji.o
 	dh_clean
 

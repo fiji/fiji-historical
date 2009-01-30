@@ -26,4 +26,9 @@ def listThreadNames():
 	listGroup(list, findRootThreadGroup())
 	return list
 
-print listThreadNames()
+IJ.log("Threads:")
+i = 1
+for thread in listThreadNames():
+	IJ.log(str(i) + ": " + thread)
+	i += 1
+

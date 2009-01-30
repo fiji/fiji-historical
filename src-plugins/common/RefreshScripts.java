@@ -37,8 +37,6 @@ import java.awt.Menu;
 import java.awt.PopupMenu;
 import java.awt.MenuItem;
 import java.awt.MenuBar;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.io.File;
 import java.io.StringWriter;
@@ -71,7 +69,7 @@ import java.io.FileReader;
  * 	or tweak ImageJ, or a thousand not-so-straighforward ways.
  *
  */
-abstract public class RefreshScripts implements PlugIn, ActionListener {
+abstract public class RefreshScripts implements PlugIn {
 
 	protected String scriptExtension;
 	protected String languageName;
@@ -119,20 +117,41 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 			items[i] = m.getItem(i);
 		}
 		String newLabel = strip(filename);
-		String newCommand = subDirectory + (0 == subDirectory.length() ? "" : File.separator) + filename;
-		for (int i=0; i<n; i++) {
-			String command = items[i].getActionCommand();
-			if( newCommand.equals(command) ) {
-				m.remove(items[i]);
-			}
+		String fullPath = topLevelDirectory + File.separator
+			+ (0 == subDirectory.length() ?
+				"" : subDirectory + File.separator)
+			+ filename;
+		if (!addMenuItem(m, newLabel, filename))
+			return;
+
+		String newCommand = getClass().getName() + "(\""
+			+ fullPath + "\")";
+		Menus.getCommands().put(newLabel, newCommand);
+	}
+
+	protected boolean addMenuItem(Menu m, String label, String filename) {
+		String command = (String)Menus.getCommands().get(label);
+		if (command == null) {
+			// Now add the command:
+			MenuItem item = new MenuItem(label);
+			// storing the name of the script file as the action
+			// command. The label is stripped!
+			m.add(item);
+			item.addActionListener(IJ.getInstance());
+
+			return true;
 		}
 
-		// Now add the command:
-		MenuItem item = new MenuItem(newLabel);
-		item.addActionListener(this);
-		// storing the name of the script file as the action command. The label is stripped!
-		item.setActionCommand(newCommand);
-		m.add(item);
+		// Allow overriding JavaScripts added by ImageJ
+		if (scriptExtension.equals(".js") &&
+				command.endsWith(".js\")") &&
+				command.startsWith("ij.plugin.Macro_Runner("))
+			return true;
+
+		IJ.log("The script " + filename + " would override "
+			+ "an existing menu entry; skipping");
+
+		return false;
 	}
 
 	/** Split subDirectory by File.separator and make sure submenus
@@ -164,6 +183,10 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 		}
 
 		String [] parts = subDirectory.split(separatorRegularExpression);
+
+		for (int i=0; i<parts.length; i++) {
+			parts[i] = parts[i].replace('_', ' ');
+		}
 
 		Menu m = pluginsMenu;
 
@@ -246,7 +269,32 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 		}
 	}
 
+	// Removes all entries that refer to scripts with the current extension
+	private void removeFromMenu(Menu menu) {
+		int count = menu.getItemCount();
+		for (int i = count - 1; i >= 0; i--) {
+			MenuItem item = menu.getItem(i);
+			if (item instanceof Menu) {
+				removeFromMenu((Menu)item);
+				continue;
+			}
+			String label = item.getLabel();
+			String command = (String)Menus.getCommands().get(label);
+			if (command == null ||
+			    !command.startsWith(getClass().getName() + "(\"") ||
+			    !command.endsWith(scriptExtension + "\")"))
+				continue;
+			menu.remove(i);
+			Menus.getCommands().remove(label);
+		}
+	}
+
 	public void run(String arg) {
+
+		if( arg != null && ! arg.equals("") ) {
+			runScript(arg);
+			return;
+		}
 
 		if( scriptExtension == null || languageName == null ) {
 			IJ.error("BUG: setLanguageProperties must have been called (with non-null scriptExtension and languageName");
@@ -271,6 +319,7 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 			}
 		}
 
+		removeFromMenu( pluginsMenu );
 		addFromDirectory( Menus.getPlugInsPath(), -1 );
 	}
 
@@ -289,30 +338,6 @@ abstract public class RefreshScripts implements PlugIn, ActionListener {
 
 	/** Run the script in a new thread. */
 	abstract protected void runScript(String filename);
-
-	/** Listens to the MenuItem objects holding the name of the python script.*/
-	public void actionPerformed(ActionEvent ae) {
-		Object source = ae.getSource();
-		if (source instanceof MenuItem) {
-			MenuItem item = (MenuItem)source;
-			final String file_name = item.getActionCommand();
-			if (file_name.endsWith(scriptExtension)) {
-				// fork to avoid running on the EventDispatchThread
-				new Thread() {
-					public void run() {
-						setPriority(Thread.NORM_PRIORITY);
-						try {
-							String scriptFilename = script_dir.getCanonicalPath() + File.separator + file_name;
-							runScript(scriptFilename);
-						} catch (Exception e) {
-							e.printStackTrace();
-							IJ.log(e.toString());
-						}
-					}
-				}.start();
-			}
-		}
-	}
 
 	static public void printError(Throwable t) {
 		final StringWriter w = new StringWriter();

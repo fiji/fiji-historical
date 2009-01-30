@@ -58,4 +58,8 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 			"require imagej_functions_path\n";
 		return s;
 	}
+
+	protected String getLineCommentMark() {
+		return "#";
+	}
 }

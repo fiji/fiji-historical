@@ -28,3 +28,21 @@
 [submodule "mpicbg"]
 	path = mpicbg
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/mpicbg.git
+[submodule "clojure"]
+	path = clojure
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/clojure/
+[submodule "bio-formats"]
+	path = bio-formats
+	url = git://pacific.mpi-cbg.de/bio-formats
+[submodule "ij-plugins"]
+	path = ij-plugins
+	url = git://pacific.mpi-cbg.de/ij-plugins
+[submodule "Retrotranslator"]
+	path = Retrotranslator
+	url = git://pacific.mpi-cbg.de/Retrotranslator
+[submodule "tcljava"]
+	path = tcljava
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/tcljava
+[submodule "batik"]
+	path = batik
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/batik/.git

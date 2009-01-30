@@ -243,6 +243,49 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("io.PDF_Viewer", path);
 		}
 
+		// Greg Jefferis: open nrrd images
+		// see Nrrd_Reader code or 
+		// http://teem.sourceforge.net/nrrd/
+		try {
+			String nrrdMagic=new String(buf,0,7,"US-ASCII");
+			if(nrrdMagic.equals("NRRD000")) {
+				// Ok we've identified the file type - now load it
+				return tryPlugIn("io.Nrrd_Reader", path);
+			}
+		} catch (Exception e) {
+		}
+
+		// Johannes Schindelin: open one or more images in a .ico file
+		if (name.endsWith(".ico"))
+			return tryPlugIn("io.ICO_Reader", path);
+
+		// Johannes Schindelin: open one or more images in a .icns file
+		if (name.endsWith(".icns"))
+			return tryPlugIn("io.Icns_Reader", path);
+
+		// Johannes Schindelin: render an .svg image into an ImagePlus
+		if (name.endsWith(".svg"))
+			return tryPlugIn("io.SVG_Reader", path);
+
+		// Johannes Schindelin: open a Cellomics DIB
+		if (name.endsWith(".C01") || name.endsWith(".c01") ||
+				(buf[0] == 0x28 && buf[1] == 0 &&
+				 buf[2] == 0 && buf[3] == 0) ||
+				(buf[0] == 0 && buf[1] == 0 &&
+				 buf[2] == 0 && buf[3] == 0x10 &&
+				 buf[4] == 0x78 && buf[5] == 0x01))
+			return tryPlugIn("io.Cellomics_DIB_Reader", path);
+
+		// Johannes Schindelin: handle scripts
+		if (name.endsWith(".py"))
+			return tryPlugIn("Jython.Refresh_Jython_Scripts", path);
+		if (name.endsWith(".rb"))
+			return tryPlugIn("JRuby.Refresh_JRuby_Scripts", path);
+		if (name.endsWith(".js"))
+			return tryPlugIn("Javascript.Refresh_Javascript_Scripts", path);
+		if (name.endsWith(".clj"))
+			return tryPlugIn("Clojure.Refresh_Clojure_Scripts", path);
+
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type
 		// and then call appropriate plugin using the above as models
@@ -265,6 +308,9 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		Object o = tryOpen(directory, name, path);
 		// if an image was returned, assume success
 		if (o instanceof ImagePlus) return (ImagePlus)o;
+
+		// if null and the file path does not exist, return null
+		if (! new File(path).exists()) return null;
 
 		// try opening the file with LOCI Bio-Formats plugin - always check this last!
 		// Do not call Bio-Formats if File>Import>Image Sequence is opening this file.

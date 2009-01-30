@@ -40,6 +40,7 @@ has_rule = dict()
 last_rule_line = -1
 precompileds = dict()
 last_precompiled_line = -1
+precompile_rule_line = -1
 for i in range(0, len(fakefile)):
 	if fakefile[i].startswith('SUBMODULE_TARGETS='):
 		while i < len(fakefile) and fakefile[i] != "\n":
@@ -63,6 +64,8 @@ for i in range(0, len(fakefile)):
 				last_precompiled_line = i
 				precompileds[fakefile[i]] = i
 			i += 1
+	elif fakefile[i] == "precompiled/* <- plugins/*\n":
+		precompile_rule_line = i
 
 if len(sys.argv) == 2:
 	if submodule in has_rule.keys():
@@ -83,9 +86,12 @@ elif len(sys.argv) == 3:
 # push submodule
 
 url = execute('git --git-dir=' + submodule + '.git config remote.origin.url')
-if not url.startswith('git://'):
-	print 'Making sure that the submodule is pushed:', \
-		execute('git --git-dir=' + submodule + '.git push origin HEAD')
+if url.startswith('git://'):
+	print 'The origin\'s URL of', submodule, \
+		'must be a pushable (i.e. not start with git://)'
+	sys.exit(1)
+print 'Making sure that the submodule is pushed:', \
+	execute('git --git-dir=' + submodule + '.git push origin HEAD')
 
 # add to .gitignore if not yet there
 
@@ -103,6 +109,9 @@ write_fakefile = False
 slash = target.rfind('/')
 precompiled_target = 'precompiled/' + target[slash + 1:]
 precompile_line = "\t" + precompiled_target + " \\\n"
+if len(sys.argv) == 3 and not target.startswith('plugins/'):
+	fakefile[precompile_rule_line] = precompiled_target + ' <- ' + \
+		target + "\n" + fakefile[precompile_rule_line]
 if not precompile_line in precompileds.keys():
 	fakefile.insert(last_precompiled_line + 1, precompile_line)
 	write_fakefile = True
@@ -120,6 +129,28 @@ if write_fakefile:
 	f.close()
 	execute('git add Fakefile')
 
+# update .gitmodules
+path = submodule[:-1]
+modules_config = 'git config -f .gitmodules submodule.' + path
+try:
+	print 'URL: ' + execute(modules_config + '.url')
+except:
+	execute(modules_config + '.path ' + path)
+	execute(modules_config + '.url ' +
+		execute('git config -f ' + path
+			+ '/.git/config remote.origin.url'))
+	execute('git add .gitmodules')
+
+# add .config and .Fakefile if there
+slash = target.find('/')
+base_name = target[slash + 1:]
+if base_name.endswith('.jar'):
+	base_name = base_name[:-4]
+for extension in [ 'config', 'Fakefile' ]:
+	path = 'staged-plugins/' + base_name + '.' + extension
+	if os.path.exists(path):
+		execute('git add ' + path)
+
 # precompile
 
 print execute('./fiji --fake ' + precompiled_target)
@@ -131,7 +162,7 @@ execute('git add ' + precompiled_target + ' ' + submodule[:-1])
 # commit it
 
 action = 'Add'
-if not target in has_rule.keys():
+if submodule in has_rule.keys():
 	action = 'Update'
 f = open('.msg', 'w')
 f.write(action + ' the submodule "' + submodule[:-1] + '"')

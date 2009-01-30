@@ -1,3 +1,5 @@
+/* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -20,6 +22,7 @@ import java.net.URLDecoder;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,7 +47,29 @@ public class Fake {
 	protected static String toolsPath;
 
 	public static void main(String[] args) {
+		if (runPrecompiledFakeIfNewer(args))
+			return;
 		new Fake().make(args);
+	}
+
+	public static boolean runPrecompiledFakeIfNewer(String[] args) {
+		String url = Fake.class.getResource("Fake.class").toString();
+		String prefix = "jar:file:";
+		String suffix = "/fake.jar!/Fake.class";
+		if (!url.startsWith(prefix) || !url.endsWith(suffix))
+			return false;
+		url = url.substring(9, url.length() - suffix.length());
+		File precompiled = new File(url + "/precompiled/fake.jar");
+		if (!precompiled.exists())
+			return false;
+		File current = new File(url + "/fake.jar");
+		if (!current.exists() || current.lastModified() >=
+				precompiled.lastModified())
+			return false;
+		System.err.println("Please copy the precompiled fake.jar "
+			+ "over the current fake.jar; the latter is older!");
+		System.exit(1);
+		return true;
 	}
 
 	final static Set variableNames = new HashSet();
@@ -59,6 +84,7 @@ public class Fake {
 		variableNames.add("CXXFLAGS");
 		variableNames.add("LDFLAGS");
 		variableNames.add("MAINCLASS");
+		variableNames.add("INCLUDESOURCE");
 		fijiHome = discoverFijiHome();
 	}
 
@@ -207,6 +233,12 @@ public class Fake {
 				allPlatforms.add("win32");
 				allPlatforms.add("win64");
 				allPlatforms.add("macosx");
+				allPlatforms.add("osx10.1");
+				allPlatforms.add("osx10.2");
+				allPlatforms.add("osx10.3");
+				allPlatforms.add("osx10.4");
+				allPlatforms.add("osx10.5");
+				allPlatforms.add("osx10.6");
 				Iterator iter = allPlatforms.iterator();
 				while (iter.hasNext()) {
 					String platform = (String)iter.next();
@@ -338,9 +370,6 @@ public class Fake {
 				String list = line.substring(arrow + 2).trim();
 				try {
 					Rule rule = addRule(target, list);
-
-					if (result == null)
-						result = rule;
 				} catch (Exception e) {
 					error(e.getMessage());
 				}
@@ -348,6 +377,7 @@ public class Fake {
 
 			lineNumber = -1;
 
+			result = allRule;
 			if (result == null)
 				error("Could not find default rule");
 
@@ -590,7 +620,7 @@ public class Fake {
 		public boolean isVarChar(char c) {
 			return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
 				|| (c >= '0' && c <= '9') || c == '_'
-				|| c == '(' || c == ')';
+				|| c == '(' || c == ')' || c == '.';
 		}
 
 		public void checkVariableNames() throws FakeException {
@@ -628,6 +658,22 @@ public class Fake {
 			if (subkey2 != null && res == null)
 				res = (String)variables.get(key
 						+ "(" + subkey2 + ")");
+			if (res == null && getPlatform().equals("macosx")) {
+				String version =
+					System.getProperty("os.version");
+				int i = 0;
+				if (version.startsWith("10.")) {
+					int dot = version.indexOf('.', 3);
+					if (dot > 0) {
+						version = version.substring(3,
+							dot);
+						i = Integer.parseInt(version);
+					}
+				}
+				while (i > 0 && res == null)
+					res = (String)variables.get(key
+						+ "(osx10." + (i--) + ")");
+			}
 			if (res == null)
 				res = (String)variables.get(key
 						+ "(" + getPlatform() + ")");
@@ -649,7 +695,7 @@ public class Fake {
 		public boolean getBool(String string) {
 			return string != null &&
 				(string.equalsIgnoreCase("true") ||
-				 string.equals("1"));
+				 string.equals("1") || string.equals("2"));
 		}
 
 		// the different rule types
@@ -657,8 +703,16 @@ public class Fake {
 		abstract class Rule {
 			protected String target;
 			protected List prerequisites, nonUpToDates;
-			boolean wasAlreadyInvoked;
-			boolean wasAlreadyChecked;
+			protected boolean wasAlreadyInvoked;
+			protected boolean wasAlreadyChecked;
+
+			/*
+			 * 0 means upToDate() was not yet run,
+			 * 1 means upToDate() is in the process of being run,
+			 * 2 means upToDate() returns true
+			 * 3 means upToDate() returns false
+			 */
+			protected int upToDateStage;
 
 			Rule(String target, List prerequisites) {
 				this.target = target;
@@ -676,7 +730,19 @@ public class Fake {
 
 			abstract void action() throws FakeException;
 
-			boolean upToDate() {
+			final boolean upToDate() {
+				if (upToDateStage == 1)
+					throw new RuntimeException("Circular "
+						+ "dependency detected in rule "
+						+ this);
+				if (upToDateStage > 0)
+					return upToDateStage == 2;
+				upToDateStage = 1;
+				upToDateStage = checkUpToDate() ? 2 : 3;
+				return upToDateStage == 2;
+			}
+
+			boolean checkUpToDate() {
 				// this implements the mtime check
 				File file = new File(makePath(cwd, target));
 				if (!file.exists()) {
@@ -701,11 +767,14 @@ public class Fake {
 			boolean upToDate(String path) {
 				if (path == null)
 					return true;
-				long targetModified =
-					new File(cwd, target).lastModified();
-				long pathModified =
-					new File(path).lastModified();
-				return targetModified > pathModified;
+				return upToDate(new File(path),
+					new File(cwd, target));
+			}
+
+			boolean upToDate(File source, File target) {
+				long targetModified = target.lastModified();
+				long sourceModified = source.lastModified();
+				return targetModified > sourceModified;
 			}
 
 			void make() throws FakeException {
@@ -716,15 +785,16 @@ public class Fake {
 					error("Dependency cycle detected!");
 				wasAlreadyInvoked = true;
 				try {
-					if (getVarBool("DEBUG"))
-						System.err.println("Checking "
-							+ this);
+					verbose("Checking prerequisites of "
+						+ this);
 					makePrerequisites();
 
 					if (upToDate())
 						return;
-					System.err.println("Faking " + this);
+					System.err.println("Building " + this);
 					action();
+					// by definition, it's up-to-date now
+					upToDateStage = 2;
 				} catch (Exception e) {
 					if (!(e instanceof FakeException))
 						e.printStackTrace();
@@ -739,6 +809,9 @@ public class Fake {
 			}
 
 			protected void clean(String path, boolean dry_run) {
+				String precomp = getVar("PRECOMPILEDDIRECTORY");
+				if (precomp != null && path.startsWith(precomp))
+					return;
 				File file = new File(path);
 				if (file.exists() && !file.isDirectory()) {
 					if (dry_run)
@@ -755,11 +828,26 @@ public class Fake {
 						+ "\n\tin rule " + this);
 			}
 
+			protected void debugLog(String message) {
+				if (!getVarBool("DEBUG"))
+					return;
+				System.err.println(message);
+			}
+
+			protected void verbose(String message) {
+				if (!getVarBool("VERBOSE"))
+					return;
+				System.err.println(message);
+			}
+
 			public void makePrerequisites() throws FakeException {
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
 					String prereq = (String)iter.next();
 
+					if (prereq.endsWith(".jar/"))
+						prereq = stripSuffix(prereq,
+								"/");
 					if (!allRules.containsKey(prereq)) {
 						if (this instanceof All)
 							error("Unknown target: "
@@ -779,10 +867,12 @@ public class Fake {
 			}
 
 			public String toString() {
-				return toString(getVarBool("VERBOSE") ? 0 : 60);
+				return toString(getVar("VERBOSE") == "2" ?
+						0 : 60);
 			}
 
 			public String toString(int maxCharacters) {
+				String target = this.target;
 				String result = "";
 				if (getVarBool("VERBOSE") &&
 						!(this instanceof Special)) {
@@ -830,6 +920,7 @@ public class Fake {
 				toolsPath = getVar("TOOLSPATH");
 				return Fake.compileJavas(javas, cwd,
 					getVar("JAVAVERSION"),
+					getVarBool("DEBUG"),
 					getVarBool("VERBOSE"),
 					getVarBool("SHOWDEPRECATION"),
 					getVar("CLASSPATH"));
@@ -852,11 +943,16 @@ public class Fake {
 				return path;
 			}
 
+			/* Copy source to target if target is not up-to-date */
 			void copyJar(String source, String target, File cwd,
 					String configPath)
 					throws FakeException {
-				if (configPath == null)
+				if (configPath == null) {
+					if (upToDate(new File(cwd, source),
+							new File(cwd, target)))
+						return;
 					copyFile(source, target, cwd);
+				}
 				else try {
 					copyJarWithPluginsConfig(source, target,
 						cwd, configPath);
@@ -871,6 +967,18 @@ public class Fake {
 			void copyJarWithPluginsConfig(String source,
 					String target, File cwd,
 					String configPath) throws Exception {
+				if (upToDate(source))
+					return;
+				if (jarUpToDate(source, target,
+						getVarBool("VERBOSE"))) {
+					if (upToDate(configPath)) {
+						touchFile(target);
+						return;
+					}
+					verbose(source + " is not up-to-date "
+						+ " because of " + configPath);
+				}
+
 				File file = new File(cwd, source);
 				InputStream input = new FileInputStream(file);
 				JarInputStream in = new JarInputStream(input);
@@ -895,17 +1003,8 @@ public class Fake {
 					}
 					byte[] buf = readStream(in);
 					in.closeEntry();
-					try {
-						out.putNextEntry(entry);
-						out.write(buf);
-						out.closeEntry();
-					} catch (ZipException e) {
-						String msg = e.getMessage();
-						if (!msg.startsWith("duplicat"))
-							throw e;
-						System.err.println("ignoring "
-							+ msg);
-					}
+					entry.setCompressedSize(-1);
+					writeJarEntry(entry, out, buf);
 				}
 				in.close();
 				out.close();
@@ -920,7 +1019,7 @@ public class Fake {
 			public void action() throws FakeException {
 			}
 
-			public boolean upToDate() {
+			public boolean checkUpToDate() {
 				return false;
 			}
 		}
@@ -930,23 +1029,25 @@ public class Fake {
 				super(target, new ArrayList());
 			}
 
-			boolean upToDate() {
+			boolean checkUpToDate() {
 				return false;
 			}
 		}
 
 		class SubFake extends Rule {
+			String baseName;
 			String source;
 			String configPath;
 
 			SubFake(String target, List prerequisites) {
 				super(target, prerequisites);
-				source = getLastPrerequisite()
-					+ new File(target).getName();
+				baseName = new File(target).getName();
+				source = getLastPrerequisite() + baseName;
+				baseName = stripSuffix(baseName, ".jar");
 				configPath = getPluginsConfig();
 			}
 
-			boolean upToDate() {
+			boolean checkUpToDate() {
 				return false;
 			}
 
@@ -969,8 +1070,7 @@ public class Fake {
 				}
 
 				if (target.indexOf('.') >= 0)
-					copyJar(source, target, cwd,
-							configPath);
+					copyJar(source, target, cwd, configPath);
 			}
 
 			void action(String directory) throws FakeException {
@@ -979,7 +1079,9 @@ public class Fake {
 					getVarBool("IGNOREMISSINGFAKEFILES",
 						directory),
 					getVarPath("TOOLSPATH", directory),
-					getVarPath("CLASSPATH", directory));
+					getVarPath("CLASSPATH", directory),
+					getVar("PLUGINSCONFIGDIRECTORY")
+						+ "/" + baseName + ".Fakefile");
 			}
 
 			String getVarPath(String variable, String subkey) {
@@ -1014,32 +1116,120 @@ public class Fake {
 				copyJar(source, target, cwd, configPath);
 			}
 
-			boolean upToDate() {
-				if (super.upToDate() && upToDate(configPath))
+			boolean checkUpToDate() {
+				if (super.checkUpToDate() &&
+						upToDate(configPath))
 					return true;
 
-				return jarUpToDate(source, target);
+				return jarUpToDate(source, target,
+					getVarBool("VERBOSE"));
 			}
 		}
 
 		class CompileJar extends Rule {
 			String configPath;
+			String classPath;
 
 			CompileJar(String target, List prerequisites) {
 				super(target, uniq(prerequisites));
 				configPath = getPluginsConfig();
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String prereq = (String)iter.next();
+					if (!prereq.endsWith(".jar/"))
+						continue;
+					prereq = stripSuffix(prereq, "/");
+					if (classPath == null)
+						classPath = prereq;
+					else
+						classPath += ":" + prereq;
+				}
+			}
+
+			String getVar(String var) {
+				String value = super.getVar(var);
+				if (var.toUpperCase().equals("CLASSPATH")) {
+					if( classPath != null ) {
+						return (value == null) ? classPath
+							: (value + ":" + classPath);
+					}
+				}
+				return value;
 			}
 
 			void action() throws FakeException {
+				// check the classpath
+				String[] paths = split(getVar("CLASSPATH"),
+						File.pathSeparator);
+				for (int i = 0; i < paths.length; i++)
+					maybeMake((Rule)allRules.get(paths[i]));
+
 				compileJavas(prerequisites);
 				List files =
 					java2classFiles(prerequisites, cwd);
+				if (getVarBool("includeSource"))
+					addSources(files);
 				makeJar(target, getMainClass(), files, cwd,
 					configPath, getVarBool("VERBOSE"));
 			}
 
-			boolean upToDate() {
-				return super.upToDate() && upToDate(configPath);
+			void addSources(List files) {
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String file = (String)iter.next();
+					if (file.endsWith(".java"))
+						files.add(file);
+				}
+			}
+
+			void maybeMake(Rule rule) throws FakeException {
+				if (rule == null || rule.upToDate())
+					return;
+				verbose("Making " + rule
+					+ " because it is in the CLASSPATH of "
+					+ this);
+				rule.make();
+			}
+
+			boolean notUpToDate(String reason) {
+				verbose("" + this
+					+ " is not up-to-date because of "
+					+ reason);
+				return false;
+			}
+
+			boolean checkUpToDate() {
+				// handle xyz[from/here] targets
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String path = (String)iter.next();
+					int bracket = path.indexOf('[');
+					if (bracket < 0 || !path.endsWith("]"))
+						continue;
+					path = path.substring(bracket + 1,
+						path.length() - 1);
+					if (path.startsWith("jar:file:")) {
+						int exclamation =
+							path.indexOf('!');
+						path = path.substring(9,
+								exclamation);
+					}
+					if (!upToDate(path))
+						return notUpToDate(path);
+				}
+				// check the classpath
+				String[] paths = split(getVar("CLASSPATH"),
+						File.pathSeparator);
+				for (int i = 0; i < paths.length; i++) {
+					if (!paths[i].equals(".") &&
+							!upToDate(paths[i]))
+						return notUpToDate(paths[i]);
+					Rule rule = (Rule)allRules.get(paths[i]);
+					if (rule != null && !rule.upToDate())
+						return notUpToDate("" + rule);
+				}
+				return super.checkUpToDate() &&
+					upToDate(configPath);
 			}
 
 			String getMainClass() {
@@ -1230,6 +1420,26 @@ public class Fake {
 				this.program = program;
 			}
 
+			boolean checkUpToDate() {
+				boolean result = super.checkUpToDate();
+
+				if (!result)
+					return result;
+
+				/*
+				 * Ignore prerequisites if none of them
+				 * exist as files.
+				 */
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String prereq = (String)iter.next();
+					if (new File(makePath(cwd,
+							prereq)).exists())
+						return true;
+				}
+				return false;
+			}
+
 			void action() throws FakeException {
 				if (program.equals(""))
 					return;
@@ -1264,16 +1474,32 @@ public class Fake {
 
 		GlobFilter(String glob, long newerThan) {
 			this.glob = glob;
-			String regex = "^"
-				+ glob.replace(".", "\\.")
-				.replace("^", "\\^")
-				.replace("$", "\\$")
-				.replace("?", "[^/]")
-				.replace("*", "[^/]*")
-				.replace("[^/]*[^/]*", ".*")
-				+ "$";
+			String regex = "^" + replaceSpecials(glob) + "$";
 			pattern = Pattern.compile(regex);
 			this.newerThan = newerThan;
+		}
+
+		String replaceSpecials(String glob) {
+			StringBuffer result = new StringBuffer();
+			char[] array = glob.toCharArray();
+			int len = array.length;
+			for (int i = 0; i < len; i++) {
+				char c = array[i];
+				if (".^$".indexOf(c) >= 0)
+					result.append("\\" + c);
+				else if (c == '?')
+					result.append("[^/]");
+				else if (c == '*') {
+					if (i + 1 >= len || array[i + 1] != '*')
+						result.append("[^/]*");
+					else {
+						result.append(".*");
+						i++;
+					}
+				} else
+					result.append(c);
+			}
+			return result.toString();
 		}
 
 		public boolean accept(File dir, String name) {
@@ -1392,11 +1618,14 @@ public class Fake {
 			String path = parentPath + names[i];
 			if (starstar && names[i].startsWith("."))
 				continue;
+			File file = new File(makePath(cwd, path));
 			if (nextSlash < 0) {
+				if (file.isDirectory())
+					continue;
 				list.add(path);
 				count++;
 			}
-			else if (new File(makePath(cwd, path)).isDirectory())
+			else if (file.isDirectory())
 				count += expandGlob(path + "/" + remainder,
 						list, cwd, newerThan);
 		}
@@ -1410,11 +1639,15 @@ public class Fake {
 	 * the class file names of those classes used that have been found
 	 * in the same class path.
 	 */
-	protected static void java2classFiles(String java, File cwd, Set all) {
+	protected static void java2classFiles(String java, File cwd,
+			List result, Set all) {
 		if (java.endsWith(".java"))
 			java = java.substring(0, java.length() - 5) + ".class";
 		else if (!java.endsWith(".class")) {
-			all.add(java);
+			if (!all.contains(java)) {
+				result.add(java);
+				all.add(java);
+			}
 			return;
 		}
 		byte[] buffer = readFile(makePath(cwd, java));
@@ -1435,8 +1668,9 @@ public class Fake {
 			String path = java + className + ".class";
 			if (new File(makePath(cwd, path)).exists() &&
 					!all.contains(path)) {
+				result.add(path);
 				all.add(path);
-				java2classFiles(path, cwd, all);
+				java2classFiles(path, cwd, result, all);
 			}
 		}
 	}
@@ -1444,11 +1678,12 @@ public class Fake {
 	/* discovers all the .class files for a given set of .java files */
 	protected static List java2classFiles(List javas, File cwd)
 			throws FakeException {
+		List result = new ArrayList();
 		Set all = new HashSet();
 		Iterator iter = javas.iterator();
 		while (iter.hasNext())
-			java2classFiles((String)iter.next(), cwd, all);
-		return new ArrayList(all);
+			java2classFiles((String)iter.next(), cwd, result, all);
+		return result;
 	}
 
 	// this function handles the javac singleton
@@ -1457,9 +1692,10 @@ public class Fake {
 		try {
 			if (javac == null) {
 				discoverJavac();
-				ClassLoader loader = getClassLoader(toolsPath);
+				JarClassLoader loader = (JarClassLoader)
+					getClassLoader(toolsPath);
 				String className = "com.sun.tools.javac.Main";
-				Class main = loader.loadClass(className);
+				Class main = loader.forceLoadClass(className);
 				Class[] argsType = new Class[] {
 					arguments.getClass()
 				};
@@ -1496,10 +1732,12 @@ public class Fake {
 	// returns all .java files in the list, and returns a list where
 	// all the .java files have been replaced by their .class files.
 	protected static List compileJavas(List javas, File cwd,
-			String javaVersion, boolean verbose,
+			String javaVersion, boolean debug, boolean verbose,
 			boolean showDeprecation, String extraClassPath)
 			throws FakeException {
 		List arguments = new ArrayList();
+		if (debug)
+			arguments.add("-g");
 		if (javaVersion != null && !javaVersion.equals("")) {
 			arguments.add("-source");
 			arguments.add(javaVersion);
@@ -1618,7 +1856,23 @@ public class Fake {
 			Iterator iter = files.iterator();
 			while (iter.hasNext()) {
 				String realName = (String)iter.next();
+				if (realName.endsWith(".jar/")) {
+					copyJar(stripSuffix(makePath(cwd,
+						realName), "/"), jar,
+						verbose);
+					continue;
+				}
+				if (realName.endsWith("/")) {
+					lastBase = realName;
+					continue;
+				}
 				String name = realName;
+				int bracket = name.indexOf('[');
+				if (bracket >= 0 && name.endsWith("]")) {
+					realName = name.substring(bracket + 1,
+						name.length() - 1);
+					name = name.substring(0, bracket);
+				}
 				byte[] buffer = readFile(makePath(cwd,
 								realName));
 				if (buffer == null)
@@ -1643,9 +1897,7 @@ public class Fake {
 						.substring(lastBase.length());
 
 				JarEntry entry = new JarEntry(name);
-				jar.putNextEntry(entry);
-				jar.write(buffer, 0, buffer.length);
-				jar.closeEntry();
+				writeJarEntry(entry, jar, buffer);
 			}
 
 			jar.close();
@@ -1656,14 +1908,62 @@ public class Fake {
 					+ "Stored it as " + path
 					+ " instead.");
 		} catch (Exception e) {
+			new File(path).delete();
 			e.printStackTrace();
 			throw new FakeException("Error writing "
 				+ path + ": " + e);
 		}
 	}
 
+	static void touchFile(String target) throws IOException {
+		long now = new Date().getTime();
+		new File(target).setLastModified(now);
+	}
+
+	static void copyJar(String inJar, JarOutputStream out, boolean verbose)
+			throws Exception {
+		File file = new File(inJar);
+		InputStream input = new FileInputStream(file);
+		JarInputStream in = new JarInputStream(input);
+
+		JarEntry entry;
+		while ((entry = in.getNextJarEntry()) != null) {
+			String name = entry.getName();
+			if (name.startsWith("META-INF/")) {
+				in.closeEntry();
+				continue;
+			}
+			byte[] buf = readStream(in);
+			in.closeEntry();
+			entry.setCompressedSize(-1);
+			writeJarEntry(entry, out, buf);
+		}
+		in.close();
+	}
+
+	static void writeJarEntry(JarEntry entry, JarOutputStream out,
+			byte[] buf) throws ZipException, IOException {
+		try {
+			out.putNextEntry(entry);
+			out.write(buf, 0, buf.length);
+			out.closeEntry();
+		} catch (ZipException e) {
+			String msg = e.getMessage();
+			if (!msg.startsWith("duplicate entry: ")) {
+				System.err.println("Error writing "
+						+ entry.getName());
+				throw e;
+			}
+			System.err.println("ignoring " + msg);
+		}
+	}
+
 	static byte[] readFile(String fileName) {
 		try {
+			if (fileName.startsWith("jar:file:")) {
+				URL url = new URL(fileName);
+				return readStream(url.openStream());
+			}
 			File file = new File(fileName);
 			if (!file.exists())
 				return null;
@@ -1858,9 +2158,19 @@ public class Fake {
 
 	protected void fakeOrMake(File cwd, String directory, boolean verbose,
 			boolean ignoreMissingFakefiles, String toolsPath,
-			String classPath) throws FakeException {
+			String classPath, String fallBackFakefile)
+			throws FakeException {
+		String[] files = new File(directory).list();
+		if (files == null || files.length == 0)
+			return;
+		files = null;
+
 		String fakeFile = directory + '/' + Parser.path;
 		boolean tryFake = new File(fakeFile).exists();
+		if (!tryFake) {
+			fakeFile = fallBackFakefile;
+			tryFake = new File(fakeFile).exists();
+		}
 		if (ignoreMissingFakefiles && !tryFake &&
 				!(new File(directory + "/Makefile").exists())) {
 			if (verbose)
@@ -1874,6 +2184,8 @@ public class Fake {
 			if (tryFake) {
 				// Try "Fake"
 				Parser parser = new Parser(fakeFile);
+				if (verbose)
+					parser.setVariable("VERBOSE", "true");
 				if (toolsPath != null)
 					parser.setVariable("TOOLSPATH",
 							toolsPath);
@@ -1896,12 +2208,16 @@ public class Fake {
 		System.err.println("Leaving " + directory);
 	}
 
-	protected static boolean jarUpToDate(String source, String target) {
+	protected static boolean jarUpToDate(String source, String target,
+			boolean verbose) {
 		JarFile targetJar, sourceJar;
 
 		try {
 			targetJar = new JarFile(target);
 		} catch(IOException e) {
+			if (verbose)
+				System.err.println(target
+						+ " does not exist yet");
 			return false;
 		}
 		try {
@@ -1915,10 +2231,20 @@ public class Fake {
 			JarEntry entry = (JarEntry)iter.nextElement();
 			JarEntry other =
 				(JarEntry)targetJar.getEntry(entry.getName());
-			if (other == null)
+			if (other == null) {
+				if (verbose)
+					System.err.println(target
+						+ " lacks the file "
+						+ entry.getName());
 				return false;
-			if (entry.hashCode() != other.hashCode())
+			}
+			if (entry.hashCode() != other.hashCode()) {
+				if (verbose)
+					System.err.println(target + " is not "
+						+ "up-to-date because of "
+						+ entry.getName());
 				return false;
+			}
 		}
 		try {
 			targetJar.close();
@@ -1999,13 +2325,20 @@ public class Fake {
 	}
 
 	public static String makePath(File cwd, String path) {
+		String prefix = "", suffix = "";
+		if (path.startsWith("jar:file:")) {
+			prefix = "jar:file:";
+			int exclamation = path.indexOf('!');
+			suffix = path.substring(exclamation);
+			path = path.substring(prefix.length(), exclamation);
+		}
 		if (isAbsolutePath(path))
-			return path;
+			return prefix + path + suffix;
 		if (path.equals("."))
-			return cwd.toString();
+			return prefix + cwd.toString() + suffix;
 		if (cwd.toString().equals("."))
-			return path.equals("") ? "." : path;
-		return new File(cwd, path).toString();
+			return prefix + (path.equals("") ? "." : path) + suffix;
+		return prefix + new File(cwd, path).toString() + suffix;
 	}
 
 	static class ByteCodeAnalyzer {
@@ -2174,26 +2507,38 @@ public class Fake {
 		if (classLoader == null)
 			classLoader = new JarClassLoader();
 		if (jarFile != null &&
-				! classLoader.jarFiles.containsKey(jarFile))
-			classLoader.jarFiles.put(jarFile, new JarFile(jarFile));
+		    ! classLoader.jarFilesMap.containsKey(jarFile)) {
+			JarFile jar = new JarFile(jarFile);
+			synchronized (classLoader) {
+				/* n.b. We don't need to synchronize
+				   fetching since nothing is ever removed */
+				classLoader.jarFilesMap.put(jarFile, jar);
+				classLoader.jarFilesNames.add(jarFile);
+				classLoader.jarFilesObjects.add(jar);
+			}
+		}
 		return classLoader;
 	}
 
 	private static class JarClassLoader extends ClassLoader {
-		Map jarFiles;
+		Map jarFilesMap;
+		List jarFilesNames;
+		List jarFilesObjects;
 		Map cache;
 
 		JarClassLoader() {
 			super(Thread.currentThread().getContextClassLoader());
-			jarFiles = new HashMap();
+			jarFilesMap = new HashMap();
+			jarFilesNames = new ArrayList(10);
+			jarFilesObjects = new ArrayList(10);
 			cache = new HashMap();
 		}
 
 		public URL getResource(String name) {
-			Iterator iter = jarFiles.keySet().iterator();
-			while (iter.hasNext()) {
-				String file = (String)iter.next();
-				JarFile jar = (JarFile)jarFiles.get(file);
+			int n = jarFilesNames.size();
+			for (int i = n - 1; i >= 0; --i) {
+				JarFile jar = (JarFile)jarFilesObjects.get(i);
+				String file = (String)jarFilesNames.get(i);
 				if (jar.getEntry(name) == null)
 					continue;
 				String url = "file:///"
@@ -2212,9 +2557,9 @@ public class Fake {
 
 		public InputStream getResourceAsStream(String name,
 				boolean nonSystemOnly) {
-			Iterator iter = jarFiles.values().iterator();
-			while (iter.hasNext()) {
-				JarFile jar = (JarFile)iter.next();
+			int n = jarFilesNames.size();
+			for (int i = n - 1; i >= 0; --i) {
+				JarFile jar = (JarFile)jarFilesObjects.get(i);
 				JarEntry entry = jar.getJarEntry(name);
 				if (entry == null)
 					continue;
@@ -2227,6 +2572,11 @@ public class Fake {
 			return super.getResourceAsStream(name);
 		}
 
+		public Class forceLoadClass(String name)
+				throws ClassNotFoundException {
+			return loadClass(name, true, true);
+		}
+
 		public Class loadClass(String name)
 				throws ClassNotFoundException {
 			return loadClass(name, true);
@@ -2234,14 +2584,22 @@ public class Fake {
 
 		public synchronized Class loadClass(String name,
 				boolean resolve) throws ClassNotFoundException {
-			Object cached = cache.get(name);
+			return loadClass(name, resolve, false);
+		}
+
+		public synchronized Class loadClass(String name,
+					boolean resolve, boolean forceReload)
+				throws ClassNotFoundException {
+			Object cached = forceReload ? null : cache.get(name);
 			if (cached != null)
 				return (Class)cached;
 			Class result;
 			try {
-				result = super.loadClass(name, resolve);
-				if (result != null)
-					return result;
+				if (!forceReload) {
+					result = super.loadClass(name, resolve);
+					if (result != null)
+						return result;
+				}
 			} catch (Exception e) { }
 			String path = name.replace('.', '/') + ".class";
 			InputStream input = getResourceAsStream(path, !true);
@@ -2254,7 +2612,11 @@ public class Fake {
 						buffer, 0, buffer.length);
 				cache.put(name, result);
 				return result;
-			} catch (IOException e) { return null; }
+			} catch (IOException e) {
+				result = forceReload ?
+					super.loadClass(name, resolve) : null;
+				return result;
+			}
 		}
 	}
 
@@ -2300,11 +2662,37 @@ public class Fake {
 		return join(list, " ");
 	}
 
+	public static String stripSuffix(String string, String suffix) {
+		if (!string.endsWith(suffix))
+			return string;
+		return string.substring(0, string.length() - suffix.length());
+	}
+
 	public static String join(List list, String separator) {
 		Iterator iter = list.iterator();
 		String result = iter.hasNext() ? iter.next().toString() : "";
 		while (iter.hasNext())
 			result += separator + iter.next();
+		return result;
+	}
+
+	public static String[] split(String string, String delimiter) {
+		if (string == null || string.equals(""))
+			return new String[0];
+		List list = new ArrayList();
+		int offset = 0;
+		for (;;) {
+			int nextOffset = string.indexOf(delimiter, offset);
+			if (nextOffset < 0) {
+				list.add(string.substring(offset));
+				break;
+			}
+			list.add(string.substring(offset, nextOffset));
+			offset = nextOffset + 1;
+		}
+		String[] result = new String[list.size()];
+		for (int i = 0; i < result.length; i++)
+			result[i] = (String)list.get(i);
 		return result;
 	}
 

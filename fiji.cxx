@@ -21,6 +21,7 @@ using std::ifstream;
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 #ifdef MACOSX
 #include <stdlib.h>
@@ -64,6 +65,11 @@ static win_cerr fake_cerr;
 #define PATH_SEP ":"
 #endif
 
+/*
+ * If set, overrides the environment variable JAVA_HOME, which in turn
+ * overrides relative_java_home.
+ */
+string absolute_java_home;
 static const char *relative_java_home = JAVA_HOME;
 static const char *library_path = JAVA_LIB_PATH;
 
@@ -93,18 +99,8 @@ static char *get_win_error(void)
 static void *dlopen(const char *name, int flags)
 {
 	void *result = LoadLibrary(name);
-	DWORD error_code = GetLastError();
-	LPSTR buffer;
 
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			FORMAT_MESSAGE_FROM_SYSTEM |
-			FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL,
-			error_code,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			(LPSTR)&buffer,
-			0, NULL);
-	dlerror_value = buffer;
+	dlerror_value = get_win_error();
 
 	return result;
 }
@@ -128,11 +124,56 @@ static void sleep(int seconds)
 {
 	Sleep(seconds * 1000);
 }
+
+// There is no setenv on Windows, so it should be safe for us to
+// define this compatible version
+static int setenv(const char *name, const char *value, int overwrite)
+{
+	if (!overwrite && getenv(name))
+		return 0;
+	if ((!name) || (!value))
+		return 0;
+	stringstream p;
+	p << name << "=" << value;
+	return putenv(strdup(p.str().c_str()));
+}
+
+// Similarly we can do the same for unsetenv:
+static int unsetenv(const char *name)
+{
+	stringstream p;
+	p << name << "=";
+	return putenv(strdup(p.str().c_str()));
+}
+
 #else
 #include <dlfcn.h>
 #endif
 
-
+// A wrapper for setenv that exits on error
+void setenv_or_exit(const char *name, const char *value, int overwrite)
+{
+	int result;
+	if (!value) {
+#ifdef MACOSX
+		unsetenv(name);
+#else
+		result = unsetenv(name);
+		if (result) {
+			cerr << "Unsetting environment variable " <<
+				name << "failed" << endl;
+			exit(1);
+		}
+#endif
+		return;
+	}
+	result = setenv(name, value, overwrite);
+	if (result) {
+		cerr << "Setting environment variable " << name <<
+			" to " << value << " failed" << endl;
+		exit(1);
+	}
+}
 
 /* Determining heap size */
 
@@ -211,12 +252,74 @@ static long long parse_memory(const char *amount)
 	return result;
 }
 
+#ifdef MACOSX
 static bool parse_bool(string &value)
 {
 	return value != "0" && value != "false" &&
 		value != "False" && value != "FALSE";
 }
+#endif
 
+/* work around a SuSE IPv6 setup bug */
+
+#ifdef IPV6_MAYBE_BROKEN
+#include <netinet/ip6.h>
+#include <fcntl.h>
+#endif
+
+static bool is_ipv6_broken(void)
+{
+#ifndef IPV6_MAYBE_BROKEN
+	return false;
+#else
+	int sock = socket(AF_INET6, SOCK_STREAM, 0);
+	struct sockaddr_in6 address = {
+		AF_INET6, 57294 + 7, 0, in6addr_loopback, 0
+	};
+	long flags;
+
+	if (sock < 0)
+		return true;
+
+	flags = fcntl(sock, F_GETFL, NULL);
+	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) {
+		close(sock);
+		return true;
+	}
+	
+
+	bool result = false;
+	if (connect(sock, (struct sockaddr *)&address, sizeof(address)) < 0) {
+		if (errno == EINPROGRESS) {
+			struct timeval tv;
+			fd_set fdset;
+
+			tv.tv_sec = 0;
+			tv.tv_usec = 50000;
+			FD_ZERO(&fdset);
+			FD_SET(sock, &fdset);
+			if (select(sock + 1, NULL, &fdset, NULL, &tv) > 0) {
+				int error;
+				socklen_t length = sizeof(int);
+				if (getsockopt(sock, SOL_SOCKET, SO_ERROR,
+						(void*)&error, &length) < 0)
+					result = true;
+				else
+					result = (error == EACCES) |
+						(error == EPERM) |
+						(error == EAFNOSUPPORT) |
+						(error == EINPROGRESS);
+			} else
+				result = true;
+		} else
+			result = (errno == EACCES) | (errno == EPERM) |
+				(errno == EAFNOSUPPORT);
+	}
+
+	close(sock);
+	return result;
+#endif
+}
 
 
 /* Java stuff */
@@ -226,10 +329,32 @@ static bool parse_bool(string &value)
 #endif
 
 const char *fiji_dir;
-char **main_argv;
-int main_argc;
+char *main_argv0;
+char **main_argv, **main_argv_backup;
+int main_argc, main_argc_backup;
 const char *main_class;
 bool run_precompiled = false;
+
+static string get_java_home(void)
+{
+	if (absolute_java_home != "")
+		return absolute_java_home;
+	const char *env = getenv("JAVA_HOME");
+	if (env)
+		return env;
+	return string(fiji_dir) + "/" + relative_java_home;
+}
+
+static bool dir_exists(string directory);
+
+static string get_jre_home(void)
+{
+	string result = get_java_home();
+	int len = result.length();
+	if (len > 4 && result.substr(len - 4) == "/jre")
+		return result;
+	return dir_exists(result + "/jre") ? result + "/jre" : result;
+}
 
 static size_t mystrlcpy(char *dest, const char *src, size_t size)
 {
@@ -257,9 +382,12 @@ char *last_slash(const char *path)
 
 static const char *make_absolute_path(const char *path)
 {
-	static char bufs[2][PATH_MAX + 1], *buf = bufs[0], *next_buf = bufs[1];
+	static char bufs[2][PATH_MAX + 1], *buf = bufs[0];
 	char cwd[1024] = "";
+#ifndef WIN32
+	static char *next_buf = bufs[1];
 	int buf_index = 1, len;
+#endif
 
 	int depth = 20;
 	char *last_elem = NULL;
@@ -347,9 +475,38 @@ static bool is_absolute_path(const char *path)
 	return path[0] == '/';
 }
 
+bool file_exists(string path)
+{
+	ifstream test(path.c_str());
+	if (!test.is_open())
+		return false;
+	test.close();
+	return true;
+}
+
+static inline int suffixcmp(const char *string, int len, const char *suffix)
+{
+	int suffix_len = strlen(suffix);
+	if (len < suffix_len)
+		return -1;
+	return strncmp(string + len - suffix_len, suffix, suffix_len);
+}
+
 static string find_in_path(const char *path)
 {
 	const char *p = getenv("PATH");
+
+#ifdef WIN32
+	int len = strlen(path);
+	string path_with_suffix;
+	if (suffixcmp(path, len, ".exe") && suffixcmp(path, len, ".EXE")) {
+		path_with_suffix = string(path) + ".exe";
+		path = path_with_suffix.c_str();
+	}
+	string in_cwd = string(make_absolute_path(path));
+	if (file_exists(in_cwd))
+		return in_cwd;
+#endif
 
 	if (!p) {
 		cerr << "Could not get PATH" << endl;
@@ -357,7 +514,7 @@ static string find_in_path(const char *path)
 	}
 
 	for (;;) {
-		const char *colon = strchr(p, ':'), *orig_p = p;
+		const char *colon = strchr(p, PATH_SEP[0]), *orig_p = p;
 		int len = colon ? colon - p : strlen(p);
 		struct stat st;
 		char buffer[PATH_MAX];
@@ -382,13 +539,15 @@ static string find_in_path(const char *path)
 	}
 }
 
-static inline int suffixcmp(const char *string, int len, const char *suffix)
+#ifdef WIN32
+static char *dos_path(const char *path)
 {
-	int suffix_len = strlen(suffix);
-	if (len < suffix_len)
-		return -1;
-	return strncmp(string + len - suffix_len, suffix, suffix_len);
+	int size = GetShortPathName(path, NULL, 0);
+	char *buffer = (char *)malloc(size);
+	GetShortPathName(path, buffer, size);
+	return buffer;
 }
+#endif
 
 static const char *get_fiji_dir(const char *argv0)
 {
@@ -421,6 +580,9 @@ static const char *get_fiji_dir(const char *argv0)
 #endif
 
 	buffer = buffer.substr(0, slash - argv0);
+#ifdef WIN32
+	buffer = dos_path(buffer.c_str());
+#endif
 	return buffer.c_str();
 }
 
@@ -429,28 +591,34 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 #ifdef MACOSX
 	set_path_to_JVM();
 #else
-	stringstream java_home, buffer;
+	// Save the original value of JAVA_HOME: if creating the JVM this
+	// way doesn't work, set it back so that calling the system JVM
+	// can use the JAVA_HOME variable if it's set...
+	char *original_java_home_env = getenv("JAVA_HOME");
+	stringstream buffer;
 	void *handle;
 	char *err;
 	static jint (*JNI_CreateJavaVM)(JavaVM **pvm, void **penv, void *args);
 
-	java_home << fiji_dir << "/" << relative_java_home;
+	string java_home = get_jre_home();
 #ifdef WIN32
-	/* support Windows with its ridiculously anachronistic putenv() */
-	stringstream java_home_env;
-	java_home_env << "JAVA_HOME=" << java_home.str();
-	putenv(strdup(java_home_env.str().c_str()));
 	/* Windows automatically adds the path of the executable to PATH */
 	stringstream path;
-	path << "PATH=" << getenv("PATH") << ";" << java_home.str() << "/bin";
-	putenv(strdup(path.str().c_str()));
-#else
-	setenv("JAVA_HOME", java_home.str().c_str(), 1);
+	path << getenv("PATH") << ";" << java_home << "/bin";
+	setenv_or_exit("PATH", path.str().c_str(), 1);
+	// on Windows, a setenv() invalidates strings obtained by getenv()
+	if (original_java_home_env)
+		original_java_home_env = strdup(original_java_home_env);
 #endif
-	buffer << java_home.str() << "/" << library_path;
+	setenv_or_exit("JAVA_HOME", java_home.c_str(), 1);
+	buffer << java_home << "/" << library_path;
 
 	handle = dlopen(buffer.str().c_str(), RTLD_LAZY);
 	if (!handle) {
+		setenv_or_exit("JAVA_HOME", original_java_home_env, 1);
+		if (!file_exists(java_home))
+			return 2;
+
 		const char *error = dlerror();
 		if (!error)
 			error = "(unknown error)";
@@ -465,6 +633,7 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 	err = dlerror();
 	if (err) {
 		cerr << "Error loading libjvm: " << err << endl;
+		setenv_or_exit("JAVA_HOME", original_java_home_env, 1);
 		return 1;
 	}
 #endif
@@ -475,9 +644,11 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 /* Windows specific stuff */
 
 #ifdef WIN32
+static bool console_opened = false;
+
 static void sleep_a_while(void)
 {
-	Sleep(60 * 1000);
+	sleep(60);
 }
 
 static void open_win_console(void)
@@ -497,7 +668,13 @@ static void open_win_console(void)
 			dlsym(kernel32_dll, "AttachConsole");
 	if (!attach_console || !attach_console((DWORD)-1)) {
 		AllocConsole();
+		console_opened = true;
 		atexit(sleep_a_while);
+	} else {
+		char title[1024];
+		if (GetConsoleTitle(title, sizeof(title)) &&
+				!strncmp(title, "rxvt", 4))
+			return; // console already opened
 	}
 
 	freopen("CONOUT$", "wt", stdout);
@@ -508,6 +685,13 @@ static void open_win_console(void)
 	SetStdHandle(STD_OUTPUT_HANDLE, handle);
 	SetStdHandle(STD_ERROR_HANDLE, handle);
 }
+
+
+static int fake_posix_mkdir(const char *name, int mode)
+{
+	return mkdir(name);
+}
+#define mkdir fake_posix_mkdir
 
 
 struct entry {
@@ -567,6 +751,55 @@ int close_dir(struct dir *dir)
 #include <dirent.h>
 #endif
 
+static bool dir_exists(string path)
+{
+	DIR *dir = opendir(path.c_str());
+	if (dir) {
+		closedir(dir);
+		return true;
+	}
+	return false;
+}
+
+static int mkdir_p(string path)
+{
+	if (dir_exists(path))
+		return 0;
+
+	size_t slash = path.find_last_of("/\\");
+	if (slash != 0 && slash != path.npos && mkdir_p(path.substr(0, slash)))
+		return -1;
+
+	return mkdir(path.c_str(), 0777);
+}
+
+static void add_java_home_to_path(void)
+{
+	string java_home = absolute_java_home;
+
+	if (java_home == "") {
+		const char *env = getenv("JAVA_HOME");
+		if (env)
+			java_home = env;
+		else {
+			java_home = string(fiji_dir) + "/" + relative_java_home;
+			int len = java_home.length();
+			if (len > 4 && java_home.substr(len - 4) == "/jre")
+				java_home = java_home.substr(0, len - 4);
+		}
+	}
+
+	string new_path;
+	if (dir_exists(java_home + "/bin"))
+		new_path += java_home + "/bin:";
+	if (dir_exists(java_home + "/jre/bin"))
+		new_path += java_home + "/jre/bin:";
+
+	const char *env = getenv("PATH");
+	new_path += env ? env : fiji_dir;
+	setenv_or_exit("PATH", new_path.c_str(), 1);
+}
+
 static int headless;
 
 int build_classpath(string &result, string jar_directory, int no_error) {
@@ -588,9 +821,11 @@ int build_classpath(string &result, string jar_directory, int no_error) {
 		unsigned int extension_start = n - extension_length;
 		if (!filename.compare(extension_start,
 					extension_length,
-					extension))
-			result += PATH_SEP + jar_directory + "/" + filename;
-		else {
+					extension)) {
+			if (result != "")
+				result += PATH_SEP;
+			result += jar_directory + "/" + filename;
+		} else {
 			if (filename != "." && filename != ".." &&
 					build_classpath(result, jar_directory
 						+ "/" + filename, 1))
@@ -754,7 +989,8 @@ static void add_options(struct options &options, string &cmd_line, int for_ij)
 		add_option(options, current, for_ij);
 }
 
-static int read_file_as_string(string file_name, string &contents)
+#ifndef MACOSX
+static void read_file_as_string(string file_name, string &contents)
 {
 	char buffer[1024];
 	ifstream in(file_name.c_str());
@@ -764,6 +1000,7 @@ static int read_file_as_string(string file_name, string &contents)
 	}
 	in.close();
 }
+#endif
 
 static string quote_if_necessary(const char *option)
 {
@@ -786,6 +1023,35 @@ static string quote_if_necessary(const char *option)
 	return result;
 }
 
+#ifdef WIN32
+/* fantastic win32 quoting */
+static char *quote_win32(char *option)
+{
+	char *p, *result, *r1;
+	int backslashes = 0;
+
+	for (p = option; *p; p++)
+		if (strchr(" \"\t", *p))
+			backslashes++;
+
+	if (!backslashes)
+		return option;
+
+	result = (char *)malloc(strlen(option) + backslashes + 2 + 1);
+	r1 = result;
+	*(r1++) = '"';
+	for (p = option; *p; p++) {
+		if (*p == '"')
+			*(r1++) = '\\';
+		*(r1++) = *p;
+	}
+	*(r1++) = '"';
+	*(r1++) = '\0';
+
+	return result;
+}
+#endif
+
 static void show_commandline(struct options& options)
 {
 	cerr << "java";
@@ -797,13 +1063,13 @@ static void show_commandline(struct options& options)
 	cerr << endl;
 }
 
-bool file_exists(string path)
+bool file_is_newer(string path, string than)
 {
-	ifstream test(path.c_str());
-	if (!test.is_open())
+	struct stat st1, st2;
+
+	if (stat(path.c_str(), &st1))
 		return false;
-	test.close();
-	return true;
+	return stat(than.c_str(), &st2) || st1.st_mtime > st2.st_mtime;
 }
 
 bool handle_one_option(int &i, const char *option, string &arg)
@@ -825,6 +1091,48 @@ bool handle_one_option(int &i, const char *option, string &arg)
 	return false;
 }
 
+static bool update_files(string relative_path)
+{
+	string absolute_path = string(fiji_dir) + "/update" + relative_path;
+	DIR *directory = opendir(absolute_path.c_str());
+	if (!directory)
+		return false;
+	if (mkdir_p(string(fiji_dir) + relative_path)) {
+		cerr << "Could not create directory: " << relative_path << endl;
+		exit(1);
+	}
+	struct dirent *entry;
+	while (NULL != (entry = readdir(directory))) {
+		string filename(entry->d_name);
+		if (filename == "." || filename == ".." ||
+				update_files(relative_path + "/" + filename))
+			continue;
+
+		string source = absolute_path + "/" + filename;
+		string target = string(fiji_dir) + relative_path
+			+ "/" + filename;
+#ifdef WIN32
+		if (file_exists(target.c_str()) && unlink(target.c_str())) {
+			cerr << "Could not remove old version of " << target
+				<< ".  Please remove manually!" << endl;
+			exit(1);
+		}
+#endif
+		if (rename(source.c_str(), target.c_str())) {
+			cerr << "Could not move " << source << " to "
+				<< target << ": " << strerror(errno) << endl;
+			exit(1);
+		}
+	}
+	rmdir(absolute_path.c_str());
+	return true;
+}
+
+static void update_files(void)
+{
+	update_files(string(""));
+}
+
 static void /* no-return */ usage(void)
 {
 	cerr << "Usage: " << main_argv[0] << " [<Java options>.. --] "
@@ -842,6 +1150,16 @@ static void /* no-return */ usage(void)
 		<< "\tshow the command line, but do not run anything" << endl
 		<< "--system" << endl
 		<< "\tdo not try to run bundled Java" << endl
+		<< "--java-home <path>" << endl
+		<< "\tspecify JAVA_HOME explicitly" << endl
+		<< "--print-java-home" << endl
+		<< "\tprint Fiji's idea of JAVA_HOME" << endl
+		<< "--print-fiji-dir" << endl
+		<< "\tprint where Fiji thinks it is located" << endl
+#ifdef WIN32
+		<< "--console" << endl
+		<< "\talways open an error console" << endl
+#endif
 		<< "--headless" << endl
 		<< "\trun in text mode" << endl
 		<< "--fiji-dir <path>" << endl
@@ -852,6 +1170,9 @@ static void /* no-return */ usage(void)
 		<< "--class-path, --classpath, -classpath, --cp, -cp <path>"
 			<< endl
 		<< "\tappend <path> to the class path" << endl
+		<< "--jar-path, --jarpath, -jarpath <path>"
+			<< endl
+		<< "\tappend .jar files in <path> to the class path" << endl
 		<< "--ext <path>" << endl
 		<< "\tset Java's extension directory to <path>" << endl
 		<< endl
@@ -870,12 +1191,20 @@ static void /* no-return */ usage(void)
 		<< "--jruby" << endl
 		<< "\tstart JRuby instead of ImageJ (this is the" << endl
 		<< "\tdefault when called with a file ending in .rb)" << endl
-		<< "--main-class <class name>" << endl
+		<< "--clojure" << endl
+		<< "\tstart Clojure instead of ImageJ (this is the "<< endl
+		<< "\tdefault when called with a file ending in .clj)" << endl
+		<< "--main-class <class name> (this is the" << endl
+		<< "\tdefault when called with a file ending in .class)" << endl
 		<< "\tstart the given class instead of ImageJ" << endl
-		<< "--fake" << endl
-		<< "\tstart Fake instead of ImageJ" << endl
+		<< "--build" << endl
+		<< "\tstart Fiji's build instead of ImageJ" << endl
 		<< "--javac" << endl
-		<< "\tstart JavaC, the Java Compiler, instead of ImagJ" << endl
+		<< "\tstart JavaC, the Java Compiler, instead of ImageJ" << endl
+		<< "--ant" << endl
+		<< "\trun Apache Ant" << endl
+		<< "--retrotranslator" << endl
+		<< "\tuse Retrotranslator to support Java < 1.6" << endl
 		<< endl;
 	exit(1);
 }
@@ -886,6 +1215,60 @@ static void /* no-return */ usage(void)
 #else
 #define MAX_32BIT_HEAP 1920
 #endif
+
+string make_memory_option(size_t memory_size)
+{
+	memory_size >>= 20;
+	stringstream heap_size;
+	heap_size << "-Xmx"<< memory_size << "m";
+	return heap_size.str();
+}
+
+static void try_with_less_memory(size_t memory_size)
+{
+	/* Try again, with 25% less memory */
+	if (memory_size < 0)
+		return;
+	memory_size >>= 20; // turn into megabytes
+	size_t subtract = memory_size >> 2;
+	if (!subtract)
+		return;
+	memory_size -= subtract;
+	stringstream option;
+	option << "--mem=" << memory_size << "m";
+	char *memory_option = strdup(option.str().c_str());
+
+	char **new_argv = (char **)malloc((3 + main_argc_backup)
+			* sizeof(char *));
+	memcpy(new_argv, main_argv_backup, main_argc_backup * sizeof(char *));
+	new_argv[main_argc_backup] = memory_option;
+	new_argv[main_argc_backup + 1] = NULL;
+
+	cerr << "Trying with a smaller heap: " << memory_option << endl;
+
+#ifdef WIN32
+	new_argv[0] = dos_path(new_argv[0]);
+	for (int k = 0; k < main_argc_backup + 1; k++)
+		new_argv[k] = quote_win32(new_argv[k]);
+#endif
+	execve(new_argv[0], new_argv, NULL);
+
+	stringstream error;
+
+	error << "ERROR: failed to launch (errno=" << errno << ";"
+		<< strerror(errno) << "):" << endl;
+	for (int i = 0; i < main_argc_backup + 1; i++)
+		error << new_argv[i] << " ";
+	error << endl;
+#ifdef WIN32
+	MessageBox(NULL, error.str().c_str(), "Error executing Fiji", MB_OK);
+#else
+	cerr << error.str();
+#endif
+	exit(1);
+}
+
+bool retrotranslator = false;
 
 static int start_ij(void)
 {
@@ -898,6 +1281,17 @@ static int start_ij(void)
 	int dashdash = 0;
 	bool allow_multiple = false, skip_build_classpath = false;
 	bool jdb = false, add_class_path_option = false;
+
+#ifdef WIN32
+#define EXE_EXTENSION ".exe"
+#else
+#define EXE_EXTENSION
+#endif
+	if (file_exists(string(fiji_dir) + "/fiji" EXE_EXTENSION) &&
+			file_is_newer(string(fiji_dir) + "/fiji.cxx",
+				string(fiji_dir) + "/fiji" EXE_EXTENSION))
+		cerr << "Warning: your Fiji executable is not up-to-date"
+			<< endl;
 
 	size_t memory_size = 0;
 
@@ -913,8 +1307,7 @@ static int start_ij(void)
 			atol(value.c_str()) > 0)
 		options.use_system_jvm++;
 	if (get_fiji_bundle_variable("ext", ext_option))
-		ext_option = string(fiji_dir)
-			+ "/" + relative_java_home + "/Home/lib/ext:"
+		ext_option = get_java_home() + "/Home/lib/ext:"
 			"/Library/Java/Extensions:"
 			"/System/Library/Java/Extensions:"
 			"/System/Library/Frameworks/JavaVM.framework";
@@ -931,8 +1324,16 @@ static int start_ij(void)
 			dashdash = count;
 		else if (!strcmp(main_argv[i], "--dry-run"))
 			options.debug++;
+		else if (handle_one_option(i, "--java-home", arg)) {
+			absolute_java_home = arg;
+			setenv_or_exit("JAVA_HOME", strdup(arg.c_str()), 1);
+		}
 		else if (!strcmp(main_argv[i], "--system"))
 			options.use_system_jvm++;
+#ifdef WIN32
+		else if (!strcmp(main_argv[i], "--console"))
+			open_win_console();
+#endif
 		else if (!strcmp(main_argv[i], "--jdb")) {
 			add_class_path_option = true;
 			jdb = true;
@@ -955,9 +1356,18 @@ static int start_ij(void)
 			main_class = "org.python.util.jython";
 		else if (!strcmp(main_argv[i], "--jruby"))
 			main_class = "org.jruby.Main";
+		else if (!strcmp(main_argv[i], "--clojure"))
+			main_class = "clojure.lang.Repl";
 		else if (handle_one_option(i, "--main-class", arg)) {
 			class_path += "." PATH_SEP;
 			main_class = strdup(arg.c_str());
+		}
+		else if (handle_one_option(i, "--jar", arg)) {
+			class_path += string(fiji_dir)
+				+ "/misc/Fiji.jar" PATH_SEP
+				+ arg + PATH_SEP;
+			main_class = "fiji.JarLauncher";
+			main_argv[count++] = strdup(arg.c_str());
 		}
 		else if (handle_one_option(i, "--class-path", arg) ||
 				handle_one_option(i, "--classpath", arg) ||
@@ -965,22 +1375,38 @@ static int start_ij(void)
 				handle_one_option(i, "--cp", arg) ||
 				handle_one_option(i, "-cp", arg))
 			class_path += arg + PATH_SEP;
+		else if (handle_one_option(i, "--jar-path", arg) ||
+				handle_one_option(i, "--jarpath", arg) ||
+				handle_one_option(i, "-jarpath", arg))
+			build_classpath(class_path, arg, 0);
 		else if (handle_one_option(i, "--ext", arg)) {
 			if (ext_option != "")
 				ext_option += PATH_SEP;
 			ext_option += arg;
 		}
-		else if (!strcmp(main_argv[i], "--fake")) {
+		else if (!strcmp(main_argv[i], "--build") ||
+				!strcmp(main_argv[i], "--fake")) {
+#ifdef WIN32
+			open_win_console();
+#endif
 			skip_build_classpath = true;
 			headless = 1;
-			class_path += fiji_dir;
-			if (run_precompiled || !file_exists(string(fiji_dir)
-						+ "/fake.jar"))
-				class_path += "/precompiled";
-			class_path += "/fake.jar" PATH_SEP;
+			string fake_jar = string(fiji_dir) + "/fake.jar";
+			string precompiled_fake_jar = string(fiji_dir)
+				+ "/precompiled/fake.jar";
+			if (run_precompiled || !file_exists(fake_jar) ||
+					file_is_newer(precompiled_fake_jar,
+						fake_jar))
+				fake_jar = precompiled_fake_jar;
+			if (file_is_newer(string(fiji_dir) + "/fake/Fake.java",
+					fake_jar))
+				cerr << "Warning: fake.jar is not up-to-date"
+					<< endl;
+			class_path += fake_jar + PATH_SEP;
 			main_class = "Fake";
 		}
-		else if (!strcmp(main_argv[i], "--javac")) {
+		else if (!strcmp(main_argv[i], "--javac") ||
+				!strcmp(main_argv[i], "--javap")) {
 			add_class_path_option = true;
 			headless = 1;
 			class_path += fiji_dir;
@@ -989,27 +1415,37 @@ static int start_ij(void)
 				class_path += "/precompiled";
 			else
 				class_path += "/jars";
-			class_path += "/javac.jar" PATH_SEP;
-			main_class = "com.sun.tools.javac.Main";
+			class_path += string("/javac.jar" PATH_SEP)
+				+ get_jre_home()
+				+ "/../lib/tools.jar" PATH_SEP;
+			if (!strcmp(main_argv[i], "--javac"))
+				main_class = "com.sun.tools.javac.Main";
+			else if (!strcmp(main_argv[i], "--javap"))
+				main_class = "sun.tools.javap.Main";
+			else
+				cerr << main_argv[i] << "!\n";
 		}
+		else if (!strcmp(main_argv[i], "--ant"))
+			main_class = "org.apache.tools.ant.Main";
+		else if (!strcmp(main_argv[i], "--retrotranslator") ||
+				!strcmp(main_argv[i], "--retro"))
+			retrotranslator = true;
 		else if (handle_one_option(i, "--fiji-dir", arg))
 			fiji_dir = strdup(arg.c_str());
+		else if (!strcmp("--print-fiji-dir", main_argv[i])) {
+			cerr << fiji_dir << endl;
+			exit(0);
+		}
+		else if (!strcmp("--print-java-home", main_argv[i])) {
+			cerr << get_java_home() << endl;
+			exit(0);
+		}
 		else if (!strcmp("--help", main_argv[i]) ||
 				!strcmp("-h", main_argv[i]))
 			usage();
-		else {
-			int len = strlen(main_argv[i]);
-			if (len > 6 && !strcmp(main_argv[i]
-						+ len - 6, ".class")) {
-				class_path += "." PATH_SEP;
-				string dotted = main_argv[i];
-				replace(dotted.begin(), dotted.end(), '/', '.');
-				dotted = dotted.substr(0, len - 6);
-				main_class = strdup(dotted.c_str());
-			}
-			else
-				main_argv[count++] = main_argv[i];
-		}
+		else
+			main_argv[count++] = main_argv[i];
+
 	main_argc = count;
 
 	if (!headless &&
@@ -1057,7 +1493,9 @@ static int start_ij(void)
 		if (build_classpath(class_path, string(fiji_dir) + "/jars", 0))
 			return 1;
 	}
-	add_option(options, class_path, 0);
+	if (retrotranslator && build_classpath(class_path,
+				string(fiji_dir) + "/retro", 0))
+		return 1;
 
 	if (plugin_path.str() == "")
 		plugin_path << "-Dplugins.dir=" << fiji_dir;
@@ -1068,19 +1506,19 @@ static int start_ij(void)
 		memory_size = get_memory_size(0);
 		/* 0.75x, but avoid multiplication to avoid overflow */
 		memory_size -= memory_size >> 2;
+		if (sizeof(void *) == 4 &&
+				(memory_size >> 20) > MAX_32BIT_HEAP)
+			memory_size = (MAX_32BIT_HEAP << 20);
 	}
 
-	if (memory_size > 0) {
-		memory_size >>= 20;
-		if (sizeof(void *) == 4 && memory_size > MAX_32BIT_HEAP)
-			memory_size = MAX_32BIT_HEAP;
-		stringstream heap_size;
-		heap_size << "-Xmx"<< memory_size << "m";
-		add_option(options, heap_size, 0);
-	}
+	if (memory_size > 0)
+		add_option(options, make_memory_option(memory_size).c_str(), 0);
 
 	if (headless)
 		add_option(options, "-Djava.awt.headless=true", 0);
+
+	if (is_ipv6_broken())
+		add_option(options, "-Djava.net.preferIPv4Stack=true", 0);
 
 	if (jvm_options != "")
 		add_options(options, jvm_options, 0);
@@ -1102,24 +1540,38 @@ static int start_ij(void)
 			main_class = "org.python.util.jython";
 		else if (len > 3 && !strcmp(first + len - 3, ".rb"))
 			main_class = "org.jruby.Main";
+		else if (len > 4 && !strcmp(first + len - 4, ".clj"))
+			main_class = "clojure.lang.Script";
+		else if (len > 6 && !strcmp(first + len - 6, ".class")) {
+			class_path += "." PATH_SEP;
+			string dotted = first;
+			replace(dotted.begin(), dotted.end(), '/', '.');
+			dotted = dotted.substr(0, len - 6);
+			main_class = strdup(dotted.c_str());
+			main_argv++;
+			main_argc--;
+		}
 		else
 			main_class = "ij.ImageJ";
 	}
+
+	add_option(options, class_path, 0);
 
 	if (add_class_path_option) {
 		add_option(options, "-classpath", 1);
 		add_option(options, class_path.substr(18).c_str(), 1);
 	}
 
-	if (jdb) {
-		add_option(options, main_class, 1);
-		main_class = "com.sun.tools.example.debug.tty.TTY";
-	}
-
-	if (allow_multiple && !strcmp(main_class, "ij.ImageJ"))
-		add_option(options, "-port0", 1);
+	if (!strcmp(main_class, "org.apache.tools.ant.Main"))
+		add_java_home_to_path();
 
 	if (!strcmp(main_class, "ij.ImageJ")) {
+		if (allow_multiple)
+			add_option(options, "-port0", 1);
+		else
+			add_option(options, "-port7", 1);
+
+		update_files();
 		stringstream icon_option;
 		icon_option << "-icon=" << fiji_dir << "/images/icon.png";
 		add_option(options, icon_option, 1);
@@ -1135,6 +1587,18 @@ static int start_ij(void)
 		}
 		if (main_argc > 1 && *main_argv[1] != '-')
 			add_option(options, "-batch", 1);
+	}
+
+	if (jdb) {
+		add_option(options, main_class, 1);
+		main_class = "com.sun.tools.example.debug.tty.TTY";
+	}
+
+	if (retrotranslator) {
+		add_option(options, "-advanced", 1);
+		add_option(options, main_class, 1);
+		main_class =
+			"net.sf.retrotranslator.transformer.JITRetrotranslator";
 	}
 
 	for (int i = 1; i < main_argc; i++)
@@ -1154,15 +1618,20 @@ static int start_ij(void)
 
 	if (options.use_system_jvm)
 		env = NULL;
-	else if (create_java_vm(&vm, (void **)&env, &args)) {
-		cerr << "Warning: falling back to System JVM" << endl;
-		env = NULL;
-	} else {
-		stringstream java_home_path;
-		java_home_path << "-Djava.home=" << fiji_dir << "/"
-			<< relative_java_home;
-		prepend_string(options.java_options,
-			java_home_path.str().c_str());
+	else {
+		int result = create_java_vm(&vm, (void **)&env, &args);
+		if (result == JNI_ENOMEM) {
+			try_with_less_memory(memory_size);
+			cerr << "Out of memory!" << endl;
+		}
+		if (result) {
+			if (result != 2)
+				cerr << "Warning: falling back to System JVM"
+					<< endl;
+			env = NULL;
+		} else
+			prepend_string(options.java_options,
+				("-Djava.home=" + get_java_home()).c_str());
 	}
 
 	if (env) {
@@ -1212,8 +1681,40 @@ static int start_ij(void)
 		append_string(options.java_options, NULL);
 		prepend_string(options.java_options, "java");
 
-		if (execvp("java", options.java_options.list))
-			cerr << "Could not launch system-wide Java" << endl;
+		string java_binary("java");
+		char * java_home_env = getenv("JAVA_HOME");
+		if( java_home_env && strlen(java_home_env) > 0 ) {
+			int n = strlen(java_home_env);
+			cerr << "Found that JAVA_HOME was: '" <<
+				java_home_env << "'" << endl;
+			java_binary = java_home_env;
+			if( java_home_env[n-1] != '/' ) {
+				java_binary += "/";
+			}
+			java_binary += "bin/java";
+		}
+		options.java_options.list[0] = (char *)java_binary.c_str();
+#ifdef WIN32
+		if (console_opened)
+			sleep(5); // sleep 5 seconds
+
+		FreeConsole(); // java.exe cannot reuse the console anyway
+		for (int i = 0; i < options.java_options.nr - 1; i++)
+			options.java_options.list[i] =
+				quote_win32(options.java_options.list[i]);
+#endif
+		if (execvp(java_binary.c_str(), options.java_options.list))
+			cerr << "Could not launch system-wide Java ("
+				<< strerror(errno) << ")" << endl;
+#ifdef WIN32
+		char message[16384];
+		int off = sprintf(message, "Error: '%s' while executing\n\n",
+				strerror(errno));
+		for (int i = 0; options.java_options.list[i]; i++)
+			off += sprintf(message + off, "'%s'\n",
+					options.java_options.list[i]);
+		MessageBox(NULL, message, "Error", MB_OK);
+#endif
 		exit(1);
 	}
 	return 0;
@@ -1436,14 +1937,24 @@ static int start_ij_macosx(void)
  * we'd rather meet the Apple software designers some night, with a baseball
  * bat in our hands, than execute an innocent binary that is not to blame.
  */
-static int is_leopard(void)
+static int is_osrelease(int min)
 {
 	int mib[2] = { CTL_KERN, KERN_OSRELEASE };
 	char os_release[128];
 	size_t len = sizeof(os_release);;
 
 	return sysctl(mib, 2, os_release, &len, NULL, 0) != -1 &&
-		atoi(os_release) > 8;
+		atoi(os_release) >= min;
+}
+
+static int is_leopard(void)
+{
+	return is_osrelease(9);
+}
+
+static int is_tiger(void)
+{
+	return is_osrelease(8);
 }
 
 static int launch_32bit_on_tiger(int argc, char **argv)
@@ -1455,6 +1966,8 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 		replace = "-macosx";
 	}
 	else { /* Tiger */
+		if (!is_tiger())
+			retrotranslator = true;
 		match = "-macosx";
 		replace = "-tiger";
 		if (sizeof(void *) < 8)
@@ -1473,18 +1986,99 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 }
 #endif
 
+static bool is_dir_empty(string path)
+{
+	DIR *dir = opendir(path.c_str());
+	if (!dir)
+		return false;
+
+	struct dirent *entry;
+	while (NULL != (entry = readdir(dir)))
+		if (entry->d_name[0] != '.') {
+			closedir(dir);
+			return false;
+		}
+
+	closedir(dir);
+	return true;
+}
+
+static string get_newest_subdir(string relative_path)
+{
+	string path = string(fiji_dir) + "/" + relative_path;
+	string result = "";
+	DIR *dir = opendir(path.c_str());
+	if (!dir)
+		return result;
+	long mtime = 0;
+	struct dirent *entry;
+	while (NULL != (entry = readdir(dir))) {
+		string filename(entry->d_name);
+		if (filename == "." || filename == ".." || filename == ".git")
+			continue;
+		struct stat st;
+		if (stat((path + "/" + filename).c_str(), &st))
+			continue;
+		if (!S_ISDIR(st.st_mode))
+			continue;
+		if (is_dir_empty(relative_path + "/" + filename))
+			continue;
+		if (mtime < st.st_mtime) {
+			mtime = st.st_mtime;
+			result = relative_path + "/" + filename;
+		}
+	}
+	closedir(dir);
+	return result;
+}
+
+static void adjust_java_home_if_necessary(void)
+{
+#ifdef MACOSX
+	/* On MacOSX, we use the system Java anyway. */
+	return;
+#endif
+	if (file_exists(string(fiji_dir) + "/" + relative_java_home
+			+ "/" + library_path))
+		return;
+	string platform_subdir = get_newest_subdir(string("java"));
+	if (platform_subdir == "")
+		return;
+	string jdk_subdir = get_newest_subdir(platform_subdir);
+	if (jdk_subdir == "")
+		return;
+	jdk_subdir += "/jre";
+	if (dir_exists(string(fiji_dir) + "/" + jdk_subdir))
+		relative_java_home = strdup(jdk_subdir.c_str());
+}
+
 int main(int argc, char **argv, char **e)
 {
 #if defined(MACOSX)
 	launch_32bit_on_tiger(argc, argv);
 #elif defined(WIN32)
+#ifdef WIN64
+	/* work around MinGW64 breakage */
+	argc = __argc;
+	argv = __argv;
+	argv[0] = _pgmptr;
+#endif
 	int len = strlen(argv[0]);
 	if (!suffixcmp(argv[0], len, "fiji.exe") ||
 			!suffixcmp(argv[0], len, "fiji"))
 		open_win_console();
 #endif
 	fiji_dir = get_fiji_dir(argv[0]);
+	adjust_java_home_if_necessary();
+	main_argv0 = argv[0];
 	main_argv = argv;
 	main_argc = argc;
+
+	/* save arguments in case we have to try with a smaller heap */
+	int size = (argc + 1) * sizeof(char *);
+	main_argv_backup = (char **)malloc(size);
+	memcpy(main_argv_backup, main_argv, size);
+	main_argc_backup = argc;
+
 	return start_ij();
 }

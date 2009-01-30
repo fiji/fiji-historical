@@ -1,13 +1,13 @@
 all: run
 
 run:
-	sh Fake.sh run
+	sh Build.sh run
 
-fiji:
-	sh Fake.sh fiji
+fiji: fiji.cxx
+	sh Build.sh fiji
 
-fake.jar:
-	sh Fake.sh fake.jar
+fake.jar: fake/Fake.java
+	sh Build.sh fake.jar
 
 # MicroManager
 mm:

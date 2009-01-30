@@ -42,11 +42,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.File;
+import java.io.Writer;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.Iterator;
 import java.util.Collections;
+import java.util.regex.Pattern;
+import java.util.Scanner;
 
 public abstract class AbstractInterpreter implements PlugIn {
 
@@ -55,16 +61,27 @@ public abstract class AbstractInterpreter implements PlugIn {
 	final protected JTextArea prompt = new JTextArea(1, 60);//new JTextField(60);
 	protected int active_line = 0;
 	final protected ArrayList al_lines = new ArrayList();
+	final protected ArrayList<Boolean> valid_lines = new ArrayList<Boolean>();
 	final protected ByteArrayOutputStream byte_out = new ByteArrayOutputStream();
 	final protected BufferedOutputStream out = new BufferedOutputStream(byte_out);
     final protected PrintWriter print_out = new PrintWriter(out);
 	Thread reader;
 	boolean reader_run = true;
 	protected JPopupMenu popup_menu;
-	/** Store class and def definitions to be executed as a block*/
-	String selection = null;
 	String last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
 	protected ExecuteCode runner;
+
+	static final protected Hashtable<Class,AbstractInterpreter> instances = new Hashtable<Class,AbstractInterpreter>();
+
+	static {
+		// Save history of all open interpreters even in the case of a call to System.exit(0),
+		// which doesn't spawn windowClosing events.
+		Runtime.getRuntime().addShutdownHook(new Thread() { public void run() {
+			for (Map.Entry<Class,AbstractInterpreter> e : instances.entrySet()) {
+				e.getValue().closingWindow();
+			}
+		}});
+	}
 
 	/** Convenient System.out.prinln(text); */
 	protected void p(String msg) {
@@ -76,14 +93,45 @@ public abstract class AbstractInterpreter implements PlugIn {
 	}
 
 	public void run(String arghhh) {
+		AbstractInterpreter instance = instances.get(getClass());
+		if (null != instance) {
+			instance.window.setVisible(true);
+			instance.window.toFront();
+			/*
+			String name = instance.getClass().getName();
+			int idot = name.lastIndexOf('.');
+			if (-1 != idot) name = name.substring(idot);
+			IJ.showMessage("The " + name.replace('_', ' ') + " is already open!");
+			*/
+			return;
+		}
+		instances.put(getClass(), this);
+
+		System.out.println("Open interpreters:");
+		for (Map.Entry<Class,AbstractInterpreter> e : instances.entrySet()) {
+			System.out.println(e.getKey() + " -> " + e.getValue());
+		}
+
+		ArrayList[] hv = readHistory();
+		al_lines.addAll(hv[0]);
+		valid_lines.addAll(hv[1]);
+		active_line = al_lines.size();
+		if (al_lines.size() != valid_lines.size()) {
+			IJ.log("ERROR in parsing history!");
+			al_lines.clear();
+			valid_lines.clear();
+			active_line = 0;
+		}
+
 		// make GUI
 		makeGUI();
 		// start thread to write stdout and stderr to the screen
 		reader = new Thread("out_reader") {
 			public void run() {
+				setPriority(Thread.NORM_PRIORITY);
 				while(reader_run) {
 					print_out.flush();
-					String output = byte_out.toString(); // this should go with proper encoding 8859-1 or whatever is called
+					String output = byte_out.toString(); // this should go with proper encoding 8859_1 or whatever is called
 					if (output.length() > 0) {
 						screen.append(output + "\n");
 						screen.setCaretPosition(screen.getDocument().getLength());
@@ -102,24 +150,23 @@ public abstract class AbstractInterpreter implements PlugIn {
 	protected void makeGUI() {
 		//JPanel panel = new JPanel();
 		//panel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
-		//screen.setEditable(false);
+		screen.setEditable(false);
 		screen.setLineWrap(true);
 		Font font = new Font("Courier", Font.PLAIN, 12);
 		screen.setFont(font);
 		popup_menu = new JPopupMenu();
 		ActionListener menu_listener = new ActionListener() {
 				public void actionPerformed(ActionEvent ae) {
+					String selection = screen.getSelectedText();
 					if (null == selection) return;
-					//this is crude as it may interfere with the user data in strings.
-					selection = selection.replaceAll(">>> ", "");
-					selection = selection.replaceAll("\\.\\.\\. ", "");
+					String sel = filterSelection();
 					String command = ae.getActionCommand();
 					if (command.equals("Copy")) {
 						Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
-						Transferable transfer = new StringSelection(selection);
+						Transferable transfer = new StringSelection(sel);
 						cb.setContents(transfer, (ClipboardOwner)transfer);
 					} else if (command.equals("Execute")) {
-						runner.execute(selection);
+						runner.execute(sel);
 					} else if (command.equals("Save")) {
 						FileDialog fd = new FileDialog(window, "Save", FileDialog.SAVE);
 						fd.setDirectory(last_dir);
@@ -140,8 +187,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 									if (gd.wasCanceled()) return;
 									file = new File(last_dir + gd.getNextString());
 								}
-								DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file), selection.length()));
-								dos.writeBytes(selection);
+								DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file), sel.length()));
+								dos.writeBytes(sel);
 								dos.flush();
 							} catch (Exception e) {
 								IJ.log("ERROR: " + e);
@@ -178,8 +225,17 @@ public abstract class AbstractInterpreter implements PlugIn {
 		prompt.getActionMap().put("up",
 				new AbstractAction("up") {
 					public void actionPerformed(ActionEvent ae) {
-						int size = al_lines.size();
+						final int size = al_lines.size();
 						if (0 == size) return;
+						// Store current prompt content if not empty and is different that last stored line
+						if (size -1 == active_line) {
+							String txt = prompt.getText();
+							if (null != txt && txt.trim().length() > 0 && !txt.equals((String)al_lines.get(active_line))) {
+								al_lines.add(txt);
+								valid_lines.add(false); // because it has never been executed yet
+							}
+						}
+
 						if (active_line > 0) {
 							if (prompt.getText().equals("") && size -1 == active_line) {
 								active_line = size - 1;
@@ -285,7 +341,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		screen.addMouseListener(
 				new MouseAdapter() {
 					public void mouseReleased(MouseEvent me) {
-						selection = screen.getSelectedText();
+						String selection = screen.getSelectedText();
 						//show popup menu
 						if (null != selection && 0 < selection.length()) {
 							popup_menu.show(screen, me.getX(), me.getY());
@@ -315,9 +371,10 @@ public abstract class AbstractInterpreter implements PlugIn {
 		window.addWindowListener(
 				new WindowAdapter() {
 					public void windowClosing(WindowEvent we) {
-						AbstractInterpreter.this.windowClosing();
-						runner.quit();
-						reader_run = false;
+						closingWindow();
+					}
+					public void windowClosed(WindowEvent we) {
+						closingWindow();
 					}
 				}
 		);
@@ -325,6 +382,21 @@ public abstract class AbstractInterpreter implements PlugIn {
 		window.setVisible(true);
 		//set the focus to the input prompt
 		prompt.requestFocus();
+	}
+
+	private void closingWindow() {
+		// Check if not closed already
+		if (!instances.containsKey(getClass())) {
+			return;
+		}
+		// Before any chance to fail, remove from hashtable of instances:
+		instances.remove(getClass());
+		// ... and store history
+		saveHistory();
+		//
+		AbstractInterpreter.this.windowClosing();
+		runner.quit();
+		reader_run = false;
 	}
 
 	void addMenuItem(JPopupMenu menu, String label, ActionListener listener) {
@@ -396,7 +468,11 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 		// store text
 		if (len > 0 && store) {
-			al_lines.add(text);
+			// only if different than last line
+			if (al_lines.isEmpty() || !al_lines.get(al_lines.size()-1).equals(text)) {
+				al_lines.add(text);
+				valid_lines.add(false);
+			}
 			active_line = al_lines.size() -1;
 		}
 		// store in multiline if appropriate for later execution
@@ -454,6 +530,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 			if (null != ob) {
 				print(ob.toString());
 			}
+			// if no error, mark as valid
+			valid_lines.set(valid_lines.size() -1, true);
 		} catch (Throwable e) {
 			e.printStackTrace(print_out);
 		} finally {
@@ -471,6 +549,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 	}
 
 	abstract protected Object eval(String text) throws Throwable;
+
+	/** Expects a '#' for python and ruby, a ';' for lisp, a '//' for javascript, etc. */
+	abstract protected String getLineCommentMark();
 
 	/** Executed when the interpreter window is being closed. */
  	protected void windowClosing() {}
@@ -617,5 +698,107 @@ public abstract class AbstractInterpreter implements PlugIn {
 			prompt.setText(pt.substring(0, istart) + al.get(i).toString() + pt.substring(istart + len_prev));
 			len_prev = ((String)al.get(i)).length();
 		}
+	}
+
+	private String filterSelection() {
+		String sel = screen.getSelectedText().trim();
+
+		StringBuffer sb = new StringBuffer();
+		int istart = 0;
+		int inl = sel.indexOf('\n');
+		int len = sel.length();
+		Pattern pat = Pattern.compile("^>>> .*$");
+
+		while (true) {
+			if (-1 == inl) inl = len -1;
+			// process line:
+			String line = sel.substring(istart, inl+1);
+			if (pat.matcher(line).matches()) {
+				line = line.substring(5);
+			}
+			sb.append(line);
+			// quit if possible
+			if (len -1 == inl) break;
+			// prepate next
+			istart = inl+1;
+			inl = sel.indexOf('\n', istart);
+		};
+
+		if (0 == sb.length()) return sel;
+		return sb.toString();
+	}
+
+	private void saveHistory() {
+		String path = ij.Prefs.getPrefsDir() + "/" + getClass().getName() + ".log";
+		File f = new File(path);
+		if (!f.getParentFile().canWrite()) {
+			IJ.log("Could not save history for " + getClass().getName() + "\nat path: " + path);
+			return;
+		}
+		Writer writer = null;
+		try {
+			writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(f)), "8859_1");
+
+			final int MAX_LINES = 2000;
+
+			// Write all lines up to MAX_LINES
+			int first = al_lines.size() - MAX_LINES;
+			if (first < 0) first = 0;
+			String rep = new StringBuffer().append('\n').append(getLineCommentMark()).toString();
+			String separator = getLineCommentMark() + "\n";
+			for (int i=first; i<al_lines.size(); i++) {
+				// Separate executed code blocks with a empty comment line:
+				writer.write(separator);
+				String block = (String)al_lines.get(i);
+				// If block threw an Exception when executed, save it as commented out:
+				if (!valid_lines.get(i)) {
+					block = getLineCommentMark() + block;
+					block = block.replaceAll("\n", rep);
+				}
+				if (!block.endsWith("\n")) block += "\n";
+				writer.write(block);
+			}
+			writer.flush();
+		} catch (Throwable e) {
+			IJ.log("Could NOT save history log file!");
+			IJ.log(e.toString());
+		} finally {
+			try {
+				writer.close();
+			} catch (java.io.IOException ioe) {
+				ioe.printStackTrace();
+			}
+		}
+	}
+
+	private ArrayList[] readHistory() {
+		String path = ij.Prefs.getPrefsDir() + "/" + getClass().getName() + ".log";
+		File f = new File(path);
+		ArrayList blocks = new ArrayList();
+		ArrayList valid = new ArrayList();
+		if (!f.exists()) {
+			System.out.println("No history exists yet for " + getClass().getName());
+			return new ArrayList[]{blocks, valid};
+		}
+		final String sep = getLineCommentMark() + "\n";
+		Scanner scanner = null;
+		try {
+			scanner = new Scanner(new File(path), "8859_1").useDelimiter(sep);
+			while (scanner.hasNext()) {
+				String block = scanner.next();
+				int inl = block.lastIndexOf('\n');
+				int end = block.length() == inl + 1 ? inl : block.length();
+				if (0 == block.indexOf(sep)) block = block.substring(sep.length(), end);
+				else block = block.substring(0, end);
+				blocks.add(block);
+				valid.add(true); // all valid, even if they were not: the invalid ones are commented out
+			}
+		} catch (Throwable e) {
+			IJ.log("Could NOT read history log file!");
+			IJ.log(e.toString());
+		} finally {
+			scanner.close();
+		}
+		return new ArrayList[]{blocks, valid};
 	}
 }

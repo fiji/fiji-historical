@@ -82,6 +82,11 @@ SUBMODULE_TARGETS=\
 	plugins/VIB_.jar \
 	plugins/TrakEM2_.jar \
 	plugins/mpicbg_.jar \
+	jars/clojure.jar \
+	plugins/loci_tools.jar \
+	plugins/ij-ImageIO_.jar \
+	jars/jacl.jar \
+	jars/batik.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -97,13 +102,24 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/LSM_Toolbox.jar \
 	plugins/SplineDeformationGenerator_.jar \
 	plugins/level_sets.jar \
-	plugins/Non_Modal_Test.jar \
-	\
+	plugins/Analyze_Reader_Writer.jar \
+	plugins/Color_Histogram.jar \
+	plugins/Color_Inspector_3D.jar \
+	plugins/Image_5D.jar \
+	plugins/M_I_P.jar \
+	plugins/Interactive_3D_Surface_Plot.jar \
+	plugins/View5D_.jar \
+	plugins/Volume_Viewer.jar \
+	plugins/IJ_Robot.jar \
+	plugins/Fiji_Updater.jar \
+	plugins/Multi_Thresholder.jar \
+	plugins/Daltonize_.jar \
+	plugins/Stitching_.jar \
+	plugins/AnalyzeSkeleton_.jar \
+	plugins/Skeletonize3D_.jar \
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
-	plugins/Examples/Example_Plot.class \
-	plugins/Utilities/Command_Launcher.class \
 	\
 	misc/Fiji.jar
 
@@ -131,39 +147,45 @@ jdk[scripts/checkout-jdk.py $JDK] <-
 ij.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar
 plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
-CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar
-plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar TrakEM2/
 CLASSPATH(plugins/mpicbg_.jar)=jars/imagescience.jar
 plugins/mpicbg_.jar <- mpicbg/
+CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar
+plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugins/mpicbg_.jar TrakEM2/
+jars/clojure.jar <- clojure/
+plugins/loci_tools.jar <- bio-formats/
+plugins/ij-ImageIO_.jar <- ij-plugins/
+jars/jacl.jar <- tcljava/
+jars/batik.jar <- batik/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.3
 misc/Fiji.jar <- src-plugins/fiji/*.java src-plugins/ij/**/*.java
 
 # These classes are common
-COMMON=src-plugins/common/**/*.java
-plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java $COMMON
-plugins/Clojure_Interpreter.jar <- src-plugins/Clojure/*.java $COMMON
-plugins/JRuby_Interpreter.jar <- src-plugins/JRuby/*.java $COMMON
-plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java $COMMON
-plugins/Javascript_.jar <- src-plugins/Javascript/*.java $COMMON
+jars/fiji-scripting.jar <- src-plugins/common/**/*.java
+
+CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar
+plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java
+CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar
+plugins/Clojure_Interpreter.jar <- src-plugins/Clojure/*.java
+CLASSPATH(plugins/JRuby_Interpreter.jar)=jars/fiji-scripting.jar
+plugins/JRuby_Interpreter.jar <- src-plugins/JRuby/*.java
+CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
+plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java
+CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
+plugins/Javascript_.jar <- src-plugins/Javascript/*.java
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar
-plugins/register_virtual_stack_slices.jar <- \
-	src-plugins/register_virtual_stack/*.java
-plugins/registration_3d.jar <- src-plugins/registration3d/*.java
-plugins/IO_.jar <- src-plugins/io/*.java
 CLASSPATH(plugins/lens_correction.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar
-plugins/lens_correction.jar <- src-plugins/lenscorrection/*.java
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.png \
 	src-plugins/LSM_Toolbox/**/*.jpg \
 	src-plugins/LSM_Toolbox/**/*.html \
 	src-plugins/LSM_Toolbox/**/*.txt
-plugins/level_sets.jar <- src-plugins/levelsets/**/*.java
+MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
+CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar
 
-plugins/*_.jar <- src-plugins/*/**/*.java
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
 plugins/**/*.class <- src-plugins/**/*.java
@@ -178,20 +200,10 @@ jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
 
 # Third party plugins
 
-# TODO: move Color_Histogram, Color_Inspector, Image_5D, Analyze_Reader_Writer,
-# Interactive_3D_Surface_Plot, M_I_P, View5D_, Volume_Viewer, and ij-ImageIO_
-# into src-plugins, compile loci_tools (bio-formats) as submodule
-THIRD_PARTY_PLUGINS=plugins/Color_Histogram.jar \
-	plugins/Color_Inspector_3D.jar \
-	plugins/Image_5D.jar \
-	plugins/Analyze_Reader_Writer.jar \
-	plugins/Interactive_3D_Surface_Plot.jar \
-	plugins/M_I_P.jar \
+# TODO: compile ij-ImageIO_ as submodule
+THIRD_PARTY_PLUGINS= \
 	plugins/TransformJ_.jar \
-	plugins/View5D_.jar \
-	plugins/Volume_Viewer.jar \
 	plugins/ij-ImageIO_.jar \
-	plugins/loci_tools.jar \
 
 third-party-plugins[] <- $THIRD_PARTY_PLUGINS
 plugins/*.jar <- staged-plugins/*.jar
@@ -206,23 +218,26 @@ JAVA_LIB_PATH(macosx)=
 
 # The variables CFLAGS, CXXFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
-CXXFLAGS(*)=-Iincludes \
+CXXFLAGS(*)=-Wall -Iincludes \
 	-DJAVA_HOME='"$JAVA_HOME"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
 CXXFLAGS(win32)=$CXXFLAGS $WINOPTS
-CXXFLAGS(win64)=$CXXFLAGS $WINOPTS -mconsole
-MACOPTS=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
-	-DMACOSX -mmacosx-version-min=10.4 -arch ppc -arch i386
-CXXFLAGS(macosx)=$CXXFLAGS $MACOPTS
-
-LDFLAGS(win32)=$LDFLAGS $WINOPTS
-LDFLAGS(macosx)=$LDFLAGS $MACOPTS
+CXXFLAGS(win64)=$CXXFLAGS $WINOPTS
 
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
 # and only on MacOSX
-MACOSX_64BIT_ARCHS(macosx)=-arch ppc64 -arch x86_64
-CXXFLAGS(fiji)=$CXXFLAGS $MACOSX_64BIT_ARCHS
-LDFLAGS(fiji)=$CXXFLAGS $MACOSX_64BIT_ARCHS
+MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
+	-DMACOSX -arch ppc
+MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386
+MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch ppc64 -arch x86_64
+
+CXXFLAGS(linux)=$CXXFLAGS -DIPV6_MAYBE_BROKEN
+CXXFLAGS(linux64)=$CXXFLAGS -DIPV6_MAYBE_BROKEN
+
+LDFLAGS(win32)=$LDFLAGS $WINOPTS
+
+CXXFLAGS(fiji)=$CXXFLAGS $MACOPTS
+LDFLAGS(fiji)=$LDFLAGS $MACOPTS
 
 LIBS(linux)=-ldl
 LIBS(linux64)=-ldl
@@ -230,7 +245,13 @@ LIBS(macosx)=-framework CoreFoundation -framework JavaVM
 
 fiji <- fiji.cxx
 
+CXXFLAGS(fiji-tiger)=$CXXFLAGS $MACOPTS(osx10.4)
+LDFLAGS(fiji-tiger)=$LDFLAGS $MACOPTS(osx10.4)
 fiji-tiger <- fiji.cxx
+
+CXXFLAGS(fiji-panther)=$CXXFLAGS $MACOPTS(osx10.3)
+LDFLAGS(fiji-panther)=$LDFLAGS $MACOPTS(osx10.3)
+fiji-panther <- fiji.cxx
 
 # Cross-compiling (works only on Linux64 so far)
 
@@ -248,7 +269,8 @@ cross-*[scripts/chrooted-cross-compiler.sh * \
 LAUNCHER(*)=precompiled/fiji-$PLATFORM
 LAUNCHER(win32)=precompiled/fiji-win32.exe
 LAUNCHER(win64)=precompiled/fiji-win64.exe
-LAUNCHER(macosx)=$LAUNCHER precompiled/fiji-tiger
+LAUNCHER(osx10.4)=precompiled/fiji-macosx
+LAUNCHER(osx10.5)=precompiled/fiji-macosx precompiled/fiji-tiger
 precompile-fiji[] <- $LAUNCHER
 
 precompiled/fiji-tiger[scripts/copy-file.py $PRE $TARGET] <- fiji-tiger
@@ -263,8 +285,16 @@ precompile-submodules[] <- \
 	precompiled/TrakEM2_.jar \
 	precompiled/VIB_.jar \
 	precompiled/mpicbg_.jar \
+	precompiled/clojure.jar \
+	precompiled/loci_tools.jar \
+	precompiled/ij-ImageIO_.jar \
+	precompiled/jacl.jar \
+	precompiled/batik.jar \
 
 precompiled/ij.jar <- ij.jar
+precompiled/clojure.jar <- jars/clojure.jar
+precompiled/jacl.jar <- jars/jacl.jar
+precompiled/batik.jar <- jars/batik.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules
@@ -291,6 +321,10 @@ all-zips[] <- fiji-linux.zip fiji-linux64.zip fiji-win32.zip fiji-win64.zip \
 	fiji-all.zip fiji-nojre.zip
 fiji-*.zip[scripts/make-zip.py $TARGET Fiji.app] <- app-* Fiji.app
 zip[] <- fiji-$PLATFORM.zip
+
+all-isos[] <- fiji-linux.iso fiji-linux64.iso fiji-win32.iso fiji-win64.iso \
+	fiji-macosx.iso fiji-all.iso fiji-nojre.iso
+fiji-*.iso[genisoimage -J -V Fiji -o $TARGET Fiji.app] <- app-*
 
 # Checks
 

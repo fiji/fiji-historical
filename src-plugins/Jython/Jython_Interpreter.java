@@ -46,9 +46,9 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		super.run(arg);
 		super.window.setTitle("Jython Interpreter");
 		super.prompt.setEnabled(false);
-		IJ.showStatus("Loading classes ...");
+		print_out.print("Starting Jython ...");
 		// Create a python interpreter that can load classes from plugin jar files.
-		PySystemState.initialize(System.getProperties(), System.getProperties(), IJ.getInstance().getArgs(), IJ.getClassLoader());
+		PySystemState.initialize(System.getProperties(), System.getProperties(), new String[] { }, IJ.getClassLoader());
 		PySystemState pystate = new PySystemState();
 		pystate.setClassLoader(IJ.getClassLoader());
 		pystate.add_extdir(ij.Menus.getPlugInsPath()); // without this line, the class loader doesn't find plugin jars.
@@ -69,6 +69,8 @@ public class Jython_Interpreter extends AbstractInterpreter {
 			}
 		);
 		super.prompt.setEnabled(true);
+		super.prompt.requestFocus();
+		print_out.println("... done.");
 	}
 
 	/** Evaluate python code. */
@@ -111,5 +113,9 @@ public class Jython_Interpreter extends AbstractInterpreter {
 			msg += " and TrakEM2";
 		} catch (Exception e) { /*fail silently*/ }
 		return msg + " classes imported.\n";
+	}
+
+	protected String getLineCommentMark() {
+		return "#";
 	}
 }

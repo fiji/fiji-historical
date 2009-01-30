@@ -14,20 +14,23 @@ Abbreviations:
 * SPL: Sun Public License
 * MPL: Mozilla Public License as specified at http://www.lowagie.com/iText/MPL-1.1.txt
 * BSD: Berkeley Software Distribution
+* EPL: Eclipse Public License (http://opensource.org/licenses/eclipse-1.0.php)
+* AL: Apache License (http://xmlgraphics.apache.org/batik/license.html)
 * ?: UNKNOWN
 
 
 Name					File					Author(s)						Contact	(2008)							License
 ----					----					---------						--------------							-------
+* Batik 				batik.jar 				http://xmlgraphics.apache.org/batik/contributors.html									AL
 * Bean Shell language 			bsh-2.0b4.jar 											http://www.beanshell.org/ 					SPL/LGPL
 * Bean Shell Interpreter 		BSH_Interpreter.jar			Johannes Schindelin					Johannes.Schindelin@gmx.de					GPL
 * bUnwarpJ				bUnwarpJ_.jar				Ignacio	Arganda et al.					ignacio.arganda@uam.es						GPL
-* Clojure				clojure.jar				Rich Hickey						http://clojure.sourceforge.net/					CPL 1.0
+* Clojure				clojure.jar				Rich Hickey						http://clojure.sourceforge.net/					EPL
 * Clojure Interpreter			Clojure_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Color Histogram 			Color_Histogram.jar			Dimiter Prodanov 					dimiterpp@gmail.com 						GPL 2
 * Color Inspector 3D 			Color_Inspector_3D.jar			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
 * Fiji as a framework																							GPL
-* ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							?
+* ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							LGPL
 * ImageJA				ij.jar					Johannes Schindelin, Wayne Rasband			Johannes.Schindelin@gmx.de					PD
 * imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright © Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
 
@@ -35,6 +38,7 @@ Name					File					Author(s)						Contact	(2008)							License
 * itext-1.3.jar 			itext-1.3.jar 				Bruno Lowagie, Paulo Soares 				http://www.lowagie.com/iText/ 					MPL/LGPL
 * IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin, G. Jefferis 	acardona@ini.phys.ethz.ch 					GPL/public domain
 * IPLab Reader 				IPLab_Reader.jar			Wayne Rasband 						wsr@nih.gov 							PD
+* Jacl 					jacl.jar 											http://sourceforge.net/projects/tcljava				BSD
 * Java Matrix package 			Jama-1.0.2.jar 				http://math.nist.gov/javanumerics/jama/#Authors 	http://math.nist.gov/javanumerics/jama/#Authors 		PD
 * Javascript Rhino Engine 		js.jar 					http://www.mozilla.org/rhino/ 				http://www.mozilla.org/rhino/ 					MPL 1.1/GPL 2  see http://developer.mozilla.org/en/docs/Rhino_License
 * Javascript Interpreter 		Javascript_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch 					GPL
@@ -50,7 +54,6 @@ Name					File					Author(s)						Contact	(2008)							License
 * Multiple Image Processor 		M_I_P.jar				Nathaniel Gonzalez Santiago				http://ciar.rcm.upr.edu/projects/imageprocessor/multiples/	GPL
 * PDF Viewer 				PDF_Viewer.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * PostgreSQL JDBC 			postgresql-8.2-506.jdbc3.jar 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
-* Quick3DApplet 			Quick3dApplet-1.0.8.jar 									info@proudman51.freeserve.co.uk 				?
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Substack Maker 			Substack_Maker.class 			Wayne Rasband 						http://rsb.info.nih.gov/ij/plugins/reverser.html 		PD
 * Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD			
@@ -63,11 +66,9 @@ Name					File					Author(s)						Contact	(2008)							License
 
 Unresolved (TODO):
 * Example/ scripts folder
-* Get_Class_Versions.class
 * Graphics/Example_Plot.class   Wayne Rasband, PD ?
 * Java Advanced Imaging jai_codec.jar, jai_core.jar, jai_imageio.jar
 * ij-ImageIO
-* Quick3DApplet
 
 
 Problematic:

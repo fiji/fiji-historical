@@ -32,11 +32,11 @@ clone_and_check='(test -d release-fiji ||
 	cd release-fiji &&
 	git diff-files &&
 	git diff-index HEAD &&
-	git checkout master &&
+	git checkout -f master &&
 	git fetch origin &&
 	git reset --hard origin/master &&
 	git clean -d -f &&
-	for d in $(git ls-files --stage | sed -n "s/^160.*\t//p");
+	for d in $(git ls-files --stage | sed -n "s/^160.*	//p");
 	do
 		test -z "$(ls $d/)" || break;
 	done'
@@ -45,23 +45,24 @@ COMMIT_MESSAGE="Precompile Fiji and Fake for $RELEASE"
 
 ssh macosx10.5 "$clone_and_check &&
 	(test ! -z \"\$(git rev-parse --verify mactmp-$RELEASE 2>/dev/null)\" ||
-	 (./Fake.sh precompile-fiji precompile-fake dmg &&
+	 (./Build.sh precompile-fiji precompile-fake dmg &&
 	  git checkout -b mactmp-$RELEASE &&
 	  (git commit -a -s -m \"$COMMIT_MESSAGE\" ||
 	   true)))" &&
 
-eval $clone_and_check &&
+eval "$clone_and_check" &&
+! git rev-parse --verify refs/tags/Fiji-$RELEASE &&
 git pull macosx10.5:release-fiji mactmp-$RELEASE &&
-./Fake.sh all-cross precompile-fiji all-tars all-zips &&
+./Build.sh all-cross precompile-fiji all-tars all-zips &&
 if test "$COMMIT_MESSAGE" = "$(git log -1 --pretty=format:%s HEAD)"
 then
-	git commit --amend -a
+	GIT_EDITOR=: git commit --amend -a
 else
 	git commit -a -s -m "$COMMIT_MESSAGE" || true
 fi &&
 git tag Fiji-$RELEASE &&
 git push /srv/git/fiji.git master Fiji-$RELEASE &&
-mkdir $TARGET_DIRECTORY &&
+mkdir -p $TARGET_DIRECTORY &&
 mv *.tar.bz2 *.zip $TARGET_DIRECTORY &&
 cd $TARGET_DIRECTORY &&
 scp macosx10.5:release-fiji/fiji-macosx.dmg ./ &&
