@@ -35,7 +35,7 @@ public class FFT_Line implements PlugInFilter {
 				cumul += pixels[i];
 			cumul /= w * h;
 			for (int i = 0; i < w * h; i++)
-				pixels[i] /= cumul;
+				pixels[i] -= cumul;
 		}
 
 		// FFT needs appropriate length
@@ -56,10 +56,15 @@ public class FFT_Line implements PlugInFilter {
 		fft.complexToComplex(-1, complex, transformed);
 
 		// truncate
-		int cutoff = w * h / 10;
-		Arrays.fill(transformed, cutoff * 2, transformed.length, 0);
+		int leftCutoff = h / 2;
+		int rightCutoff = h * 2;
+IJ.log("cutoffs were chosen as " + leftCutoff + ", " + rightCutoff);
+		Arrays.fill(transformed, 0, leftCutoff * 2, 0);
+		Arrays.fill(transformed,
+				rightCutoff * 2, transformed.length, 0);
 
-		showPlot(transformed, cutoff);
+//showPlot(complex, w * h / 2 - 10 * h, w * h / 2 + 10 * h);
+		showPlot(transformed, leftCutoff, rightCutoff);
 
 		// inverse transform
 		fft.complexToComplex(1, transformed, complex);
@@ -81,15 +86,17 @@ public class FFT_Line implements PlugInFilter {
 
 	protected PlotWindow plot, plot2;
 
-	protected void showPlot(float[] array, int cutoff) {
-		float[] real = new float[cutoff];
-		float[] imag = new float[cutoff];
-		float[] indexes = new float[cutoff];
+	protected void showPlot(float[] array,
+			int leftCutoff, int rightCutoff) {
+		float[] real = new float[rightCutoff - leftCutoff];
+		float[] imag = new float[real.length];
+		float[] indexes = new float[real.length];
 
-		for (int i = 0; i < cutoff; i++) {
-			real[i] = array[i * 2];
-			imag[i] = array[i * 2 + 1];
-			indexes[i] = i;
+		for (int i = 0; i < real.length; i++) {
+			int j = leftCutoff + i;
+			indexes[i] = j;
+			real[i] = array[j * 2];
+			imag[i] = array[j * 2 + 1];
 		}
 
 		if (plot == null)
