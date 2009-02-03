@@ -1,5 +1,20 @@
 #!/bin/sh
 
+case "$(uname -s)" in
+MINGW*)
+	dirname () {
+		case "$1" in
+		*\\*|*/*)
+			echo "$1" | sed 's/[\\\/][^\\\/]*$//'
+			;;
+		*)
+			echo .
+			;;
+		esac
+	}
+	;;
+esac
+
 CWD="$(dirname "$0")"
 
 case "$(uname -s)" in
