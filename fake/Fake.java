@@ -1393,8 +1393,17 @@ public class Fake {
 					precompiled += "/";
 				String source =
 					precompiled + file.getName();
-				if (!new File(source).exists())
-					source += "-" + getPlatform();
+				if (!new File(source).exists()) {
+					if (getPlatform().startsWith("win")) {
+						int len = source.length();
+						source = source.substring(0,
+								len - 4) +
+							"-" + getPlatform() +
+							".exe";
+					}
+					else
+						source += "-" + getPlatform();
+				}
 				moveFileOutOfTheWay(makePath(cwd, target));
 				copyFile(source, target, cwd);
 				if (!getPlatform().startsWith("win")) try {
