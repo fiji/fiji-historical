@@ -1,3 +1,14 @@
 4th May 2009, Monday
 
 Tried out using Vi, and read up help pages for Git to familiarise with the technical terms.
+
+This 4th May 2009 entry is modified after midnight to include the following:
+
+How to stage change files for a commit ("git add", so as to track it for committing), how to commit changes ("git commit"), how to look at it using gitk (gitk master), how to push 'master' branch to pacific ("git push origin master"). May have "dry run" for commit through "git status", see which are the files changed - Do "git add" for relevant changes.
+
+-commit name is a cryptographic hash (40-char hex string) of complete history up to that commit
+-Files are identified by these cryptographic hashes, "object name"
+-Directory stored as tree object - List of file/directory names
+-Tree obj identified by hashes too
+-"Git clone" assumed that you want to start working on the current branch
+-"Git Remote Add" tells Git to track a remote repository, assuming you already have a current branch and do not need another one
