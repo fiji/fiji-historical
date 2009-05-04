@@ -1,0 +1,3 @@
+4th May 2009, Monday
+
+Tried out using Vi, and read up help pages for Git to familiarise with the technical terms.
