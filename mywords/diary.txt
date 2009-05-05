@@ -18,3 +18,24 @@ How to stage change files for a commit ("git add", so as to track it for committ
 5th May 2009, Tuesday
 
 Its 11.37am now. What is going to happen today? Probably later going to start practising how to play with a bit of Git. But first I have to do some commits first so I can mess around in my own space. And I will create a new file listing project requirements.
+
+When Git talks about a "clean state", working directory, index and HEAD (latest commit) agree fully
+
+Git Reset
+1) "git reset --soft" -> update HEAD, leave working directory and index alone
+--> Implies slow way to say "git commit --amend" is to "git reset --soft HEAD^ && git commit"
+2) "git reset --mixed" -> update HEAD, reset index, leave working directory alone
+3) "git reset --hard" -> reset both index and working directory as well...
+
+Git Rebase
+e.g: git rebase -i HEAD~3
+
+-"rebase" means to take a bunch of commits, and to try to apply the corresponding changes on top of another commit.
+-With commit messages, authorship and all.
+-"-i" says that it will be interactive, i.e. get to choose which commits to rebase, and in which order.
+-"HEAD~3" rebase all commits descending from HEAD~3 (the great-grand-parent of HEAD) until HEAD.
+-In a linear history (no merges), this means that you will rebase HEAD~2, HEAD~1 and HEAD.
+-git rebase -i HEAD~3 will start text editor and present you with the list of commits to rebase.
+-if you want to remove all three, you will have to add a command "noop" in the text editor.
+
+With selected commits removed, do "git push --force origin master". Need for the "--force" flag because system detects data would be lost on remote side, and by default prevents that.
