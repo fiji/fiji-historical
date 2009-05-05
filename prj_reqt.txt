@@ -25,7 +25,7 @@ what the product is able to do?
 
 
 DATA REQUIREMENTS:
-what kinds of information the product is dealing with?
+What kinds of information the product is dealing with?
 -Different kinds of plugin (I've noticed CLASS and JAR types)
 -Database of Plugins? Or a list of links?
    -Summary information, version of application and/or plugin
