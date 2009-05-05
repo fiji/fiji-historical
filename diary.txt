@@ -12,3 +12,9 @@ How to stage change files for a commit ("git add", so as to track it for committ
 -Tree obj identified by hashes too
 -"Git clone" assumed that you want to start working on the current branch
 -"Git Remote Add" tells Git to track a remote repository, assuming you already have a current branch and do not need another one
+
+
+
+5th May 2009, Tuesday
+
+Its 11.37am now. What is going to happen today? Probably later going to start practising how to play with a bit of Git. But first I have to do some commits first so I can mess around in my own space. And I will create a new file listing project requirements.
