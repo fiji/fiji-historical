@@ -46,3 +46,14 @@ Should you delete a file...
 -"git checkout -- filename.txt" to get it from previous commit...
 -"git checkout HEAD^^ -- filename.txt" to get file back from previous two commits...
 -Note that "--" is an optional separator
+
+
+
+6th May 2009, Wednesday
+Used "git branch newbranch HEAD^^":
+Basic Meaning: Create a new branch named "newbranch" with 2nd previous commit as HEAD (root node/latest commit).
+
+Apparently, "^" means "previous". Commit IDs and tags may be used in place of "HEAD^^".
+
+Different branches, different states:
+Editing this diary from "master" branch, not "newbranch", so "newbranch" won't have these additions 
