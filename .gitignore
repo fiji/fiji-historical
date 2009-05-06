@@ -1,5 +1,6 @@
 .DS_Store
 .project
+.metadata
 /fiji.o
 /fiji
 /fiji.exe
@@ -66,7 +67,6 @@
 /jars/clojure.jar
 /plugins/IJ_Robot.jar
 /plugins/Fiji_Updater.jar
-/plugins/Multi_Thresholder.jar
 /plugins/Daltonize_.jar
 /plugins/Stitching_.jar
 /plugins/AnalyzeSkeleton_.jar
@@ -88,4 +88,5 @@
 /plugins/FlowJ_.jar
 /plugins/PIV_analyser.jar
 /plugins/Record_Screen.jar
+/plugins/Video_Editing.jar
 /jars/zs.jar
