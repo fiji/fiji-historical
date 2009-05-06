@@ -57,3 +57,14 @@ Apparently, "^" means "previous". Commit IDs and tags may be used in place of "H
 
 Different branches, different states:
 Editing this diary from "master" branch, not "newbranch", so "newbranch" won't have these additions 
+
+"git checkout newbranch" switches to "newbranch"
+-Added "newbranch_doc.txt"
+-File appears in "newbranch" but does not appear in "master"
+-When it comes to switching branches, edits made must be committed first
+
+Back at "master" branch, "git merge newbranch"
+-Combine changes from both "master" and "newbranch"
+-"master" now has both diary changes and "newbranch_doc.txt"
+
+"git branch -d newbranch" deletes "newbranch"
