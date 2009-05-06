@@ -68,3 +68,10 @@ Back at "master" branch, "git merge newbranch"
 -"master" now has both diary changes and "newbranch_doc.txt"
 
 "git branch -d newbranch" deletes "newbranch"
+
+"git log" default to "git log HEAD"
+e.g: "git log contrib/master -- .gitignore" prints log of .gitignore at contrib/master
+
+"touch filename" command basically just updates the timestamp of a file.
+
+./fiji runs the application... finally.
