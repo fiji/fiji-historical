@@ -80,3 +80,24 @@ e.g: "git log contrib/master -- .gitignore" prints log of .gitignore at contrib/
 -once you know which plugin handles the menu entry, you can find which .jar it is in: ./fiji scripts/find-jar-for-class.py Biorad_Writer
 -(replace Biorad_Writer with whatever plugin you're interested)
 -once you know the .jar file, you look into the Fakefile to see if it is generated from src-plugins/ (and if yes, from which subdirectory), or from a submodule.
+
+
+
+7th May 2009, Thursday
+Compile application and its JAR files using Fakefile's configuration information.
+
+Location information of menu items are found through plugin.config of JAR files.
+
+With Fakefile's information, Fake.jar takes xxx.config at fiji/staged_plugins - Bundles with corresponding JAR file.
+
+Removing JAR file from correct location removes the entire corresponding plugin.
+
+There are plugins belonging to submodules and plugins located at fiji/src-plugins. Submodules being like plugins with source that's significant enough to live in its own git repository...
+
+"git log -p", "git show", to show differences between commits.
+
+Downloading of Plugins uses Timestamps and 160-bit md5.
+
+An issue to think about though later: Plugin Manager facilitates downloading of JAR/CLASS files only, or does it facilitates downloading/compiling of source code?
+
+With this bit of technical context understood, next will be focusing on detailed requirements gathering stage.
