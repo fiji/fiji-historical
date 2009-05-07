@@ -75,3 +75,8 @@ e.g: "git log contrib/master -- .gitignore" prints log of .gitignore at contrib/
 "touch filename" command basically just updates the timestamp of a file.
 
 ./fiji runs the application... finally.
+
+-"./fiji tests/plugin_jars.py -v" to see a list of menu entries and the plugins handling them
+-once you know which plugin handles the menu entry, you can find which .jar it is in: ./fiji scripts/find-jar-for-class.py Biorad_Writer
+-(replace Biorad_Writer with whatever plugin you're interested)
+-once you know the .jar file, you look into the Fakefile to see if it is generated from src-plugins/ (and if yes, from which subdirectory), or from a submodule.
