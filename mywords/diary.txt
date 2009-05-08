@@ -101,3 +101,18 @@ Downloading of Plugins uses Timestamps and 160-bit md5.
 An issue to think about though later: Plugin Manager facilitates downloading of JAR/CLASS files only, or does it facilitates downloading/compiling of source code?
 
 With this bit of technical context understood, next will be focusing on detailed requirements gathering stage.
+
+
+
+8th May 2009, Friday
+DETAILED requirements gathering stage. Focus of research may be shifted to aimed to having an understanding of compatibility of different versions of Plugins.
+
+Get the requirements out first!!!!
+
+Regarding dependencies: A humble strategy I can think of is that of a second text file containing all the dependencies between different Fiji plugins, which would be downloaded each time the user wants to update Fiji plugins. Essentially, a "database" of all versions of plugins and their dependencies.
+
+More about plugins.config: W/O this file, plugins class filenames would need to have underscore to identify it as a plugin to be picked up by Fiji. Loading classes to detect the class type would take substantial time.
+
+A .jar file (without plugins.config) will be analyzed for plugins, and they will be installed - just enumerates the files contained, and whenever it encounters a .class file with an underscore, it assumes this is a plugin.
+
+Dependencies are class-specific on technical level, implementation-wise is plugin-specific.
