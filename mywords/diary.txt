@@ -123,3 +123,7 @@ Might wanna look at fake/Fake.java's ByteCodeAnalyzer class.
 
 9th May 2009, Saturday
 I've noticed that having the same menu item name will have Fiji application generating an error, even if they are on different menu section.
+
+Removing plugin menu item doesn't seem to work...
+
+I put up a more comprehensive detailed requirements with breakdown of tasks... Waiting to establish requirements...

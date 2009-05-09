@@ -54,3 +54,4 @@ For "CLASS" plugins
 -Go to Plugins>Shortcuts>Remove
 -Choose the corresponding file of choice
 
+Dependencies are currently not checked for.
