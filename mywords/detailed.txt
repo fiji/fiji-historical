@@ -1,0 +1,78 @@
+FUNCTIONAL REQUIREMENTS:
+what the product is able to do?
+1-Downloading of Plugins
+   1.1-Display compatibilities with different versions of Fiji
+   1.2-When downloading, able to see the download progress of selected updates
+   1.3-Able to pause or cancel the download
+      ==> No plugins will be installed
+2-Display of the Manager
+   2.1-Tree view/List view of plugins
+      2.1.1-Reflect the location of Plugins in the menus
+   2.2-Information of plugins to be displayed
+      2.2.1-Descriptive information (Summary?)
+      2.2.2-Version
+         ==> Version number, show hash number upon request
+      2.2.3-Compatibility
+         2.2.3.1-Remote "Database": Ability to identify previous versions of each Fiji plugin, and dependencies of each version as well
+         2.2.3.2-User downloads this information, program processes it and uses it to identify what needs to be done
+         2.2.3.3-User is guided along, given enough information to know what is going on - Additional technical details shown upon request
+         2.2.3.4-Assuming 3rd parties know about dependencies (Support is not provided for them)
+   2.3-User's choice to add/remove an entire plugin
+      2.3.1-Tree view/List view would reflect changes
+      2.3.2-Removing a Fiji plugin: Need to check for dependencies, deny removal if another existing plugin depends on it
+         ==> 3rd parties are left on their own to discriminate dependencies
+   2.4-User's choice: Able to download/update plugin if any newer versions
+      2.4.1-3rd party plugins
+         ==> To add/update, specify link/location enough, have option to override existing file if any
+         ==> Assuming 3rd parties know what they are doing with their work (Support is not provided for them)
+      2.4.2-Plugins from Fiji
+         ==> Select from a list, add/update through server's current.txt
+         ==> For Updates, check through remote "database" of versions of Fiji plugins
+         ==> If there is local modification detected, user will be notified
+      2.4.3-Support both CLASS and JAR
+      2.4.4-3rd party: Able to do validation check for plugin - Is it really a plugin?
+      2.4.5-Have ability to check for duplicate menu items, especially 3rd party ones
+   2.5**-A separate Plugin here: "Fiji Plugin Manager Plus"?
+      2.5.1-Is it possible to delete an entire plugin (Option to completely uninstall plugin)?
+      2.5.2-Renaming of menu items for user's readability
+         ==> Ability to check for duplicate menu items
+         ==> Relies on a local database to identify plugins, instead of the plugin file itself
+      2.5.3-Customization of location of menu items
+3-Create a second Java Plugin
+   3.1-Loads documentation from Wiki
+   3.2-Access Plugin Manager directly
+   3.3-Display documentation information onto plugin
+
+** --> Note that 2.5 is nice to have. If there is time to implement, then there would be a total of 3 plugins.
+Otherwise it would be two main ones: "Fundamental Plugin Manager" and "Documentation Plugin"
+
+Risks:
+-Technical issues of database that stores plugin dependencies, a mistake would create confusion and usability problems for users
+-For "Fiji Plugin Manager Plus", identification is based on md5 sums and date - modifying plugins.config would change identity
+
+DATA REQUIREMENTS:
+What kinds of information the product would be dealing with?
+-CLASS plugins
+-JAR plugins
+-current.txt
+-myDB.txt
+   ==> local list of all Fiji plugins - Their md5 sums act as ID
+   ==> Assumption here is that these md5 sums (i.e: Identification) are calculated from an unmodified version of the corresponding plugin
+   ==> Suggested local "database" for the purpose of "Fiji Plugin Manager Plus"
+-database.txt
+   ==> Remote list
+   ==> proposed to hold every record of all versions of Fiji plugins, old and new
+   ==> Each record would contain dependency information, if any
+   ==> Manager uses information and displays relevant contents coherently
+   ==> Database
+
+
+
+USER REQUIREMENTS (Have them in your mind while designing):
+Who are the users?
+-Non-Programmers who are Scientists in fields like Biology, Genetics, Material Science
+   -Questions: Are these users familiar with using computer applications?
+   -What do Users need the application for?
+      -Image processing: What type of image processing do they do?
+      -Note to self: At least know a little about the nature of their work
+   -To myself: Wonder if I need to write a persona for these users? (Applying lessons from Human-Computer Interaction)

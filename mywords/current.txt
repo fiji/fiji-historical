@@ -1,0 +1,56 @@
+At the moment, list of different ways users can add, remove or update their Fiji Plugins
+
+MANUAL WAY
+
+To add a plugin:
+-Download a JAR or CLASS ImageJ plugin file (Either 3rd party or from Fiji download page is fine).
+-Place it into fiji/plugins folder.
+-Restart Fiji for changes to menu structure to take effect.
+
+Implications:
+-For "JAR" plugins, plugins.config determines the location of the menu items, and thus should exist
+-You have to be careful that the plugin's physical filenames do not clash when you copy it over. Otherwise you have to either overwrite it, or change to a new filename.
+-Dependencies may pose a problem if you add a new plugin which depends on another plugin which you have not added in
+
+To remove a plugin:
+-Close Fiji application.
+-Move the relevant plugin file (JAR or CLASS) away from the fiji/plugins folder.
+-Start Fiji to see that it is removed.
+
+Implications:
+-Going strictly by manual way, it may be difficult to keep track of what plugins are there.
+-Dependencies may pose a problem if a plugin is removed which another relies on it
+
+To update a plugin:
+-Close Fiji application.
+-Replace the existing, corresponding JAR or CLASS plugin file with the newer one on fiji/plugins folder.
+-Start Fiji to see that it has been updated.
+
+Implications:
+For "JAR" plugins, keep note of plugins.config - Make sure location specified do not conflict with other existing plugins' menu item locations.
+"JAR" plugins.config is deleted.
+
+
+
+CURRENT FIJI IMPLEMENTATION
+
+To add/update a plugin from Fiji server:
+-Go to Menu Help, choose "Update Fiji"
+-Select the plugins you wanted to install or update.
+
+To install a 3rd party plugin:
+Currently not supported for "JAR" plugins.
+For "CLASS" plugins,
+-Go to Menu Plugins, choose "Install Plugin" or Plugins>Shortcuts>Install Plugin
+-Choose the corresponding file of choice.
+Alternatively, if you have the source code
+-Choose menu Plugins>Compile and Run
+-Restart Fiji
+-Appears in the Plugin menu
+
+To remove a plugin:
+Currently not supported for "JAR" plugins.
+For "CLASS" plugins
+-Go to Plugins>Shortcuts>Remove
+-Choose the corresponding file of choice
+
