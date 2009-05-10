@@ -127,3 +127,12 @@ I've noticed that having the same menu item name will have Fiji application gene
 Removing plugin menu item doesn't seem to work...
 
 I put up a more comprehensive detailed requirements with breakdown of tasks... Waiting to establish requirements...
+
+Description of available plugins should be a task as well.
+
+Think in terms of files (JAR and CLASS), not in terms of plugins... To be elaborated...
+
+
+
+10th May 2009, Sunday
+Tried writing a plugin using JSwing... Seemed to work.
