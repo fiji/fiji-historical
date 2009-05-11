@@ -380,3 +380,11 @@ check-*[./scripts/up-to-date-check.py * precompiled/*_.jar] <-
 MAINCLASS(fake.jar)=Fake
 JAVAVERSION(fake.jar)=1.3
 fake.jar <- fake/Fake.java
+
+# TextEditorDemo
+MAINCLASS(TextEditorDemo.jar)=TextEditorDemo
+JAVAVERSION(TextEditorDemo.jar)=1.4
+CLASSPATH(TextEditorDemo.jar)=jars/rsyntaxtextarea.jar
+
+TextEditorDemo.jar <-	TextEditorDemo.java \
+						icon.png[images/icon.png] 
