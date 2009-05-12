@@ -380,3 +380,5 @@ check-*[./scripts/up-to-date-check.py * precompiled/*_.jar] <-
 MAINCLASS(fake.jar)=Fake
 JAVAVERSION(fake.jar)=1.3
 fake.jar <- fake/Fake.java
+
+plugins/Yap_CK.jar <- mywords/My*.java mywords/plugins.config
