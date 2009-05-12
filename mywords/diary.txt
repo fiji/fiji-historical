@@ -136,3 +136,17 @@ Think in terms of files (JAR and CLASS), not in terms of plugins... To be elabor
 
 10th May 2009, Sunday
 Tried writing a plugin using JSwing... Seemed to work.
+
+
+
+11th May 2009, Monday
+Tried out HTMLEditorKit, get a feel of the workload and effort needed.
+
+
+
+12th May 2009, Tuesday
+Rough design sketches to get an idea.
+
+"git cherry-pick contrib/plugin-manager" - takes a commit as an argument, and then tries to re-apply the changes that commit introduced on top of the current HEAD. If that succeeds, it takes the author information as well as the commit messages and creates a new commit from all that.
+
+"git show HEAD" to see the changes, commit message.

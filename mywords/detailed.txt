@@ -19,6 +19,19 @@ what the product is able to do?
          2.2.3.3-User is guided along, given enough information to know what is going on
             ==> *** Additional technical details shown upon request ***
          2.2.3.4-Assuming 3rd parties know about dependencies (Support is not provided for them)
+
+
+
+time to fill some details!!!
+Conflicts: ?
+Depends: ?
+
+Do we need Recommends, Suggests, or Replace?
+
+How about other fields like priority, source, section?
+
+
+
    2.3-User's choice to add/remove an entire plugin
       2.3.1-Tree view/List view would reflect changes
       2.3.2-Removing a Fiji plugin: Need to check for dependencies, deny removal if another existing plugin depends on it
@@ -45,7 +58,8 @@ There are two main plugins to implement: "Fundamental Plugin Manager" and "Docum
 
 Known Risks:
 -Technical issues of database that stores plugin dependencies, a mistake would create confusion and usability problems for users
-
+-Assuming binary package installation
+-Assuming design for Fiji alone, not ImageJ
 
 
 DATA REQUIREMENTS:

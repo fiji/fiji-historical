@@ -1,0 +1,79 @@
+Packages may be either binary packages or source packages.
+
+Binary packages: Contain files needed for installation and proper functioning of the software, NOT the source files => Precompiled
+
+Source packages: Contain files needed for compilation of the software on the user’s computer. The source package contains a compilation script => More flexible, optimized for the user’s architecture at compile time
+
+Debian Binary Package Metadata
+
+Control file
+Text file contains metadata
+-Paragraphs ==> fields ==> field name, contents
+
+Fields
+-Package name (MANDATORY)
+-Source (identifies the name of the source package)
+-Section (classify packages)
+-Priority (e.g: Required/Important/Standard/Optional)
+-Architecture (MANDATORY, e.g: i386/sparc or "all" if architecture-independent)
+-Essential (Yes/No)
+-Installed-Size
+-Maintainer (MANDATORY, who?)
+-Description (MANDATORY)
+-Depends (A-B: B must be configured before package A can be configured)
+-Recommends (A-B: B usually needed in order for A to function properly)
+-Suggests (A-B: A can function properly w/o B)
+-Enhances (A-B: Similar to B suggests A)
+-Pre-Depends (A-B: A cannot be installed w/o B)
+-Conflicts (Impossible for A and B to be installed on same system)
+-Replaces (A-B: If package A and B conflict, B will be removed and A installed)
+
+
+
+RPM File Format
+Divided into four logical sections:
+1. Lead: Contains the package format signature and some information concerning the structure of the package itself.
+2. Signature: A collection of digital signatures that are used to sign the package by using cryptographic techniques.
+3. Header: Contains all the package metadata, such as package description, package relationships etc.
+4. Payload: The actual archive which contains all the files that are bundled with the package.
+
+LEAD
+magic: 4 byte identifier
+major/minor: version
+type: (0 or 1, binary-type or source-type)
+archnum: Two bytes representing the hardware architecture the RPM package has been built for.
+name: string representing the name and the version of the package using the standard RPM package name specification conventions
+osnum: Built for which OS?
+signature_type: 2-byte rep. format of signature section
+
+Some information above may be obsolete for current versions and is meant for backward compatibility (HEADER has those information as well).
+
+HEADER
+magic (3 bytes):
+	Identify beginning of the header structure.
+version + reserved (1 + 4 bytes):
+	1 byte defining version of header structure and 4 more bytes reserved for future usage.
+entries count (4 bytes):
+	Gives the number of entries stored in the header structure.
+data size (4 bytes):
+	total size in bytes of the data associated to all the entries stored in the header structure.
+index (n * 16 bytes):
+	A set of n 16-bytes records, where n is the number of entries specified by the entries count attribute, where each record contains the following attributes:
+	tag, type, offset, count. These attributes actually defines the logical entry described above. The offset attribute is a byte offset relative to the beginning of the data part of the header structure, where the actual data associated with the current entry is stored.
+data (k bytes):
+	A sequence of bytes which contains all the data associated with all the entries stored in the header structure. The size of the data part depends on the actual data stored for each entry.
+
+SIGNATURE - Assess origin of the package
+
+PAYLOAD - format is a gzipped cpio archive which is uncompressed
+
+
+
+Proposal for improving Package Management MetaData
+explicit metadata specification
+1) Definition of packages classes and grouping by capabilities - need to make this grouping more structured
+2) Package compilation options - separating the information concerning what options have been built into the packaged software, giving them a clear semantic meaning
+3) Package configuration options - specifying metadata information, makes it possible to describe what are the configuration options that have been used to configure the packaged software.
+
+Configuration and compilation options really need to be distinguished and may not be grouped in the same semantic class:
+Compilation options are hard-coded in the software and cannot be modified once the binary package has been built, configuration options describe some aspect of the software that can be changed at installation time, or even later.
