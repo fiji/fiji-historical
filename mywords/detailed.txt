@@ -6,7 +6,7 @@ what the product is able to do?
    1.3-Able to pause or cancel the download
       ==> No plugins will be installed
 2-Display of the Manager
-   2.1-Tree view/List view of plugins
+   2.1-Tree view and List view of plugins
       2.1.1-Reflect the location of Plugins in the menus
    2.2-Information of plugins to be displayed
       2.2.1-Descriptive information (Summary, release notes etc)
@@ -33,7 +33,7 @@ How about other fields like priority, source, section?
 
 
    2.3-User's choice to add/remove an entire plugin
-      2.3.1-Tree view/List view would reflect changes
+      2.3.1-Tree view and List view would reflect changes
       2.3.2-Removing a Fiji plugin: Need to check for dependencies, deny removal if another existing plugin depends on it
          ==> 3rd parties are left on their own to discriminate dependencies
          ==> *** Provide option to completely uninstall plugin (i.e: Delete) ***

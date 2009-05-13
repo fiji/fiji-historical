@@ -55,3 +55,30 @@ For "CLASS" plugins
 -Choose the corresponding file of choice
 
 Dependencies are currently not checked for.
+
+
+
+Fiji Updater plugin:
+
+Fetches updates from the server using information in current.txt.
+
+Calculates md5 sums of existing plugins.
+Checks it with md5 sums and dates that server has listed in current.txt
+Same file but different md5 sums and later date of file at server => Update
+Information displayed at the interface
+User selects the desired updates
+To update, download and save at "update" directory
+Restart Fiji, where contents of update directory will overwrite corresponding files
+
+
+
+Fiji's plugins.config file, format should be as follows:
+
+MENU_CATEGORY>SUB_MENU, MENU_ITEM_NAME (in double quotes), function name (plugin's Java constructor, or some script function)
+
+Note: SUB_MENU may not be needed at all if you want menu item name to appear within the menu itself.
+
+i.e: MENU_CATEGORY, MENU_ITEM_NAME, function name
+
+e.g in the form of Image5D:
+Plugins>Image5D, "Virtual Image5D Opener", Virtual_Image5D_Opener("")
