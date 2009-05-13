@@ -1,18 +1,27 @@
 FUNCTIONAL REQUIREMENTS:
 what the product is able to do?
+
 1-Downloading of Plugins
+
    1.1-Display compatibilities with different versions (dependencies)
+
    1.2-When downloading, able to see the download progress of selected updates
-   1.3-Able to pause or cancel the download
+
+   1.3-Able to cancel the download
       ==> No plugins will be installed
+
 2-Display of the Manager
+
    2.1-Tree view and List view of plugins
       2.1.1-Reflect the location of Plugins in the menus
+
    2.2-Information of plugins to be displayed
       2.2.1-Descriptive information (Summary, release notes etc)
+
       2.2.2-Version
-         ==> Version number
+         ==> In the form of date (timestamp)
          ==> *** show hash number upon request ***
+
       2.2.3-Compatibility
          2.2.3.1-Remote "Database": Ability to identify previous versions of each Fiji plugin, and dependencies of each version as well
          2.2.3.2-User downloads this information, program processes it and uses it to identify what needs to be done
@@ -20,46 +29,51 @@ what the product is able to do?
             ==> *** Additional technical details shown upon request ***
          2.2.3.4-Assuming 3rd parties know about dependencies (Support is not provided for them)
 
-
-
-time to fill some details!!!
-Conflicts: ?
-Depends: ?
-
-Do we need Recommends, Suggests, or Replace?
-
-How about other fields like priority, source, section?
-
-
-
    2.3-User's choice to add/remove an entire plugin
       2.3.1-Tree view and List view would reflect changes
+
       2.3.2-Removing a Fiji plugin: Need to check for dependencies, deny removal if another existing plugin depends on it
          ==> 3rd parties are left on their own to discriminate dependencies
          ==> *** Provide option to completely uninstall plugin (i.e: Delete) ***
+
    2.4-User's choice: Able to download/update plugin if any newer versions
       2.4.1-3rd party plugins
          ==> To add/update, specifying location is enough, have option to override existing file if any
          ==> Assuming 3rd parties know what they are doing with their work (Support is not provided for them)
+
       2.4.2-Plugins from Fiji
          ==> Select from a list, add/update through server's current.txt
-         ==> For Updates, check through remote "database" of versions of Fiji plugins
+         ==> Able to check for dependencies/conflicts, and inform user, avoiding unnecessary error
+         ==> Use remote "database" of versions of Fiji plugins
+         ==> Before downloading/installation, check that instructed update will create a valid, consistent set of plugin versions.
          ==> *** If there is local modification detected, user will be notified ***
+
       2.4.3-Support both CLASS and JAR
+
       2.4.4-3rd party: Able to do validation check for plugin - Is it really a plugin?
+
       2.4.5-Have ability to check for duplicate menu items, especially 3rd party ones
+
 3-Create a second Java Documentation Plugin
+
    3.1-Loads documentation from Pacific Wiki
+
    3.2-Access Plugin Manager directly
+
    3.3-Display documentation information onto plugin
+
 
 There are two main plugins to implement: "Fundamental Plugin Manager" and "Documentation Plugin"
 *** --> Secondary goals, to serve Developers/Advanced users a little better. Priority should be on the more crucial features.
 
-Known Risks:
+
+Known Risks and Assumptions:
 -Technical issues of database that stores plugin dependencies, a mistake would create confusion and usability problems for users
 -Assuming binary package installation
 -Assuming design for Fiji alone, not ImageJ
+-Assume people are only upgrading
+
+
 
 
 DATA REQUIREMENTS:
@@ -70,10 +84,22 @@ What kinds of information the product would be dealing with?
 -database.txt
    ==> Remote list
    ==> proposed to hold every record of all versions of Fiji plugins, old and new
-   ==> Each record would contain dependency information, if any
    ==> Manager uses information and displays relevant contents coherently
+
    ==> Information contents:
-      ==> md5 sum, version, dependencies, and... timestamp and download address?
+      ==> Plugin name (identifier): filename
+      ==> hash: md5 sum
+      ==> Date: timestamp (Used as data for version and other purposes)
+      ==> Description: some lines of text
+      ==> Dependency: state plugin name (filename) AND date (timestamp)
+      ==> Directory: location of the file
+
+   ==> Assume: Later versions (i.e: later timestamps) are backwards compatible with dependent plugins, unless marked as conflicting.
+      ==> Self-note: Can be done using > and < symbols
+   ==> Assume: Only one version installed at a time
+      ==> Each version understood to conflict with every other version of the same plugin
+      ==> Need not state that it is conflicting
+
 
 
 
@@ -81,10 +107,12 @@ USER REQUIREMENTS (Have them in your mind while designing):
 Who are the users?
 -Non-Programmers who are Scientists in fields like Biology, Genetics, Material Science
    -Questions: Are these users familiar with using computer applications?
+      ==> Yes they are, but they need help with the more technical side, like plugin functionality for example
    -What do Users need the application for?
-      -Image processing: What type of image processing do they do?
-      -Note to self: At least know a little about the nature of their work
+      -Image processing: Mostly analysing biological images
+      -Seek quick/convenient source of information for their needs
    -To myself: Wonder if I need to write a persona for these users? (Applying lessons from Human-Computer Interaction)
+
 
 
 
@@ -94,13 +122,13 @@ Assumptions:
 ==> Have a general idea of technical feasibility for the requirements and how to go about implementing it
 
 Week 1 (25th-31st May):
-==> Interface Design
+==> Interface Design (Start ASAP!!!)
    ==> Download Manager
    ==> Plugin Tree View
 ==> Unit testing?
 
 Week 2 (1st-7th June):
-==> Construction of remote "database" file (version, dependencies etc)
+==> Construction of remote "database" file (version, dependencies, descriptions etc)
 ==> Ability to select and display information of plugins
 ==> Unit testing
 
@@ -114,7 +142,7 @@ Week 4 (15th-21st June):
    ==> Specifying location, have option to override existing file if any
 ==> Downloading Fiji Plugins
    ==> Fetch information from remote database, update it on local side
-   ==> Display compatibilities with different versions (dependencies)
+   ==> Display, check compatibilities with different versions (dependencies)
 ==> Unit testing
 
 Week 5 (22nd-28th June):

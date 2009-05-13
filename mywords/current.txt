@@ -62,13 +62,14 @@ Fiji Updater plugin:
 
 Fetches updates from the server using information in current.txt.
 
-Calculates md5 sums of existing plugins.
-Checks it with md5 sums and dates that server has listed in current.txt
-Same file but different md5 sums and later date of file at server => Update
-Information displayed at the interface
-User selects the desired updates
-To update, download and save at "update" directory
-Restart Fiji, where contents of update directory will overwrite corresponding files
+-Calculates md5 sums of existing plugins.
+-Checks it with md5 sums and dates that server has listed in current.txt
+-Same file but different md5 sums and later date of file at server => Update
+-Information displayed at the interface
+-User selects the desired updates
+-To update, download and save at "update" directory
+-Restart Fiji, where contents of update directory will overwrite corresponding files
+--> Note actual updating is responsibility of the Fiji launcher, not updater
 
 
 

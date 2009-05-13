@@ -150,3 +150,10 @@ Rough design sketches to get an idea.
 "git cherry-pick contrib/plugin-manager" - takes a commit as an argument, and then tries to re-apply the changes that commit introduced on top of the current HEAD. If that succeeds, it takes the author information as well as the commit messages and creates a new commit from all that.
 
 "git show HEAD" to see the changes, commit message.
+
+
+
+13th May 2009, Wednesday
+Finalizing (more or less?) detailed requirements, know my users a little more.
+
+Soon, time will come for class design...
