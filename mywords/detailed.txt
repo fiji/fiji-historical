@@ -121,6 +121,15 @@ Assumptions:
 ==> Interface design, project requirements are established.
 ==> Have a general idea of technical feasibility for the requirements and how to go about implementing it
 
+Software product is broken down into increments, listed in order of time of implementation:
+1) Interface
+2) Display list of plugins and information
+3) Add/remove a menu item
+4) Ability to update Fiji plugins
+5) Ability to install 3rd-Party plugins
+6) Validating installation/updates
+7) Wiki Documentation Plugin
+
 Week 1 (25th-31st May):
 ==> Interface Design (Start ASAP!!!)
    ==> Download Manager
@@ -129,7 +138,7 @@ Week 1 (25th-31st May):
 
 Week 2 (1st-7th June):
 ==> Construction of remote "database" file (version, dependencies, descriptions etc)
-==> Ability to select and display information of plugins
+==> Ability to list, select and display information of plugins
 ==> Unit testing
 
 Week 3 (8th-14th June):
@@ -138,23 +147,23 @@ Week 3 (8th-14th June):
 ==> Unit testing
 
 Week 4 (15th-21st June):
-==> Installing 3rd Party plugins
-   ==> Specifying location, have option to override existing file if any
-==> Downloading Fiji Plugins
-   ==> Fetch information from remote database, update it on local side
+==> Updating Fiji Plugins (3 processes)
+   ==> Process #1: Fetch information from remote database, update it on local side
    ==> Display, check compatibilities with different versions (dependencies)
+   ==> Process #2: Select plugins to download
+   ==> See download progress, able to cancel download
 ==> Unit testing
 
 Week 5 (22nd-28th June):
-==> Downloading Fiji Plugins (Continued)
-   ==> Able to select plugins to download
-   ==> See download progress, pause/cancel download
-==> Installing/Updating Fiji plugins
+==> Installing 3rd-Party plugins
+   ==> Specifying location, have option to override existing file if any
+==> Updating Fiji plugins (3 processes, continued)
+   ==> Process #2 (Continued)
 ==> Unit testing
 
 Week 6 (29th June-5th July):
-==> Installing/Updating plugins
-   ==> Do validation check for plugin
+==> Installing 3rd-Party plugins/Updating Fiji Plugins
+   ==> Do validation checks
    ==> Ability to check for duplicate menu items
 ==> Unit testing
 
@@ -180,6 +189,31 @@ Week 12 (10th-16th August):
 ==> Writing documentation (If not yet finished)
 
 If time permits, secondary objectives and to some extent, "gold-plating" can be done.
+
+
+
+
+PROPOSED PLUGIN MANAGER'S INNER WORKINGS:
+
+Updating
+-Gets data from all plugins (External JAR/CLASS files)
+-Process the data (Calculate hashes, last modified etc)
+-Store the data
+-Gets data from the server (current.txt and database.xml)
+-Update local database.xml
+-Use local database.xml to check: Dependencies, store the data
+-Use current.txt (Most recent data) to compare with existing plugins: Same file, different md5 sums and later dates => UPDATE
+-Those in need of update: Show dependencies along with plugin information (Also available at database.xml)
+-User selects the plugins to update
+-Checks for any conflicts, dependencies, error, etc
+
+Add/remove plugin
+-Use local database.xml to check: Dependencies, store the data
+-Show dependencies along with plugin information (Also available at database.xml)
+-User selects the plugins to add/remove
+-Checks for any dependencies, error, etc
+-Add/remove the plugin
+
 
 
 

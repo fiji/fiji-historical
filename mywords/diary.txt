@@ -157,3 +157,11 @@ Rough design sketches to get an idea.
 Finalizing (more or less?) detailed requirements, know my users a little more.
 
 Soon, time will come for class design...
+
+
+
+14th May 2009, Thursday
+After starting "git log", hit the Return key.
+Output of "git log" is piped into the so-called pager, a program with the name "less.exe". Sole purpose of a pager is to take the output of another program and to present it to the user. Makes it possible to scroll up and down, with PageUp/PageDown (or CursorUp/CursorDown).
+
+Made a class diagram.
