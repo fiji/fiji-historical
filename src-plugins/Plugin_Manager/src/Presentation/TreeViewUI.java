@@ -12,9 +12,11 @@ import java.util.ArrayList;
 import Data.PluginObject;
 
 class TreeViewUI extends JPanel {
-	public TreeViewUI() {
+	private PluginMgrUI pluginMgrUI = null;
+	public TreeViewUI(PluginMgrUI pluginMgrUI) {
 		super();
 		this.setLayout(null);
+		this.pluginMgrUI = pluginMgrUI;
 
 		/* Create the tree */
 		DefaultMutableTreeNode top =
@@ -56,7 +58,5 @@ class TreeViewUI extends JPanel {
 
 		this.add(scrollpane);
 		this.add(tabbedPane);
-	}
-	public static void main(String args[]) {
 	}
 }

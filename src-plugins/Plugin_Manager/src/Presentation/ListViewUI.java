@@ -9,16 +9,20 @@ import javax.swing.JTabbedPane;
 //import javax.swing.JLabel;
 import javax.swing.table.*;
 import java.awt.Dimension;
-import java.util.ArrayList;
 import Data.PluginObject;
+import java.util.ArrayList;
 
 class ListViewUI extends JPanel {
-	public ListViewUI() {
+	private PluginMgrUI pluginMgrUI = null;
+	private ArrayList existingPluginList = null;
+	private PluginTableModel pluginModel = null;
+
+	public ListViewUI(PluginMgrUI pluginMgrUI) {
 		super();
 		this.setLayout(null);
+		this.pluginMgrUI = pluginMgrUI;
 
 		/* Create the plugin table */
-		PluginTableModel pluginModel = null;
 		JTable table = new JTable(pluginModel = new PluginTableModel());
 		table.setShowGrid(false);
 		table.setIntercellSpacing(new Dimension(0,0));
@@ -69,18 +73,19 @@ class ListViewUI extends JPanel {
 		this.add(scrollpane);
 		this.add(tabbedPane);
 	}
-	public static void main(String args[]) {
+	public void setExistingPluginList(ArrayList arr) {
+		existingPluginList = arr;
+		pluginModel.update(existingPluginList);
 	}
 }
 
 //{{{ PluginTableModel class
-class PluginTableModel extends AbstractTableModel
-{
+class PluginTableModel extends AbstractTableModel {
 	private ArrayList entries;
 
 	//{{{ Constructor
-	public PluginTableModel()
-	{
+	public PluginTableModel() {
+		super();
 		entries = new ArrayList();
 		//update(); //get the entries?
 	} //}}}
@@ -91,8 +96,7 @@ class PluginTableModel extends AbstractTableModel
 	} //}}}
 
 	//{{{ getColumnClass() method
-	public Class getColumnClass(int columnIndex)
-	{
+	public Class getColumnClass(int columnIndex) {
 		switch (columnIndex)
 		{
 			case 0: return Boolean.class;
@@ -103,8 +107,7 @@ class PluginTableModel extends AbstractTableModel
 	} //}}}
 
 	//{{{ getColumnName() method
-	public String getColumnName(int column)
-	{
+	public String getColumnName(int column) {
 		switch (column)
 		{
 			case 0:
@@ -132,25 +135,25 @@ class PluginTableModel extends AbstractTableModel
 	} //}}}
 
 	//{{{ getRowCount() method
-	public int getRowCount()
-	{
+	public int getRowCount() {
 		return entries.size();
 	} //}}}
 
 	//{{{ getValueAt() method
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		//Entry entry = (Entry)entries.get(rowIndex);
+		PluginObject entry = (PluginObject)entries.get(rowIndex);
 		switch (columnIndex)
 		{
 			case 0:
-				return new Boolean(false);
-				/*return new Boolean(
-					!entry.status.equals(
-					Entry.NOT_LOADED));*/
+				return new Boolean(entry.getStatusLoaded());
 			case 1:
-				return " ";
+				return entry.getFilename();
 			case 2:
-				return " ";
+				if (entry.getStatusLoaded() == false) {
+					return "Unloaded";
+				} else {
+					return "Loaded";
+				}
 			/*case 1:
 				if(entry.name == null)
 				{
@@ -169,8 +172,7 @@ class PluginTableModel extends AbstractTableModel
 	} //}}}
 
 	//{{{ isCellEditable() method
-	public boolean isCellEditable(int rowIndex, int columnIndex)
-	{
+	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		return columnIndex == 0;
 	} //}}}
 
@@ -197,6 +199,49 @@ class PluginTableModel extends AbstractTableModel
 		}
 
 		//update();
+	} //}}}
+
+	//{{{ update() method
+	public void update(ArrayList myArr) {
+		entries.clear();
+		entries = myArr;
+
+		/*String systemJarDir = MiscUtilities.constructPath(
+			jEdit.getJEditHome(),"jars");
+		String userJarDir;
+		if(jEdit.getSettingsDirectory() == null)
+			userJarDir = null;
+		else
+		{
+			userJarDir = MiscUtilities.constructPath(
+				jEdit.getSettingsDirectory(),"jars");
+		}
+
+		PluginJAR[] plugins = jEdit.getPluginJARs();
+		for(int i = 0; i < plugins.length; i++)
+		{
+			String path = plugins[i].getPath();
+			if(path.startsWith(systemJarDir)
+				|| (userJarDir != null
+				&& path.startsWith(userJarDir)))
+			{
+				Entry e = new Entry(plugins[i]);
+				if(!hideLibraries.isSelected()
+					|| e.clazz != null)
+				{
+					entries.add(e);
+				}
+			}
+		}
+
+		String[] newPlugins = jEdit.getNotLoadedPluginJARs();
+		for(int i = 0; i < newPlugins.length; i++)
+		{
+			Entry e = new Entry(newPlugins[i]);
+			entries.add(e);
+		}
+
+		sort(sortType);*/
 	} //}}}
 
 	//{{{ setSortType() method

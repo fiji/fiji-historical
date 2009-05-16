@@ -9,18 +9,23 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 //import javax.swing.JLabel;
 import javax.swing.table.*;
+
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import Data.PluginObject;
 
 class UpdateUI extends JPanel {
-	public UpdateUI() {
+	private PluginMgrUI pluginMgrUI = null;
+	public UpdateUI(PluginMgrUI pluginMgrUI) {
 		super();
 		this.setLayout(null);
+		this.pluginMgrUI = pluginMgrUI;
 
 		/* Create the plugin table */
-		PluginTableModel pluginModel = null;
-		JTable table = new JTable(pluginModel = new PluginTableModel());
+		UpdateTableModel pluginModel = null;
+		JTable table = new JTable(pluginModel = new UpdateTableModel());
 		table.setShowGrid(false);
 		table.setIntercellSpacing(new Dimension(0,0));
 		table.setRowHeight(table.getRowHeight() + 2);
@@ -70,12 +75,22 @@ class UpdateUI extends JPanel {
 		JButton btnCheckUpdate = new JButton();
 		btnCheckUpdate.setBounds(395, 350, 145, 30);
 		btnCheckUpdate.setText("Check for Updates");
-		btnCheckUpdate.setToolTipText("Retain settings and exit Plugin Manager");
+		btnCheckUpdate.setToolTipText("Getting news of any updates");
+		btnCheckUpdate.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                //PluginFrame
+            }
+        });
 
 		JButton btnDownload = new JButton();
 		btnDownload.setBounds(555, 350, 145, 30);
 		btnDownload.setText("Download Updates");
 		btnDownload.setToolTipText("Retain settings and exit Plugin Manager");
+		btnDownload.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+            	showDownloadManager();
+            }
+        });
 
 		JCheckBox chkSelectAll = new JCheckBox();
 		chkSelectAll.setBounds(10, 350, 120, 30);
@@ -87,6 +102,144 @@ class UpdateUI extends JPanel {
 		this.add(btnDownload);
 		this.add(chkSelectAll);
 	}
-	public static void main(String args[]) {
+	private void showDownloadManager() {
+		pluginMgrUI.showDownloadManager();
 	}
 }
+//{{{ PluginTableModel class
+class UpdateTableModel extends AbstractTableModel
+{
+	private ArrayList entries;
+
+	//{{{ Constructor
+	public UpdateTableModel()
+	{
+		entries = new ArrayList();
+		//update(); //get the entries?
+	} //}}}
+
+	//{{{ getColumnCount() method
+	public int getColumnCount() {
+		return 3; //4 values to show for Plugin object
+	} //}}}
+
+	//{{{ getColumnClass() method
+	public Class getColumnClass(int columnIndex)
+	{
+		switch (columnIndex)
+		{
+			case 0: return Boolean.class;
+			case 1: return String.class; //to be replaced...
+			case 2: return String.class; //to be replaced...
+			default: return Object.class;
+		}
+	} //}}}
+
+	//{{{ getColumnName() method
+	public String getColumnName(int column)
+	{
+		switch (column)
+		{
+			case 0:
+				return " ";
+			case 1:
+				return "Name";
+			case 2:
+				return "Date";
+			/*case 1:
+				return jEdit.getProperty("manage-plugins.info.name");
+			case 2:
+				return jEdit.getProperty("manage-plugins.info.version");
+			case 3:
+				return jEdit.getProperty("manage-plugins.info.status");*/
+			default:
+				throw new Error("Column out of range");
+		}
+	} //}}}
+
+	//{{{ getEntry() method
+	public PluginObject getEntry(int rowIndex)
+	{
+		//return (Entry)entries.get(rowIndex);
+		return null;
+	} //}}}
+
+	//{{{ getRowCount() method
+	public int getRowCount()
+	{
+		return entries.size();
+	} //}}}
+
+	//{{{ getValueAt() method
+	public Object getValueAt(int rowIndex, int columnIndex) {
+		//Entry entry = (Entry)entries.get(rowIndex);
+		switch (columnIndex)
+		{
+			case 0:
+				return new Boolean(false);
+				/*return new Boolean(
+					!entry.status.equals(
+					Entry.NOT_LOADED));*/
+			case 1:
+				return " ";
+			case 2:
+				return " ";
+			/*case 1:
+				if(entry.name == null)
+				{
+					return MiscUtilities.getFileName(entry.jar);
+				}
+				else
+					return entry.name;
+			case 2:
+				return entry.version;
+			case 3:
+				return jEdit.getProperty("plugin-manager.status."
+					+ entry.status);*/
+			default:
+				throw new Error("Column out of range");
+		}
+	} //}}}
+
+	//{{{ isCellEditable() method
+	public boolean isCellEditable(int rowIndex, int columnIndex)
+	{
+		return columnIndex == 0;
+	} //}}}
+
+	//{{{ setValueAt() method
+	public void setValueAt(Object value, int rowIndex, int columnIndex) {
+		//Entry entry = (Entry)entries.get(rowIndex);
+		if(columnIndex == 0)
+		{
+			/*PluginJAR jar = jEdit.getPluginJAR(entry.jar);
+			if(jar == null)
+			{
+				if(value.equals(Boolean.FALSE))
+					return;
+
+				loadPluginJAR(entry.jar);
+			}
+			else
+			{
+				if(value.equals(Boolean.TRUE))
+					return;
+
+				unloadPluginJARWithDialog(jar);
+			}*/
+		}
+
+		//update();
+	} //}}}
+
+	//{{{ setSortType() method
+	public void setSortType(int type) {
+	} //}}}
+
+	//{{{ sort() method
+	public void sort(int type) {
+	}
+	//}}}
+
+
+} //}}}

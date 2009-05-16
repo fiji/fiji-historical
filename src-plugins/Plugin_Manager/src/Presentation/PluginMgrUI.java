@@ -7,15 +7,21 @@ import ij.plugin.frame.*;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.JFrame;
 import java.awt.Container;
+import java.util.ArrayList;
+
 import javax.swing.JButton;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JComponent;
 import javax.swing.ImageIcon;
 
 public class PluginMgrUI extends PlugInFrame implements ActionListener {
 	private static PluginMgrUI pluginMgrUI = null;
+	private DownloadUI frameDownloader = null;
+	private TreeViewUI treeViewUI = null;
+	private ListViewUI listViewUI = null;
+	private UpdateUI updateUI = null;
 
 	private PluginMgrUI() {
 		super("Plugin Manager");
@@ -25,9 +31,10 @@ public class PluginMgrUI extends PlugInFrame implements ActionListener {
 
 		//Tabbed pane of contents
 		JTabbedPane tabbedPane = new JTabbedPane();
-		TreeViewUI treeViewUI = new TreeViewUI();
-		ListViewUI listViewUI = new ListViewUI();
-		UpdateUI updateUI = new UpdateUI();
+		treeViewUI = new TreeViewUI(this);
+		listViewUI = new ListViewUI(this);
+		updateUI = new UpdateUI(this);
+		//JComponent downloadUI = new DownloadUI(); //attached to another JFrame
 		tabbedPane.addTab("Tree", null, treeViewUI, "Tree view of plugins");
 		tabbedPane.addTab("List", null, listViewUI, "List view of plugins");
 		tabbedPane.addTab("Update", null, updateUI, "Get a list of updates");
@@ -43,6 +50,10 @@ public class PluginMgrUI extends PlugInFrame implements ActionListener {
 		btnCancel.setText("Cancel");
 		btnCancel.setToolTipText("Exit Plugin Manager");
 
+        //if status says there's a list to download...
+    	frameDownloader = new DownloadUI(this);
+    	//but don't show it yet...
+
 		/*
 		content.add(tabbedPane);
 		content.add(btnOK);
@@ -51,7 +62,6 @@ public class PluginMgrUI extends PlugInFrame implements ActionListener {
 		this.add(tabbedPane);
 		this.add(btnOK);
 		this.add(btnCancel);
-		//JComponent downloadUI = new DownloadUI(); //attached to another JFrame
 	}
 	public static PluginMgrUI getInstance() {
 		if (pluginMgrUI == null) {
@@ -59,8 +69,22 @@ public class PluginMgrUI extends PlugInFrame implements ActionListener {
 		}
 		return pluginMgrUI;
 	}
-	public static JFrame getDownloadManager(JComponent downloadUI) {
-		return null;
+	public void setExistingPluginList(ArrayList arr) {
+		listViewUI.setExistingPluginList(arr);
+	}
+	public void setUpdatesPluginList(ArrayList arr) {
+	}
+	public void setDownloadNameList(ArrayList arr) {
+	}
+	public void showDownloadManager() {
+		//in later implementations, this should feedback to Plugin Manager, which will
+		//liase with SystemController
+		frameDownloader.setVisible(true);
+		this.setEnabled(false);
+	}
+	public void backToPluginManager() {
+		frameDownloader.setVisible(false);
+		this.setEnabled(true);
 	}
 	public void actionPerformed(ActionEvent e) {
 		
