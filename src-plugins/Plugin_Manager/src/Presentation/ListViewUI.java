@@ -7,6 +7,7 @@ import javax.swing.JTextPane;
 import javax.swing.JTabbedPane;
 //import javax.swing.JCheckBox;
 //import javax.swing.JLabel;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
 import java.awt.Dimension;
 import Data.PluginObject;
@@ -179,8 +180,11 @@ class PluginTableModel extends AbstractTableModel {
 	//{{{ setValueAt() method
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		//Entry entry = (Entry)entries.get(rowIndex);
+		PluginObject entry = (PluginObject)entries.get(rowIndex);
 		if(columnIndex == 0)
 		{
+			entry.setStatusLoaded(((Boolean)value).booleanValue());
+			fireTableChanged(new TableModelEvent(this));
 			/*PluginJAR jar = jEdit.getPluginJAR(entry.jar);
 			if(jar == null)
 			{
