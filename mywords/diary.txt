@@ -165,3 +165,20 @@ After starting "git log", hit the Return key.
 Output of "git log" is piped into the so-called pager, a program with the name "less.exe". Sole purpose of a pager is to take the output of another program and to present it to the user. Makes it possible to scroll up and down, with PageUp/PageDown (or CursorUp/CursorDown).
 
 Made a class diagram.
+
+
+
+15th-19th May 2009, Fri-Tue
+Hmmm.... Its been a while. Have been trying to debug my interface. A list of these classes is more or less confirmed and partially implemented:
+PluginManager.java - The main UI that uses Controller
+TextPaneFormat.java - Utility for text formatting in a textpane
+Controller.java - In charge of determining dependencies, getting data from the plugin files, in short the lower level implementation
+Dependency.java - Data form of a dependency
+PluginObject.java - Data form of a Plugin, already "processed and ready to use"
+
+Keep in mind:
+-Have explicit import e.g "import ij.gui.ImageCanvas;" not implicit like "import ij.gui.*;"
+-Have empty lines between methods, and even inside methods between logical blocks
+-Have lowercase for packages
+-Have expressive names for methods and classes and objects
+-use Java 1.5-style generics, e.g.: List<String> = new LinkedList<String>();
