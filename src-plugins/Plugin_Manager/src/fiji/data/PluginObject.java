@@ -7,8 +7,8 @@ public class PluginObject {
 	private String timestamp = null; //Version of plugin file ("Co-Identifier")
 	private String directory = null; //Where should the plugin file (Loaded) be located
 	private String description = null;
-	private boolean loaded = false; //For to-update plugin list, this is not needed
-	private boolean toInstall = false; //For existingPluginList, this is not needed
+	private boolean status = false; //True: Installed, False: Not Installed
+	private int action = 0; //0: Remain as it is, 1: Install, 2: Uninstall, 3: Update
 	private List<Dependency> dependency = null; //2-element arrays of ==> 0: filename, 1: timestamp
 
 	public PluginObject(String strFilename, String md5Sum, String timestamp, String directory) {
@@ -18,15 +18,15 @@ public class PluginObject {
 		this.directory = directory;
 	}
 
-	public PluginObject(String strFilename, String md5Sum, String timestamp, String directory, String description, List<Dependency> dependency, boolean loaded, boolean toInstall) {
+	public PluginObject(String strFilename, String md5Sum, String timestamp, String directory, String description, List<Dependency> dependency, boolean status, int action) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
 		this.timestamp = timestamp;
 		this.directory = directory;
 		this.description = description;
 		this.dependency = dependency;
-		this.loaded = loaded;
-		this.toInstall = toInstall;
+		this.status = status;
+		this.action = action;
 	}
 
 	public void setDescription(String description) {
@@ -37,12 +37,12 @@ public class PluginObject {
 		this.dependency = dependency;
 	}
 
-	public void setStatusLoaded(boolean loaded) {
-		this.loaded = loaded;
+	public void setStatusLoaded(boolean status) {
+		this.status = status;
 	}
 
-	public void setToInstall(boolean toInstall) {
-		this.toInstall = toInstall;
+	public void setAction(int action) {
+		this.action = action;
 	}
 
 	public String getFilename() {
@@ -73,11 +73,11 @@ public class PluginObject {
 		return dependency.get(index);
 	}
 
-	public boolean getStatusLoaded() {
-		return loaded;
+	public boolean getStatus() {
+		return status;
 	}
 
-	public boolean getToInstallStatus() {
-		return toInstall;
+	public int getAction() {
+		return action;
 	}
 }

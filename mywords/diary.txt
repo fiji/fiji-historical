@@ -182,3 +182,21 @@ Keep in mind:
 -Have lowercase for packages
 -Have expressive names for methods and classes and objects
 -use Java 1.5-style generics, e.g.: List<String> = new LinkedList<String>();
+
+
+
+20th May 2009, Wednesday
+New Design: Basically plugin has two statuses. Either plugin is uninstalled or its installed. If its uninstalled, users can choose to remain as it is ("Uninstalled") or "Install" it. If its installed, users can choose to remain as it is ("Installed") or "Remove" it.
+
+Suggestion for better usability: Make the "Install" and "Remove" labels bold, and update the label of the action button to say something like "Install 3, Remove 2", and grey it out when the user did not specify any changes.
+
+New design is partially implemented. Looks simpler now... I only hope coding the rest of the interface doesn't get complicated.
+
+To do NEXT:
+1) Remote database, a version with artificial information for testing purposes, including information for UPDATED plugins.
+2) Able to view the plugins, installed, uninstalled, along with can-be-updated
+3) Put up the rest of the interface elements
+
+
+
+21st May...?
