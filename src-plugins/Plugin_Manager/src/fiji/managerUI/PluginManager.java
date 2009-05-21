@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.DefaultCellEditor;
+import javax.swing.JTextField;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JButton;
@@ -21,8 +22,10 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 
 import extendedSwing.JTableX;
 import extendedSwing.RowEditorModel;
@@ -30,23 +33,32 @@ import fiji.data.Dependency;
 import fiji.data.PluginObject;
 import fiji.logic.Controller;
 
-public class PluginManager extends PlugInFrame implements ActionListener {
+public class PluginManager extends PlugInFrame implements ActionListener, TableModelListener {
 	private Controller controller = null;
-	private List<PluginObject> pluginList = null;
 
 	/* User Interface elements */
 	private DownloadUI frameDownloader = null;
-	private PluginTableModel pluginModel = null;
+	private String[] arrViewingOptions = {
+			"View all plugins",
+			"View installed plugins only",
+			"View uninstalled plugins only",
+			"View up-to-date plugins only",
+			"View update-able plugins only"
+			};
+	private JTextField txtSearch = null;
+	private JComboBox comboBoxViewingOptions = null;
+	private PluginTableModel pluginTableModel = null;
 	private JTableX table = null;
+	private JLabel lblPluginSummary = null;
 	private JTextPane txtPluginDetails = null;
 	private JButton btnStart = null;
 	private JButton btnOK = null;
-	private String[] arrUninstalledOptions = { "Uninstalled", "Install it" };
-	private String[] arrInstalledOptions1 = { "Installed", "Remove it" };
-	private String[] arrInstalledOptions2 = { "Installed", "Remove it", "Update it" };
+	static String[] arrUninstalledOptions = { "Not installed", "Install it" };
+	static String[] arrInstalledOptions = { "Installed", "Remove it" };
+	static String[] arrUpdateableOptions = { "Installed", "Remove it", "Update it" };
 	private DefaultCellEditor uninstalledOptions = new DefaultCellEditor(new JComboBox(arrUninstalledOptions));
-	private DefaultCellEditor installedOptions1 = new DefaultCellEditor(new JComboBox(arrInstalledOptions1));
-	private DefaultCellEditor installedOptions2 = new DefaultCellEditor(new JComboBox(arrInstalledOptions2));
+	private DefaultCellEditor installedOptions = new DefaultCellEditor(new JComboBox(arrInstalledOptions));
+	private DefaultCellEditor updateableOptions = new DefaultCellEditor(new JComboBox(arrUpdateableOptions));
 	private RowEditorModel rowEditorModel = null;
 	//private String ... //current.txt and database.txt address tentatively......
 
@@ -59,28 +71,56 @@ public class PluginManager extends PlugInFrame implements ActionListener {
 		//initialize the data...
 		controller = new Controller();
 
-        //if status says there's a list to download...
-    	frameDownloader = new DownloadUI(this);
-    	//but don't show it yet...
+		//if status says there's a list to download...
+		frameDownloader = new DownloadUI(this);
+		//but don't show it yet...
+	
+		setUpUserInterface();
 
-    	setUpUserInterface();
-    	pluginList = controller.getExistingPluginList();
-    	pluginModel.update(pluginList);
-    	//after displaying UI, allow editable comboboxes
-    	setupPluginComboBoxes();
+		//Retrieves the data
+		pluginTableModel.update(controller.getPluginList());
 
-		this.setVisible(true);
+		//after displaying UI and data ready for display, allow editable ComboBoxes
+		setupPluginComboBoxes();
+
+		//this.setVisible(true);
+		this.show();
 	}
 
 	private void setUpUserInterface() {
-		/* Create labels to annotate */
-		JLabel tableLabel = new JLabel("Please choose what you want to install/uninstall:");
-		tableLabel.setBounds(30, 120, 350, 30);
-		tableLabel.setAlignmentX(TOP_ALIGNMENT);
-		tableLabel.setAlignmentY(LEFT_ALIGNMENT);
+		/* Create labels to annotate search options */
+		JLabel lblSearch1 = new JLabel("Search:");
+		lblSearch1.setBounds(30, 45, 120, 25);
+		lblSearch1.setAlignmentX(TOP_ALIGNMENT);
+		lblSearch1.setAlignmentY(LEFT_ALIGNMENT);
+		JLabel lblSearch2 = new JLabel("View Options:");
+		lblSearch2.setBounds(30, 85, 120, 25);
+		lblSearch2.setAlignmentX(TOP_ALIGNMENT);
+		lblSearch2.setAlignmentY(LEFT_ALIGNMENT);
+
+		/* Create text search */
+		txtSearch = new JTextField();
+		txtSearch.setBounds(150, 45, 230, 25);
+
+		/* Create combo box of options */
+		comboBoxViewingOptions = new JComboBox(arrViewingOptions);
+		comboBoxViewingOptions.setBounds(150, 85, 230, 25);
+		comboBoxViewingOptions.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				comboBoxViewListener();
+			}
+
+		});
+		
+		/* Create labels to annotate table */
+		JLabel lblTable = new JLabel("Please choose what you want to install/uninstall:");
+		lblTable.setBounds(30, 120, 350, 30);
+		lblTable.setAlignmentX(TOP_ALIGNMENT);
+		lblTable.setAlignmentY(LEFT_ALIGNMENT);
 
 		/* Create the plugin table */
-		table = new JTableX(pluginModel = new PluginTableModel());
+		table = new JTableX(pluginTableModel = new PluginTableModel());
 		table.setColumnSelectionAllowed(false);
 		table.setRowSelectionAllowed(true);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -93,14 +133,14 @@ public class PluginManager extends PlugInFrame implements ActionListener {
 		                    //Selection got filtered away
 		                } else {
 		                    int modelRow = table.convertRowIndexToModel(viewRow);
-		                    PluginObject myPlugin = (PluginObject)pluginList.get(modelRow);
+		                    PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
 		                    txtPluginDetails.setText("");
 		                    TextPaneFormat.insertText(txtPluginDetails, "Name: ", TextPaneFormat.BOLD_BLACK);
 		                    TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BLACK);
 		                    TextPaneFormat.insertText(txtPluginDetails, "\n\nMd5 Sum", TextPaneFormat.BOLD_BLACK);
 		                    TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum(), TextPaneFormat.BLACK);
 		                    TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased:", TextPaneFormat.BOLD_BLACK);
-		                    TextPaneFormat.insertText(txtPluginDetails, myPlugin.getTimestamp(), TextPaneFormat.BLACK);
+		                    TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp(), TextPaneFormat.BLACK);
 		                    TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
 		                    ArrayList<Dependency> myDependencies = (ArrayList<Dependency>) myPlugin.getDependencies();
 		                    String strDependencies = "";
@@ -124,6 +164,7 @@ public class PluginManager extends PlugInFrame implements ActionListener {
 		        }
 
 		);
+		table.getModel().addTableModelListener(this); //listen for changes (tableChanged(TableModelEvent e))
 
 		//Set appearance of table
 		table.setShowGrid(false);
@@ -150,12 +191,18 @@ public class PluginManager extends PlugInFrame implements ActionListener {
 		scrollpane.getViewport().setBackground(table.getBackground());
 		scrollpane.setBounds(30, 150, 370, 310);
 
+		/* Label text for plugin summaries */
+		lblPluginSummary = new JLabel();
+		lblPluginSummary.setBounds(30, 460, 350, 30);
+		lblPluginSummary.setAlignmentX(TOP_ALIGNMENT);
+		lblPluginSummary.setAlignmentY(LEFT_ALIGNMENT);
+
 		/* Create textpane to hold the information */
 		txtPluginDetails = new JTextPane();
 		txtPluginDetails.setEditable(false);
 		txtPluginDetails.setText("");
 		txtPluginDetails.setBounds(0, 0, 290, 275);
-		
+
 		/* Create scrollpane to hold the textpane */
 		JScrollPane txtScrollpane = new JScrollPane(txtPluginDetails);
 		txtScrollpane.getViewport().setBackground(txtPluginDetails.getBackground());
@@ -172,60 +219,171 @@ public class PluginManager extends PlugInFrame implements ActionListener {
 
 		//Buttons to start actions
 		btnStart = new JButton();
-		btnStart.setBounds(30, 470, 110, 30);
+		btnStart.setBounds(30, 490, 110, 30);
 		btnStart.setText("Start");
 		btnStart.setToolTipText("Start installing/uninstalling specified plugins");
+		btnStart.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				clickToBeginOperations();
+			}
+
+		});
 
 		//Buttons to quit Plugin Manager
 		btnOK = new JButton();
 		btnOK.setBounds(610, 490, 110, 30);
 		btnOK.setText("OK");
 		btnOK.setToolTipText("Exit Plugin Manager");
+		btnStart.addActionListener(new ActionListener() {
 
-		this.add(tableLabel);
+			public void actionPerformed(ActionEvent e) {
+				clickToQuitPluginManager();
+			}
+
+		});
+
+		this.add(lblSearch1);
+		this.add(lblSearch2);
+		this.add(txtSearch);
+		this.add(comboBoxViewingOptions);
+		this.add(lblTable);
 		this.add(scrollpane);
+		this.add(lblPluginSummary);
 		this.add(tabbedPane);
 		this.add(btnStart);
 		this.add(btnOK);
 	}
 
-	//Assuming user interface has been setup along with values available on table...
+	//Assuming user interface setup, with all relevant plugin data already in table...
 	private void setupPluginComboBoxes() {
     	rowEditorModel = new RowEditorModel();
     	table.setRowEditorModel(rowEditorModel);
-        for (int i = 0; i < pluginList.size(); i++) {
-        	PluginObject myPlugin = (PluginObject)pluginList.get(i);
-        	if (myPlugin.getStatus() == false) //if plugin is not installed
+    	int size = table.getRowCount();
+        for (int i = 0; i < size; i++) {
+        	PluginObject myPlugin = pluginTableModel.getEntry(i);
+        	if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) //if plugin is not installed
         		rowEditorModel.addEditorForRow(i, uninstalledOptions);
-        	else //if plugin is installed
-        		//todo: Check whether plugin has updates or not (ref. discovered later versions)
-        		rowEditorModel.addEditorForRow(i, installedOptions1);
+        	else if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED) //if plugin is installed
+        		rowEditorModel.addEditorForRow(i, installedOptions);
+        	else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) //if plugin is installed
+        		rowEditorModel.addEditorForRow(i, updateableOptions);
+        	else
+        		throw new Error("Error while assigning combo-boxes to data!");
         }
+        //update the table's appearance
+        //pluginModel.fireTableChanged(new TableModelEvent(pluginModel));
 	}
 
-	public void clickToDownloadUpdates() {
+	//Whenever Viewing Options in the ComboBox has been changed
+	private void comboBoxViewListener() {
+		String strOption = (String)comboBoxViewingOptions.getSelectedItem();
+		if (strOption.equals(arrViewingOptions[0])) {
+			//if "View all plugins"
+			pluginTableModel.update(controller.getPluginList());
+			//When data is ready for display, allow editable ComboBoxes
+			setupPluginComboBoxes();
+		} else if (strOption.equals(arrViewingOptions[1])) {
+			//if "View installed plugins"
+			List<PluginObject> viewList = new ArrayList<PluginObject>();
+			for (int i = 0; i < controller.getPluginList().size(); i++) {
+				PluginObject myPlugin = controller.getPluginList().get(i);
+				if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
+					myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+					viewList.add(myPlugin);
+				}
+			}
+			pluginTableModel.update(viewList);
+			//When data is ready for display, allow editable ComboBoxes
+			setupPluginComboBoxes();
+		} else if (strOption.equals(arrViewingOptions[2])) {
+			//if "View uninstalled plugins"
+			List<PluginObject> viewList = new ArrayList<PluginObject>();
+			for (int i = 0; i < controller.getPluginList().size(); i++) {
+				PluginObject myPlugin = controller.getPluginList().get(i);
+				if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
+					viewList.add(myPlugin);
+				}
+			}
+			pluginTableModel.update(viewList);
+			//When data is ready for display, allow editable ComboBoxes
+			setupPluginComboBoxes();
+		} else if (strOption.equals(arrViewingOptions[3])) {
+			//if "View up-to-date plugins"
+			List<PluginObject> viewList = new ArrayList<PluginObject>();
+			for (int i = 0; i < controller.getPluginList().size(); i++) {
+				PluginObject myPlugin = controller.getPluginList().get(i);
+				if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED) {
+					viewList.add(myPlugin);
+				}
+			}
+			pluginTableModel.update(viewList);
+			//When data is ready for display, allow editable ComboBoxes
+			setupPluginComboBoxes();
+		} else if (strOption.equals(arrViewingOptions[4])) {
+			//if "View update-able plugins"
+			List<PluginObject> viewList = new ArrayList<PluginObject>();
+			for (int i = 0; i < controller.getPluginList().size(); i++) {
+				PluginObject myPlugin = controller.getPluginList().get(i);
+				if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+					viewList.add(myPlugin);
+				}
+			}
+			pluginTableModel.update(viewList);
+			//When data is ready for display, allow editable ComboBoxes
+			setupPluginComboBoxes();
+		} else {
+			throw new Error("Viewing option specified does not exist!");
+		}
+	}
+	private void clickToBeginOperations() {
 		//in later implementations, this should liase with Controller
+		//e.g: controller.isReadyToBegin()... Controller checks pluginList...
 		frameDownloader.setVisible(true);
 		this.setEnabled(false);
+	}
+	
+	private void clickToQuitPluginManager() {
+		//in later implementations, this should have some notifications
+		this.dispose();
 	}
 
 	public void clickBackToPluginManager() {
 		//in later implementations, this should liase with Controller
+		//e.g: controller.hasDownloadEnded()... Controller checks download complete or not...
 		frameDownloader.setVisible(false);
 		this.setEnabled(true);
-	}
-	
-	public void clickToGenerateUpdates() {
-		//show the download window
-		frameDownloader.setVisible(true);
-		this.setEnabled(false);
-		//began download
-		//controller.generateUpdatesPluginList();
-		//updateUI.setUpdatesPluginList(controller.getUpdatesPluginList());
 	}
 
 	public void actionPerformed(ActionEvent e) {
 		
+	}
+
+	//When a value in the table has been modified by the user
+	public void tableChanged(TableModelEvent e) {
+		//QUESTION: should we count objects in the view-table or objects in the entire list?
+		PluginTableModel model = (PluginTableModel)e.getSource();
+		int size = model.getRowCount();
+		int installCount = 0;
+		int removeCount = 0;
+		int updateCount = 0;
+		for (int i = 0; i < size; i++) {
+			PluginObject myPlugin = model.getEntry(i);
+			if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
+				myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
+				installCount += 1;
+			}
+			else if ((myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
+				myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) &&
+				myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
+				removeCount += 1;
+			} else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE &&
+						myPlugin.getAction() == PluginObject.ACTION_UPDATE) {
+				updateCount += 1;
+			}
+		}
+		lblPluginSummary.setText("Total: " + size + ", To install: " + installCount +
+				", To remove: " + removeCount + ", To update: " + updateCount);
 	}
 
 	/* Returns an ImageIcon, or null if the path was invalid. */
@@ -301,26 +459,38 @@ class PluginTableModel extends AbstractTableModel {
 		switch (columnIndex)
 		{
 			case 0:
-				return entry.getFilename();
+				if (entry.getAction() != PluginObject.ACTION_NONE)
+					return entry.getFilename() + " *"; //"*" indicates action needed
+				else
+					return entry.getFilename();
 			case 1:
-				boolean installed = entry.getStatus();
-				int actionToTake = entry.getAction();
-				if (installed == false) {
-					if (actionToTake == 0)
-						return "Not installed";
-					else if (actionToTake == 1)
-						return "Install it";
+				byte currentStatus = entry.getStatus();
+				byte actionToTake = entry.getAction();
+				if (currentStatus == PluginObject.STATUS_UNINSTALLED) { //if not installed 
+					if (actionToTake == PluginObject.ACTION_NONE)
+						return PluginManager.arrUninstalledOptions[0]; //"Not installed"
+					else if (actionToTake == PluginObject.ACTION_REVERSE)
+						return PluginManager.arrUninstalledOptions[1]; //"Install"
 					else
 						throw new Error("INVALID action value for Uninstalled Plugin");
-				} else { //if it is installed
-					if (actionToTake == 0)
-						return "Installed";
-					else if (actionToTake == 2)
-						return "Remove it";
-					else if (actionToTake == 3)
-						return "Update it";
+				} else if (currentStatus == PluginObject.STATUS_INSTALLED) { //if installed
+					if (actionToTake == PluginObject.ACTION_NONE)
+						return PluginManager.arrInstalledOptions[0]; //"Installed"
+					else if (actionToTake == PluginObject.ACTION_REVERSE)
+						return PluginManager.arrInstalledOptions[1]; //"Remove"
 					else
 						throw new Error("INVALID action value for Installed Plugin");
+				} else if (currentStatus == PluginObject.STATUS_MAY_UPDATE) { //if installed AND update-able
+					if (actionToTake == PluginObject.ACTION_NONE)
+						return PluginManager.arrUpdateableOptions[0]; //"Installed"
+					else if (actionToTake == PluginObject.ACTION_REVERSE)
+						return PluginManager.arrUpdateableOptions[1]; //"Remove"
+					else if (actionToTake == PluginObject.ACTION_UPDATE)
+						return PluginManager.arrUpdateableOptions[2]; //"Update"
+					else
+						throw new Error("INVALID action value for Update-able Plugin");
+				} else {
+					throw new Error("INVALID Plugin Status retrieved!");
 				}
 			/*case 1:
 				if(entry.name == null)
@@ -350,17 +520,53 @@ class PluginTableModel extends AbstractTableModel {
 		PluginObject entry = (PluginObject)entries.get(rowIndex);
 		if(columnIndex == 1) {
 			String newValue = (String)value;
-			if (newValue.equals("Not installed") && entry.getStatus() == false)
-				entry.setAction(0);
-			else if (newValue.equals("Install it") && entry.getStatus() == false)
-				entry.setAction(1);
-			else if (newValue.equals("Installed") && entry.getStatus() == true)
-				entry.setAction(0);
-			else if (newValue.equals("Remove it") && entry.getStatus() == true)
-				entry.setAction(2);
-			else if (newValue.equals("Update it") && entry.getStatus() == true)
-				entry.setAction(3);
-			else throw new Error("INVALID action value specified for selected Plugin");
+			//if current status of selected plugin is "not installed"
+			if (entry.getStatus() == PluginObject.STATUS_UNINSTALLED) {
+				//if option chosen is "Not installed"
+				if (newValue.equals(PluginManager.arrUninstalledOptions[0])) {
+					entry.setAction(PluginObject.ACTION_NONE);
+				}
+				//if option chosen is "Install"
+				else if (newValue.equals(PluginManager.arrUninstalledOptions[1])) {
+					entry.setAction(PluginObject.ACTION_REVERSE);
+				}
+				//otherwise...
+				else {
+					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
+				}
+			} else if (entry.getStatus() == PluginObject.STATUS_INSTALLED) {
+				//if option chosen is "Installed"
+				if (newValue.equals(PluginManager.arrInstalledOptions[0])) {
+					entry.setAction(PluginObject.ACTION_NONE);
+				}
+				//if option chosen is "Remove" (Or uninstall it)
+				else if (newValue.equals(PluginManager.arrInstalledOptions[1])) {
+					entry.setAction(PluginObject.ACTION_REVERSE);
+				}
+				//otherwise...
+				else {
+					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
+				}
+			} else if (entry.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+				//if option chosen is "Installed"
+				if (newValue.equals(PluginManager.arrUpdateableOptions[0])) {
+					entry.setAction(PluginObject.ACTION_NONE);
+				}
+				//if option chosen is "Remove" (Or uninstall it)
+				else if (newValue.equals(PluginManager.arrUpdateableOptions[1])) {
+					entry.setAction(PluginObject.ACTION_REVERSE);
+				}
+				//if option chosen is "Update"
+				else if (newValue.equals(PluginManager.arrUpdateableOptions[2])) {
+					entry.setAction(PluginObject.ACTION_UPDATE);
+				}
+				//otherwise...
+				else {
+					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
+				}
+			} else {
+				throw new Error("Invalid status specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
+			}
 			fireTableChanged(new TableModelEvent(this));
 			/*PluginJAR jar = jEdit.getPluginJAR(entry.jar);
 			if(jar == null)
@@ -384,7 +590,6 @@ class PluginTableModel extends AbstractTableModel {
 
 	//{{{ update() method
 	public void update(List<PluginObject> myArr) {
-		entries.clear();
 		entries = myArr;
 		fireTableChanged(new TableModelEvent(this));
 

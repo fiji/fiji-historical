@@ -4,25 +4,31 @@ import java.util.List;
 public class PluginObject {
 	private String strFilename = null; //Identifier
 	private String md5Sum = null; //Used for comparison: Determine if update needed
-	private String timestamp = null; //Version of plugin file ("Co-Identifier")
+	private long timestamp = 0; //Version of plugin file ("Co-Identifier")
 	private String directory = null; //Where should the plugin file (Loaded) be located
 	private String description = null;
-	private boolean status = false; //True: Installed, False: Not Installed
-	private int action = 0; //0: Remain as it is, 1: Install, 2: Uninstall, 3: Update
+	public static byte STATUS_UNINSTALLED = 0; //Meaning current status is not installed
+	public static byte STATUS_INSTALLED = 1; //Meaning current status is installed
+	public static byte STATUS_MAY_UPDATE = 2; //Meaning installed AND update-able
+	private byte status = 0; //default
+	public static byte ACTION_NONE = 0; //No action; Remain as it is
+	public static byte ACTION_REVERSE = 1; //Install if not installed, Uninstall if installed
+	public static byte ACTION_UPDATE = 2; //Only possibly valid for (status == 2)
+	private byte action = ACTION_NONE; //default
 	private List<Dependency> dependency = null; //2-element arrays of ==> 0: filename, 1: timestamp
 
-	public PluginObject(String strFilename, String md5Sum, String timestamp, String directory) {
+	public PluginObject(String strFilename, String md5Sum, String directory, long timestamp) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
-		this.timestamp = timestamp;
 		this.directory = directory;
+		this.timestamp = timestamp;
 	}
 
-	public PluginObject(String strFilename, String md5Sum, String timestamp, String directory, String description, List<Dependency> dependency, boolean status, int action) {
+	public PluginObject(String strFilename, String md5Sum, String directory, long timestamp, String description, List<Dependency> dependency, byte status, byte action) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
-		this.timestamp = timestamp;
 		this.directory = directory;
+		this.timestamp = timestamp;
 		this.description = description;
 		this.dependency = dependency;
 		this.status = status;
@@ -37,11 +43,11 @@ public class PluginObject {
 		this.dependency = dependency;
 	}
 
-	public void setStatusLoaded(boolean status) {
+	public void setStatus(byte status) {
 		this.status = status;
 	}
 
-	public void setAction(int action) {
+	public void setAction(byte action) {
 		this.action = action;
 	}
 
@@ -53,7 +59,7 @@ public class PluginObject {
 		return md5Sum;
 	}
 
-	public String getTimestamp() {
+	public long getTimestamp() {
 		return timestamp;
 	}
 
@@ -73,11 +79,11 @@ public class PluginObject {
 		return dependency.get(index);
 	}
 
-	public boolean getStatus() {
+	public byte getStatus() {
 		return status;
 	}
 
-	public int getAction() {
+	public byte getAction() {
 		return action;
 	}
 }

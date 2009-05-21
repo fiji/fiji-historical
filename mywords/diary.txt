@@ -199,4 +199,5 @@ To do NEXT:
 
 
 
-21st May...?
+21st May 2009, Thursday
+My progress so far: Able to list out plugins in different categories. Now to wait for further establishment of design requirements...
