@@ -201,3 +201,6 @@ To do NEXT:
 
 21st May 2009, Thursday
 My progress so far: Able to list out plugins in different categories. Now to wait for further establishment of design requirements...
+
+22nd May 2009, Friday
+There seems to be some discrepancy between the results of my Fiji Plugin Manager and the Fiji Updater... To be updated in a while.

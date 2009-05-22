@@ -60,6 +60,8 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 	private DefaultCellEditor installedOptions = new DefaultCellEditor(new JComboBox(arrInstalledOptions));
 	private DefaultCellEditor updateableOptions = new DefaultCellEditor(new JComboBox(arrUpdateableOptions));
 	private RowEditorModel rowEditorModel = null;
+	
+	private String updateURL = "http://pacific.mpi-cbg.de/update/current.txt";
 	//private String ... //current.txt and database.txt address tentatively......
 
 	public PluginManager() {
@@ -69,7 +71,7 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		//Container content = this.getContentPane();
 
 		//initialize the data...
-		controller = new Controller();
+		controller = new Controller(updateURL);
 
 		//if status says there's a list to download...
 		frameDownloader = new DownloadUI(this);
@@ -158,7 +160,11 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		                    }
 		                    TextPaneFormat.insertText(txtPluginDetails, "\n" + strDependencies, TextPaneFormat.BLACK);
 		                    TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
-		                    TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getDescription(), TextPaneFormat.BLACK);
+		                    String strDescription = "";
+		                    if (myPlugin.getDescription() == null || myPlugin.getDescription().trim().equals("")) {
+		                    	strDescription = "None";
+		                    } else strDescription = myPlugin.getDescription();
+		                    TextPaneFormat.insertText(txtPluginDetails, "\n" + strDescription, TextPaneFormat.BLACK);
 		                }
 		            }
 		        }
@@ -235,7 +241,7 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		btnOK.setBounds(610, 490, 110, 30);
 		btnOK.setText("OK");
 		btnOK.setToolTipText("Exit Plugin Manager");
-		btnStart.addActionListener(new ActionListener() {
+		btnOK.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
 				clickToQuitPluginManager();

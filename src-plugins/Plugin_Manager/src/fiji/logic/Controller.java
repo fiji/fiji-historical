@@ -6,14 +6,16 @@ import fiji.data.PluginObject;
 import fiji.data.PluginDataReader;
 
 public class Controller {
-	private List<PluginObject> updatesPluginList = null;
 	private List<PluginObject> pluginList = null;
 	private List downloadNameList = null; //tentatively, array of strings from Downloader
 	private PluginDataReader pluginDataReader = null;
 
-	public Controller() {
+	public Controller(String updateURL) {
+		//Firstly, build a list from local, existing plugins
 		pluginDataReader = new PluginDataReader();
-		updatesPluginList = new ArrayList<PluginObject>();
+		//Get information from server to build on information
+		pluginDataReader.combineUpdatesWithPluginList(updateURL);
+
 		pluginList = new ArrayList<PluginObject>();
 		downloadNameList = new ArrayList();
 
@@ -22,20 +24,12 @@ public class Controller {
 
 	}
 
-	public List<PluginObject> getUpdatesPluginList() {
-		return updatesPluginList;
-	}
-
 	public List<PluginObject> getPluginList() {
 		return pluginList;
 	}
 
 	public List getDownloadNameList() {
 		return downloadNameList;
-	}
-
-	public void generateUpdatesPluginList() {
-		pluginDataReader.generateUpdatesPluginList();
 	}
 }
 
