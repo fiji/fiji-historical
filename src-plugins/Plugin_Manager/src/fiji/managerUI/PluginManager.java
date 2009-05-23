@@ -60,7 +60,7 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 	private DefaultCellEditor installedOptions = new DefaultCellEditor(new JComboBox(arrInstalledOptions));
 	private DefaultCellEditor updateableOptions = new DefaultCellEditor(new JComboBox(arrUpdateableOptions));
 	private RowEditorModel rowEditorModel = null;
-	
+
 	private String updateURL = "http://pacific.mpi-cbg.de/update/current.txt";
 	//private String ... //current.txt and database.txt address tentatively......
 
@@ -74,9 +74,8 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		controller = new Controller(updateURL);
 
 		//if status says there's a list to download...
-		frameDownloader = new DownloadUI(this);
-		//but don't show it yet...
-	
+		frameDownloader = new DownloadUI(this); //but don't show it yet...
+
 		setUpUserInterface();
 
 		//Retrieves the data
@@ -126,50 +125,57 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		table.setColumnSelectionAllowed(false);
 		table.setRowSelectionAllowed(true);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		table.getSelectionModel().addListSelectionListener(
+		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
-		        new ListSelectionListener() {
-		            public void valueChanged(ListSelectionEvent event) {
-		                int viewRow = table.getSelectedRow();
-		                if (viewRow < 0) {
-		                    //Selection got filtered away
-		                } else {
-		                    int modelRow = table.convertRowIndexToModel(viewRow);
-		                    PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
-		                    txtPluginDetails.setText("");
-		                    TextPaneFormat.insertText(txtPluginDetails, "Name: ", TextPaneFormat.BOLD_BLACK);
-		                    TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BLACK);
-		                    TextPaneFormat.insertText(txtPluginDetails, "\n\nMd5 Sum", TextPaneFormat.BOLD_BLACK);
-		                    TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum(), TextPaneFormat.BLACK);
-		                    TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased:", TextPaneFormat.BOLD_BLACK);
-		                    TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp(), TextPaneFormat.BLACK);
-		                    TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
-		                    ArrayList<Dependency> myDependencies = (ArrayList<Dependency>) myPlugin.getDependencies();
-		                    String strDependencies = "";
-		                    if (myDependencies != null) {
-		                    	int noOfDependencies = myDependencies.size();
-		                    	for (int i = 0; i < noOfDependencies; i++) {
-		                    		Dependency dependency = myDependencies.get(i);
-		                    		strDependencies +=  dependency.getFilename() + " (" + dependency.getTimestamp() + ")";
-		                    		if (i != noOfDependencies -1 && noOfDependencies != 1) //if last index
-		                    			strDependencies += ",\n";
-		                    	}
-		                    	if (strDependencies.equals("")) strDependencies = "None";
-		                    } else {
-		                    	strDependencies = "None";
-		                    }
-		                    TextPaneFormat.insertText(txtPluginDetails, "\n" + strDependencies, TextPaneFormat.BLACK);
-		                    TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
-		                    String strDescription = "";
-		                    if (myPlugin.getDescription() == null || myPlugin.getDescription().trim().equals("")) {
-		                    	strDescription = "None";
-		                    } else strDescription = myPlugin.getDescription();
-		                    TextPaneFormat.insertText(txtPluginDetails, "\n" + strDescription, TextPaneFormat.BLACK);
-		                }
-		            }
-		        }
+			public void valueChanged(ListSelectionEvent event) {
+				int viewRow = table.getSelectedRow();
+				if (viewRow < 0) {
+					//Selection got filtered away
+				} else {
+					int modelRow = table.convertRowIndexToModel(viewRow);
+					PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
+					txtPluginDetails.setText("");
+					TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BOLD_BLACK_TITLE);
+					if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE)
+						TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.BOLD_BLACK);
+					TextPaneFormat.insertText(txtPluginDetails, "\n\nMd5 Sum", TextPaneFormat.BOLD_BLACK);
+					TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum(), TextPaneFormat.BLACK);
+					TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
+					TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp(), TextPaneFormat.BLACK);
+					TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
+					ArrayList<Dependency> myDependencies = (ArrayList<Dependency>) myPlugin.getDependencies();
+					String strDependencies = "";
+					if (myDependencies != null) {
+						int noOfDependencies = myDependencies.size();
+						for (int i = 0; i < noOfDependencies; i++) {
+							Dependency dependency = myDependencies.get(i);
+							strDependencies +=  dependency.getFilename() + " (" + dependency.getTimestamp() + ")";
+							if (i != noOfDependencies -1 && noOfDependencies != 1) //if last index
+								strDependencies += ",\n";
+						}
+						if (strDependencies.equals("")) strDependencies = "None";
+					} else {
+						strDependencies = "None";
+					}
+					TextPaneFormat.insertText(txtPluginDetails, "\n" + strDependencies, TextPaneFormat.BLACK);
+					TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
+					String strDescription = "";
+					if (myPlugin.getDescription() == null || myPlugin.getDescription().trim().equals("")) {
+						strDescription = "None";
+					} else
+						strDescription = myPlugin.getDescription();
+					TextPaneFormat.insertText(txtPluginDetails, "\n" + strDescription, TextPaneFormat.BLACK);
+					if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+						TextPaneFormat.insertText(txtPluginDetails, "\n\nUpdate Details", TextPaneFormat.BOLD_BLACK_TITLE);
+						TextPaneFormat.insertText(txtPluginDetails, "\n\nNew Md5 Sum", TextPaneFormat.BOLD_BLACK);
+						TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum(), TextPaneFormat.BLACK);
+						TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
+						TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp(), TextPaneFormat.BLACK);
+					}
+				}
+			}
 
-		);
+		});
 		table.getModel().addTableModelListener(this); //listen for changes (tableChanged(TableModelEvent e))
 
 		//Set appearance of table
@@ -183,19 +189,19 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		TableColumn col1 = table.getColumnModel().getColumn(0);
 		TableColumn col2 = table.getColumnModel().getColumn(1);
 
-		col1.setPreferredWidth(190);
-		col1.setMinWidth(190);
-		col1.setMaxWidth(190);
+		col1.setPreferredWidth(250);
+		col1.setMinWidth(250);
+		col1.setMaxWidth(250);
 		col1.setResizable(false);
-		col2.setPreferredWidth(180);
-		col2.setMinWidth(180);
-		col2.setMaxWidth(180);
+		col2.setPreferredWidth(120);
+		col2.setMinWidth(120);
+		col2.setMaxWidth(120);
 		col2.setResizable(false);
-
-		/* Create scrollpane to hold the table */
-		JScrollPane scrollpane = new JScrollPane(table);
-		scrollpane.getViewport().setBackground(table.getBackground());
-		scrollpane.setBounds(30, 150, 370, 310);
+		
+		/* create the scrollpane that holds the table */
+		JScrollPane pluginListScrollpane = new JScrollPane(table);
+		pluginListScrollpane.getViewport().setBackground(table.getBackground());
+		pluginListScrollpane.setBounds(30, 150, 370, 310);
 
 		/* Label text for plugin summaries */
 		lblPluginSummary = new JLabel();
@@ -254,7 +260,7 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		this.add(txtSearch);
 		this.add(comboBoxViewingOptions);
 		this.add(lblTable);
-		this.add(scrollpane);
+		this.add(pluginListScrollpane);
 		this.add(lblPluginSummary);
 		this.add(tabbedPane);
 		this.add(btnStart);
@@ -277,19 +283,27 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
         	else
         		throw new Error("Error while assigning combo-boxes to data!");
         }
-        //update the table's appearance
-        //pluginModel.fireTableChanged(new TableModelEvent(pluginModel));
 	}
 
 	//Whenever Viewing Options in the ComboBox has been changed
 	private void comboBoxViewListener() {
 		String strOption = (String)comboBoxViewingOptions.getSelectedItem();
+
+		//Remove the old pluginList display
+		table.getModel().removeTableModelListener(this);
+		//Preparing the new pluginList display
+		table.setModel(pluginTableModel = new PluginTableModel());
+		table.getModel().addTableModelListener(this);
+
 		if (strOption.equals(arrViewingOptions[0])) {
+
 			//if "View all plugins"
 			pluginTableModel.update(controller.getPluginList());
 			//When data is ready for display, allow editable ComboBoxes
 			setupPluginComboBoxes();
+
 		} else if (strOption.equals(arrViewingOptions[1])) {
+
 			//if "View installed plugins"
 			List<PluginObject> viewList = new ArrayList<PluginObject>();
 			for (int i = 0; i < controller.getPluginList().size(); i++) {
@@ -302,7 +316,9 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 			pluginTableModel.update(viewList);
 			//When data is ready for display, allow editable ComboBoxes
 			setupPluginComboBoxes();
+
 		} else if (strOption.equals(arrViewingOptions[2])) {
+
 			//if "View uninstalled plugins"
 			List<PluginObject> viewList = new ArrayList<PluginObject>();
 			for (int i = 0; i < controller.getPluginList().size(); i++) {
@@ -314,7 +330,9 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 			pluginTableModel.update(viewList);
 			//When data is ready for display, allow editable ComboBoxes
 			setupPluginComboBoxes();
+
 		} else if (strOption.equals(arrViewingOptions[3])) {
+
 			//if "View up-to-date plugins"
 			List<PluginObject> viewList = new ArrayList<PluginObject>();
 			for (int i = 0; i < controller.getPluginList().size(); i++) {
@@ -326,7 +344,9 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 			pluginTableModel.update(viewList);
 			//When data is ready for display, allow editable ComboBoxes
 			setupPluginComboBoxes();
+
 		} else if (strOption.equals(arrViewingOptions[4])) {
+
 			//if "View update-able plugins"
 			List<PluginObject> viewList = new ArrayList<PluginObject>();
 			for (int i = 0; i < controller.getPluginList().size(); i++) {
@@ -338,6 +358,7 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 			pluginTableModel.update(viewList);
 			//When data is ready for display, allow editable ComboBoxes
 			setupPluginComboBoxes();
+
 		} else {
 			throw new Error("Viewing option specified does not exist!");
 		}

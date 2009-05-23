@@ -202,5 +202,24 @@ To do NEXT:
 21st May 2009, Thursday
 My progress so far: Able to list out plugins in different categories. Now to wait for further establishment of design requirements...
 
+
+
 22nd May 2009, Friday
 There seems to be some discrepancy between the results of my Fiji Plugin Manager and the Fiji Updater... To be updated in a while.
+
+
+
+23rd May 2009, Saturday
+-Bug fix of pluginTableModel
+-Now able to display same output as that of old Fiji Updater
+-Text format change
+
+Something unnerving...
+When processing plugin file data:
+When digest is null compared to remoteDigest, it means local plugin does not exist ==> Install
+When date is null, it means local plugin should be updated? Why? How is it even null in the first place (When corresponding digest is NOT null)?
+And we are using almost exactly the same code as Fiji Updater here.
+
+I need a break...
+
+Anyway... Official coding starts on Monday! (23rd May actually)

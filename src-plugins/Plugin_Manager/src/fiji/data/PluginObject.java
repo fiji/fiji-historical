@@ -4,9 +4,9 @@ import java.util.List;
 public class PluginObject {
 	private String strFilename = null; //Identifier
 	private String md5Sum = null; //Used for comparison: Determine if update needed
-	private long timestamp = 0; //Version of plugin file ("Co-Identifier")
+	private String timestamp = ""; //Version of plugin file ("Co-Identifier")
 	private String newMd5Sum = null; //if any
-	private long newTimestamp = 0; //if any
+	private String newTimestamp = ""; //if any
 	private String directory = null; //Where should the plugin file (Loaded) be located
 	private String description = null;
 	public static final byte STATUS_UNINSTALLED = 0; //Meaning current status is not installed
@@ -19,15 +19,13 @@ public class PluginObject {
 	private byte action = ACTION_NONE; //default
 	private List<Dependency> dependency = null; //Dependency object: filename and timestamp
 
-	public PluginObject(String strFilename, String md5Sum, long timestamp) {
+	public PluginObject(String strFilename, String md5Sum, String timestamp) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
 		this.timestamp = timestamp;
-		this.newMd5Sum = null;
-		this.newTimestamp = 0;
 	}
 
-	public PluginObject(String strFilename, String md5Sum, long timestamp, String description, List<Dependency> dependency, byte status, byte action) {
+	public PluginObject(String strFilename, String md5Sum, String timestamp, String description, List<Dependency> dependency, byte status, byte action) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
 		this.timestamp = timestamp;
@@ -35,11 +33,9 @@ public class PluginObject {
 		this.dependency = dependency;
 		this.status = status;
 		this.action = action;
-		newMd5Sum = null;
-		newTimestamp = 0;
 	}
 
-	public void setToUpdateable(String newMd5Sum, long newTimestamp) {
+	public void setToUpdateable(String newMd5Sum, String newTimestamp) {
 		setStatus(PluginObject.STATUS_MAY_UPDATE); //set status, if not done so already
 		this.newMd5Sum = newMd5Sum;
 		this.newTimestamp = newTimestamp;
@@ -68,9 +64,17 @@ public class PluginObject {
 	public String getmd5Sum() {
 		return md5Sum;
 	}
+	
+	public String getNewMd5Sum() {
+		return newMd5Sum;
+	}
 
-	public long getTimestamp() {
+	public String getTimestamp() {
 		return timestamp;
+	}
+	
+	public String getNewTimestamp() {
+		return newTimestamp;
 	}
 
 	public String getDirectory() {

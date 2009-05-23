@@ -1,13 +1,14 @@
 package fiji.data;
-import fiji.logic.Downloader;
 import ij.IJ;
 import ij.Menus;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
 import java.net.URL;
@@ -38,6 +39,8 @@ public class PluginDataReader {
 	private List downloadNameList = null; //tentatively, array of strings from Downloader
 	private List<PluginObject> pluginList = null;
 
+	private Map<String, String> digests = null;
+	private Map<String, String> dates = null;
 	private Map<String, String> latestDates = null;
 	private Map<String, String> latestDigests = null;
 	private String fijiPath;
@@ -51,22 +54,16 @@ public class PluginDataReader {
 		if (tempDemo) {
 
 		pluginList = new ArrayList<PluginObject>();
+		dates = new TreeMap<String, String>();
+		digests = new TreeMap<String, String>();
 		latestDates = new TreeMap<String, String>();
 		latestDigests = new TreeMap<String, String>();
 		hasGUI = true;
-
-		//currentDate = timestamp(Calendar.getInstance());
 		
 		String path = stripSuffix(stripSuffix(Menus.getPlugInsPath(),
-				File.separator), "plugins");
+				File.separator),
+				"plugins");
 		initialize(path);
-
-		/*String url = gd.getNextString();
-		try {
-			update(new URL(url));
-		} catch (MalformedURLException e) {
-			IJ.write("Invalid URL: " + url);
-		}*/
 
 		} else {
 
@@ -86,33 +83,33 @@ public class PluginDataReader {
 		// timestamp info in the case of update)
 
 		//retrieve information of installed plugins...
-		PluginObject pluginA = new PluginObject("PluginA.jar", "65c3ecc1bbd7564f92545ffd2521f9d96509ca64", Long.parseLong("20090429190842"), "This is a description of Plugin A", null, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+		PluginObject pluginA = new PluginObject("PluginA.jar", "65c3ecc1bbd7564f92545ffd2521f9d96509ca64", "20090429190842", "This is a description of Plugin A", null, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
 		Dependency dependencyB1 = new Dependency("PluginA.jar", Long.parseLong("20090429190842"));
 		ArrayList<Dependency> Bdependency = new ArrayList<Dependency>();
 		Bdependency.add(dependencyB1);
-		PluginObject pluginB = new PluginObject("PluginB.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", Long.parseLong("20090429190854"), "This is a description of Plugin B", Bdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+		PluginObject pluginB = new PluginObject("PluginB.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20090429190854", "This is a description of Plugin B", Bdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
 		Dependency dependencyC2 = new Dependency("PluginA.jar", Long.parseLong("20090429190842"));
 		Dependency dependencyC3 = new Dependency("PluginB.jar", Long.parseLong("20090429190854"));
 		ArrayList<Dependency> Cdependency = new ArrayList<Dependency>();
 		Cdependency.add(dependencyC2);
 		Cdependency.add(dependencyC3);
-		PluginObject pluginC = new PluginObject("PluginC.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d", Long.parseLong("20090429190854"), "This is a description of Plugin C", Cdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+		PluginObject pluginC = new PluginObject("PluginC.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d", "20090429190854", "This is a description of Plugin C", Cdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
-		PluginObject pluginD = new PluginObject("PluginD.jar", "61c3ecc1add7364f92545ffd2521e9d96508cb62", Long.parseLong("20090429190842"), "This is a description of Plugin D", null, PluginObject.STATUS_INSTALLED, PluginObject.ACTION_NONE);
+		PluginObject pluginD = new PluginObject("PluginD.jar", "61c3ecc1add7364f92545ffd2521e9d96508cb62", "20090429190842", "This is a description of Plugin D", null, PluginObject.STATUS_INSTALLED, PluginObject.ACTION_NONE);
 
 		Dependency dependencyE4 = new Dependency("PluginA.jar", Long.parseLong("20090429190842"));
 		ArrayList<Dependency> Edependency = new ArrayList<Dependency>();
 		Edependency.add(dependencyE4);
-		PluginObject pluginE = new PluginObject("PluginE.jar", "8114fe93cbf7720c01c7ff97c28b007b79900dc7", Long.parseLong("20090501190854"), "This is a description of Plugin E", Edependency, PluginObject.STATUS_MAY_UPDATE, PluginObject.ACTION_NONE);
+		PluginObject pluginE = new PluginObject("PluginE.jar", "8114fe93cbf7720c01c7ff97c28b007b79900dc7", "20090501190854", "This is a description of Plugin E", Edependency, PluginObject.STATUS_MAY_UPDATE, PluginObject.ACTION_NONE);
 
 		Dependency dependencyF5 = new Dependency("PluginE.jar",Long.parseLong("20090501190854"));
 		Dependency dependencyF6 = new Dependency("PluginB.jar",Long.parseLong("20090429190854"));
 		ArrayList<Dependency> Fdependency = new ArrayList<Dependency>();
 		Fdependency.add(dependencyF5);
 		Fdependency.add(dependencyF6);
-		PluginObject pluginF = new PluginObject("PluginF.jar", "1b992dbca07ef84020d44a980c7902ba6c82dfee", Long.parseLong("20090509190854"), "This is a description of Plugin F", Fdependency, PluginObject.STATUS_MAY_UPDATE, PluginObject.ACTION_NONE);
+		PluginObject pluginF = new PluginObject("PluginF.jar", "1b992dbca07ef84020d44a980c7902ba6c82dfee", "20090509190854", "This is a description of Plugin F", Fdependency, PluginObject.STATUS_MAY_UPDATE, PluginObject.ACTION_NONE);
 
 		pluginList.add(pluginA);
 		pluginList.add(pluginB);
@@ -211,13 +208,10 @@ public class PluginDataReader {
 			long modified = new File(fullPath).lastModified();
 			if (useMacPrefix && path.startsWith(macPrefix))
 				path = path.substring(macPrefix.length());
-			//dates.put(path, timestamp(modified));
+			dates.put(path, timestamp(modified));
 			if (File.separator.equals("\\"))
 				path = path.replace("\\", "/");
-			//digests.put(path, digest);
-			PluginObject myPlugin = new PluginObject(path, digest, Long.parseLong(timestamp(modified)));
-			myPlugin.setStatus(PluginObject.STATUS_INSTALLED);
-			pluginList.add(myPlugin);
+			digests.put(path, digest);
 		} catch (Exception e) {
 			if (e instanceof FileNotFoundException &&
 					path.startsWith("fiji-"))
@@ -342,10 +336,11 @@ public class PluginDataReader {
 		return pluginList;
 	}
 
-	private void fetchUpdateInformation(String textFileURL) throws IOException {
-		Downloader reader = new Downloader(textFileURL);
-		String line = null;
-		while ((line = reader.getNextLineFromTextFile()) != null) {
+	public void initializeFromList(InputStream input) throws IOException {
+		BufferedReader in =
+			new BufferedReader(new InputStreamReader(input));
+		String line;
+		while ((line = in.readLine()) != null) {
 			int space = line.indexOf(' ');
 			if (space < 0)
 				continue;
@@ -358,13 +353,15 @@ public class PluginDataReader {
 			latestDates.put(path, date);
 			latestDigests.put(path, digest);
 		}
-		
+		in.close();
 	}
 
-	/* Called after PluginList is built from local plugin files */
-	public void combineUpdatesWithPluginList(String strURL) {
+	/* Called after local plugin files have been processed */
+	public void buildFullPluginList(URL listFile) {
+	//public void combineUpdatesWithPluginList(String strURL) {
 		try {
-			fetchUpdateInformation(strURL);
+			initializeFromList(listFile.openStream());
+			//fetchUpdateInformation(strURL);
 		} catch (FileNotFoundException e) {
 			IJ.showMessage("No updates found");
 			return; /* nothing to do, please move along */
@@ -373,49 +370,11 @@ public class PluginDataReader {
 			return;
 		}
 
-		for (int i = 0; i < pluginList.size(); i++) {
-			PluginObject myPlugin = pluginList.get(i);
-			String myPluginName = myPlugin.getFilename();
-			String myPluginMd5Sum = myPlugin.getmd5Sum();
-			long myPluginTimestamp = myPlugin.getTimestamp();
+		Iterator<String> iterLatest = latestDigests.keySet().iterator();
+		while (iterLatest.hasNext()) {
+			String name = iterLatest.next();
 
-			//if current plugin is a Fiji plugin
-			if (latestDigests.containsKey(myPluginName)) {
-				/* launcher is platform-specific */
-				if (myPluginName.startsWith("fiji-")) {
-					String platform = getPlatform();
-					if (!myPluginName.equals("fiji-" + platform) &&
-						(!platform.equals("macosx") ||
-						 !myPluginName.startsWith("fiji-tiger")))
-						continue;
-				}
-
-				//Remove digests, dates checked for, remaining ones indicate NEW plugins
-				String latestMd5Sum = latestDigests.remove(myPluginName);
-				long latestTimestamp = Long.parseLong(latestDates.remove(myPluginName));
-
-				//if same md5 sums
-				if (myPluginMd5Sum != null && latestMd5Sum.equals(myPluginMd5Sum))
-					continue;
-
-				//if different md5 sums (implies need for update), but local date is newer
-				if (latestTimestamp < myPluginTimestamp)
-					continue; //Assume local modification, need not update
-
-				//since different md5 sums and is local date is older
-				myPlugin.setToUpdateable(latestMd5Sum, latestTimestamp);
-				myPlugin.setStatus(PluginObject.STATUS_MAY_UPDATE);
-			} else {
-				//latest digests do not have file ==> Not considered Fiji plugin
-				//do nothing...
-			}
-		}
-
-		//As for the remaining updated-plugin information ==> Uninstalled Plugins
-		Iterator<String> iter = latestDigests.keySet().iterator();
-		while (iter.hasNext()) {
-			String name = (String)iter.next();
-			/* launcher is platform-specific */
+			// launcher is platform-specific
 			if (name.startsWith("fiji-")) {
 				String platform = getPlatform();
 				if (!name.equals("fiji-" + platform) &&
@@ -423,12 +382,55 @@ public class PluginDataReader {
 						!name.startsWith("fiji-tiger")))
 					continue;
 			}
-			String md5Sum = latestDigests.get(name);
-			long timestamp = Long.parseLong(latestDates.get(name));
 
-			PluginObject newPlugin = new PluginObject(name, md5Sum, timestamp);
-			newPlugin.setStatus(PluginObject.STATUS_UNINSTALLED);
-			pluginList.add(newPlugin);
+			String digest = digests.get(name);
+			String remoteDigest = latestDigests.get(name);
+			String date = (String)dates.get(name);
+			String remoteDate = latestDates.get(name);
+			PluginObject myPlugin = null;
+
+			if (digest != null && remoteDigest.equals(digest)) {
+				myPlugin = new PluginObject(name, digest, date);
+				myPlugin.setStatus(PluginObject.STATUS_INSTALLED);
+				pluginList.add(myPlugin);
+				continue;
+			}
+			if (date != null && date.compareTo(remoteDate) > 0) {
+				myPlugin = new PluginObject(name, digest, date);
+				myPlugin.setStatus(PluginObject.STATUS_INSTALLED);
+				pluginList.add(myPlugin);
+				continue; // local modification
+			}
+			//if new file
+			if (digest == null) {
+				myPlugin = new PluginObject(name, remoteDigest, remoteDate);
+				myPlugin.setStatus(PluginObject.STATUS_UNINSTALLED);
+				pluginList.add(myPlugin);
+			} else if (date == null) { //if its to be updated
+				//Why is the date null? I don't understand this.
+				//This gives exactly the same output as that of Fiji Updater though
+				//So if Fiji Updater has a problem, the same problem is here too.
+				myPlugin = new PluginObject(name, digest, remoteDate);
+				myPlugin.setToUpdateable(remoteDigest, remoteDate);
+				myPlugin.setStatus(PluginObject.STATUS_MAY_UPDATE);
+				pluginList.add(myPlugin);
+			}
+		}
+
+		Iterator<String> iterCurrent = digests.keySet().iterator();
+		while (iterCurrent.hasNext()) {
+			String name = iterCurrent.next();
+
+			// if it is not a Fiji plugin (Not found in list of up-to-date versions)
+			if (!latestDigests.containsKey(name)) {
+				String digest = digests.get(name);
+				String date = dates.get(name);
+				//implies third-party plugin
+				PluginObject myPlugin = new PluginObject(name, digest, date);
+				myPlugin.setStatus(PluginObject.STATUS_INSTALLED);
+				//add it anyway?
+				pluginList.add(myPlugin);
+			}
 		}
 
 		/*

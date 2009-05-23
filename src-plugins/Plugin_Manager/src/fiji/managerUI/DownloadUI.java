@@ -83,6 +83,7 @@ class DownloadUI extends JFrame {
 		progressBar.setValue(0);
 		isDownloading = true;
 	}
+
 	public void showDownloadEnded() {
 		btnCancel.setText(strCloseWhenFinished);
 		btnCancel.setToolTipText(toolTipWhenFinished);
@@ -90,5 +91,14 @@ class DownloadUI extends JFrame {
 		progressBar.setValue(100);
 		isDownloading = false;
 	}
-	
+
+	public void setPercentageComplete(int percent) {
+		progressBar.setString(percent + "%");
+		progressBar.setValue(percent);
+	}
+
+	public void insertText(String text) {
+		txtDownloadDetails.setText(txtDownloadDetails.getText() + text);
+	}
+
 }

@@ -1,4 +1,6 @@
 package fiji.logic;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +16,11 @@ public class Controller {
 		//Firstly, build a list from local, existing plugins
 		pluginDataReader = new PluginDataReader();
 		//Get information from server to build on information
-		pluginDataReader.combineUpdatesWithPluginList(updateURL);
+		try {
+			pluginDataReader.buildFullPluginList(new URL(updateURL));
+		} catch (MalformedURLException e) {
+			throw new Error(updateURL + " specifies an unknown protocol.");
+		}
 
 		pluginList = new ArrayList<PluginObject>();
 		downloadNameList = new ArrayList();

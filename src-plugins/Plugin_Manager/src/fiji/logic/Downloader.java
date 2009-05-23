@@ -20,36 +20,6 @@ public class Downloader {
 		this.downloadAddresses = downloadAddresses;
 	}
 
-	public Downloader(String strTextFileURL) {
-		URL textFileURL = null;
-
-		try {
-			textFileURL = new URL(strTextFileURL);
-		} catch (MalformedURLException e) {
-			throw new Error("URL " + strTextFileURL + " contains unknown protocol.");
-		}
-
-		try {
-			textFileReader = new BufferedReader(new InputStreamReader(textFileURL.openStream()));
-		} catch (FileNotFoundException e) {
-			throw new Error("No updates found.");
-		} catch (Exception e) {
-			throw new Error("An error occurred while trying to fetch text file " + strTextFileURL);
-		}
-	}
-
-	public String getNextLineFromTextFile() throws IOException {
-		if (textFileReader == null) throw new Error("Null BufferedReader object");
-		else {
-			return textFileReader.readLine();
-		}
-	}
-
-	public void close() throws IOException {
-		if (textFileReader == null) throw new Error("Null BufferedReader object");
-		else textFileReader.close();
-	}
-
 }
 
 //This class downloads a file from a URL.

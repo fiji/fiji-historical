@@ -11,6 +11,7 @@ public class TextPaneFormat {
 	public static SimpleAttributeSet ITALIC_GRAY = new SimpleAttributeSet();
 	public static SimpleAttributeSet BOLD_BLACK = new SimpleAttributeSet();
 	public static SimpleAttributeSet BLACK = new SimpleAttributeSet();
+	public static SimpleAttributeSet BOLD_BLACK_TITLE = new SimpleAttributeSet();
 
 	static {
 		StyleConstants.setForeground(ITALIC_GRAY, Color.gray);
@@ -26,6 +27,11 @@ public class TextPaneFormat {
 		StyleConstants.setForeground(BLACK, Color.black);
 		StyleConstants.setFontFamily(BLACK, "Verdana");
 		StyleConstants.setFontSize(BLACK, 12);
+
+		StyleConstants.setForeground(BOLD_BLACK_TITLE, Color.black);
+		//StyleConstants.setBold(BOLD_BLACK_TITLE, true);
+		StyleConstants.setFontFamily(BOLD_BLACK_TITLE, "Impact");
+		StyleConstants.setFontSize(BOLD_BLACK_TITLE, 18);
 	}
 
 	public static void insertText(JTextPane textPane, String text, AttributeSet set) {
