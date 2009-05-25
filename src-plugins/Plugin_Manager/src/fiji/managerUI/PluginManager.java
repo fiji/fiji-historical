@@ -1,7 +1,10 @@
 package fiji.managerUI;
 import ij.plugin.frame.PlugInFrame;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
@@ -121,7 +125,8 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		lblTable.setAlignmentY(LEFT_ALIGNMENT);
 
 		/* Create the plugin table */
-		table = new JTableX(pluginTableModel = new PluginTableModel());
+		table = new JTableX();
+		setupTableModel(); //set pluginTableModel and table column widths
 		table.setColumnSelectionAllowed(false);
 		table.setRowSelectionAllowed(true);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -176,7 +181,6 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 			}
 
 		});
-		table.getModel().addTableModelListener(this); //listen for changes (tableChanged(TableModelEvent e))
 
 		//Set appearance of table
 		table.setShowGrid(false);
@@ -185,18 +189,29 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		table.setPreferredScrollableViewportSize(new Dimension(370,310));
 		table.setBounds(0, 0, 370, 310);
 		table.setRequestFocusEnabled(false);
+		table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
 
-		TableColumn col1 = table.getColumnModel().getColumn(0);
-		TableColumn col2 = table.getColumnModel().getColumn(1);
+			// method to over-ride - returns cell renderer component
+			public Component getTableCellRendererComponent(JTable table, Object value, 
+					boolean isSelected, boolean hasFocus, int row, int column) {
 
-		col1.setPreferredWidth(250);
-		col1.setMinWidth(250);
-		col1.setMaxWidth(250);
-		col1.setResizable(false);
-		col2.setPreferredWidth(120);
-		col2.setMinWidth(120);
-		col2.setMaxWidth(120);
-		col2.setResizable(false);
+				// let the default renderer prepare the component for us
+				Component comp = super.getTableCellRendererComponent(table, value,
+						isSelected, hasFocus, row, column);
+				int modelRow = table.convertRowIndexToModel(row);
+				PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
+
+				if (myPlugin.getAction() == PluginObject.ACTION_NONE) {
+					//if there is no action
+					comp.setFont(comp.getFont().deriveFont(Font.PLAIN));
+				} else {
+					//if an action is specified by user, bold the field
+					comp.setFont(comp.getFont().deriveFont(Font.BOLD));
+				}
+
+				return comp;
+			}
+		});
 		
 		/* create the scrollpane that holds the table */
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
@@ -267,6 +282,22 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		this.add(btnOK);
 	}
 
+	//Set up the table model
+	private void setupTableModel() {
+		table.setModel(pluginTableModel = new PluginTableModel());
+		table.getModel().addTableModelListener(this); //listen for changes (tableChanged(TableModelEvent e))
+		TableColumn col1 = table.getColumnModel().getColumn(0);
+		TableColumn col2 = table.getColumnModel().getColumn(1);
+
+		col1.setPreferredWidth(250);
+		col1.setMinWidth(250);
+		col1.setMaxWidth(250);
+		col1.setResizable(false);
+		col2.setPreferredWidth(120);
+		col2.setMinWidth(120);
+		col2.setMaxWidth(120);
+		col2.setResizable(false);
+	}
 	//Assuming user interface setup, with all relevant plugin data already in table...
 	private void setupPluginComboBoxes() {
     	rowEditorModel = new RowEditorModel();
@@ -292,8 +323,7 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		//Remove the old pluginList display
 		table.getModel().removeTableModelListener(this);
 		//Preparing the new pluginList display
-		table.setModel(pluginTableModel = new PluginTableModel());
-		table.getModel().addTableModelListener(this);
+		setupTableModel();
 
 		if (strOption.equals(arrViewingOptions[0])) {
 
@@ -363,6 +393,7 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 			throw new Error("Viewing option specified does not exist!");
 		}
 	}
+
 	private void clickToBeginOperations() {
 		//in later implementations, this should liase with Controller
 		//e.g: controller.isReadyToBegin()... Controller checks pluginList...
@@ -486,10 +517,7 @@ class PluginTableModel extends AbstractTableModel {
 		switch (columnIndex)
 		{
 			case 0:
-				if (entry.getAction() != PluginObject.ACTION_NONE)
-					return entry.getFilename() + " *"; //"*" indicates action needed
-				else
-					return entry.getFilename();
+				return entry.getFilename();
 			case 1:
 				byte currentStatus = entry.getStatus();
 				byte actionToTake = entry.getAction();
