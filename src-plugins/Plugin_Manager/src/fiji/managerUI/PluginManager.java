@@ -398,9 +398,11 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		//in later implementations, this should liase with Controller
 		//e.g: controller.isReadyToBegin()... Controller checks pluginList...
 		frameDownloader.setVisible(true);
+		//frameDownloader.showDownload
+		controller.startInstaller();
 		this.setEnabled(false);
 	}
-	
+
 	private void clickToQuitPluginManager() {
 		//in later implementations, this should have some notifications
 		this.dispose();

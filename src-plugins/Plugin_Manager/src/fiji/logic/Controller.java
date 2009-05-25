@@ -8,12 +8,15 @@ import fiji.data.PluginObject;
 import fiji.data.PluginDataReader;
 
 public class Controller {
+	private String updateURL = null;
 	private List<PluginObject> pluginList = null;
-	private List downloadNameList = null; //tentatively, array of strings from Downloader
 	private PluginDataReader pluginDataReader = null;
+	private Installer installer = null;
 
 	public Controller(String updateURL) {
-		//Firstly, build a list from local, existing plugins
+		this.updateURL = updateURL;
+
+		//Firstly, get information from local, existing plugins
 		pluginDataReader = new PluginDataReader();
 		//Get information from server to build on information
 		try {
@@ -23,7 +26,6 @@ public class Controller {
 		}
 
 		pluginList = new ArrayList<PluginObject>();
-		downloadNameList = new ArrayList();
 
 		//this is where we extract the data...
 		pluginList = pluginDataReader.getExistingPluginList();
@@ -34,8 +36,16 @@ public class Controller {
 		return pluginList;
 	}
 
-	public List getDownloadNameList() {
-		return downloadNameList;
+	public void startInstaller() {
+		List<PluginObject> selectedList = new ArrayList<PluginObject>();
+		for (int i = 0; i < pluginList.size(); i++) {
+			PluginObject myPlugin = pluginList.get(i);
+			if (myPlugin.getAction() != PluginObject.ACTION_NONE)
+				selectedList.add(myPlugin);
+		}
+		installer = new Installer(selectedList, updateURL);
+		installer.startDelete();
+		installer.startDownload();
 	}
 }
 
