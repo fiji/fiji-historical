@@ -208,10 +208,10 @@ public class PluginDataReader {
 			long modified = new File(fullPath).lastModified();
 			if (useMacPrefix && path.startsWith(macPrefix))
 				path = path.substring(macPrefix.length());
-			dates.put(path, timestamp(modified));
 			if (File.separator.equals("\\"))
 				path = path.replace("\\", "/");
 			digests.put(path, digest);
+			dates.put(path, timestamp(modified));
 		} catch (Exception e) {
 			if (e instanceof FileNotFoundException &&
 					path.startsWith("fiji-"))
@@ -385,9 +385,11 @@ public class PluginDataReader {
 
 			String digest = digests.get(name);
 			String remoteDigest = latestDigests.get(name);
-			String date = (String)dates.get(name);
+			String date = dates.get(name);
 			String remoteDate = latestDates.get(name);
 			PluginObject myPlugin = null;
+
+			System.out.println(name + ", digest: " + digest + ", timestamp: " + date);
 
 			if (digest != null && remoteDigest.equals(digest)) {
 				myPlugin = new PluginObject(name, digest, date);
@@ -395,22 +397,19 @@ public class PluginDataReader {
 				pluginList.add(myPlugin);
 				continue;
 			}
-			if (date != null && date.compareTo(remoteDate) > 0) {
+			/*if (date != null && date.compareTo(remoteDate) > 0) {
 				myPlugin = new PluginObject(name, digest, date);
 				myPlugin.setStatus(PluginObject.STATUS_INSTALLED);
 				pluginList.add(myPlugin);
 				continue; // local modification
-			}
+			}*/
 			//if new file
 			if (digest == null) {
 				myPlugin = new PluginObject(name, remoteDigest, remoteDate);
 				myPlugin.setStatus(PluginObject.STATUS_UNINSTALLED);
 				pluginList.add(myPlugin);
-			} else if (date == null) { //if its to be updated
-				//Why is the date null? I don't understand this.
-				//This gives exactly the same output as that of Fiji Updater though
-				//So if Fiji Updater has a problem, the same problem is here too.
-				myPlugin = new PluginObject(name, digest, remoteDate);
+			} else { //if its to be updated
+				myPlugin = new PluginObject(name, digest, date);
 				myPlugin.setToUpdateable(remoteDigest, remoteDate);
 				myPlugin.setStatus(PluginObject.STATUS_MAY_UPDATE);
 				pluginList.add(myPlugin);

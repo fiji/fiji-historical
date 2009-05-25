@@ -168,9 +168,9 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 					if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
 						TextPaneFormat.insertText(txtPluginDetails, "\n\nUpdate Details", TextPaneFormat.BOLD_BLACK_TITLE);
 						TextPaneFormat.insertText(txtPluginDetails, "\n\nNew Md5 Sum", TextPaneFormat.BOLD_BLACK);
-						TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum(), TextPaneFormat.BLACK);
+						TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getNewMd5Sum(), TextPaneFormat.BLACK);
 						TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
-						TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp(), TextPaneFormat.BLACK);
+						TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getNewTimestamp(), TextPaneFormat.BLACK);
 					}
 				}
 			}
