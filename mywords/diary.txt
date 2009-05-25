@@ -223,3 +223,37 @@ And we are using almost exactly the same code as Fiji Updater here.
 I need a break...
 
 Anyway... Official coding starts on Monday! (23rd May actually)
+
+
+
+25th May, Monday
+
+1) Fiji Updater Bug discovered. Null date value is due to wrong input of path key value when creating the Dates map object.
+2) Implemented TableCellRenderer - You are now able to change format of text in a table
+3) Implementation of adding (i.e: Downloading) of plugins is complete.
+
+Fiji Updater intended algorithm is:
+
+For each plugin file:
+-Same digest ==> Don't consider for update
+-Newer date on local than on server ==> Don't consider for update (?!)
+-Local digest is null when using server side's filename ==> Uninstalled
+-Otherwise it is an existing local plugin requiring update
+
+REMINDER: Looks quite standalone in its problem. But remember to go back and understand the conceptual model of the Fiji Updater...
+
+Removal/Uninstallation of Plugins to be considered later on.
+
+What's planned:
+First task: Implement progressbar-style window for plugin downloads.
+Second task: Refactoring - Bring out a new utility class from PluginDataReader
+Third task: Re-enable mock database again - Plugin Dependencies to work on (IOW actual downloading is disabled here)
+
+Above tasks hopefully should take less than 10 working days.
+
+Other tasks not in line yet
+-Fiji Updater conceptual model... What should it exactly do?!
+-Non-core features like e.g: 3rd party support, CLASS support
+-Removal/Uninstallation of plugins
+-Gathering of plugin information (Description and dependencies)
+-Construction of Database (Wait till we have a clue what information goes in there)
