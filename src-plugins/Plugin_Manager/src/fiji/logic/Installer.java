@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.io.BufferedReader;
@@ -42,14 +43,20 @@ public class Installer {
 	protected boolean useMacPrefix = false;
 
 	private List<String> deletionList = null; //tentatively, filenames are only needed?
-	private List<PluginObject> updateList = null;
+
+	//Keeping track of status
+	private List<PluginObject> downloadedList = null;
+	private List<PluginObject> waitingList = null;
+	private PluginObject currentlyDownloading = null;
+	private long totalBytes = 0;
+	private long downloadedBytes = 0;
 
 	//Assume the list passed to constructor is a list of only plugins that wanted change
 	public Installer(List<PluginObject> selectedList, String updateURL) {
 		this.updateURL = updateURL;
 		fijiPath = getDefaultFijiPath();
 		deletionList = new ArrayList<String>();
-		updateList = new ArrayList<PluginObject>();
+		waitingList = new ArrayList<PluginObject>();
 
 		//divide into two groups
 		for (int i = 0; i < selectedList.size(); i++) {
@@ -62,9 +69,10 @@ public class Installer {
 			} else {
 				//if not, it means to update/install
 				//In technical implementation, updating and installing are the same
-				updateList.add(myPlugin);
+				waitingList.add(myPlugin);
 			}
 		}
+		downloadedList = new ArrayList<PluginObject>();
 	}
 
 	public String getDefaultFijiPath() {
@@ -213,10 +221,33 @@ public class Installer {
 		}
 	}
 
+
+	public long getBytesDownloaded() {
+		return downloadedBytes;
+	}
+
+	public long getBytesTotal() {
+		return totalBytes;
+	}
+
+	public List<PluginObject> getListOfDownloaded() {
+		return downloadedList;
+	}
+
+	public List<PluginObject> getListOfWaiting() {
+		return waitingList;
+	}
+
+	public PluginObject getCurrentDownload() {
+		return currentlyDownloading;
+	}
+
 	//start processing on contents of updateList
 	public void startDownload() {
-		for (int i = 0; i < updateList.size(); i++) {
-			PluginObject myPlugin = updateList.get(i);
+		Iterator<PluginObject> iterWaiting = waitingList.listIterator();
+		while (iterWaiting.hasNext()) {
+		//for (int i = 0; i < waitingList.size(); i++) {
+			PluginObject myPlugin = iterWaiting.next();
 			String name = myPlugin.getFilename();
 			String digest = null;
 			String date = null;
@@ -229,7 +260,8 @@ public class Installer {
 			}
 
 			//if (hasGUI) //we assume true for now okay?
-			IJ.showStatus("Updating " + name);
+			//IJ.showStatus("Updating " + name);
+
 			String fullPath = prefix(updateDirectory +
 					File.separator + name);
 			try {
@@ -242,10 +274,8 @@ public class Installer {
 				//String digest = (String)remote.digests.get(name);
 				String realDigest = getDigest(name, fullPath);
 				if (!realDigest.equals(digest))
-					throw new Exception("wrong checksum: "
-							+ digest + " != " + realDigest);
-				if (name.startsWith("fiji-") && !getPlatform()
-						.startsWith("win"))
+					throw new Exception("wrong checksum: " + digest + " != " + realDigest);
+				if (name.startsWith("fiji-") && !getPlatform().startsWith("win"))
 					Runtime.getRuntime().exec(new String[] {
 							"chmod", "0755", fullPath});
 				//updated++;
@@ -259,7 +289,7 @@ public class Installer {
 				//errors++;
 			}
 			//if (hasGUI)
-			IJ.showProgress(i + 1, updateList.size());
+			//IJ.showProgress(i + 1, waitingList.size());
 		}
 		IJ.showStatus(""); //done
 	}

@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.CellEditor;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
@@ -28,6 +29,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
@@ -60,9 +62,9 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 	static String[] arrUninstalledOptions = { "Not installed", "Install it" };
 	static String[] arrInstalledOptions = { "Installed", "Remove it" };
 	static String[] arrUpdateableOptions = { "Installed", "Remove it", "Update it" };
-	private DefaultCellEditor uninstalledOptions = new DefaultCellEditor(new JComboBox(arrUninstalledOptions));
-	private DefaultCellEditor installedOptions = new DefaultCellEditor(new JComboBox(arrInstalledOptions));
-	private DefaultCellEditor updateableOptions = new DefaultCellEditor(new JComboBox(arrUpdateableOptions));
+	private TableCellEditor uninstalledOptions = new DefaultCellEditor(new JComboBox(arrUninstalledOptions));
+	private TableCellEditor installedOptions = new DefaultCellEditor(new JComboBox(arrInstalledOptions));
+	private TableCellEditor updateableOptions = new DefaultCellEditor(new JComboBox(arrUpdateableOptions));
 	private RowEditorModel rowEditorModel = null;
 
 	private String updateURL = "http://pacific.mpi-cbg.de/update/current.txt";
@@ -71,14 +73,12 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 	public PluginManager() {
 		super("Plugin Manager");
 		this.setSize(750,540);
+		//this.setLayout(this.)
 		this.setLayout(null);
 		//Container content = this.getContentPane();
 
 		//initialize the data...
 		controller = new Controller(updateURL);
-
-		//if status says there's a list to download...
-		frameDownloader = new DownloadUI(this); //but don't show it yet...
 
 		setUpUserInterface();
 
@@ -227,7 +227,6 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		/* Create textpane to hold the information */
 		txtPluginDetails = new JTextPane();
 		txtPluginDetails.setEditable(false);
-		txtPluginDetails.setText("");
 		txtPluginDetails.setBounds(0, 0, 290, 275);
 
 		/* Create scrollpane to hold the textpane */
@@ -298,6 +297,7 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		col2.setMaxWidth(120);
 		col2.setResizable(false);
 	}
+
 	//Assuming user interface setup, with all relevant plugin data already in table...
 	private void setupPluginComboBoxes() {
     	rowEditorModel = new RowEditorModel();
@@ -318,24 +318,22 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 
 	//Whenever Viewing Options in the ComboBox has been changed
 	private void comboBoxViewListener() {
-		String strOption = (String)comboBoxViewingOptions.getSelectedItem();
-
 		//Remove the old pluginList display
 		table.getModel().removeTableModelListener(this);
 		//Preparing the new pluginList display
 		setupTableModel();
 
-		if (strOption.equals(arrViewingOptions[0])) {
+		List<PluginObject> viewList = new ArrayList<PluginObject>();
+		int selectedIndex = comboBoxViewingOptions.getSelectedIndex();
+
+		if (selectedIndex == 0) {
 
 			//if "View all plugins"
-			pluginTableModel.update(controller.getPluginList());
-			//When data is ready for display, allow editable ComboBoxes
-			setupPluginComboBoxes();
+			viewList = controller.getPluginList();
 
-		} else if (strOption.equals(arrViewingOptions[1])) {
+		} else if (selectedIndex == 1) {
 
 			//if "View installed plugins"
-			List<PluginObject> viewList = new ArrayList<PluginObject>();
 			for (int i = 0; i < controller.getPluginList().size(); i++) {
 				PluginObject myPlugin = controller.getPluginList().get(i);
 				if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
@@ -343,63 +341,53 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 					viewList.add(myPlugin);
 				}
 			}
-			pluginTableModel.update(viewList);
-			//When data is ready for display, allow editable ComboBoxes
-			setupPluginComboBoxes();
 
-		} else if (strOption.equals(arrViewingOptions[2])) {
+		} else if (selectedIndex == 2) {
 
 			//if "View uninstalled plugins"
-			List<PluginObject> viewList = new ArrayList<PluginObject>();
 			for (int i = 0; i < controller.getPluginList().size(); i++) {
 				PluginObject myPlugin = controller.getPluginList().get(i);
 				if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
 					viewList.add(myPlugin);
 				}
 			}
-			pluginTableModel.update(viewList);
-			//When data is ready for display, allow editable ComboBoxes
-			setupPluginComboBoxes();
 
-		} else if (strOption.equals(arrViewingOptions[3])) {
+		} else if (selectedIndex == 3) {
 
 			//if "View up-to-date plugins"
-			List<PluginObject> viewList = new ArrayList<PluginObject>();
 			for (int i = 0; i < controller.getPluginList().size(); i++) {
 				PluginObject myPlugin = controller.getPluginList().get(i);
 				if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED) {
 					viewList.add(myPlugin);
 				}
 			}
-			pluginTableModel.update(viewList);
-			//When data is ready for display, allow editable ComboBoxes
-			setupPluginComboBoxes();
 
-		} else if (strOption.equals(arrViewingOptions[4])) {
+		} else if (selectedIndex == 4) {
 
 			//if "View update-able plugins"
-			List<PluginObject> viewList = new ArrayList<PluginObject>();
 			for (int i = 0; i < controller.getPluginList().size(); i++) {
 				PluginObject myPlugin = controller.getPluginList().get(i);
 				if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
 					viewList.add(myPlugin);
 				}
 			}
-			pluginTableModel.update(viewList);
-			//When data is ready for display, allow editable ComboBoxes
-			setupPluginComboBoxes();
 
 		} else {
 			throw new Error("Viewing option specified does not exist!");
 		}
+
+		//When data is ready for display, allow editable ComboBoxes
+		pluginTableModel.update(viewList);
+		setupPluginComboBoxes();
 	}
 
 	private void clickToBeginOperations() {
 		//in later implementations, this should liase with Controller
-		//e.g: controller.isReadyToBegin()... Controller checks pluginList...
+		//if status says there's a list to download...
+		frameDownloader = new DownloadUI(this);
 		frameDownloader.setVisible(true);
-		//frameDownloader.showDownload
-		controller.startInstaller();
+		controller.createInstaller();
+		frameDownloader.setInstaller(controller.getInstaller());
 		this.setEnabled(false);
 	}
 

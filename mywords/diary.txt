@@ -257,3 +257,30 @@ Other tasks not in line yet
 -Removal/Uninstallation of plugins
 -Gathering of plugin information (Description and dependencies)
 -Construction of Database (Wait till we have a clue what information goes in there)
+
+
+
+26th May, Tuesday
+
+Going into details for Refactoring (What's left undone):
+
+Code readability issues
+-Avoid distraction of initialization of variables - Unless its an important note
+-Avoid using unnecessary "this." statement
+-super()... Unnecessary?
+
+Structural issues
+-Make a JFrame that implements PlugIn
+-Use Layout
+-Merge TextPaneFormat with PluginManager?
+-the old insertText() of TextPaneFormat
+   Split into something like:
+      insertTitle(text)
+      insertText(text, param) //if you want italics/bold
+      insertText(text) //if you want default
+
+What's done:
+Still on getting out a working progressbar. Have been thinking too much about design patterns.
+
+NOTE this should get you the size of a file:
+new URL(baseURL, fileName + suffix).openConnection().getContentLength();

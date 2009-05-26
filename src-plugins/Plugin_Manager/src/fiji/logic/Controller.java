@@ -36,7 +36,7 @@ public class Controller {
 		return pluginList;
 	}
 
-	public void startInstaller() {
+	public void createInstaller() {
 		List<PluginObject> selectedList = new ArrayList<PluginObject>();
 		for (int i = 0; i < pluginList.size(); i++) {
 			PluginObject myPlugin = pluginList.get(i);
@@ -44,8 +44,10 @@ public class Controller {
 				selectedList.add(myPlugin);
 		}
 		installer = new Installer(selectedList, updateURL);
-		installer.startDelete();
-		installer.startDownload();
+	}
+	
+	public Installer getInstaller() {
+		return installer;
 	}
 }
 

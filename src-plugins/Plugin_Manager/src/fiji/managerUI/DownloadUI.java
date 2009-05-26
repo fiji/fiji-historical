@@ -10,7 +10,10 @@ import javax.swing.JOptionPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import fiji.logic.Installer;
+
 class DownloadUI extends JFrame {
+	private Installer installer = null; //observable, to grab data from
 	private PluginManager pluginManager = null;
 	private JButton btnCancel = null;
 	private JProgressBar progressBar = null;
@@ -99,6 +102,15 @@ class DownloadUI extends JFrame {
 
 	public void insertText(String text) {
 		txtDownloadDetails.setText(txtDownloadDetails.getText() + text);
+	}
+
+	public void setInstaller(Installer installer) {
+		if (this.installer != null) throw new Error("Installer object already exists.");
+		else {
+			this.installer = installer;
+			installer.startDelete();
+			installer.startDownload();
+		}
 	}
 
 }
