@@ -241,7 +241,6 @@ public class UpdateFiji implements PlugIn {
 			long modified = new File(fullPath).lastModified();
 			if (useMacPrefix && path.startsWith(macPrefix))
 				path = path.substring(macPrefix.length());
-			//System.out.println("Exists: " + path + ", timestamp: " + timestamp(modified));
 			dates.put(path, timestamp(modified));
 			if (File.separator.equals("\\"))
 				path = path.replace("\\", "/");
