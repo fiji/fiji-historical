@@ -27,8 +27,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLDecoder;
 
+import fiji.data.PluginCollection;
 import fiji.data.PluginObject;
 
 //To do: This class has the ability to track number of bytes downloaded?
@@ -41,13 +43,13 @@ public class Installer {
 	public static final String updateDirectory = "update";
 	protected final String macPrefix = "Contents/MacOS/";
 	protected boolean useMacPrefix = false;
-
-	private List<String> deletionList = null; //tentatively, filenames are only needed?
+	private List<PluginObject> toInstallList;
 
 	//Keeping track of status
-	private List<PluginObject> downloadedList = null;
-	private List<PluginObject> waitingList = null;
-	private PluginObject currentlyDownloading = null;
+	private List<PluginObject> toUninstallList;
+	private List<PluginObject> downloadedList;
+	private List<PluginObject> waitingList;
+	private PluginObject currentlyDownloading;
 	private long totalBytes = 0;
 	private long downloadedBytes = 0;
 
@@ -55,24 +57,19 @@ public class Installer {
 	public Installer(List<PluginObject> selectedList, String updateURL) {
 		this.updateURL = updateURL;
 		fijiPath = getDefaultFijiPath();
-		deletionList = new ArrayList<String>();
-		waitingList = new ArrayList<PluginObject>();
+		toInstallList = new PluginCollection();
+		waitingList = new PluginCollection();
+		downloadedList = new PluginCollection();
 
 		//divide into two groups
+		toUninstallList = ((PluginCollection)selectedList).getListWhereActionUninstall();
 		for (int i = 0; i < selectedList.size(); i++) {
 			PluginObject myPlugin = selectedList.get(i);
-			//if current status is installed/update-able and you want to uninstall it
-			if ((myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
-					myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE)
-					&& myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
-				deletionList.add(myPlugin.getFilename()); //todo: If inadequate, turn into PluginObject
-			} else {
-				//if not, it means to update/install
-				//In technical implementation, updating and installing are the same
+			if (!toUninstallList.contains(myPlugin)) {
 				waitingList.add(myPlugin);
+				toInstallList.add(myPlugin);
 			}
 		}
-		downloadedList = new ArrayList<PluginObject>();
 	}
 
 	public String getDefaultFijiPath() {
@@ -96,6 +93,7 @@ public class Installer {
 		return path;
 	}
 
+	//old
 	public void update(URL baseURL, String fileName, String suffix,
 				String targetPath)
 			throws FileNotFoundException, IOException {
@@ -103,13 +101,22 @@ public class Installer {
 		copyFile(new URL(baseURL, fileName + suffix).openStream(),
 				new FileOutputStream(targetPath));
 	}
+	//alternative new method?
+	public void update(HttpURLConnection myConnection, String targetPath)
+	throws FileNotFoundException, IOException {
+		new File(targetPath).getParentFile().mkdirs();
+		copyFile(myConnection.getInputStream(), new FileOutputStream(targetPath));
+	}
 
-	public static void copyFile(InputStream in, OutputStream out)
+	public void copyFile(InputStream in, OutputStream out)
 			throws IOException {
 		byte[] buffer = new byte[65536];
 		int count;
-		while ((count = in.read(buffer)) >= 0)
+		while ((count = in.read(buffer)) >= 0) {
 			out.write(buffer, 0, count);
+			downloadedBytes += count;
+			System.out.println("Downloaded so far: " + downloadedBytes);
+		}
 		in.close();
 		out.close();
 	}
@@ -216,7 +223,7 @@ public class Installer {
 
 	//start processing on contents of deletionList
 	public void startDelete() {
-		for (int i = 0; i < deletionList.size(); i++) {
+		for (int i = 0; i < toUninstallList.size(); i++) {
 			//do deleting
 		}
 	}
@@ -244,10 +251,36 @@ public class Installer {
 
 	//start processing on contents of updateList
 	public void startDownload() {
-		Iterator<PluginObject> iterWaiting = waitingList.listIterator();
-		while (iterWaiting.hasNext()) {
-		//for (int i = 0; i < waitingList.size(); i++) {
-			PluginObject myPlugin = iterWaiting.next();
+		//Temporary arrangement - This segment gets the size of the file
+		for (int i = 0; i < toInstallList.size(); i++) {
+			PluginObject myPlugin = toInstallList.get(i);
+			String name = myPlugin.getFilename();
+			String digest = null;
+			String date = null;
+			if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
+				digest = myPlugin.getmd5Sum();
+				date = myPlugin.getTimestamp();
+			} else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+				digest = myPlugin.getNewMd5Sum();
+				date = myPlugin.getNewTimestamp();
+			}
+
+			try {
+				URL myURL = new URL(updateURL);
+				HttpURLConnection myConn = (HttpURLConnection)(new URL(myURL, name + "-" + date)).openConnection();
+				totalBytes += myConn.getContentLength();
+				System.out.println("total bytes so far: " + totalBytes);
+			} catch (MalformedURLException e) {
+				throw new Error(updateURL + " has unknown protocol.");
+			} catch (IOException e) {
+				throw new Error("I/O Exception while opening connection to " + updateURL);
+			}
+		}
+
+		//Downloads the file(s), one by one
+		Iterator<PluginObject> iterInstallList = toInstallList.listIterator();
+		while (iterInstallList.hasNext()) {
+			PluginObject myPlugin = iterInstallList.next();
 			String name = myPlugin.getFilename();
 			String digest = null;
 			String date = null;
@@ -261,7 +294,6 @@ public class Installer {
 
 			//if (hasGUI) //we assume true for now okay?
 			//IJ.showStatus("Updating " + name);
-
 			String fullPath = prefix(updateDirectory +
 					File.separator + name);
 			try {
@@ -270,7 +302,13 @@ public class Installer {
 					File orig = new File(fullPath);
 					orig.renameTo(new File(fullPath + ".old"));
 				}
-				update(new URL(updateURL), name, "-" + date, fullPath);
+
+				//Download the file specified at this iteration
+				System.out.println(myPlugin.getFilename() + " began downloading...");
+				currentlyDownloading = myPlugin;
+				HttpURLConnection myConnection = (HttpURLConnection)(new URL(new URL(updateURL), name + "-" + date)).openConnection();
+				update(myConnection, fullPath);
+				//update(new URL(updateURL), name, "-" + date, fullPath);
 				//String digest = (String)remote.digests.get(name);
 				String realDigest = getDigest(name, fullPath);
 				if (!realDigest.equals(digest))
@@ -290,6 +328,9 @@ public class Installer {
 			}
 			//if (hasGUI)
 			//IJ.showProgress(i + 1, waitingList.size());
+			waitingList.remove(myPlugin);
+			downloadedList.add(myPlugin);
+			System.out.println(myPlugin.getFilename() + " finished download.");
 		}
 		IJ.showStatus(""); //done
 	}

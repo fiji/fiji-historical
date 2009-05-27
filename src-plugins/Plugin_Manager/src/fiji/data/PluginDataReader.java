@@ -53,7 +53,7 @@ public class PluginDataReader {
 	public PluginDataReader() {
 		if (tempDemo) {
 
-		pluginList = new ArrayList<PluginObject>();
+		pluginList = new PluginCollection();
 		dates = new TreeMap<String, String>();
 		digests = new TreeMap<String, String>();
 		latestDates = new TreeMap<String, String>();

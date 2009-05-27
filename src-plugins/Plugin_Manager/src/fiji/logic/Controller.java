@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import fiji.data.PluginCollection;
 import fiji.data.PluginObject;
 import fiji.data.PluginDataReader;
 
@@ -37,15 +38,9 @@ public class Controller {
 	}
 
 	public void createInstaller() {
-		List<PluginObject> selectedList = new ArrayList<PluginObject>();
-		for (int i = 0; i < pluginList.size(); i++) {
-			PluginObject myPlugin = pluginList.get(i);
-			if (myPlugin.getAction() != PluginObject.ACTION_NONE)
-				selectedList.add(myPlugin);
-		}
-		installer = new Installer(selectedList, updateURL);
+		installer = new Installer(((PluginCollection)pluginList).getListWhereActionIsSpecified(), updateURL);
 	}
-	
+
 	public Installer getInstaller() {
 		return installer;
 	}

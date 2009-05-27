@@ -36,6 +36,7 @@ import javax.swing.table.TableModel;
 import extendedSwing.JTableX;
 import extendedSwing.RowEditorModel;
 import fiji.data.Dependency;
+import fiji.data.PluginCollection;
 import fiji.data.PluginObject;
 import fiji.logic.Controller;
 
@@ -334,43 +335,22 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		} else if (selectedIndex == 1) {
 
 			//if "View installed plugins"
-			for (int i = 0; i < controller.getPluginList().size(); i++) {
-				PluginObject myPlugin = controller.getPluginList().get(i);
-				if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
-					myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
-					viewList.add(myPlugin);
-				}
-			}
+			viewList = ((PluginCollection)controller.getPluginList()).getAlreadyInstalledList();
 
 		} else if (selectedIndex == 2) {
 
 			//if "View uninstalled plugins"
-			for (int i = 0; i < controller.getPluginList().size(); i++) {
-				PluginObject myPlugin = controller.getPluginList().get(i);
-				if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
-					viewList.add(myPlugin);
-				}
-			}
+			viewList = ((PluginCollection)controller.getPluginList()).getListWhereStatus(PluginObject.STATUS_UNINSTALLED);
 
 		} else if (selectedIndex == 3) {
 
 			//if "View up-to-date plugins"
-			for (int i = 0; i < controller.getPluginList().size(); i++) {
-				PluginObject myPlugin = controller.getPluginList().get(i);
-				if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED) {
-					viewList.add(myPlugin);
-				}
-			}
+			viewList = ((PluginCollection)controller.getPluginList()).getListWhereStatus(PluginObject.STATUS_INSTALLED);
 
 		} else if (selectedIndex == 4) {
 
 			//if "View update-able plugins"
-			for (int i = 0; i < controller.getPluginList().size(); i++) {
-				PluginObject myPlugin = controller.getPluginList().get(i);
-				if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
-					viewList.add(myPlugin);
-				}
-			}
+			viewList = ((PluginCollection)controller.getPluginList()).getListWhereStatus(PluginObject.STATUS_MAY_UPDATE);
 
 		} else {
 			throw new Error("Viewing option specified does not exist!");

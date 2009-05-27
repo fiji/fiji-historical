@@ -284,3 +284,11 @@ Still on getting out a working progressbar. Have been thinking too much about de
 
 NOTE this should get you the size of a file:
 new URL(baseURL, fileName + suffix).openConnection().getContentLength();
+
+
+
+27th May, Wednesday
+
+Because of a stupid mistake I made with Git while trying to merge conflicts, now I have to redo some stuff. At least I got the algorithm of it in my head...
+
+Download now appears to work...
