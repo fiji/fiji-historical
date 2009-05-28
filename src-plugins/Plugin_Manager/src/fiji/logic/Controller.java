@@ -8,6 +8,7 @@ import fiji.data.PluginCollection;
 import fiji.data.PluginObject;
 import fiji.data.PluginDataReader;
 
+//Determine the dependencies of the plugin
 public class Controller {
 	private String updateURL = null;
 	private List<PluginObject> pluginList = null;

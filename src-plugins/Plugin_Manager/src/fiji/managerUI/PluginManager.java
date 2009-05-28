@@ -1,6 +1,8 @@
 package fiji.managerUI;
+import ij.plugin.PlugIn;
 import ij.plugin.frame.PlugInFrame;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -10,8 +12,12 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.CellEditor;
 import javax.swing.DefaultCellEditor;
+import javax.swing.JFrame;
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -23,6 +29,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -32,6 +39,10 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 
 import extendedSwing.JTableX;
 import extendedSwing.RowEditorModel;
@@ -39,8 +50,9 @@ import fiji.data.Dependency;
 import fiji.data.PluginCollection;
 import fiji.data.PluginObject;
 import fiji.logic.Controller;
+import fiji.logic.Installer;
 
-public class PluginManager extends PlugInFrame implements ActionListener, TableModelListener {
+public class PluginManager extends JFrame implements PlugIn, ActionListener, TableModelListener {
 	private Controller controller = null;
 
 	/* User Interface elements */
@@ -74,9 +86,6 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 	public PluginManager() {
 		super("Plugin Manager");
 		this.setSize(750,540);
-		//this.setLayout(this.)
-		this.setLayout(null);
-		//Container content = this.getContentPane();
 
 		//initialize the data...
 		controller = new Controller(updateURL);
@@ -89,28 +98,23 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		//after displaying UI and data ready for display, allow editable ComboBoxes
 		setupPluginComboBoxes();
 
-		//this.setVisible(true);
-		this.show();
+		this.setVisible(true);
 	}
 
 	private void setUpUserInterface() {
-		/* Create labels to annotate search options */
-		JLabel lblSearch1 = new JLabel("Search:");
-		lblSearch1.setBounds(30, 45, 120, 25);
-		lblSearch1.setAlignmentX(TOP_ALIGNMENT);
-		lblSearch1.setAlignmentY(LEFT_ALIGNMENT);
-		JLabel lblSearch2 = new JLabel("View Options:");
-		lblSearch2.setBounds(30, 85, 120, 25);
-		lblSearch2.setAlignmentX(TOP_ALIGNMENT);
-		lblSearch2.setAlignmentY(LEFT_ALIGNMENT);
-
 		/* Create text search */
+		JLabel lblSearch1 = new JLabel("Search:", SwingConstants.LEFT);
 		txtSearch = new JTextField();
-		txtSearch.setBounds(150, 45, 230, 25);
+
+		JPanel searchPanel = new JPanel();
+		searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.X_AXIS));
+		searchPanel.add(lblSearch1);
+		searchPanel.add(Box.createRigidArea(new Dimension(10,0)));
+		searchPanel.add(txtSearch);
 
 		/* Create combo box of options */
+		JLabel lblSearch2 = new JLabel("View Options:");
 		comboBoxViewingOptions = new JComboBox(arrViewingOptions);
-		comboBoxViewingOptions.setBounds(150, 85, 230, 25);
 		comboBoxViewingOptions.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
@@ -118,12 +122,18 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 			}
 
 		});
-		
+		JPanel comboBoxPanel = new JPanel();
+		comboBoxPanel.setLayout(new BoxLayout(comboBoxPanel, BoxLayout.X_AXIS));
+		comboBoxPanel.add(lblSearch2);
+		comboBoxPanel.add(Box.createRigidArea(new Dimension(10,0)));
+		comboBoxPanel.add(comboBoxViewingOptions);
+
 		/* Create labels to annotate table */
 		JLabel lblTable = new JLabel("Please choose what you want to install/uninstall:");
-		lblTable.setBounds(30, 120, 350, 30);
-		lblTable.setAlignmentX(TOP_ALIGNMENT);
-		lblTable.setAlignmentY(LEFT_ALIGNMENT);
+		JPanel lblTablePanel = new JPanel();
+		lblTablePanel.add(lblTable);
+		lblTablePanel.add(Box.createHorizontalGlue());
+		lblTablePanel.setLayout(new BoxLayout(lblTablePanel, BoxLayout.X_AXIS));
 
 		/* Create the plugin table */
 		table = new JTableX();
@@ -186,9 +196,7 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		//Set appearance of table
 		table.setShowGrid(false);
 		table.setIntercellSpacing(new Dimension(0,0));
-		table.setRowHeight(table.getRowHeight() + 2);
-		table.setPreferredScrollableViewportSize(new Dimension(370,310));
-		table.setBounds(0, 0, 370, 310);
+		table.setAutoResizeMode(JTableX.AUTO_RESIZE_ALL_COLUMNS);
 		table.setRequestFocusEnabled(false);
 		table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
 
@@ -217,36 +225,59 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		/* create the scrollpane that holds the table */
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());
-		pluginListScrollpane.setBounds(30, 150, 370, 310);
 
 		/* Label text for plugin summaries */
 		lblPluginSummary = new JLabel();
-		lblPluginSummary.setBounds(30, 460, 350, 30);
-		lblPluginSummary.setAlignmentX(TOP_ALIGNMENT);
-		lblPluginSummary.setAlignmentY(LEFT_ALIGNMENT);
+		JPanel lblSummaryPanel = new JPanel();
+		lblSummaryPanel.add(lblPluginSummary);
+		lblSummaryPanel.add(Box.createHorizontalGlue());
+		lblSummaryPanel.setLayout(new BoxLayout(lblSummaryPanel, BoxLayout.X_AXIS));
+
+		JPanel leftPanel = new JPanel();
+		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+		leftPanel.add(searchPanel);
+		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
+		leftPanel.add(comboBoxPanel);
+		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
+		leftPanel.add(lblTablePanel);
+		leftPanel.add(Box.createRigidArea(new Dimension(0,5)));
+		leftPanel.add(pluginListScrollpane);
+		leftPanel.add(Box.createRigidArea(new Dimension(0,5)));
+		leftPanel.add(lblSummaryPanel);
 
 		/* Create textpane to hold the information */
 		txtPluginDetails = new JTextPane();
 		txtPluginDetails.setEditable(false);
-		txtPluginDetails.setBounds(0, 0, 290, 275);
+		txtPluginDetails.setPreferredSize(new Dimension(335,315));
 
 		/* Create scrollpane to hold the textpane */
 		JScrollPane txtScrollpane = new JScrollPane(txtPluginDetails);
 		txtScrollpane.getViewport().setBackground(txtPluginDetails.getBackground());
-		txtScrollpane.setBounds(5, 5, 290, 275);
+		txtScrollpane.setPreferredSize(new Dimension(335,315));
 
 		/* Tabbed pane of plugin details to hold the textpane (w/ scrollpane) */
 		JTabbedPane tabbedPane = new JTabbedPane();
 		JPanel panelPluginDetails = new JPanel();
-		panelPluginDetails.setLayout(null);
-		panelPluginDetails.setBounds(0, 0, 305, 315);
-		panelPluginDetails.add(txtScrollpane);
+		panelPluginDetails.setLayout(new BorderLayout());
+		panelPluginDetails.add(txtScrollpane, BorderLayout.CENTER);
 		tabbedPane.addTab("Details", null, panelPluginDetails, "Individual Plugin information");
-		tabbedPane.setBounds(420, 145, 305, 315);
+		tabbedPane.setPreferredSize(new Dimension(335,315));
+
+		JPanel rightPanel = new JPanel();
+		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+		rightPanel.add(Box.createVerticalGlue());
+		rightPanel.add(tabbedPane);
+		rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
+
+		JPanel topPanel = new JPanel();
+		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
+		topPanel.add(leftPanel);
+		topPanel.add(Box.createRigidArea(new Dimension(15,0)));
+		topPanel.add(rightPanel);
+		topPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 5, 15));
 
 		//Buttons to start actions
 		btnStart = new JButton();
-		btnStart.setBounds(30, 490, 110, 30);
 		btnStart.setText("Start");
 		btnStart.setToolTipText("Start installing/uninstalling specified plugins");
 		btnStart.addActionListener(new ActionListener() {
@@ -259,7 +290,6 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 
 		//Buttons to quit Plugin Manager
 		btnOK = new JButton();
-		btnOK.setBounds(610, 490, 110, 30);
 		btnOK.setText("OK");
 		btnOK.setToolTipText("Exit Plugin Manager");
 		btnOK.addActionListener(new ActionListener() {
@@ -270,16 +300,16 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 
 		});
 
-		this.add(lblSearch1);
-		this.add(lblSearch2);
-		this.add(txtSearch);
-		this.add(comboBoxViewingOptions);
-		this.add(lblTable);
-		this.add(pluginListScrollpane);
-		this.add(lblPluginSummary);
-		this.add(tabbedPane);
-		this.add(btnStart);
-		this.add(btnOK);
+		JPanel bottomPanel = new JPanel();
+		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
+		bottomPanel.add(btnStart);
+		bottomPanel.add(Box.createHorizontalGlue());
+		bottomPanel.add(btnOK);
+		bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
+
+		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+		getContentPane().add(topPanel);
+		getContentPane().add(bottomPanel);
 	}
 
 	//Set up the table model
@@ -289,13 +319,12 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		TableColumn col1 = table.getColumnModel().getColumn(0);
 		TableColumn col2 = table.getColumnModel().getColumn(1);
 
+		//Minimum width of 370 (250 + 120)
 		col1.setPreferredWidth(250);
 		col1.setMinWidth(250);
-		col1.setMaxWidth(250);
 		col1.setResizable(false);
 		col2.setPreferredWidth(120);
 		col2.setMinWidth(120);
-		col2.setMaxWidth(120);
 		col2.setResizable(false);
 	}
 
@@ -365,6 +394,7 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 		//in later implementations, this should liase with Controller
 		//if status says there's a list to download...
 		frameDownloader = new DownloadUI(this);
+		//Installer installer = new Installer(((PluginCollection)pluginList).getListWhereActionIsSpecified(), updateURL);
 		frameDownloader.setVisible(true);
 		controller.createInstaller();
 		frameDownloader.setInstaller(controller.getInstaller());
@@ -424,6 +454,12 @@ public class PluginManager extends PlugInFrame implements ActionListener, TableM
 			return null;
 		}
 	}
+
+	@Override
+	public void run(String arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 }
 
 //{{{ PluginTableModel class
@@ -444,8 +480,7 @@ class PluginTableModel extends AbstractTableModel {
 
 	//{{{ getColumnClass() method
 	public Class getColumnClass(int columnIndex) {
-		switch (columnIndex)
-		{
+		switch (columnIndex) {
 			case 0: return String.class; //filename
 			case 1: return String.class; //status
 			default: return Object.class;
@@ -454,8 +489,7 @@ class PluginTableModel extends AbstractTableModel {
 
 	//{{{ getColumnName() method
 	public String getColumnName(int column) {
-		switch (column)
-		{
+		switch (column) {
 			case 0:
 				return "Name";
 			case 1:
@@ -484,8 +518,7 @@ class PluginTableModel extends AbstractTableModel {
 	//{{{ getValueAt() method
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		PluginObject entry = (PluginObject)entries.get(rowIndex);
-		switch (columnIndex)
-		{
+		switch (columnIndex) {
 			case 0:
 				return entry.getFilename();
 			case 1:
@@ -665,5 +698,40 @@ class PluginTableModel extends AbstractTableModel {
 	}
 	//}}}
 
-
 } //}}}
+
+class TextPaneFormat {
+	public static SimpleAttributeSet ITALIC_GRAY = new SimpleAttributeSet();
+	public static SimpleAttributeSet BOLD_BLACK = new SimpleAttributeSet();
+	public static SimpleAttributeSet BLACK = new SimpleAttributeSet();
+	public static SimpleAttributeSet BOLD_BLACK_TITLE = new SimpleAttributeSet();
+
+	static {
+		StyleConstants.setForeground(ITALIC_GRAY, Color.gray);
+		StyleConstants.setItalic(ITALIC_GRAY, true);
+		StyleConstants.setFontFamily(ITALIC_GRAY, "Verdana");
+		StyleConstants.setFontSize(ITALIC_GRAY, 12);
+
+		StyleConstants.setForeground(BOLD_BLACK, Color.black);
+		StyleConstants.setBold(BOLD_BLACK, true);
+		StyleConstants.setFontFamily(BOLD_BLACK, "Verdana");
+		StyleConstants.setFontSize(BOLD_BLACK, 12);
+
+		StyleConstants.setForeground(BLACK, Color.black);
+		StyleConstants.setFontFamily(BLACK, "Verdana");
+		StyleConstants.setFontSize(BLACK, 12);
+
+		StyleConstants.setForeground(BOLD_BLACK_TITLE, Color.black);
+		//StyleConstants.setBold(BOLD_BLACK_TITLE, true);
+		StyleConstants.setFontFamily(BOLD_BLACK_TITLE, "Impact");
+		StyleConstants.setFontSize(BOLD_BLACK_TITLE, 18);
+	}
+
+	public static void insertText(JTextPane textPane, String text, AttributeSet set) {
+		try {
+			textPane.getDocument().insertString(textPane.getDocument().getLength(), text, set);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+	}
+}
