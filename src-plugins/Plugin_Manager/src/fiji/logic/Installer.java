@@ -36,7 +36,7 @@ import fiji.data.PluginObject;
 //To do: This class has the ability to track number of bytes downloaded?
 //This class downloads (installs) as well as deletes files, through other classes calling
 //this class' methods
-public class Installer {
+public class Installer implements Runnable {
 	String updateURL;
 	String fijiPath;
 	boolean forServer = false;
@@ -50,8 +50,8 @@ public class Installer {
 	private List<PluginObject> downloadedList;
 	private List<PluginObject> waitingList;
 	private PluginObject currentlyDownloading;
-	private long totalBytes = 0;
-	private long downloadedBytes = 0;
+	private int totalBytes = 0;
+	private int downloadedBytes = 0;
 
 	//Assume the list passed to constructor is a list of only plugins that wanted change
 	public Installer(List<PluginObject> selectedList, String updateURL) {
@@ -104,6 +104,7 @@ public class Installer {
 	//alternative new method?
 	public void update(HttpURLConnection myConnection, String targetPath)
 	throws FileNotFoundException, IOException {
+		System.out.println(currentlyDownloading.getFilename() + " began downloading...");
 		new File(targetPath).getParentFile().mkdirs();
 		copyFile(myConnection.getInputStream(), new FileOutputStream(targetPath));
 	}
@@ -229,11 +230,11 @@ public class Installer {
 	}
 
 
-	public long getBytesDownloaded() {
+	public int getBytesDownloaded() {
 		return downloadedBytes;
 	}
 
-	public long getBytesTotal() {
+	public int getBytesTotal() {
 		return totalBytes;
 	}
 
@@ -251,6 +252,11 @@ public class Installer {
 
 	//start processing on contents of updateList
 	public void startDownload() {
+		Thread myThread = new Thread(this);
+		myThread.start();
+	}
+
+	public void run() {
 		//Temporary arrangement - This segment gets the size of the file
 		for (int i = 0; i < toInstallList.size(); i++) {
 			PluginObject myPlugin = toInstallList.get(i);
@@ -266,10 +272,13 @@ public class Installer {
 			}
 
 			try {
+				System.out.println("Trying to establish connection for " + new URL(new URL(updateURL), name + "-" + date).getPath());
 				URL myURL = new URL(updateURL);
 				HttpURLConnection myConn = (HttpURLConnection)(new URL(myURL, name + "-" + date)).openConnection();
+				System.out.println("Connection for " + new URL(new URL(updateURL), name + "-" + date).getPath() + " established.");
 				totalBytes += myConn.getContentLength();
 				System.out.println("total bytes so far: " + totalBytes);
+				myConn.disconnect();
 			} catch (MalformedURLException e) {
 				throw new Error(updateURL + " has unknown protocol.");
 			} catch (IOException e) {
@@ -281,6 +290,7 @@ public class Installer {
 		Iterator<PluginObject> iterInstallList = toInstallList.listIterator();
 		while (iterInstallList.hasNext()) {
 			PluginObject myPlugin = iterInstallList.next();
+			currentlyDownloading = myPlugin;
 			String name = myPlugin.getFilename();
 			String digest = null;
 			String date = null;
@@ -304,210 +314,31 @@ public class Installer {
 				}
 
 				//Download the file specified at this iteration
-				System.out.println(myPlugin.getFilename() + " began downloading...");
-				currentlyDownloading = myPlugin;
+				System.out.println("Trying to establish connection for " + new URL(new URL(updateURL), name + "-" + date).getPath());
 				HttpURLConnection myConnection = (HttpURLConnection)(new URL(new URL(updateURL), name + "-" + date)).openConnection();
+				System.out.println("Connection for " + new URL(new URL(updateURL), name + "-" + date).getPath() + " established.");
 				update(myConnection, fullPath);
+				myConnection.disconnect();
 				//update(new URL(updateURL), name, "-" + date, fullPath);
 				//String digest = (String)remote.digests.get(name);
 				String realDigest = getDigest(name, fullPath);
 				if (!realDigest.equals(digest))
-					throw new Exception("wrong checksum: " + digest + " != " + realDigest);
+					throw new Exception("Wrong checksum: Recorded Md5 sum " + digest + " != Actual Md5 sum " + realDigest);
 				if (name.startsWith("fiji-") && !getPlatform().startsWith("win"))
 					Runtime.getRuntime().exec(new String[] {
 							"chmod", "0755", fullPath});
-				//updated++;
+				waitingList.remove(currentlyDownloading);
+				downloadedList.add(currentlyDownloading);
+				System.out.println(currentlyDownloading.getFilename() + " finished download.");
+				currentlyDownloading = null;
 			} catch(Exception e) {
+				//try to delete the file
 				try {
 					new File(fullPath).delete();
 				} catch (Exception e2) { }
-				IJ.write("Could not update " + name
-						+ ": " + e.getMessage());
-				e.printStackTrace();
-				//errors++;
-			}
-			//if (hasGUI)
-			//IJ.showProgress(i + 1, waitingList.size());
-			waitingList.remove(myPlugin);
-			downloadedList.add(myPlugin);
-			System.out.println(myPlugin.getFilename() + " finished download.");
-		}
-		IJ.showStatus(""); //done
-	}
-
-}
-
-//This class downloads a file from a URL.
-class Download implements Runnable {
-	// Max size of download buffer.
-	private static final int MAX_BUFFER_SIZE = 1024;
-    
-	// These are the status names.
-	public static final String STATUSES[] = {"Downloading", "Paused", "Complete", "Cancelled", "Error"};
-
-	// These are the status codes.
-	public static final int DOWNLOADING = 0;
-	public static final int PAUSED = 1;
-	public static final int COMPLETE = 2;
-	public static final int CANCELLED = 3;
-	public static final int ERROR = 4;
-
-	private URL url; // download URL
-	private int size; // size of download in bytes
-	private int downloaded; // number of bytes downloaded
-	private int status; // current status of download
-
-	// Constructor for Download.
-	public Download(URL url) {
-		this.url = url;
-		size = -1;
-		downloaded = 0;
-		status = DOWNLOADING;
-
-		// Begin the download.
-		download();
-	}
-    
-	// Get this download's URL.
-	public String getUrl() {
-		return url.toString();
-	}
-    
-	// Get this download's size.
-	public int getSize() {
-		return size;
-	}
-    
-	// Get this download's progress.
-	public float getProgress() {
-		return ((float) downloaded / size) * 100;
-	}
-    
-	// Get this download's status.
-	public int getStatus() {
-    	return status;
-	}
-    
-	// Pause this download.
-	public void pause() {
-		status = PAUSED;
-		stateChanged();
-	}
-    
-	// Resume this download.
-	public void resume() {
-		status = DOWNLOADING;
-		stateChanged();
-		download();
-	}
-    
-	// Cancel this download.
-	public void cancel() {
-		status = CANCELLED;
-		stateChanged();
-	}
-    
-	// Mark this download as having an error.
-	private void error() {
-		status = ERROR;
-		stateChanged();
-	}
-    
-	// Start or resume downloading.
-	private void download() {
-		Thread thread = new Thread(this);
-		thread.start();
-	}
-    
-	// Get file name portion of URL.
-	private String getFileName(URL url) {
-		String fileName = url.getFile();
-		return fileName.substring(fileName.lastIndexOf('/') + 1);
-	}
-    
-	// Download file.
-	public void run() {
-		RandomAccessFile file = null;
-		InputStream stream = null;
-
-		try {
-			// Open connection to URL.
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            
-			// Specify what portion of file to download.
-			connection.setRequestProperty("Range", "bytes=" + downloaded + "-");
-            
-			// Connect to server.
-			connection.connect();
-            
-			// Make sure response code is in the 200 range.
-			if (connection.getResponseCode() / 100 != 2) {
-				error();
-			}
-            
-			// Check for valid content length.
-			int contentLength = connection.getContentLength();
-			if (contentLength < 1) {
-				error();
-			}
-            
-			/* Set the size for this download if it hasn't been already set. */
-			if (size == -1) {
-				size = contentLength;
-				stateChanged();
-			}
-            
-			// Open file and seek to the end of it.
-			file = new RandomAccessFile(getFileName(url), "rw");
-			file.seek(downloaded);
-            
-			stream = connection.getInputStream();
-			while (status == DOWNLOADING) {
-				/* Size buffer according to how much of the file is left to download. */
-				byte buffer[];
-				if (size - downloaded > MAX_BUFFER_SIZE) {
-					buffer = new byte[MAX_BUFFER_SIZE];
-				} else {
-					buffer = new byte[size - downloaded];
-				}
-                
-				// Read from server into buffer.
-				int read = stream.read(buffer);
-				if (read == -1) break;
-                
-				// Write buffer to file.
-				file.write(buffer, 0, read);
-				downloaded += read;
-				stateChanged();
-			}
-            
-			/* Change status to complete if this point was 
-			 * reached because downloading has finished. */
-			if (status == DOWNLOADING) {
-				status = COMPLETE;
-				stateChanged();
-			}
-		} catch (Exception e) {
-			error();
-		} finally {
-			// Close file.
-			if (file != null) {
-				try {
-					file.close();
-				} catch (Exception e) {}
-			}
-			// Close connection to server.
-			if (stream != null) {
-				try {
-					stream.close();
-				} catch (Exception e) {}
+				throw new Error("Could not update " + name + ": " + e.getMessage());
 			}
 		}
 	}
 
-	// Notify observers that this download's status has changed.
-	private void stateChanged() {
-		//setChanged();
-		//notifyObservers();
-	}
 }
