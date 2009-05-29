@@ -153,11 +153,11 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 					txtPluginDetails.setText("");
 					TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BOLD_BLACK_TITLE);
 					if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE)
-						TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.BOLD_BLACK);
+						TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.ITALIC_BLACK);
 					TextPaneFormat.insertText(txtPluginDetails, "\n\nMd5 Sum", TextPaneFormat.BOLD_BLACK);
-					TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum(), TextPaneFormat.BLACK);
-					TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
-					TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp(), TextPaneFormat.BLACK);
+					TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum());
+					TextPaneFormat.insertText(txtPluginDetails, "\n\nLast Modified: ", TextPaneFormat.BOLD_BLACK);
+					TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp());
 					TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
 					ArrayList<Dependency> myDependencies = (ArrayList<Dependency>) myPlugin.getDependencies();
 					String strDependencies = "";
@@ -173,20 +173,20 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 					} else {
 						strDependencies = "None";
 					}
-					TextPaneFormat.insertText(txtPluginDetails, "\n" + strDependencies, TextPaneFormat.BLACK);
+					TextPaneFormat.insertText(txtPluginDetails, "\n" + strDependencies);
 					TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
 					String strDescription = "";
 					if (myPlugin.getDescription() == null || myPlugin.getDescription().trim().equals("")) {
 						strDescription = "None";
 					} else
 						strDescription = myPlugin.getDescription();
-					TextPaneFormat.insertText(txtPluginDetails, "\n" + strDescription, TextPaneFormat.BLACK);
+					TextPaneFormat.insertText(txtPluginDetails, "\n" + strDescription);
 					if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
 						TextPaneFormat.insertText(txtPluginDetails, "\n\nUpdate Details", TextPaneFormat.BOLD_BLACK_TITLE);
 						TextPaneFormat.insertText(txtPluginDetails, "\n\nNew Md5 Sum", TextPaneFormat.BOLD_BLACK);
-						TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getNewMd5Sum(), TextPaneFormat.BLACK);
+						TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getNewMd5Sum());
 						TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
-						TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getNewTimestamp(), TextPaneFormat.BLACK);
+						TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getNewTimestamp());
 					}
 				}
 			}
@@ -330,20 +330,20 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 
 	//Assuming user interface setup, with all relevant plugin data already in table...
 	private void setupPluginComboBoxes() {
-    	rowEditorModel = new RowEditorModel();
-    	table.setRowEditorModel(rowEditorModel);
-    	int size = table.getRowCount();
-        for (int i = 0; i < size; i++) {
-        	PluginObject myPlugin = pluginTableModel.getEntry(i);
-        	if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) //if plugin is not installed
-        		rowEditorModel.addEditorForRow(i, uninstalledOptions);
-        	else if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED) //if plugin is installed
-        		rowEditorModel.addEditorForRow(i, installedOptions);
-        	else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) //if plugin is installed
-        		rowEditorModel.addEditorForRow(i, updateableOptions);
-        	else
-        		throw new Error("Error while assigning combo-boxes to data!");
-        }
+		rowEditorModel = new RowEditorModel();
+		table.setRowEditorModel(rowEditorModel);
+		int size = table.getRowCount();
+		for (int i = 0; i < size; i++) {
+			PluginObject myPlugin = pluginTableModel.getEntry(i);
+			if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) //if plugin is not installed
+				rowEditorModel.addEditorForRow(i, uninstalledOptions);
+			else if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED) //if plugin is installed
+				rowEditorModel.addEditorForRow(i, installedOptions);
+			else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) //if plugin is installed
+				rowEditorModel.addEditorForRow(i, updateableOptions);
+			else
+				throw new Error("Error while assigning combo-boxes to data!");
+		}
 	}
 
 	//Whenever Viewing Options in the ComboBox has been changed
@@ -462,60 +462,45 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 	}
 }
 
-//{{{ PluginTableModel class
 class PluginTableModel extends AbstractTableModel {
 	private List<PluginObject> entries;
 
-	//{{{ Constructor
 	public PluginTableModel() {
 		super();
 		entries = new ArrayList<PluginObject>();
-		//update(); //get the entries?
-	} //}}}
+	}
 
-	//{{{ getColumnCount() method
 	public int getColumnCount() {
 		return 2; //Name of plugin, status
-	} //}}}
+	}
 
-	//{{{ getColumnClass() method
 	public Class getColumnClass(int columnIndex) {
 		switch (columnIndex) {
 			case 0: return String.class; //filename
 			case 1: return String.class; //status
 			default: return Object.class;
 		}
-	} //}}}
+	}
 
-	//{{{ getColumnName() method
 	public String getColumnName(int column) {
 		switch (column) {
 			case 0:
 				return "Name";
 			case 1:
 				return "Status/Action";
-			/*case 1:
-				return jEdit.getProperty("manage-plugins.info.name");
-			case 2:
-				return jEdit.getProperty("manage-plugins.info.version");
-			case 3:
-				return jEdit.getProperty("manage-plugins.info.status");*/
 			default:
 				throw new Error("Column out of range");
 		}
-	} //}}}
+	}
 
-	//{{{ getEntry() method
 	public PluginObject getEntry(int rowIndex) {
 		return (PluginObject)entries.get(rowIndex);
-	} //}}}
+	}
 
-	//{{{ getRowCount() method
 	public int getRowCount() {
 		return entries.size();
-	} //}}}
+	}
 
-	//{{{ getValueAt() method
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		PluginObject entry = (PluginObject)entries.get(rowIndex);
 		switch (columnIndex) {
@@ -550,31 +535,16 @@ class PluginTableModel extends AbstractTableModel {
 				} else {
 					throw new Error("INVALID Plugin Status retrieved!");
 				}
-			/*case 1:
-				if(entry.name == null)
-				{
-					return MiscUtilities.getFileName(entry.jar);
-				}
-				else
-					return entry.name;
-			case 2:
-				return entry.version;
-			case 3:
-				return jEdit.getProperty("plugin-manager.status."
-					+ entry.status);*/
 			default:
 				throw new Error("Column out of range");
 		}
-	} //}}}
+	}
 
-	//{{{ isCellEditable() method
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		return columnIndex == 1;
-	} //}}}
+	}
 
-	//{{{ setValueAt() method
 	public void setValueAt(Object value, int rowIndex, int columnIndex) {
-		//Entry entry = (Entry)entries.get(rowIndex);
 		PluginObject entry = (PluginObject)entries.get(rowIndex);
 		if(columnIndex == 1) {
 			String newValue = (String)value;
@@ -642,11 +612,8 @@ class PluginTableModel extends AbstractTableModel {
 				unloadPluginJARWithDialog(jar);
 			}*/
 		}
+	}
 
-		//update();
-	} //}}}
-
-	//{{{ update() method
 	public void update(List<PluginObject> myArr) {
 		entries = myArr;
 		fireTableChanged(new TableModelEvent(this));
@@ -687,30 +654,26 @@ class PluginTableModel extends AbstractTableModel {
 		}
 
 		sort(sortType);*/
-	} //}}}
+	}
 
-	//{{{ setSortType() method
 	public void setSortType(int type) {
-	} //}}}
+	}
 
-	//{{{ sort() method
 	public void sort(int type) {
 	}
-	//}}}
-
-} //}}}
+}
 
 class TextPaneFormat {
-	public static SimpleAttributeSet ITALIC_GRAY = new SimpleAttributeSet();
+	public static SimpleAttributeSet ITALIC_BLACK = new SimpleAttributeSet();
 	public static SimpleAttributeSet BOLD_BLACK = new SimpleAttributeSet();
 	public static SimpleAttributeSet BLACK = new SimpleAttributeSet();
 	public static SimpleAttributeSet BOLD_BLACK_TITLE = new SimpleAttributeSet();
 
 	static {
-		StyleConstants.setForeground(ITALIC_GRAY, Color.gray);
-		StyleConstants.setItalic(ITALIC_GRAY, true);
-		StyleConstants.setFontFamily(ITALIC_GRAY, "Verdana");
-		StyleConstants.setFontSize(ITALIC_GRAY, 12);
+		StyleConstants.setForeground(ITALIC_BLACK, Color.black);
+		StyleConstants.setItalic(ITALIC_BLACK, true);
+		StyleConstants.setFontFamily(ITALIC_BLACK, "Verdana");
+		StyleConstants.setFontSize(ITALIC_BLACK, 12);
 
 		StyleConstants.setForeground(BOLD_BLACK, Color.black);
 		StyleConstants.setBold(BOLD_BLACK, true);
@@ -730,6 +693,14 @@ class TextPaneFormat {
 	public static void insertText(JTextPane textPane, String text, AttributeSet set) {
 		try {
 			textPane.getDocument().insertString(textPane.getDocument().getLength(), text, set);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void insertText(JTextPane textPane, String text) {
+		try {
+			textPane.getDocument().insertString(textPane.getDocument().getLength(), text, TextPaneFormat.BLACK);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
