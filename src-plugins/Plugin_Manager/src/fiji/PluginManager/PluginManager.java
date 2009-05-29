@@ -48,14 +48,14 @@ import javax.swing.text.StyleConstants;
 
 
 public class PluginManager extends JFrame implements PlugIn, ActionListener, TableModelListener {
-	private Controller controller = null;
-	private PluginDataReader pluginDataReader = null;
-	private Installer installer = null;
+	private Controller controller;
+	private PluginDataReader pluginDataReader;
+	private Installer installer;
 	private String updateURL = "http://pacific.mpi-cbg.de/update/current.txt";
 	//private String ... //current.txt and database.txt address tentatively......
 
 	/* User Interface elements */
-	private DownloadUI frameDownloader = null;
+	private DownloadUI frameDownloader;
 	private String[] arrViewingOptions = {
 			"View all plugins",
 			"View installed plugins only",
@@ -63,25 +63,25 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 			"View up-to-date plugins only",
 			"View update-able plugins only"
 			};
-	private JTextField txtSearch = null;
-	private JComboBox comboBoxViewingOptions = null;
-	private PluginTableModel pluginTableModel = null;
-	private JTableX table = null;
-	private JLabel lblPluginSummary = null;
-	private JTextPane txtPluginDetails = null;
-	private JButton btnStart = null;
-	private JButton btnOK = null;
+	private JTextField txtSearch;
+	private JComboBox comboBoxViewingOptions;
+	private PluginTableModel pluginTableModel;
+	private JTableX table;
+	private JLabel lblPluginSummary;
+	private JTextPane txtPluginDetails;
+	private JButton btnStart;
+	private JButton btnOK;
 	static String[] arrUninstalledOptions = { "Not installed", "Install it" };
 	static String[] arrInstalledOptions = { "Installed", "Remove it" };
 	static String[] arrUpdateableOptions = { "Installed", "Remove it", "Update it" };
 	private TableCellEditor uninstalledOptions = new DefaultCellEditor(new JComboBox(arrUninstalledOptions));
 	private TableCellEditor installedOptions = new DefaultCellEditor(new JComboBox(arrInstalledOptions));
 	private TableCellEditor updateableOptions = new DefaultCellEditor(new JComboBox(arrUpdateableOptions));
-	private RowEditorModel rowEditorModel = null;
+	private RowEditorModel rowEditorModel;
 
 	public PluginManager() {
 		super("Plugin Manager");
-		this.setSize(750,540);
+		setSize(750,540);
 
 		//Firstly, get information from local, existing plugins
 		pluginDataReader = new PluginDataReader();
@@ -103,7 +103,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		//after displaying UI and data ready for display, allow editable ComboBoxes
 		setupPluginComboBoxes();
 
-		this.setVisible(true);
+		setVisible(true);
 	}
 
 	private void setUpUserInterface() {
@@ -405,19 +405,19 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 				((PluginCollection)pluginDataReader.getExistingPluginList()).getListWhereActionIsSpecified(),
 				updateURL);
 		frameDownloader.setInstaller(installer);
-		this.setEnabled(false);
+		setEnabled(false);
 	}
 
 	private void clickToQuitPluginManager() {
 		//in later implementations, this should have some notifications
-		this.dispose();
+		dispose();
 	}
 
 	public void clickBackToPluginManager() {
 		//in later implementations, this should liase with Controller
 		//e.g: controller.hasDownloadEnded()... Controller checks download complete or not...
 		frameDownloader.setVisible(false);
-		this.setEnabled(true);
+		setEnabled(true);
 	}
 
 	public void actionPerformed(ActionEvent e) {

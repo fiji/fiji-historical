@@ -14,24 +14,23 @@ import java.io.File;
 import java.util.List;
 
 class DownloadUI extends JFrame {
-	private Installer installer = null; //observable, to grab data from
-	private Timer timer = null;
-	private PluginManager pluginManager = null;
-	private JButton btnCancel = null;
-	private JProgressBar progressBar = null;
-	private JTextPane txtDownloadDetails = null;
+	private Installer installer; //observable, to grab data from
+	private Timer timer;
+	private PluginManager pluginManager;
+	private JButton btnCancel;
+	private JProgressBar progressBar;
+	private JTextPane txtDownloadDetails;
 	private String strCloseWhileDownloading = "Cancel";
 	private String toolTipWhileDownloading = "Revert installation and return";
 	private String strCloseWhenFinished = "Done";
-	private String toolTipWhenFinished = "";
-	private boolean isDownloading = false;
+	private String toolTipWhenFinished = "Close Download Manager";
+	private boolean isDownloading;
 
 	public DownloadUI(PluginManager pluginManager) {
-		super();
-		this.setLayout(null);
-		this.setSize(600, 400);
-		this.setTitle("Download");
-		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		setLayout(null);
+		setSize(600, 400);
+		setTitle("Download");
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		this.pluginManager = pluginManager;
 
 		/* progress bar */
@@ -64,9 +63,9 @@ class DownloadUI extends JFrame {
         });
 		isDownloading = false;
 
-		this.getContentPane().add(progressBar);
-		this.getContentPane().add(txtScrollpane);
-		this.getContentPane().add(btnCancel);
+		getContentPane().add(progressBar);
+		getContentPane().add(txtScrollpane);
+		getContentPane().add(btnCancel);
 
 		timer = new Timer();
 		timer.schedule(new DownloadStatus(), 0, 100); //status refreshes every 100 ms

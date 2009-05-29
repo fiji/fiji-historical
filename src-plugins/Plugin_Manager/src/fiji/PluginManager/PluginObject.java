@@ -3,13 +3,13 @@ import java.util.List;
 
 
 public class PluginObject {
-	private String strFilename = null; //Identifier
-	private String md5Sum = null; //Used for comparison: Determine if update needed
-	private String timestamp = ""; //Version of plugin file ("Co-Identifier")
-	private String newMd5Sum = null; //if any
-	private String newTimestamp = ""; //if any
-	private String directory = null; //Where should the plugin file (Loaded) be located
-	private String description = null;
+	private String strFilename; //Identifier
+	private String md5Sum; //Used for comparison: Determine if update needed
+	private String timestamp; //Version of plugin file ("Co-Identifier")
+	private String newMd5Sum; //if any
+	private String newTimestamp; //if any
+	private String directory; //Where should the plugin file (Loaded) be located
+	private String description;
 	public static final byte STATUS_UNINSTALLED = 0; //Meaning current status is not installed
 	public static final byte STATUS_INSTALLED = 1; //Meaning current status is installed
 	public static final byte STATUS_MAY_UPDATE = 2; //Meaning installed AND update-able
@@ -18,7 +18,7 @@ public class PluginObject {
 	public static final byte ACTION_REVERSE = 1; //Install if not installed, Uninstall if installed
 	public static final byte ACTION_UPDATE = 2; //Only possibly valid for (status == 2)
 	private byte action = ACTION_NONE; //default
-	private List<Dependency> dependency = null; //Dependency object: filename and timestamp
+	private List<Dependency> dependency; //Dependency object: filename and timestamp
 
 	public PluginObject(String strFilename, String md5Sum, String timestamp) {
 		this.strFilename = strFilename;

@@ -7,9 +7,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-//Role: Determine the dependencies of the plugin
+/*
+ * Determine the dependencies of the plugin.
+ */
 public class Controller {
-	private List<PluginObject> pluginList = null;
+	private List<PluginObject> pluginList;
 
 	public Controller(List<PluginObject> pluginList) {
 		this.pluginList = pluginList;

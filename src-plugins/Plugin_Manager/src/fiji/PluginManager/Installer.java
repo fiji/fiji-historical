@@ -45,8 +45,8 @@ public class Installer implements Runnable {
 	private List<PluginObject> downloadedList;
 	private List<PluginObject> waitingList;
 	private PluginObject currentlyDownloading;
-	private int totalBytes = 0;
-	private int downloadedBytes = 0;
+	private int totalBytes;
+	private int downloadedBytes;
 
 	//Assume the list passed to constructor is a list of only plugins that wanted change
 	public Installer(PluginDataProcessor pluginDataProcessor, List<PluginObject> selectedList, String updateURL) {

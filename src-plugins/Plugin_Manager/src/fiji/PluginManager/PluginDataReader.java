@@ -36,13 +36,13 @@ import java.util.jar.JarFile;
 public class PluginDataReader {
 	private boolean tempDemo = true; //if true, use UpdateFiji.java's code...
 
-	private List<PluginObject> pluginList = null;
-	private Map<String, String> digests = null;
-	private Map<String, String> dates = null;
-	private Map<String, String> latestDates = null;
-	private Map<String, String> latestDigests = null;
+	private List<PluginObject> pluginList;
+	private Map<String, String> digests;
+	private Map<String, String> dates;
+	private Map<String, String> latestDates;
+	private Map<String, String> latestDigests;
 	private String fijiPath;
-	private boolean hasGUI = false;
+	private boolean hasGUI;
 
 	private PluginDataProcessor pluginDataProcessor;
 
