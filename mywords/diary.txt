@@ -292,3 +292,29 @@ new URL(baseURL, fileName + suffix).openConnection().getContentLength();
 Because of a stupid mistake I made with Git while trying to merge conflicts, now I have to redo some stuff. At least I got the algorithm of it in my head...
 
 Download now appears to work...
+
+
+
+28-29th May, Thu-Fri
+
+At last!
+What was implemented:
+-JFrame that implements PlugIn for PluginManager.java
+-Layout Manager for PluginManager.java frame
+-TextPaneFormat more logically, merged with PluginManager.java
+-Download Manager works: Able to download selected files
+-Refactoring: New PluginDataProcessor.java
+-Stick to basic programming conventions
+
+To do soon (Planned in order):
+1-Refactoring stage 4: Change of JTableX and RowEditorModel into implementation of TableColumnModel instead
+2-Display download/time manager for downloading of current.txt and/or calculating md5 sums
+3-Work on Dependencies checking for Controller.java
+4-Able to delete incomplete files when download manager is cancelled
+5-Have a Layout Manager for DownloadUI too?
+6-Provide brief descriptions
+
+Estimated time to do the above tasks:
+Having learnt my lesson, I think task 1-4 will take me five days (Mon to Friday).
+
+Current plans: The "database" would be expanded from current.txt, including dependencies and filesize (To avoid making too many connections at a time just to get download size for our Download Manager). A separate database would contain richer information like description.
