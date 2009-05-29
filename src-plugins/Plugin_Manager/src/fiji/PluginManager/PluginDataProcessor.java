@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+/*
+ * This class' main role is to calculate the Md5 sums of a plugin file, as well as
+ * determining the type of operating system the user has. Overall, an utility class.
+ */
 public class PluginDataProcessor {
 	private final String macPrefix = "Contents/MacOS/";
 	private boolean useMacPrefix;
@@ -33,7 +37,9 @@ public class PluginDataProcessor {
 		'8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
 	};
 
-	public PluginDataProcessor() {
+	public PluginDataProcessor(String fijiPath) {
+		this.fijiPath = (fijiPath == null ? getDefaultFijiPath() : fijiPath);
+
 		//gets the platform string value
 		boolean is64bit = System.getProperty("os.arch", "").indexOf("64") >= 0;
 		String osName = System.getProperty("os.name", "<unknown>");
@@ -55,25 +61,6 @@ public class PluginDataProcessor {
 		String macLauncher = macPrefix + "fiji-macosx";
 		if (platform.equals("macosx") && new File(prefix(macLauncher)).exists())
 			useMacPrefix = true;
-
-		//gets fijiPath
-		String name = "/UpdateFiji.class";
-		URL url = getClass().getResource(name);
-		fijiPath = URLDecoder.decode(url.toString());
-		fijiPath = fijiPath.substring(0, fijiPath.length() - name.length());
-		if (fijiPath.startsWith("jar:") && fijiPath.endsWith("!"))
-			fijiPath = fijiPath.substring(4, fijiPath.length() - 5);
-		if (fijiPath.startsWith("file:")) {
-			fijiPath = fijiPath.substring(5);
-			if (File.separator.equals("\\") && fijiPath.startsWith("/"))
-				fijiPath = fijiPath.substring(1);
-		}
-		int slash = fijiPath.lastIndexOf('/');
-		if (slash > 0) {
-			slash = fijiPath.lastIndexOf('/', slash - 1);
-			if (slash > 0)
-				fijiPath = fijiPath.substring(0, slash);
-		}
 	}
 
 	public String getMacPrefix() {
@@ -177,20 +164,24 @@ public class PluginDataProcessor {
 		return new String(buffer);
 	}
 
-	public String[] getDigestAndDateFromFile(String path) throws Exception {
-		System.out.println("path is " + path);
+	public String[] getDigestAndDateFromFile(String path){
+		try {
 		String fullPath = prefix(path);
-		System.out.println("full path is " + fullPath);
 		String digest = getDigest(path, fullPath);
 		long modified = new File(fullPath).lastModified();
-		/*if (useMacPrefix && path.startsWith(macPrefix))
+
+		if (useMacPrefix && path.startsWith(macPrefix))
 			path = path.substring(macPrefix.length());
 		if (File.separator.equals("\\"))
-			path = path.replace("\\", "/");*/
-		System.out.println("digest: isz " + digest);
-		System.out.println("modified: isz " + modified);
-		String[] myDigestAndDate = {digest, timestamp(modified)};
+			path = path.replace("\\", "/");
+
+		String[] myDigestAndDate = {path, digest, timestamp(modified)};
 		return myDigestAndDate;
+		} catch (Exception e) {
+			if (e instanceof FileNotFoundException && path.startsWith("fiji-"))
+				return null;
+			throw new Error("Could not get digest: " + prefix(path) + " (" + e + ")");
+		}
 	}
 
 	public String timestamp(Calendar date) {

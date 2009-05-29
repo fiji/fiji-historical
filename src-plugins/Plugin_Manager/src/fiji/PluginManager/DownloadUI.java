@@ -10,6 +10,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.List;
 
 class DownloadUI extends JFrame {
@@ -94,23 +95,23 @@ class DownloadUI extends JFrame {
 				} else {
 					//Able to display progress bar
 					setPercentageComplete(downloadedBytes * 100 / totalBytes);
-				}
 
-				for (int i=0; i < downloadedList.size(); i++) {
-					PluginObject myPlugin = downloadedList.get(i);
-					if (i != 0) strCurrentStatus += "\n";
-					strCurrentStatus += "Finished downloading " + myPlugin.getFilename();
-				}
-				if (currentlyDownloading != null) {
-					strCurrentStatus += "\nNow downloading " + currentlyDownloading.getFilename();
-				}
-				txtDownloadDetails.setText(strCurrentStatus);
+					for (int i=0; i < downloadedList.size(); i++) {
+						PluginObject myPlugin = downloadedList.get(i);
+						if (i != 0) strCurrentStatus += "\n";
+						strCurrentStatus += "Finished downloading " + myPlugin.getFilename();
+					}
+					if (currentlyDownloading != null) {
+						strCurrentStatus += "\nNow downloading " + currentlyDownloading.getFilename();
+					}
+					txtDownloadDetails.setText(strCurrentStatus);
 
-				//check if download has finished (Whether 100% success or not)
-				if (waitingList.size() == 0) {
-					showDownloadEnded();
-					txtDownloadDetails.setText(txtDownloadDetails.getText() + "\nAll download tasks completed.");
-					timer.cancel();
+					//check if download has finished (Whether 100% success or not)
+					if (waitingList.size() == 0) {
+						showDownloadEnded();
+						txtDownloadDetails.setText(txtDownloadDetails.getText() + "\nAll download tasks completed.");
+						timer.cancel();
+					}
 				}
 			}
 		}
@@ -126,6 +127,19 @@ class DownloadUI extends JFrame {
 					"Revert Download?",
 					JOptionPane.YES_NO_OPTION,
 					JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
+				//below comment: loop through the waitingList
+				/*
+					String fullPath = pluginDataProcessor.prefix(updateDirectory +
+					File.separator + name);
+					if (name.startsWith("fiji-")) {
+						boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
+						String macPrefix = pluginDataProcessor.getMacPrefix();
+						fullPath = pluginDataProcessor.prefix((useMacPrefix ? macPrefix : "") + name);
+					}
+					try {
+						new File(fullPath).delete();
+					} catch (Exception e2) { }*/
+					
 				pluginManager.clickBackToPluginManager();
 				//delete or just let those that are already downloaded remain?
 			}

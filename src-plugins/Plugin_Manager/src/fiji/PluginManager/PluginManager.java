@@ -9,6 +9,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +49,10 @@ import javax.swing.text.StyleConstants;
 
 public class PluginManager extends JFrame implements PlugIn, ActionListener, TableModelListener {
 	private Controller controller = null;
+	private PluginDataReader pluginDataReader = null;
+	private Installer installer = null;
+	private String updateURL = "http://pacific.mpi-cbg.de/update/current.txt";
+	//private String ... //current.txt and database.txt address tentatively......
 
 	/* User Interface elements */
 	private DownloadUI frameDownloader = null;
@@ -73,20 +79,26 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 	private TableCellEditor updateableOptions = new DefaultCellEditor(new JComboBox(arrUpdateableOptions));
 	private RowEditorModel rowEditorModel = null;
 
-	private String updateURL = "http://pacific.mpi-cbg.de/update/current.txt";
-	//private String ... //current.txt and database.txt address tentatively......
-
 	public PluginManager() {
 		super("Plugin Manager");
 		this.setSize(750,540);
 
+		//Firstly, get information from local, existing plugins
+		pluginDataReader = new PluginDataReader();
+		//Get information from server to build on information
+		try {
+			pluginDataReader.buildFullPluginList(new URL(updateURL));
+		} catch (MalformedURLException e) {
+			throw new Error(updateURL + " specifies an unknown protocol.");
+		}
+
 		//initialize the data...
-		controller = new Controller(updateURL);
+		controller = new Controller(pluginDataReader.getExistingPluginList());
 
 		setUpUserInterface();
 
 		//Retrieves the data
-		pluginTableModel.update(controller.getPluginList());
+		pluginTableModel.update(pluginDataReader.getExistingPluginList());
 
 		//after displaying UI and data ready for display, allow editable ComboBoxes
 		setupPluginComboBoxes();
@@ -352,27 +364,27 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		if (selectedIndex == 0) {
 
 			//if "View all plugins"
-			viewList = controller.getPluginList();
+			viewList = pluginDataReader.getExistingPluginList();
 
 		} else if (selectedIndex == 1) {
 
 			//if "View installed plugins"
-			viewList = ((PluginCollection)controller.getPluginList()).getAlreadyInstalledList();
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getAlreadyInstalledList();
 
 		} else if (selectedIndex == 2) {
 
 			//if "View uninstalled plugins"
-			viewList = ((PluginCollection)controller.getPluginList()).getListWhereStatus(PluginObject.STATUS_UNINSTALLED);
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getListWhereStatus(PluginObject.STATUS_UNINSTALLED);
 
 		} else if (selectedIndex == 3) {
 
 			//if "View up-to-date plugins"
-			viewList = ((PluginCollection)controller.getPluginList()).getListWhereStatus(PluginObject.STATUS_INSTALLED);
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getListWhereStatus(PluginObject.STATUS_INSTALLED);
 
 		} else if (selectedIndex == 4) {
 
 			//if "View update-able plugins"
-			viewList = ((PluginCollection)controller.getPluginList()).getListWhereStatus(PluginObject.STATUS_MAY_UPDATE);
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getListWhereStatus(PluginObject.STATUS_MAY_UPDATE);
 
 		} else {
 			throw new Error("Viewing option specified does not exist!");
@@ -389,8 +401,10 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		frameDownloader = new DownloadUI(this);
 		//Installer installer = new Installer(((PluginCollection)pluginList).getListWhereActionIsSpecified(), updateURL);
 		frameDownloader.setVisible(true);
-		controller.createInstaller();
-		frameDownloader.setInstaller(controller.getInstaller());
+		installer = new Installer(pluginDataReader.getPluginDataProcessor(),
+				((PluginCollection)pluginDataReader.getExistingPluginList()).getListWhereActionIsSpecified(),
+				updateURL);
+		frameDownloader.setInstaller(installer);
 		this.setEnabled(false);
 	}
 

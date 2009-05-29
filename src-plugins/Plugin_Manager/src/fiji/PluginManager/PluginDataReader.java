@@ -42,16 +42,13 @@ public class PluginDataReader {
 	private Map<String, String> latestDates = null;
 	private Map<String, String> latestDigests = null;
 	private String fijiPath;
-	//private String currentDate;
 	private boolean hasGUI = false;
-	//private boolean useMacPrefix = false;
 
 	private PluginDataProcessor pluginDataProcessor;
 
-	public PluginDataReader(PluginDataProcessor pluginDataProcessor) {
+	public PluginDataReader() {
 		if (tempDemo) {
 
-		this.pluginDataProcessor = pluginDataProcessor;
 		pluginList = new PluginCollection();
 		dates = new TreeMap<String, String>();
 		digests = new TreeMap<String, String>();
@@ -62,6 +59,7 @@ public class PluginDataReader {
 		String path = stripSuffix(stripSuffix(Menus.getPlugInsPath(),
 				File.separator),
 				"plugins");
+		pluginDataProcessor = new PluginDataProcessor(path);
 		initialize(path);
 
 		} else {
@@ -120,7 +118,7 @@ public class PluginDataReader {
 		}
 	}
 
-	public static String stripSuffix(String string, String suffix) {
+	private String stripSuffix(String string, String suffix) {
 		if (!string.endsWith(suffix))
 			return string;
 		return string.substring(0, string.length() - suffix.length());
@@ -133,12 +131,12 @@ public class PluginDataReader {
 	//NOTE: This method along with initialize(String fijiPath) looks redundant, will
 	//look into it again
 	public void initialize(String fijiPath, String[] only) {
-		this.fijiPath = (fijiPath == null ? pluginDataProcessor.getDefaultFijiPath() : fijiPath);
+		//is the below line even needed?
+		//this.fijiPath = (fijiPath == null ? pluginDataProcessor.getDefaultFijiPath() : fijiPath);
 		List<String> queue = new ArrayList<String>();
 
 		//To get a list of plugins on the local side
 		if (only == null || only.length == 0) {
-			System.out.println("very first ...");
 			String platform = pluginDataProcessor.getPlatform();
 			String macPrefix = pluginDataProcessor.getMacPrefix();
 			boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
@@ -166,23 +164,15 @@ public class PluginDataReader {
 			//To do: Perhaps move GUI-related stuff over to PluginManager
 			if (hasGUI)
 				IJ.showStatus("Checksumming " + name + "...");
-			System.out.println("hello!!!!!! i'm here right now" + name);
-			try {
-				String[] digestAndDate = pluginDataProcessor.getDigestAndDateFromFile(name);
-				System.out.println("index 0 is " + digestAndDate[0] + " and index 1 is " + digestAndDate[1]);
-				
-				if (pluginDataProcessor.getUseMacPrefix() && name.startsWith(pluginDataProcessor.getMacPrefix()))
-					name = name.substring(pluginDataProcessor.getMacPrefix().length());
-				if (File.separator.equals("\\"))
-					name = name.replace("\\", "/");
-				
-				digests.put(name, digestAndDate[0]);
-				dates.put(name, digestAndDate[1]);
-			} catch (Exception e) {
-				//if (e instanceof FileNotFoundException && name.startsWith("fiji-"))
-				//	return;
-				throw new Error("Could not get digest: " + pluginDataProcessor.prefix(name) + " (" + e + ")");
+
+			String[] digestAndDate = pluginDataProcessor.getDigestAndDateFromFile(name);
+
+			//index 0: path name, index 1: digest, index 2: date
+			if (digestAndDate != null && digestAndDate[1] != null && digestAndDate[2] != null) {
+				digests.put(digestAndDate[0], digestAndDate[1]);
+				dates.put(digestAndDate[0], digestAndDate[2]);
 			}
+
 			if (hasGUI)
 				IJ.showProgress(++i, total);
 		}
@@ -326,6 +316,9 @@ public class PluginDataReader {
 			IJ.showMessage("Some" + msg);
 		}*/
 
+	}
 
+	public PluginDataProcessor getPluginDataProcessor() {
+		return pluginDataProcessor;
 	}
 }

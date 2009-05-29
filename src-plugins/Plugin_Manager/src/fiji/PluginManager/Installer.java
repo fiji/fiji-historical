@@ -30,17 +30,14 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 
-
-//To do: This class has the ability to track number of bytes downloaded?
-//This class downloads (installs) as well as deletes files, through other classes calling
-//this class' methods
+/*
+ * This class' main role is to download selected files, as well as indicate those that
+ * are marked for deletion. It is able to track the number of bytes downloaded.
+*/
 public class Installer implements Runnable {
-	String updateURL;
-	//String fijiPath;
-	//boolean forServer = false;
-	public static final String updateDirectory = "update";
-	protected final String macPrefix = "Contents/MacOS/";
-	protected boolean useMacPrefix = false;
+	private PluginDataProcessor pluginDataProcessor;
+	private String updateURL;
+	private final String updateDirectory = "update";
 	private List<PluginObject> toInstallList;
 
 	//Keeping track of status
@@ -51,17 +48,14 @@ public class Installer implements Runnable {
 	private int totalBytes = 0;
 	private int downloadedBytes = 0;
 
-	PluginDataProcessor pluginDataProcessor;
-
 	//Assume the list passed to constructor is a list of only plugins that wanted change
 	public Installer(PluginDataProcessor pluginDataProcessor, List<PluginObject> selectedList, String updateURL) {
 		this.updateURL = updateURL;
-		//fijiPath = getDefaultFijiPath();
+		this.pluginDataProcessor = pluginDataProcessor;
+
 		toInstallList = new PluginCollection();
 		waitingList = new PluginCollection();
 		downloadedList = new PluginCollection();
-
-		this.pluginDataProcessor = pluginDataProcessor;
 
 		//divide into two groups
 		toUninstallList = ((PluginCollection)selectedList).getListWhereActionUninstall();
@@ -74,14 +68,6 @@ public class Installer implements Runnable {
 		}
 	}
 
-	//old
-	public void update(URL baseURL, String fileName, String suffix, String targetPath)
-			throws FileNotFoundException, IOException {
-		new File(targetPath).getParentFile().mkdirs();
-		copyFile(new URL(baseURL, fileName + suffix).openStream(),
-				new FileOutputStream(targetPath));
-	}
-	//alternative new method?
 	public void update(HttpURLConnection myConnection, String targetPath)
 	throws FileNotFoundException, IOException {
 		System.out.println(currentlyDownloading.getFilename() + " began downloading...");
@@ -181,12 +167,12 @@ public class Installer implements Runnable {
 				date = myPlugin.getNewTimestamp();
 			}
 
-			//if (hasGUI) //we assume true for now okay?
-			//IJ.showStatus("Updating " + name);
 			String fullPath = pluginDataProcessor.prefix(updateDirectory +
 					File.separator + name);
 			try {
 				if (name.startsWith("fiji-")) {
+					boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
+					String macPrefix = pluginDataProcessor.getMacPrefix();
 					fullPath = pluginDataProcessor.prefix((useMacPrefix ? macPrefix : "") + name);
 					File orig = new File(fullPath);
 					orig.renameTo(new File(fullPath + ".old"));
