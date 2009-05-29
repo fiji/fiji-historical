@@ -1,4 +1,4 @@
-package extendedSwing;
+package fiji.PluginManager;
 
 import javax.swing.table.TableCellEditor;
 import java.util.Hashtable;

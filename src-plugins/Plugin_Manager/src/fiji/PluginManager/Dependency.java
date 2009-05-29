@@ -1,4 +1,4 @@
-package fiji.data;
+package fiji.PluginManager;
 
 public class Dependency {
 	private String filename = "";

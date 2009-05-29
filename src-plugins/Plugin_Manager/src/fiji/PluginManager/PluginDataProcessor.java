@@ -1,0 +1,229 @@
+package fiji.PluginManager;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
+public class PluginDataProcessor {
+	private final String macPrefix = "Contents/MacOS/";
+	private boolean useMacPrefix;
+	private String fijiPath;
+	private String platform;
+	private boolean forServer;
+	private final char[] hex = {
+		'0', '1', '2', '3', '4', '5', '6', '7',
+		'8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+	};
+
+	public PluginDataProcessor() {
+		//gets the platform string value
+		boolean is64bit = System.getProperty("os.arch", "").indexOf("64") >= 0;
+		String osName = System.getProperty("os.name", "<unknown>");
+		if (osName.equals("Linux"))
+			platform = "linux" + (is64bit ? "64" : "");
+		else if (osName.equals("Mac OS X"))
+			platform = "macosx";
+		else if (osName.startsWith("Windows"))
+			platform = "win" + (is64bit ? "64" : "32") + ".exe";
+		else {
+			System.err.println("Unknown platform: " + osName);
+			platform = osName;
+		}
+
+		forServer = false;
+
+		//useMacPrefix initially is false, set to true if macLauncher exist
+		useMacPrefix = false;
+		String macLauncher = macPrefix + "fiji-macosx";
+		if (platform.equals("macosx") && new File(prefix(macLauncher)).exists())
+			useMacPrefix = true;
+
+		//gets fijiPath
+		String name = "/UpdateFiji.class";
+		URL url = getClass().getResource(name);
+		fijiPath = URLDecoder.decode(url.toString());
+		fijiPath = fijiPath.substring(0, fijiPath.length() - name.length());
+		if (fijiPath.startsWith("jar:") && fijiPath.endsWith("!"))
+			fijiPath = fijiPath.substring(4, fijiPath.length() - 5);
+		if (fijiPath.startsWith("file:")) {
+			fijiPath = fijiPath.substring(5);
+			if (File.separator.equals("\\") && fijiPath.startsWith("/"))
+				fijiPath = fijiPath.substring(1);
+		}
+		int slash = fijiPath.lastIndexOf('/');
+		if (slash > 0) {
+			slash = fijiPath.lastIndexOf('/', slash - 1);
+			if (slash > 0)
+				fijiPath = fijiPath.substring(0, slash);
+		}
+	}
+
+	public String getMacPrefix() {
+		return macPrefix;
+	}
+
+	public String getDefaultFijiPath() {
+		//return fijiPath;
+		String name = "/UpdateFiji.class";
+		URL url = getClass().getResource(name);
+		String path = URLDecoder.decode(url.toString());
+		path = path.substring(0, path.length() - name.length());
+		if (path.startsWith("jar:") && path.endsWith("!"))
+			path = path.substring(4, path.length() - 5);
+		if (path.startsWith("file:")) {
+			path = path.substring(5);
+			if (File.separator.equals("\\") && path.startsWith("/"))
+				path = path.substring(1);
+		}
+		int slash = path.lastIndexOf('/');
+		if (slash > 0) {
+			slash = path.lastIndexOf('/', slash - 1);
+			if (slash > 0)
+				path = path.substring(0, slash);
+		}
+		return path;
+	}
+
+	public String getPlatform() {
+		return platform;
+	}
+
+	public boolean getUseMacPrefix() {
+		return useMacPrefix;
+	}
+
+	public String getDigest(String path, String fullPath)
+	throws NoSuchAlgorithmException, FileNotFoundException,
+	IOException, UnsupportedEncodingException {
+		if (path.endsWith(".jar"))
+			return getJarDigest(fullPath);
+		MessageDigest digest = getDigest();
+		digest.update(path.getBytes("ASCII"));
+		updateDigest(new FileInputStream(fullPath), digest);
+		return toHex(digest.digest());
+	}
+
+	public MessageDigest getDigest()
+			throws NoSuchAlgorithmException {
+		return MessageDigest.getInstance("SHA-1");
+	}
+
+	public void updateDigest(InputStream input, MessageDigest digest)
+			throws IOException {
+		byte[] buffer = new byte[65536];
+		DigestInputStream digestStream =
+			new DigestInputStream(input, digest);
+		while (digestStream.read(buffer) >= 0)
+			; /* do nothing */
+		digestStream.close();
+	}
+
+	public String getJarDigest(String path)
+			throws FileNotFoundException, IOException {
+		MessageDigest digest = null;
+		try {
+			digest = getDigest();
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+
+		JarFile jar = new JarFile(path);
+		List list = new ArrayList();
+		Enumeration entries = jar.entries();
+		while (entries.hasMoreElements())
+			list.add(entries.nextElement());
+		Collections.sort(list, new JarEntryComparator());
+
+		Iterator iter = list.iterator();
+		while (iter.hasNext()) {
+			JarEntry entry = (JarEntry)iter.next();
+			digest.update(entry.getName().getBytes("ASCII"));
+			updateDigest(jar.getInputStream(entry), digest);
+		}
+		return toHex(digest.digest());
+	}
+
+	public String prefix(String path) {
+		return fijiPath + File.separator
+			+ (forServer && path.startsWith("fiji-") ?
+					"precompiled/" : "")
+			+ path;
+	}
+
+	public String toHex(byte[] bytes) {
+		char[] buffer = new char[bytes.length * 2];
+		for (int i = 0; i < bytes.length; i++) {
+			buffer[i * 2] = hex[(bytes[i] & 0xf0) >> 4];
+			buffer[i * 2 + 1] = hex[bytes[i] & 0xf];
+		}
+		return new String(buffer);
+	}
+
+	public String[] getDigestAndDateFromFile(String path) throws Exception {
+		System.out.println("path is " + path);
+		String fullPath = prefix(path);
+		System.out.println("full path is " + fullPath);
+		String digest = getDigest(path, fullPath);
+		long modified = new File(fullPath).lastModified();
+		/*if (useMacPrefix && path.startsWith(macPrefix))
+			path = path.substring(macPrefix.length());
+		if (File.separator.equals("\\"))
+			path = path.replace("\\", "/");*/
+		System.out.println("digest: isz " + digest);
+		System.out.println("modified: isz " + modified);
+		String[] myDigestAndDate = {digest, timestamp(modified)};
+		return myDigestAndDate;
+	}
+
+	public String timestamp(Calendar date) {
+		DecimalFormat format = new DecimalFormat("00");
+		int month = date.get(Calendar.MONTH) + 1;
+		int day = date.get(Calendar.DAY_OF_MONTH);
+		int hour = date.get(Calendar.HOUR_OF_DAY);
+		int minute = date.get(Calendar.MINUTE);
+		int second = date.get(Calendar.SECOND);
+		return "" + date.get(Calendar.YEAR) +
+			format.format(month) + format.format(day) +
+			format.format(hour) + format.format(minute) +
+			format.format(second);
+	}
+
+	public String timestamp(long millis) {
+		Calendar date = Calendar.getInstance();
+		date.setTimeInMillis(millis);
+		return timestamp(date);
+	}
+
+	private class JarEntryComparator implements Comparator {
+		public int compare(Object o1, Object o2) {
+			String name1 = ((JarEntry)o1).getName();
+			String name2 = ((JarEntry)o2).getName();
+			return name1.compareTo(name2);
+		}
+
+		public boolean equals(Object o1, Object o2) {
+			String name1 = ((JarEntry)o1).getName();
+			String name2 = ((JarEntry)o2).getName();
+			return name1.equals(name2);
+		}
+	}
+
+}

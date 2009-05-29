@@ -1,12 +1,8 @@
-package fiji.logic;
+package fiji.PluginManager;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
-import fiji.data.PluginCollection;
-import fiji.data.PluginObject;
-import fiji.data.PluginDataReader;
 
 //Determine the dependencies of the plugin
 public class Controller {
@@ -14,12 +10,14 @@ public class Controller {
 	private List<PluginObject> pluginList = null;
 	private PluginDataReader pluginDataReader = null;
 	private Installer installer = null;
+	private PluginDataProcessor pluginDataProcessor;
 
 	public Controller(String updateURL) {
+		pluginDataProcessor = new PluginDataProcessor();
 		this.updateURL = updateURL;
 
 		//Firstly, get information from local, existing plugins
-		pluginDataReader = new PluginDataReader();
+		pluginDataReader = new PluginDataReader(pluginDataProcessor);
 		//Get information from server to build on information
 		try {
 			pluginDataReader.buildFullPluginList(new URL(updateURL));
@@ -39,7 +37,7 @@ public class Controller {
 	}
 
 	public void createInstaller() {
-		installer = new Installer(((PluginCollection)pluginList).getListWhereActionIsSpecified(), updateURL);
+		installer = new Installer(pluginDataProcessor, ((PluginCollection)pluginList).getListWhereActionIsSpecified(), updateURL);
 	}
 
 	public Installer getInstaller() {

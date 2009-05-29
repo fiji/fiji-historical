@@ -1,4 +1,4 @@
-package fiji.managerUI;
+package fiji.PluginManager;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.PlugInFrame;
 
@@ -44,13 +44,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-import extendedSwing.JTableX;
-import extendedSwing.RowEditorModel;
-import fiji.data.Dependency;
-import fiji.data.PluginCollection;
-import fiji.data.PluginObject;
-import fiji.logic.Controller;
-import fiji.logic.Installer;
 
 public class PluginManager extends JFrame implements PlugIn, ActionListener, TableModelListener {
 	private Controller controller = null;

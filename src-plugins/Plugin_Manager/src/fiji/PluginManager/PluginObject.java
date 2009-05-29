@@ -1,5 +1,6 @@
-package fiji.data;
+package fiji.PluginManager;
 import java.util.List;
+
 
 public class PluginObject {
 	private String strFilename = null; //Identifier

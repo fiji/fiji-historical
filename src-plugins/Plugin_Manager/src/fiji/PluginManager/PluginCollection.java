@@ -1,7 +1,8 @@
-package fiji.data;
+package fiji.PluginManager;
 
 import java.util.List;
 import java.util.ArrayList;
+
 
 public class PluginCollection extends ArrayList<PluginObject> {
 	public PluginCollection() {

@@ -1,4 +1,4 @@
-package fiji.managerUI;
+package fiji.PluginManager;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -11,10 +11,6 @@ import java.util.TimerTask;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import fiji.data.PluginCollection;
-import fiji.data.PluginObject;
-
-import fiji.logic.Installer;
 
 class DownloadUI extends JFrame {
 	private Installer installer = null; //observable, to grab data from
@@ -91,7 +87,7 @@ class DownloadUI extends JFrame {
 				int downloadedBytes = installer.getBytesDownloaded();
 				String strCurrentStatus = "";
 
-				if (totalBytes == 0) {
+				if (totalBytes == 0 || downloadedBytes == 0) {
 					//Remain at 0
 					showDownloadStart("Starting up download now...");
 					setPercentageComplete(0);

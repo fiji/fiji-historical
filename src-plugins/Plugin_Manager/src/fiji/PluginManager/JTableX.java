@@ -1,10 +1,12 @@
-package extendedSwing;
+package fiji.PluginManager;
 
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
+
+
 import java.util.Vector;
 
 public class JTableX extends JTable {

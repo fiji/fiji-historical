@@ -1,4 +1,4 @@
-package fiji.data;
+package fiji.PluginManager;
 import ij.IJ;
 import ij.Menus;
 
@@ -36,9 +36,7 @@ import java.util.jar.JarFile;
 public class PluginDataReader {
 	private boolean tempDemo = true; //if true, use UpdateFiji.java's code...
 
-	private List downloadNameList = null; //tentatively, array of strings from Downloader
 	private List<PluginObject> pluginList = null;
-
 	private Map<String, String> digests = null;
 	private Map<String, String> dates = null;
 	private Map<String, String> latestDates = null;
@@ -46,13 +44,14 @@ public class PluginDataReader {
 	private String fijiPath;
 	//private String currentDate;
 	private boolean hasGUI = false;
-	private boolean forServer = false;
-	private final String macPrefix = "Contents/MacOS/";
-	private boolean useMacPrefix = false;
+	//private boolean useMacPrefix = false;
 
-	public PluginDataReader() {
+	private PluginDataProcessor pluginDataProcessor;
+
+	public PluginDataReader(PluginDataProcessor pluginDataProcessor) {
 		if (tempDemo) {
 
+		this.pluginDataProcessor = pluginDataProcessor;
 		pluginList = new PluginCollection();
 		dates = new TreeMap<String, String>();
 		digests = new TreeMap<String, String>();
@@ -121,42 +120,29 @@ public class PluginDataReader {
 		}
 	}
 
-	public String getDefaultFijiPath() {
-		String name = "/UpdateFiji.class";
-		URL url = getClass().getResource(name);
-		String path = URLDecoder.decode(url.toString());
-		path = path.substring(0, path.length() - name.length());
-		if (path.startsWith("jar:") && path.endsWith("!"))
-			path = path.substring(4, path.length() - 5);
-		if (path.startsWith("file:")) {
-			path = path.substring(5);
-			if (File.separator.equals("\\") && path.startsWith("/"))
-				path = path.substring(1);
-		}
-		int slash = path.lastIndexOf('/');
-		if (slash > 0) {
-			slash = path.lastIndexOf('/', slash - 1);
-			if (slash > 0)
-				path = path.substring(0, slash);
-		}
-		return path;
+	public static String stripSuffix(String string, String suffix) {
+		if (!string.endsWith(suffix))
+			return string;
+		return string.substring(0, string.length() - suffix.length());
 	}
 
 	public void initialize(String fijiPath) {
 		initialize(fijiPath, null);
 	}
 
+	//NOTE: This method along with initialize(String fijiPath) looks redundant, will
+	//look into it again
 	public void initialize(String fijiPath, String[] only) {
-		this.fijiPath = (fijiPath == null ? getDefaultFijiPath() : fijiPath);
-
+		this.fijiPath = (fijiPath == null ? pluginDataProcessor.getDefaultFijiPath() : fijiPath);
 		List<String> queue = new ArrayList<String>();
 
+		//To get a list of plugins on the local side
 		if (only == null || only.length == 0) {
-			String platform = getPlatform();
+			System.out.println("very first ...");
+			String platform = pluginDataProcessor.getPlatform();
+			String macPrefix = pluginDataProcessor.getMacPrefix();
+			boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
 			if (platform.equals("macosx")) {
-				String macLauncher = macPrefix + "fiji-macosx";
-				if (new File(prefix(macLauncher)).exists())
-					useMacPrefix = true;
 				queue.add((useMacPrefix ? macPrefix : "") + "fiji-macosx");
 				queue.add((useMacPrefix ? macPrefix : "") + "fiji-tiger");
 			} else
@@ -167,9 +153,11 @@ public class PluginDataReader {
 			queueDirectory(queue, "jars");
 			queueDirectory(queue, "retro");
 			queueDirectory(queue, "misc");
-		} else
+		} else {
+			System.out.println("very second.....");
 			for (int i = 0; i < only.length; i++)
 				queue.add(only[i]);
+		}
 
 		Iterator<String> iter = queue.iterator();
 		int i = 0, total = queue.size();
@@ -178,7 +166,23 @@ public class PluginDataReader {
 			//To do: Perhaps move GUI-related stuff over to PluginManager
 			if (hasGUI)
 				IJ.showStatus("Checksumming " + name + "...");
-			initializeFile(name);
+			System.out.println("hello!!!!!! i'm here right now" + name);
+			try {
+				String[] digestAndDate = pluginDataProcessor.getDigestAndDateFromFile(name);
+				System.out.println("index 0 is " + digestAndDate[0] + " and index 1 is " + digestAndDate[1]);
+				
+				if (pluginDataProcessor.getUseMacPrefix() && name.startsWith(pluginDataProcessor.getMacPrefix()))
+					name = name.substring(pluginDataProcessor.getMacPrefix().length());
+				if (File.separator.equals("\\"))
+					name = name.replace("\\", "/");
+				
+				digests.put(name, digestAndDate[0]);
+				dates.put(name, digestAndDate[1]);
+			} catch (Exception e) {
+				//if (e instanceof FileNotFoundException && name.startsWith("fiji-"))
+				//	return;
+				throw new Error("Could not get digest: " + pluginDataProcessor.prefix(name) + " (" + e + ")");
+			}
 			if (hasGUI)
 				IJ.showProgress(++i, total);
 		}
@@ -186,8 +190,9 @@ public class PluginDataReader {
 			IJ.showStatus("");
 	}
 
+	//recursively looks into a directory and adds the relevant file
 	public void queueDirectory(List<String> queue, String path) {
-		File dir = new File(prefix(path));
+		File dir = new File(pluginDataProcessor.prefix(path));
 		if (!dir.isDirectory())
 			return;
 		String[] list = dir.list();
@@ -199,137 +204,6 @@ public class PluginDataReader {
 			else
 				queueDirectory(queue,
 					path + File.separator + list[i]);
-	}
-
-	public void initializeFile(String path) {
-		try {
-			String fullPath = prefix(path);
-			String digest = getDigest(path, fullPath);
-			long modified = new File(fullPath).lastModified();
-			if (useMacPrefix && path.startsWith(macPrefix))
-				path = path.substring(macPrefix.length());
-			if (File.separator.equals("\\"))
-				path = path.replace("\\", "/");
-			digests.put(path, digest);
-			dates.put(path, timestamp(modified));
-		} catch (Exception e) {
-			if (e instanceof FileNotFoundException &&
-					path.startsWith("fiji-"))
-				return;
-			System.err.println("Could not get digest: "
-					+ prefix(path) + " (" + e + ")");
-			e.printStackTrace();
-		}
-	}
-
-	public String getDigest(String path, String fullPath)
-	throws NoSuchAlgorithmException, FileNotFoundException,
-		IOException, UnsupportedEncodingException {
-		if (path.endsWith(".jar"))
-			return getJarDigest(fullPath);
-		MessageDigest digest = getDigest();
-		digest.update(path.getBytes("ASCII"));
-		updateDigest(new FileInputStream(fullPath), digest);
-		return toHex(digest.digest());
-	}
-
-	public String getJarDigest(String path) throws FileNotFoundException, IOException {
-		MessageDigest digest = null;
-		try {
-			digest = getDigest();
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
-
-		JarFile jar = new JarFile(path);
-		List list = new ArrayList();
-		Enumeration entries = jar.entries();
-		while (entries.hasMoreElements())
-			list.add(entries.nextElement());
-		Collections.sort(list, new JarEntryComparator());
-
-		Iterator iter = list.iterator();
-		while (iter.hasNext()) {
-			JarEntry entry = (JarEntry)iter.next();
-			digest.update(entry.getName().getBytes("ASCII"));
-			updateDigest(jar.getInputStream(entry), digest);
-		}
-		return toHex(digest.digest());
-	}
-
-	public static MessageDigest getDigest()
-			throws NoSuchAlgorithmException {
-		return MessageDigest.getInstance("SHA-1");
-	}
-
-	public void updateDigest(InputStream input, MessageDigest digest)
-			throws IOException {
-		byte[] buffer = new byte[65536];
-		DigestInputStream digestStream =
-			new DigestInputStream(input, digest);
-		while (digestStream.read(buffer) >= 0)
-			; /* do nothing */
-		digestStream.close();
-	}
-
-	public String prefix(String path) {
-		return fijiPath + File.separator
-			+ (forServer && path.startsWith("fiji-") ?
-					"precompiled/" : "")
-			+ path;
-	}
-
-	public static String stripSuffix(String string, String suffix) {
-		if (!string.endsWith(suffix))
-			return string;
-		return string.substring(0, string.length() - suffix.length());
-	}
-
-	public static String timestamp(Calendar date) {
-		DecimalFormat format = new DecimalFormat("00");
-		int month = date.get(Calendar.MONTH) + 1;
-		int day = date.get(Calendar.DAY_OF_MONTH);
-		int hour = date.get(Calendar.HOUR_OF_DAY);
-		int minute = date.get(Calendar.MINUTE);
-		int second = date.get(Calendar.SECOND);
-		return "" + date.get(Calendar.YEAR) +
-			format.format(month) + format.format(day) +
-			format.format(hour) + format.format(minute) +
-			format.format(second);
-	}
-
-	public static String timestamp(long millis) {
-		Calendar date = Calendar.getInstance();
-		date.setTimeInMillis(millis);
-		return timestamp(date);
-	}
-
-	public static String getPlatform() {
-		boolean is64bit =
-			System.getProperty("os.arch", "").indexOf("64") >= 0;
-		String osName = System.getProperty("os.name", "<unknown>");
-		if (osName.equals("Linux"))
-			return "linux" + (is64bit ? "64" : "");
-		if (osName.equals("Mac OS X"))
-			return "macosx";
-		if (osName.startsWith("Windows"))
-			return "win" + (is64bit ? "64" : "32") + ".exe";
-		System.err.println("Unknown platform: " + osName);
-		return osName;
-	}
-
-	public final static char[] hex = {
-		'0', '1', '2', '3', '4', '5', '6', '7',
-		'8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-	};
-
-	public static String toHex(byte[] bytes) {
-		char[] buffer = new char[bytes.length * 2];
-		for (int i = 0; i < bytes.length; i++) {
-			buffer[i * 2] = hex[(bytes[i] & 0xf0) >> 4];
-			buffer[i * 2 + 1] = hex[bytes[i] & 0xf];
-		}
-		return new String(buffer);
 	}
 
 	public List<PluginObject> getExistingPluginList() {
@@ -376,7 +250,7 @@ public class PluginDataReader {
 
 			// launcher is platform-specific
 			if (name.startsWith("fiji-")) {
-				String platform = getPlatform();
+				String platform = pluginDataProcessor.getPlatform();
 				if (!name.equals("fiji-" + platform) &&
 						(!platform.equals("macosx") ||
 						!name.startsWith("fiji-tiger")))
@@ -453,19 +327,5 @@ public class PluginDataReader {
 		}*/
 
 
-	}
-
-	private class JarEntryComparator implements Comparator {
-		public int compare(Object o1, Object o2) {
-			String name1 = ((JarEntry)o1).getName();
-			String name2 = ((JarEntry)o2).getName();
-			return name1.compareTo(name2);
-		}
-
-		public boolean equals(Object o1, Object o2) {
-			String name1 = ((JarEntry)o1).getName();
-			String name2 = ((JarEntry)o2).getName();
-			return name1.equals(name2);
-		}
 	}
 }
