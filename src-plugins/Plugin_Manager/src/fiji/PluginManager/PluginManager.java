@@ -66,18 +66,11 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 	private JTextField txtSearch;
 	private JComboBox comboBoxViewingOptions;
 	private PluginTableModel pluginTableModel;
-	private JTableX table;
+	private PluginTable table;
 	private JLabel lblPluginSummary;
 	private JTextPane txtPluginDetails;
 	private JButton btnStart;
 	private JButton btnOK;
-	static String[] arrUninstalledOptions = { "Not installed", "Install it" };
-	static String[] arrInstalledOptions = { "Installed", "Remove it" };
-	static String[] arrUpdateableOptions = { "Installed", "Remove it", "Update it" };
-	private TableCellEditor uninstalledOptions = new DefaultCellEditor(new JComboBox(arrUninstalledOptions));
-	private TableCellEditor installedOptions = new DefaultCellEditor(new JComboBox(arrInstalledOptions));
-	private TableCellEditor updateableOptions = new DefaultCellEditor(new JComboBox(arrUpdateableOptions));
-	private RowEditorModel rowEditorModel;
 
 	public PluginManager() {
 		super("Plugin Manager");
@@ -97,11 +90,8 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 
 		setUpUserInterface();
 
-		//Retrieves the data
+		//Retrieves the data and displays them
 		pluginTableModel.update(pluginDataReader.getExistingPluginList());
-
-		//after displaying UI and data ready for display, allow editable ComboBoxes
-		setupPluginComboBoxes();
 
 		setVisible(true);
 	}
@@ -141,7 +131,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		lblTablePanel.setLayout(new BoxLayout(lblTablePanel, BoxLayout.X_AXIS));
 
 		/* Create the plugin table */
-		table = new JTableX();
+		table = new PluginTable();
 		setupTableModel(); //set pluginTableModel and table column widths
 		table.setColumnSelectionAllowed(false);
 		table.setRowSelectionAllowed(true);
@@ -333,27 +323,9 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		col2.setResizable(false);
 	}
 
-	//Assuming user interface setup, with all relevant plugin data already in table...
-	private void setupPluginComboBoxes() {
-		rowEditorModel = new RowEditorModel();
-		table.setRowEditorModel(rowEditorModel);
-		int size = table.getRowCount();
-		for (int i = 0; i < size; i++) {
-			PluginObject myPlugin = pluginTableModel.getEntry(i);
-			if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) //if plugin is not installed
-				rowEditorModel.addEditorForRow(i, uninstalledOptions);
-			else if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED) //if plugin is installed
-				rowEditorModel.addEditorForRow(i, installedOptions);
-			else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) //if plugin is installed
-				rowEditorModel.addEditorForRow(i, updateableOptions);
-			else
-				throw new Error("Error while assigning combo-boxes to data!");
-		}
-	}
-
 	//Whenever Viewing Options in the ComboBox has been changed
 	private void comboBoxViewListener() {
-		//Remove the old pluginList display
+		//Remove the old pluginList display, if any
 		table.getModel().removeTableModelListener(this);
 		//Preparing the new pluginList display
 		setupTableModel();
@@ -390,9 +362,8 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 			throw new Error("Viewing option specified does not exist!");
 		}
 
-		//When data is ready for display, allow editable ComboBoxes
+		//Directly update the table for display
 		pluginTableModel.update(viewList);
-		setupPluginComboBoxes();
 	}
 
 	private void clickToBeginOperations() {
@@ -466,207 +437,6 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 	public void run(String arg0) {
 		// TODO Auto-generated method stub
 		
-	}
-}
-
-class PluginTableModel extends AbstractTableModel {
-	private List<PluginObject> entries;
-
-	public PluginTableModel() {
-		super();
-		entries = new ArrayList<PluginObject>();
-	}
-
-	public int getColumnCount() {
-		return 2; //Name of plugin, status
-	}
-
-	public Class getColumnClass(int columnIndex) {
-		switch (columnIndex) {
-			case 0: return String.class; //filename
-			case 1: return String.class; //status
-			default: return Object.class;
-		}
-	}
-
-	public String getColumnName(int column) {
-		switch (column) {
-			case 0:
-				return "Name";
-			case 1:
-				return "Status/Action";
-			default:
-				throw new Error("Column out of range");
-		}
-	}
-
-	public PluginObject getEntry(int rowIndex) {
-		return (PluginObject)entries.get(rowIndex);
-	}
-
-	public int getRowCount() {
-		return entries.size();
-	}
-
-	public Object getValueAt(int rowIndex, int columnIndex) {
-		PluginObject entry = (PluginObject)entries.get(rowIndex);
-		switch (columnIndex) {
-			case 0:
-				return entry.getFilename();
-			case 1:
-				byte currentStatus = entry.getStatus();
-				byte actionToTake = entry.getAction();
-				if (currentStatus == PluginObject.STATUS_UNINSTALLED) { //if not installed 
-					if (actionToTake == PluginObject.ACTION_NONE)
-						return PluginManager.arrUninstalledOptions[0]; //"Not installed"
-					else if (actionToTake == PluginObject.ACTION_REVERSE)
-						return PluginManager.arrUninstalledOptions[1]; //"Install"
-					else
-						throw new Error("INVALID action value for Uninstalled Plugin");
-				} else if (currentStatus == PluginObject.STATUS_INSTALLED) { //if installed
-					if (actionToTake == PluginObject.ACTION_NONE)
-						return PluginManager.arrInstalledOptions[0]; //"Installed"
-					else if (actionToTake == PluginObject.ACTION_REVERSE)
-						return PluginManager.arrInstalledOptions[1]; //"Remove"
-					else
-						throw new Error("INVALID action value for Installed Plugin");
-				} else if (currentStatus == PluginObject.STATUS_MAY_UPDATE) { //if installed AND update-able
-					if (actionToTake == PluginObject.ACTION_NONE)
-						return PluginManager.arrUpdateableOptions[0]; //"Installed"
-					else if (actionToTake == PluginObject.ACTION_REVERSE)
-						return PluginManager.arrUpdateableOptions[1]; //"Remove"
-					else if (actionToTake == PluginObject.ACTION_UPDATE)
-						return PluginManager.arrUpdateableOptions[2]; //"Update"
-					else
-						throw new Error("INVALID action value for Update-able Plugin");
-				} else {
-					throw new Error("INVALID Plugin Status retrieved!");
-				}
-			default:
-				throw new Error("Column out of range");
-		}
-	}
-
-	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		return columnIndex == 1;
-	}
-
-	public void setValueAt(Object value, int rowIndex, int columnIndex) {
-		PluginObject entry = (PluginObject)entries.get(rowIndex);
-		if(columnIndex == 1) {
-			String newValue = (String)value;
-			//if current status of selected plugin is "not installed"
-			if (entry.getStatus() == PluginObject.STATUS_UNINSTALLED) {
-				//if option chosen is "Not installed"
-				if (newValue.equals(PluginManager.arrUninstalledOptions[0])) {
-					entry.setAction(PluginObject.ACTION_NONE);
-				}
-				//if option chosen is "Install"
-				else if (newValue.equals(PluginManager.arrUninstalledOptions[1])) {
-					entry.setAction(PluginObject.ACTION_REVERSE);
-				}
-				//otherwise...
-				else {
-					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
-				}
-			} else if (entry.getStatus() == PluginObject.STATUS_INSTALLED) {
-				//if option chosen is "Installed"
-				if (newValue.equals(PluginManager.arrInstalledOptions[0])) {
-					entry.setAction(PluginObject.ACTION_NONE);
-				}
-				//if option chosen is "Remove" (Or uninstall it)
-				else if (newValue.equals(PluginManager.arrInstalledOptions[1])) {
-					entry.setAction(PluginObject.ACTION_REVERSE);
-				}
-				//otherwise...
-				else {
-					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
-				}
-			} else if (entry.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
-				//if option chosen is "Installed"
-				if (newValue.equals(PluginManager.arrUpdateableOptions[0])) {
-					entry.setAction(PluginObject.ACTION_NONE);
-				}
-				//if option chosen is "Remove" (Or uninstall it)
-				else if (newValue.equals(PluginManager.arrUpdateableOptions[1])) {
-					entry.setAction(PluginObject.ACTION_REVERSE);
-				}
-				//if option chosen is "Update"
-				else if (newValue.equals(PluginManager.arrUpdateableOptions[2])) {
-					entry.setAction(PluginObject.ACTION_UPDATE);
-				}
-				//otherwise...
-				else {
-					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
-				}
-			} else {
-				throw new Error("Invalid status specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
-			}
-			fireTableChanged(new TableModelEvent(this));
-			/*PluginJAR jar = jEdit.getPluginJAR(entry.jar);
-			if(jar == null)
-			{
-				if(value.equals(Boolean.FALSE))
-					return;
-
-				loadPluginJAR(entry.jar);
-			}
-			else
-			{
-				if(value.equals(Boolean.TRUE))
-					return;
-
-				unloadPluginJARWithDialog(jar);
-			}*/
-		}
-	}
-
-	public void update(List<PluginObject> myArr) {
-		entries = myArr;
-		fireTableChanged(new TableModelEvent(this));
-
-		/*String systemJarDir = MiscUtilities.constructPath(
-			jEdit.getJEditHome(),"jars");
-		String userJarDir;
-		if(jEdit.getSettingsDirectory() == null)
-			userJarDir = null;
-		else
-		{
-			userJarDir = MiscUtilities.constructPath(
-				jEdit.getSettingsDirectory(),"jars");
-		}
-
-		PluginJAR[] plugins = jEdit.getPluginJARs();
-		for(int i = 0; i < plugins.length; i++)
-		{
-			String path = plugins[i].getPath();
-			if(path.startsWith(systemJarDir)
-				|| (userJarDir != null
-				&& path.startsWith(userJarDir)))
-			{
-				Entry e = new Entry(plugins[i]);
-				if(!hideLibraries.isSelected()
-					|| e.clazz != null)
-				{
-					entries.add(e);
-				}
-			}
-		}
-
-		String[] newPlugins = jEdit.getNotLoadedPluginJARs();
-		for(int i = 0; i < newPlugins.length; i++)
-		{
-			Entry e = new Entry(newPlugins[i]);
-			entries.add(e);
-		}
-
-		sort(sortType);*/
-	}
-
-	public void setSortType(int type) {
-	}
-
-	public void sort(int type) {
 	}
 }
 
