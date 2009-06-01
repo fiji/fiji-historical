@@ -1,4 +1,3 @@
-
 package JMathLib_Interpreter;
 
 import ij.IJ;
@@ -29,10 +28,14 @@ public class Refresh_JMathLib_Scripts extends RefreshScripts
 	}
 
 	public void runScript(String filename) {
-		interpreter = new Interpreter(true);
+		interpreter = new Interpreter(false);
 		interpreter.setOutputPanel(this);
-		//interpreter.executeExpression("startup");		
-		input = new DataInputStream(filename);
+		//interpreter.executeExpression("startup");
+		try {		
+			input = new DataInputStream(new FileInputStream(filename));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		displayPrompt();
         	while(!exiting) {
        		
@@ -42,36 +45,31 @@ public class Refresh_JMathLib_Scripts extends RefreshScripts
 
 	}
 
-		
-
 	private String readLine() {
         	try {
         		return input.readLine();
-        	}
-        	catch(IOException error) {
-        		System.out.println("IO Exception");
+        	} catch (IOException error) {
+			System.out.println("IO Exception");
         	}
         	return "";
     	}
 
 	public void interpretLine(String line) {
-    		if(interactiveMode) {    
+		if (interactiveMode) {    
 			//check to see if this is the beginning of a user function
-        		if(line.length() > 7 && line.substring(0, 8).equalsIgnoreCase("FUNCTION")) {
-        			functionCode = line;
+			if (line.length() > 7 && line.substring(0, 8).equalsIgnoreCase("FUNCTION")) {
+				functionCode = line;
         			interactiveMode = false;	
 		
 				displayPrompt();
-        		}
-        		else {
-                    		String answerString = interpreter.executeExpression(line);
+        		} else {
+				String answerString = interpreter.executeExpression(line);
             
                     		displayText(answerString);
                     		displayPrompt();		        
 	        	}
-	   	}
-	   	else {   		
-	   		if(line.equalsIgnoreCase("END")) {
+	   	} else {
+			if (line.equalsIgnoreCase("END")) {
 		   		String answerString = "";
 	   			//process the function
 	   			//answerString = interpreter.readFunction(functionCode, true, false);
@@ -79,13 +77,12 @@ public class Refresh_JMathLib_Scripts extends RefreshScripts
 	   			interactiveMode = true;
 
 		        	displayText(answerString);
-	   		}		    
-	   		else
-		   		functionCode += line;
-	   		
-	        displayPrompt();
-	   	}
-    	}
+	   		} else {
+				functionCode += line;
+	   		}
+		displayPrompt();
+		}
+	}
 	
 	public void displayText(String text) {
 		print_out.println(text);
