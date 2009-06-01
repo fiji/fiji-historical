@@ -1,6 +1,8 @@
 package fiji.PluginManager;
 
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.JProgressBar;
@@ -14,24 +16,38 @@ import java.io.File;
 import java.util.List;
 
 class DownloadUI extends JFrame {
+	private PluginManager pluginManager; //Used if opened from Plugin Manager UI
 	private Installer installer; //observable, to grab data from
-	private Timer timer;
-	private PluginManager pluginManager;
-	private JButton btnCancel;
-	private JProgressBar progressBar;
-	private JTextPane txtDownloadDetails;
-	private String strCloseWhileDownloading = "Cancel";
-	private String toolTipWhileDownloading = "Revert installation and return";
-	private String strCloseWhenFinished = "Done";
-	private String toolTipWhenFinished = "Close Download Manager";
-	private boolean isDownloading;
 
+	private Timer timer;
+	private JButton btnClose;
+	private JProgressBar progressBar;
+	private JTextPane txtProgressDetails;
+	private String strCloseWhileDownloading = "Cancel";
+	private String toolTipWhileDownloading = "Stop downloads and return";
+	private String strCloseWhenFinished = "Done";
+	private String toolTipWhenFinished = "Close Window";
+	private boolean isProgressing;
+
+	//Download Window opened from Plugin Manager UI
 	public DownloadUI(PluginManager pluginManager) {
+		this.pluginManager = pluginManager;
+		setUpUserInterface();
+		setupButtonsAndListeners();
+	}
+
+	//Download Window for downloading current.txt and/or database file
+	public DownloadUI() {
+		setUpUserInterface();
+		setupButtonsAndListeners();
+	}
+
+	private void setUpUserInterface() {
 		setLayout(null);
+		//getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 		setSize(600, 400);
 		setTitle("Download");
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		this.pluginManager = pluginManager;
 
 		/* progress bar */
 		progressBar = new JProgressBar();
@@ -43,39 +59,47 @@ class DownloadUI extends JFrame {
 		progressBar.setValue(100);
 
 		/* Create textpane to hold the information */
-		txtDownloadDetails = new JTextPane();
-		txtDownloadDetails.setEditable(false);
-		txtDownloadDetails.setBounds(0, 0, 555, 200);
+		txtProgressDetails = new JTextPane();
+		txtProgressDetails.setEditable(false);
+		txtProgressDetails.setBounds(0, 0, 555, 200);
 
 		/* Create scrollpane to hold the textpane */
-		JScrollPane txtScrollpane = new JScrollPane(txtDownloadDetails);
-		txtScrollpane.getViewport().setBackground(txtDownloadDetails.getBackground());
+		JScrollPane txtScrollpane = new JScrollPane(txtProgressDetails);
+		txtScrollpane.getViewport().setBackground(txtProgressDetails.getBackground());
 		txtScrollpane.setBounds(15, 90, 555, 200);
 
-		/* Button to cancel download (Or press done when complete) */
-		btnCancel = new JButton(strCloseWhenFinished);
-		btnCancel.setBounds(460, 315, 115, 30);
-		btnCancel.setToolTipText(toolTipWhenFinished);
-		btnCancel.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-            	backToPluginManager();
-            }
-        });
-		isDownloading = false;
+		/* Button to cancel progressing task (Or press done when complete) */
+		btnClose = new JButton(strCloseWhenFinished);
+		btnClose.setBounds(460, 315, 115, 30);
+		btnClose.setToolTipText(toolTipWhenFinished);
+		isProgressing = false;
 
 		getContentPane().add(progressBar);
 		getContentPane().add(txtScrollpane);
-		getContentPane().add(btnCancel);
+		getContentPane().add(btnClose);
+	}
 
-		timer = new Timer();
-		timer.schedule(new DownloadStatus(), 0, 100); //status refreshes every 100 ms
+	private void setupButtonsAndListeners() {
+		if (pluginManager != null) {
+			//Close button listener
+			btnClose.addActionListener(new ActionListener() {
+	            public void actionPerformed(ActionEvent e) {
+	            	backToPluginManager();
+	            }
+	        });
+			//Timer to check for download
+			timer = new Timer();
+			timer.schedule(new DownloadStatus(), 0, 100); //status refreshes every 100 ms
+		} else {
+			//Not loaded from PluginManager UI
+		}
 	}
 
 	private class DownloadStatus extends TimerTask {
 		public void run() {
 			if (installer == null) {
 				//Remain at 0
-				showDownloadStart("Preparing to download...");
+				showProgressStart("Preparing to download...");
 				setPercentageComplete(0);
 			}
 			else {
@@ -89,7 +113,7 @@ class DownloadUI extends JFrame {
 
 				if (totalBytes == 0 || downloadedBytes == 0) {
 					//Remain at 0
-					showDownloadStart("Starting up download now...");
+					showProgressStart("Starting up download now...");
 					setPercentageComplete(0);
 				} else {
 					//Able to display progress bar
@@ -103,12 +127,12 @@ class DownloadUI extends JFrame {
 					if (currentlyDownloading != null) {
 						strCurrentStatus += "\nNow downloading " + currentlyDownloading.getFilename();
 					}
-					txtDownloadDetails.setText(strCurrentStatus);
+					txtProgressDetails.setText(strCurrentStatus);
 
 					//check if download has finished (Whether 100% success or not)
 					if (waitingList.size() == 0) {
-						showDownloadEnded();
-						txtDownloadDetails.setText(txtDownloadDetails.getText() + "\nAll download tasks completed.");
+						showProgressComplete();
+						txtProgressDetails.setText(txtProgressDetails.getText() + "\nAll download tasks completed.");
 						timer.cancel();
 					}
 				}
@@ -118,7 +142,7 @@ class DownloadUI extends JFrame {
 
 	private void backToPluginManager() {
 		//plugin manager will deal with this
-		if (!isDownloading)
+		if (!isProgressing)
 			pluginManager.clickBackToPluginManager();
 		else {
 			if (JOptionPane.showConfirmDialog(this,
@@ -145,21 +169,21 @@ class DownloadUI extends JFrame {
 		}
 	}
 
-	public void showDownloadStart(String startMessage) {
-		btnCancel.setText(strCloseWhileDownloading);
-		btnCancel.setToolTipText(toolTipWhileDownloading);
-		txtDownloadDetails.setText(startMessage);
+	public void showProgressStart(String startMessage) {
+		btnClose.setText(strCloseWhileDownloading);
+		btnClose.setToolTipText(toolTipWhileDownloading);
+		txtProgressDetails.setText(startMessage);
 		progressBar.setString("0%");
 		progressBar.setValue(0);
-		isDownloading = true;
+		isProgressing = true;
 	}
 
-	public void showDownloadEnded() {
-		btnCancel.setText(strCloseWhenFinished);
-		btnCancel.setToolTipText(toolTipWhenFinished);
+	public void showProgressComplete() {
+		btnClose.setText(strCloseWhenFinished);
+		btnClose.setToolTipText(toolTipWhenFinished);
 		progressBar.setString("100%");
 		progressBar.setValue(100);
-		isDownloading = false;
+		isProgressing = false;
 	}
 
 	public void setPercentageComplete(int percent) {
@@ -168,11 +192,12 @@ class DownloadUI extends JFrame {
 	}
 
 	public void insertText(String text) {
-		txtDownloadDetails.setText(txtDownloadDetails.getText() + text);
+		txtProgressDetails.setText(txtProgressDetails.getText() + text);
 	}
 
 	public void setInstaller(Installer installer) {
 		if (this.installer != null) throw new Error("Installer object already exists.");
+		else if (pluginManager == null) throw new Error("Plugin Download/Removal tasks are not shown here.");
 		else {
 			this.installer = installer;
 			installer.startDelete();
