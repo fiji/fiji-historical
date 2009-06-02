@@ -17,7 +17,8 @@ import java.util.List;
 
 class DownloadUI extends JFrame {
 	private PluginManager pluginManager; //Used if opened from Plugin Manager UI
-	private Installer installer; //observable, to grab data from
+	private Installer installer; //To grab data from (Used if Plugin Manager UI not null)
+	private PluginDataReader pluginDataReader; //To grab data from (Used if Plugin Manager UI is null)
 
 	private Timer timer;
 	private JButton btnClose;
@@ -37,7 +38,8 @@ class DownloadUI extends JFrame {
 	}
 
 	//Download Window for downloading current.txt and/or database file
-	public DownloadUI() {
+	public DownloadUI(PluginDataReader pluginDataReader) {
+		this.pluginDataReader = pluginDataReader;
 		setUpUserInterface();
 		setupButtonsAndListeners();
 	}

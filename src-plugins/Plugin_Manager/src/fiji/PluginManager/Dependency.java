@@ -2,9 +2,9 @@ package fiji.PluginManager;
 
 public class Dependency {
 	private String filename;
-	private long timestamp;
+	private String timestamp;
 
-	public Dependency(String filename, long timestamp) {
+	public Dependency(String filename, String timestamp) {
 		this.filename = filename;
 		this.timestamp = timestamp;
 	}
@@ -13,7 +13,7 @@ public class Dependency {
 		return filename;
 	}
 
-	public long getTimestamp() {
+	public String getTimestamp() {
 		return timestamp;
 	}
 }

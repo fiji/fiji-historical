@@ -309,7 +309,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 
 	//Set up the table model
 	private void setupTableModel() {
-		table.setModel(pluginTableModel = new PluginTableModel());
+		table.setModel(pluginTableModel = new PluginTableModel(controller));
 		table.getModel().addTableModelListener(this); //listen for changes (tableChanged(TableModelEvent e))
 		TableColumn col1 = table.getColumnModel().getColumn(0);
 		TableColumn col2 = table.getColumnModel().getColumn(1);

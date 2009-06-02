@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 import java.net.URL;
@@ -34,7 +35,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class PluginDataReader {
-	private boolean tempDemo = true; //if true, use UpdateFiji.java's code...
+	private boolean tempDemo = false; //if true, use UpdateFiji.java's code...
 
 	private List<PluginObject> pluginList;
 	private Map<String, String> digests;
@@ -47,9 +48,9 @@ public class PluginDataReader {
 	private PluginDataProcessor pluginDataProcessor;
 
 	public PluginDataReader() {
+		pluginList = new PluginCollection();
 		if (tempDemo) {
 
-		pluginList = new PluginCollection();
 		dates = new TreeMap<String, String>();
 		digests = new TreeMap<String, String>();
 		latestDates = new TreeMap<String, String>();
@@ -82,13 +83,13 @@ public class PluginDataReader {
 		//retrieve information of installed plugins...
 		PluginObject pluginA = new PluginObject("PluginA.jar", "65c3ecc1bbd7564f92545ffd2521f9d96509ca64", "20090429190842", "This is a description of Plugin A", null, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
-		Dependency dependencyB1 = new Dependency("PluginA.jar", Long.parseLong("20090429190842"));
+		Dependency dependencyB1 = new Dependency("PluginA.jar", "20090429190842");
 		ArrayList<Dependency> Bdependency = new ArrayList<Dependency>();
 		Bdependency.add(dependencyB1);
 		PluginObject pluginB = new PluginObject("PluginB.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20090429190854", "This is a description of Plugin B", Bdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
-		Dependency dependencyC2 = new Dependency("PluginA.jar", Long.parseLong("20090429190842"));
-		Dependency dependencyC3 = new Dependency("PluginB.jar", Long.parseLong("20090429190854"));
+		Dependency dependencyC2 = new Dependency("PluginA.jar", "20090429190842");
+		Dependency dependencyC3 = new Dependency("PluginB.jar", "20090429190854");
 		ArrayList<Dependency> Cdependency = new ArrayList<Dependency>();
 		Cdependency.add(dependencyC2);
 		Cdependency.add(dependencyC3);
@@ -96,13 +97,13 @@ public class PluginDataReader {
 
 		PluginObject pluginD = new PluginObject("PluginD.jar", "61c3ecc1add7364f92545ffd2521e9d96508cb62", "20090429190842", "This is a description of Plugin D", null, PluginObject.STATUS_INSTALLED, PluginObject.ACTION_NONE);
 
-		Dependency dependencyE4 = new Dependency("PluginA.jar", Long.parseLong("20090429190842"));
+		Dependency dependencyE4 = new Dependency("PluginA.jar", "20090429190842");
 		ArrayList<Dependency> Edependency = new ArrayList<Dependency>();
 		Edependency.add(dependencyE4);
 		PluginObject pluginE = new PluginObject("PluginE.jar", "8114fe93cbf7720c01c7ff97c28b007b79900dc7", "20090501190854", "This is a description of Plugin E", Edependency, PluginObject.STATUS_MAY_UPDATE, PluginObject.ACTION_NONE);
 
-		Dependency dependencyF5 = new Dependency("PluginE.jar",Long.parseLong("20090501190854"));
-		Dependency dependencyF6 = new Dependency("PluginB.jar",Long.parseLong("20090429190854"));
+		Dependency dependencyF5 = new Dependency("PluginE.jar","20090501190854");
+		Dependency dependencyF6 = new Dependency("PluginB.jar","20090429190854");
 		ArrayList<Dependency> Fdependency = new ArrayList<Dependency>();
 		Fdependency.add(dependencyF5);
 		Fdependency.add(dependencyF6);
@@ -219,6 +220,17 @@ public class PluginDataReader {
 		}
 		in.close();
 	}
+	/*public void copyFile(InputStream in, OutputStream out) throws IOException {
+		byte[] buffer = new byte[65536];
+		int count;
+		while ((count = in.read(buffer)) >= 0) {
+			out.write(buffer, 0, count);
+			downloadedBytes += count;
+			System.out.println("Downloaded so far: " + downloadedBytes);
+		}
+		in.close();
+		out.close();
+	}*/
 
 	/* Called after local plugin files have been processed */
 	public void buildFullPluginList(URL listFile) {
