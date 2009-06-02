@@ -318,3 +318,16 @@ Estimated time to do the above tasks:
 Having learnt my lesson, I think task 1-4 will take me five days (Mon to Friday).
 
 Current plans: The "database" would be expanded from current.txt, including dependencies and filesize (To avoid making too many connections at a time just to get download size for our Download Manager). A separate database would contain richer information like description.
+
+
+
+1st June, Monday-Tuesday
+What was implemented:
+-Refactoring stage 4: A new PluginTable that replaces JTableX and RowEditorModel, simpler code
+-Controller.java now has a basic check for dependencies when adding plugins - System.out.println output only
+
+Through discussion:
+- Most of the code regarding the table (settings and the like) should be at the definition of PluginTable
+- Table will handle the PluginList directly, instead of leaving the latter to its attributes
+- Current problem: PluginTable is not told anything about the plugins, and the selection mode is not specified by PluginTable
+- Problems to take note of, intuitiveness: PluginCollection and PluginDataReader, which one should text parsing go to?
