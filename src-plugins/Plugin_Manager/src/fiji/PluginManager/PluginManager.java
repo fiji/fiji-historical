@@ -288,6 +288,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 			toInstallList = controller.getUnlistedInstalls(toInstallList);
 			toUpdateList = controller.getUnlistedUpdates(toUpdateList);
 			toRemoveList = controller.getUnlistedRemoves(toRemoveList);
+			System.out.println("------------------------------------------------------------");
 			for (int i = 0; i < toInstallList.size(); i++) {
 				PluginObject myPlugin = toInstallList.get(i);
 				System.out.println("To set to installed: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
@@ -357,6 +358,22 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 			TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getNewMd5Sum());
 			TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
 			TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getNewTimestamp());
+			TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
+			ArrayList<Dependency> myNewDependencies = (ArrayList<Dependency>) myPlugin.getNewDependencies();
+			strDependencies = "";
+			if (myNewDependencies != null) {
+				int noOfDependencies = myNewDependencies.size();
+				for (int i = 0; i < noOfDependencies; i++) {
+					Dependency dependency = myNewDependencies.get(i);
+					strDependencies +=  dependency.getFilename() + " (" + dependency.getTimestamp() + ")";
+					if (i != noOfDependencies -1 && noOfDependencies != 1) //if last index
+						strDependencies += ",\n";
+				}
+				if (strDependencies.equals("")) strDependencies = "None";
+			} else {
+				strDependencies = "None";
+			}
+			TextPaneFormat.insertText(txtPluginDetails, "\n" + strDependencies);
 		}
 	}
 

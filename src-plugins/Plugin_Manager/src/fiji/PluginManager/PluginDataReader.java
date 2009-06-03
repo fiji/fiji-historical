@@ -81,41 +81,78 @@ public class PluginDataReader {
 		// timestamp info in the case of update)
 
 		//retrieve information of installed plugins...
-		PluginObject pluginA = new PluginObject("PluginA.jar", "65c3ecc1bbd7564f92545ffd2521f9d96509ca64", "20090429190842", "This is a description of Plugin A", null, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+		Dependency dependencyA1 = new Dependency("PluginD.jar", "20090420190033");
+		ArrayList<Dependency> Adependency = new ArrayList<Dependency>();
+		Adependency.add(dependencyA1);
+		PluginObject pluginA = new PluginObject("PluginA.jar", "65c3ecc1bbd7564f92545ffd2521f9d96509ca64", "20090429190842", "This is a description of Plugin A", Adependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
-		Dependency dependencyB1 = new Dependency("PluginA.jar", "20090429190842");
+		Dependency dependencyB1 = new Dependency("PluginD.jar", "20090420190033");
+		Dependency dependencyB2 = new Dependency("PluginH.jar", "20081224666220");
+		Dependency dependencyB3 = new Dependency("PluginC.jar", "20081011183621");
 		ArrayList<Dependency> Bdependency = new ArrayList<Dependency>();
 		Bdependency.add(dependencyB1);
+		Bdependency.add(dependencyB2);
+		Bdependency.add(dependencyB3);
 		PluginObject pluginB = new PluginObject("PluginB.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20090429190854", "This is a description of Plugin B", Bdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
-		Dependency dependencyC2 = new Dependency("PluginA.jar", "20090429190842");
-		Dependency dependencyC3 = new Dependency("PluginB.jar", "20090429190854");
-		ArrayList<Dependency> Cdependency = new ArrayList<Dependency>();
-		Cdependency.add(dependencyC2);
-		Cdependency.add(dependencyC3);
-		PluginObject pluginC = new PluginObject("PluginC.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d", "20090429190854", "This is a description of Plugin C", Cdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+		PluginObject pluginC = new PluginObject("PluginC.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d", "20090425190854", "This is a description of Plugin C", null, PluginObject.STATUS_INSTALLED, PluginObject.ACTION_NONE);
 
-		PluginObject pluginD = new PluginObject("PluginD.jar", "61c3ecc1add7364f92545ffd2521e9d96508cb62", "20090429190842", "This is a description of Plugin D", null, PluginObject.STATUS_INSTALLED, PluginObject.ACTION_NONE);
+		Dependency dependencyD1 = new Dependency("PluginF.jar", "20090420191023");
+		//Dependency dependencyD2 = new Dependency("PluginL.jar", "20090220616220");
+		Dependency dependencyD3 = new Dependency("PluginE.jar", "20090311213621");
+		ArrayList<Dependency> Ddependency = new ArrayList<Dependency>();
+		Ddependency.add(dependencyD1);
+		//Ddependency.add(dependencyD2);
+		Ddependency.add(dependencyD3);
+		PluginObject pluginD = new PluginObject("PluginD.jar", "61c3ecc1add7364f92545ffd2521e9d96508cb62", "20090420190033", "This is a description of Plugin D", Ddependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
-		Dependency dependencyE4 = new Dependency("PluginA.jar", "20090429190842");
+		Dependency dependencyE1 = new Dependency("PluginG.jar", "20090125190842");
 		ArrayList<Dependency> Edependency = new ArrayList<Dependency>();
-		Edependency.add(dependencyE4);
-		PluginObject pluginE = new PluginObject("PluginE.jar", "8114fe93cbf7720c01c7ff97c28b007b79900dc7", "20090501190854", "This is a description of Plugin E", Edependency, PluginObject.STATUS_MAY_UPDATE, PluginObject.ACTION_NONE);
+		Edependency.add(dependencyE1);
+		PluginObject pluginE = new PluginObject("PluginE.jar", "8114fe93cbf7720c01c7ff97c28b007b79900dc7", "20090311213621", "This is a description of Plugin E", Edependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
-		Dependency dependencyF5 = new Dependency("PluginE.jar","20090501190854");
-		Dependency dependencyF6 = new Dependency("PluginB.jar","20090429190854");
+		Dependency dependencyF1 = new Dependency("PluginI.jar", "20090501190854");
 		ArrayList<Dependency> Fdependency = new ArrayList<Dependency>();
-		Fdependency.add(dependencyF5);
-		Fdependency.add(dependencyF6);
-		PluginObject pluginF = new PluginObject("PluginF.jar", "1b992dbca07ef84020d44a980c7902ba6c82dfee", "20090509190854", "This is a description of Plugin F", Fdependency, PluginObject.STATUS_MAY_UPDATE, PluginObject.ACTION_NONE);
+		Fdependency.add(dependencyF1);
+		PluginObject pluginF = new PluginObject("PluginF.jar", "1b992dbca07ef84020d44a980c7902ba6c82dfee", "20090420191023", "This is a description of Plugin F", Fdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+		
+		PluginObject pluginG = new PluginObject("PluginG.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d", "20090415160854", "This is a description of Plugin G", null, PluginObject.STATUS_MAY_UPDATE, PluginObject.ACTION_NONE);
+		pluginG.setToUpdateable("2c992db3327ef8402bd44b980c7992da6c8eefd9", "20090502130854", null);
+		
+		Dependency dependencyH1 = new Dependency("PluginD.jar", "20090420190033");
+		ArrayList<Dependency> HnewDependency = new ArrayList<Dependency>();
+		HnewDependency.add(dependencyH1);
+		PluginObject pluginH = new PluginObject("PluginH.jar", "33c88dc1fbd7564f92587ffdc521f9de6507ca65", "20081224666220", "This is a description of Plugin H", null, PluginObject.STATUS_MAY_UPDATE, PluginObject.ACTION_NONE);
+		pluginH.setToUpdateable("23d88dc1fbd7564f92087ffdc529acce6500ef60", "20090524666220", HnewDependency);
+		
+		Dependency dependencyI1 = new Dependency("PluginF.jar", "20090420191023");
+		Dependency dependencyI2 = new Dependency("PluginK.jar", "20081221866291");
+		ArrayList<Dependency> Idependency = new ArrayList<Dependency>();
+		Idependency.add(dependencyI1);
+		Idependency.add(dependencyI2);
+		PluginObject pluginI = new PluginObject("PluginI.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20090429190854", "This is a description of Plugin I", Idependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
+		Dependency dependencyJ1 = new Dependency("PluginI.jar", "20090404090854");
+		ArrayList<Dependency> Jdependency = new ArrayList<Dependency>();
+		Jdependency.add(dependencyJ1);
+		PluginObject pluginJ = new PluginObject("PluginJ.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20090521181954", "This is a description of Plugin J", Jdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+		
+		Dependency dependencyK1 = new Dependency("PluginJ.jar", "20090404090854");
+		ArrayList<Dependency> Kdependency = new ArrayList<Dependency>();
+		Kdependency.add(dependencyK1);
+		PluginObject pluginK = new PluginObject("PluginK.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20081221866291", "This is a description of Plugin K", Kdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+		
 		pluginList.add(pluginA);
 		pluginList.add(pluginB);
 		pluginList.add(pluginC);
 		pluginList.add(pluginD);
 		pluginList.add(pluginE);
 		pluginList.add(pluginF);
-
+		pluginList.add(pluginG);
+		pluginList.add(pluginH);
+		pluginList.add(pluginI);
+		pluginList.add(pluginJ);
+		pluginList.add(pluginK);
 		}
 	}
 
