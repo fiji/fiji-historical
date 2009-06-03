@@ -321,7 +321,7 @@ Current plans: The "database" would be expanded from current.txt, including depe
 
 
 
-1st June, Monday-Tuesday
+1st-2nd June, Monday-Tuesday
 What was implemented:
 -Refactoring stage 4: A new PluginTable that replaces JTableX and RowEditorModel, simpler code
 -Controller.java now has a basic check for dependencies when adding plugins - System.out.println output only
@@ -331,3 +331,21 @@ Through discussion:
 - Table will handle the PluginList directly, instead of leaving the latter to its attributes
 - Current problem: PluginTable is not told anything about the plugins, and the selection mode is not specified by PluginTable
 - Problems to take note of, intuitiveness: PluginCollection and PluginDataReader, which one should text parsing go to?
+
+
+
+3rd June, Wednesday
+-PluginTable class now in charge of PluginTableModel and its own settings after been handed the Controller and PluginManager references.
+-addDependency() of Controller class works by adding ALL dependencies related to a particular plugin.
+-getUnlistedInstalls(), getUnlistedUpdates() which generates a list of dependencies that the user did NOT visibly select to install/update.
+-Test cases for Dependency-checking created. Having went through them, addDependency() at this stage should be considered bug-free.
+
+Revised implementation tasklist from Thursday to Friday, in order:
+1-Writing method for removeDependent() for Controller class
+2-Display download/time manager for downloading of current.txt and or calculating md5 sums
+3-PluginCollection and PluginDataReader refactoring
+4-Able to delete incomplete files when download manager is cancelled
+5-Have a Layout Manager for DownloadUI
+6-Further improve coding conventions
+
+Knowing my coding abilities at this stage, probably hard to complete all tasks...
