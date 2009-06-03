@@ -229,34 +229,11 @@ class PluginTableModel extends AbstractTableModel {
 			if (entry.getStatus() == PluginObject.STATUS_UNINSTALLED) {
 				//if option chosen is "Not installed"
 				if (newValue.equals(PluginTable.arrUninstalledOptions[0])) {
-					List<PluginObject> toUninstallList = new ArrayList<PluginObject>();
-					controller.removeDependent(toUninstallList, entry);
 					entry.setAction(PluginObject.ACTION_NONE);
-					
-					//debug: Print out the plugin dependencies
-					System.out.println("What you deselected: " + entry.getFilename());
-					for (int i = 0; i < toUninstallList.size(); i++) {
-						PluginObject myPlugin = toUninstallList.get(i);
-						System.out.println("To set to uninstalled: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
-					}
 				}
 				//if option chosen is "Install"
 				else if (newValue.equals(PluginTable.arrUninstalledOptions[1])) {
-					List<PluginObject> toInstallList = new ArrayList<PluginObject>();
-					List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
-					controller.addDependency(toInstallList, toUpdateList, entry);
 					entry.setAction(PluginObject.ACTION_REVERSE);
-
-					//debug: Print out the plugin dependencies
-					System.out.println("What you selected: " + entry.getFilename());
-					for (int i = 0; i < toInstallList.size(); i++) {
-						PluginObject myPlugin = toInstallList.get(i);
-						System.out.println("To set to installed: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
-					}
-					for (int i = 0; i < toUpdateList.size(); i++) {
-						PluginObject myPlugin = toUpdateList.get(i);
-						System.out.println("To set to updated: " + myPlugin.getFilename() + ", " + myPlugin.getNewTimestamp());
-					}
 				}
 				//otherwise...
 				else {
@@ -265,35 +242,12 @@ class PluginTableModel extends AbstractTableModel {
 			} else if (entry.getStatus() == PluginObject.STATUS_INSTALLED) {
 				//if option chosen is "Installed"
 				if (newValue.equals(PluginTable.arrInstalledOptions[0])) {
-					List<PluginObject> toInstallList = new ArrayList<PluginObject>();
-					List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
-					controller.addDependency(toInstallList, toUpdateList, entry);
 					entry.setAction(PluginObject.ACTION_NONE);
-
-					//debug: Print out the plugin dependencies
-					System.out.println("What you selected: " + entry.getFilename());
-					for (int i = 0; i < toInstallList.size(); i++) {
-						PluginObject myPlugin = toInstallList.get(i);
-						System.out.println("To set to installed: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
-					}
-					for (int i = 0; i < toUpdateList.size(); i++) {
-						PluginObject myPlugin = toUpdateList.get(i);
-						System.out.println("To set to updated: " + myPlugin.getFilename() + ", " + myPlugin.getNewTimestamp());
-					}
 				}
 				//if option chosen is "Remove" (Or uninstall it)
 				else if (newValue.equals(PluginTable.arrInstalledOptions[1])) {
 					//TO IMPLEMENT: To check whether it is valid to remove w/o violating dependencies
-					List<PluginObject> toUninstallList = new ArrayList<PluginObject>();
-					controller.removeDependent(toUninstallList, entry);
 					entry.setAction(PluginObject.ACTION_REVERSE);
-					
-					//debug: Print out the plugin dependencies
-					System.out.println("What you deselected: " + entry.getFilename());
-					for (int i = 0; i < toUninstallList.size(); i++) {
-						PluginObject myPlugin = toUninstallList.get(i);
-						System.out.println("To set to uninstalled: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
-					}
 				}
 				//otherwise...
 				else {
@@ -302,52 +256,15 @@ class PluginTableModel extends AbstractTableModel {
 			} else if (entry.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
 				//if option chosen is "Installed"
 				if (newValue.equals(PluginTable.arrUpdateableOptions[0])) {
-					List<PluginObject> toInstallList = new ArrayList<PluginObject>();
-					List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
-					controller.addDependency(toInstallList, toUpdateList, entry);
 					entry.setAction(PluginObject.ACTION_NONE);
-
-					//debug: Print out the plugin dependencies
-					System.out.println("What you selected: " + entry.getFilename());
-					for (int i = 0; i < toInstallList.size(); i++) {
-						PluginObject myPlugin = toInstallList.get(i);
-						System.out.println("To set to installed: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
-					}
-					for (int i = 0; i < toUpdateList.size(); i++) {
-						PluginObject myPlugin = toUpdateList.get(i);
-						System.out.println("To set to updated: " + myPlugin.getFilename() + ", " + myPlugin.getNewTimestamp());
-					}
 				}
 				//if option chosen is "Remove" (Or uninstall it)
 				else if (newValue.equals(PluginTable.arrUpdateableOptions[1])) {
-					List<PluginObject> toUninstallList = new ArrayList<PluginObject>();
-					controller.removeDependent(toUninstallList, entry);
 					entry.setAction(PluginObject.ACTION_REVERSE);
-					
-					//debug: Print out the plugin dependencies
-					System.out.println("What you deselected: " + entry.getFilename());
-					for (int i = 0; i < toUninstallList.size(); i++) {
-						PluginObject myPlugin = toUninstallList.get(i);
-						System.out.println("To set to uninstalled: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
-					}
 				}
 				//if option chosen is "Update"
 				else if (newValue.equals(PluginTable.arrUpdateableOptions[2])) {
-					List<PluginObject> toInstallList = new ArrayList<PluginObject>();
-					List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
-					controller.addDependency(toInstallList, toUpdateList, entry);
 					entry.setAction(PluginObject.ACTION_UPDATE);
-
-					//debug: Print out the plugin dependencies
-					System.out.println("What you selected: " + entry.getFilename());
-					for (int i = 0; i < toInstallList.size(); i++) {
-						PluginObject myPlugin = toInstallList.get(i);
-						System.out.println("To set to installed: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
-					}
-					for (int i = 0; i < toUpdateList.size(); i++) {
-						PluginObject myPlugin = toUpdateList.get(i);
-						System.out.println("To set to updated: " + myPlugin.getFilename() + ", " + myPlugin.getNewTimestamp());
-					}
 				}
 				//otherwise...
 				else {

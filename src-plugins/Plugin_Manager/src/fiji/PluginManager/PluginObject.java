@@ -18,6 +18,7 @@ public class PluginObject {
 	public static final byte ACTION_REVERSE = 1; //Install if not installed, Uninstall if installed
 	public static final byte ACTION_UPDATE = 2; //Only possibly valid for (status == 2)
 	private byte action = ACTION_NONE; //default
+	private List<Dependency> newDependency;
 	private List<Dependency> dependency; //Dependency object: filename and timestamp
 
 	public PluginObject(String strFilename, String md5Sum, String timestamp) {
@@ -36,10 +37,11 @@ public class PluginObject {
 		this.action = action;
 	}
 
-	public void setToUpdateable(String newMd5Sum, String newTimestamp) {
+	public void setToUpdateable(String newMd5Sum, String newTimestamp, List<Dependency> newDependency) {
 		setStatus(PluginObject.STATUS_MAY_UPDATE); //set status, if not done so already
 		this.newMd5Sum = newMd5Sum;
 		this.newTimestamp = newTimestamp;
+		this.newDependency = newDependency;
 	}
 
 	public void setDescription(String description) {
@@ -92,6 +94,14 @@ public class PluginObject {
 
 	public Dependency getDependency(int index) {
 		return dependency.get(index);
+	}
+	
+	public List<Dependency> getNewDependencies() {
+		return newDependency;
+	}
+	
+	public Dependency getNewDependency(int index) {
+		return newDependency.get(index);
 	}
 
 	public byte getStatus() {

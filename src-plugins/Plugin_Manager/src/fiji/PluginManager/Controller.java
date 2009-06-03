@@ -19,11 +19,34 @@ public class Controller {
 
 	//comes up with a list of plugins needed for download to go with this selected plugin
 	public void addDependency(List<PluginObject> changeToInstallList, List<PluginObject> changeToUpdateList, PluginObject selectedPlugin) {
+		//First retrieve the dependency list
+		List<Dependency> dependencyList = new ArrayList<Dependency>();
+		boolean updateableState = (selectedPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE);
+		if (updateableState) {
+			boolean selectedInInstallList = changeToInstallList.contains(selectedPlugin);
+			boolean selectedInUpdateList = changeToUpdateList.contains(selectedPlugin);
+			//does not belong to any list, implies its the FIRST selected plugin
+			if (!selectedInInstallList && !selectedInUpdateList) {
+				//if action indicate to update further, then use new dependencies
+				if (selectedPlugin.getAction() == PluginObject.ACTION_UPDATE)
+					dependencyList = selectedPlugin.getNewDependencies();
+				else //otherwise, as per normal
+					dependencyList = selectedPlugin.getDependencies();
+			} else { //if it is already in a list
+				if (!selectedInInstallList && selectedInUpdateList)
+					dependencyList = selectedPlugin.getNewDependencies();
+				else if (selectedInInstallList && !selectedInUpdateList)
+					dependencyList = selectedPlugin.getDependencies();
+				//else... Can't possibly have both true at the same time
+			}
+		} else //otherwise, as per normal
+			dependencyList = selectedPlugin.getDependencies();
+
 		//if there are no dependencies for this selected plugin
-		if (selectedPlugin.getDependencies() == null || selectedPlugin.getDependencies().size() == 0) {
+		if (dependencyList == null || dependencyList.size() == 0) {
 			return;
 		} else {
-			List<Dependency> dependencyList = selectedPlugin.getDependencies();
+			//if there are dependencies, check for prerequisites
 			for (int i = 0; i < dependencyList.size(); i++) {
 
 				Dependency dependency = dependencyList.get(i);
@@ -32,37 +55,37 @@ public class Controller {
 
 					//if Prerequisite is found,
 					if (plugin.getFilename().equals(dependency.getFilename())) {
+						boolean inInstallList = changeToInstallList.contains(plugin);
+						boolean inUpdateList = changeToUpdateList.contains(plugin);
 						//Which does not exist in any of the "change" lists yet
-						if (!changeToInstallList.contains(plugin) &&
-							!changeToUpdateList.contains(plugin)) {
+						if (!inInstallList && !inUpdateList) {
 
-							//if prerequisite already installed, but asked to be uninstalled
-							if (plugin.getStatus() == PluginObject.STATUS_INSTALLED &&
-									plugin.getAction() == PluginObject.ACTION_REVERSE) {
+							//if prerequisite installed/uninstalled
+							if (plugin.getStatus() == PluginObject.STATUS_INSTALLED ||
+								plugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
 								//add to list
 								changeToInstallList.add(plugin);
 								addDependency(changeToInstallList, changeToUpdateList, plugin);
 							}
-							//if prerequisite not installed, and asked to have no action taken
-							else if (plugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
-									plugin.getAction() == PluginObject.ACTION_NONE) {
-								//add to list
-								changeToInstallList.add(plugin);
-								addDependency(changeToInstallList, changeToUpdateList, plugin);
-							}
-							//if prerequisite is update-able, but not asked to update to latest
-							else if (plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE &&
-									plugin.getAction() != PluginObject.ACTION_UPDATE) {
+							//if prerequisite is update-able
+							else if (plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
 								//if current dependency's plugin is outdated
 								if (plugin.getTimestamp().compareTo(dependency.getTimestamp()) < 0) {
 									changeToUpdateList.add(plugin); //add to update list ("special" case)
-									addDependency(changeToInstallList, changeToUpdateList, plugin);
-								} else { //if current installed dependency is not outdated
-									if (plugin.getAction() == PluginObject.ACTION_REVERSE) {
-										changeToInstallList.add(plugin);
-										addDependency(changeToInstallList, changeToUpdateList, plugin);
-									} //otherwise, leave it be (It is enough unless user specifies otherwise)
+								} else { //if not, just installing is the minimum
+									changeToInstallList.add(plugin);
 								}
+								addDependency(changeToInstallList, changeToUpdateList, plugin);
+							}
+						}
+						//if previous "update-able" prerequisite only requires an install
+						else if (inInstallList && !inUpdateList &&
+								plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+							//Check again, if this current dependency's plugin is outdated
+							if (plugin.getTimestamp().compareTo(dependency.getTimestamp()) < 0) {
+								changeToInstallList.remove(plugin);
+								changeToUpdateList.add(plugin); //add to update list ("special" case)
+								addDependency(changeToInstallList, changeToUpdateList, plugin);
 							}
 						} else { //if prerequisite does appear in the "change" lists
 							//nothing, assume its dependencies were added already as well
@@ -79,6 +102,59 @@ public class Controller {
 		
 	}
 
+	//Using a compiled list of dependencies for all plugins selected by user
+	//Objective is to show user only information that was previously invisible
+	public List<PluginObject> getUnlistedInstalls(List<PluginObject> toInstallList) {
+		List<PluginObject> unlistedInstalls = new ArrayList<PluginObject>();
+		for (int i = 0; i < toInstallList.size(); i++) {
+			PluginObject plugin = toInstallList.get(i);
+			if ((plugin.getStatus() == PluginObject.STATUS_INSTALLED ||
+				plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) &&
+				plugin.getAction() == PluginObject.ACTION_REVERSE) {
+				unlistedInstalls.add(plugin);
+			} else if (plugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
+					plugin.getAction() == PluginObject.ACTION_NONE) {
+				unlistedInstalls.add(plugin);
+			}
+		}
+		return unlistedInstalls;
+	}
+
+	//Using a compiled list of dependencies of all plugins selected by user
+	//Objective is to show user only information that was previously invisible
+	public List<PluginObject> getUnlistedUpdates(List<PluginObject> toUpdateList) {
+		List<PluginObject> unlistedUpdates = new ArrayList<PluginObject>();
+		for (int i = 0; i < toUpdateList.size(); i++) {
+			PluginObject plugin = toUpdateList.get(i);
+			if (plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE &&
+				plugin.getAction() != PluginObject.ACTION_UPDATE) {
+				unlistedUpdates.add(plugin);
+			}
+		}
+		return unlistedUpdates;
+	}
+
+	//Using a compiled list of dependencies of all plugins deselected by user
+	//Objective is to show user only information that was previously invisible
+	public List<PluginObject> getUnlistedRemoves(List<PluginObject> toUninstallList) {
+		List<PluginObject> unlistedRemoves = new ArrayList<PluginObject>();
+		for (int i = 0; i < toUninstallList.size(); i++) {
+			PluginObject plugin = toUninstallList.get(i);
+			if (plugin.getStatus() == PluginObject.STATUS_INSTALLED &&
+				plugin.getAction() == PluginObject.ACTION_NONE) {
+				unlistedRemoves.add(plugin);
+			} else if (plugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
+					plugin.getAction() == PluginObject.ACTION_REVERSE) {
+				unlistedRemoves.add(plugin);
+			} else if (plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE &&
+					plugin.getAction() != PluginObject.ACTION_REVERSE) {
+				unlistedRemoves.add(plugin);
+			}
+		}
+		return unlistedRemoves;
+	}
+
+	//forces action for every plugin in the list to "install"
 	public void setToInstall(List<PluginObject> selectedList) {
 		for (int i = 0; i < selectedList.size(); i++) {
 			PluginObject plugin = selectedList.get(i);
@@ -91,19 +167,17 @@ public class Controller {
 		}
 	}
 
+	//forces action for every update-able plugin in the list to be "update"
 	public void setToUpdate(List<PluginObject> selectedList) {
 		for (int i = 0; i < selectedList.size(); i++) {
 			PluginObject plugin = selectedList.get(i);
-			if (plugin.getStatus() == PluginObject.STATUS_INSTALLED) {
-				plugin.setAction(PluginObject.ACTION_NONE);
-			} else if (plugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
-				plugin.setAction(PluginObject.ACTION_REVERSE);
-			} else if (plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+			if (plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
 				plugin.setAction(PluginObject.ACTION_UPDATE);
 			}
 		}
 	}
 
+	//forces action for every plugin in the list to be "uninstall"
 	public void setToRemove(List<PluginObject> selectedList) {
 		for (int i = 0; i < selectedList.size(); i++) {
 			PluginObject plugin = selectedList.get(i);

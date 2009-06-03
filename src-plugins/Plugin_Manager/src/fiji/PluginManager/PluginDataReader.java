@@ -49,7 +49,7 @@ public class PluginDataReader {
 
 	public PluginDataReader() {
 		pluginList = new PluginCollection();
-		if (tempDemo) {
+		if (!tempDemo) {
 
 		dates = new TreeMap<String, String>();
 		digests = new TreeMap<String, String>();
@@ -286,7 +286,7 @@ public class PluginDataReader {
 				pluginList.add(myPlugin);
 			} else { //if its to be updated
 				myPlugin = new PluginObject(name, digest, date);
-				myPlugin.setToUpdateable(remoteDigest, remoteDate);
+				myPlugin.setToUpdateable(remoteDigest, remoteDate, null);
 				myPlugin.setStatus(PluginObject.STATUS_MAY_UPDATE);
 				pluginList.add(myPlugin);
 			}

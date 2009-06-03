@@ -256,6 +256,8 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 	private void clickToBeginOperations() {
 		//in later implementations, this should liase with Controller
 		//if status says there's a list to download...
+		boolean tempDemo = true;
+		if (!tempDemo) {
 		frameDownloader = new DownloadUI(this);
 		//Installer installer = new Installer(((PluginCollection)pluginList).getListWhereActionIsSpecified(), updateURL);
 		frameDownloader.setVisible(true);
@@ -264,6 +266,41 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 				updateURL);
 		frameDownloader.setInstaller(installer);
 		setEnabled(false);
+		} else {
+			//if just a demo
+			List<PluginObject> myList = controller.getPluginList();
+			List<PluginObject> toInstallList = new ArrayList<PluginObject>();
+			List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
+			List<PluginObject> toRemoveList = new ArrayList<PluginObject>();
+			for (int i = 0; i < myList.size(); i++) {
+				PluginObject myPlugin = myList.get(i);
+				if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
+					myPlugin.getAction() == PluginObject.ACTION_REVERSE)
+					controller.addDependency(toInstallList, toUpdateList, myPlugin);
+				else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE &&
+					myPlugin.getAction() == PluginObject.ACTION_UPDATE)
+					controller.addDependency(toInstallList, toUpdateList, myPlugin);
+				else if ((myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
+					myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) &&
+					myPlugin.getAction() == PluginObject.ACTION_REVERSE)
+					controller.removeDependent(toRemoveList, myPlugin);
+			}
+			toInstallList = controller.getUnlistedInstalls(toInstallList);
+			toUpdateList = controller.getUnlistedUpdates(toUpdateList);
+			toRemoveList = controller.getUnlistedRemoves(toRemoveList);
+			for (int i = 0; i < toInstallList.size(); i++) {
+				PluginObject myPlugin = toInstallList.get(i);
+				System.out.println("To set to installed: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
+			}
+			for (int i = 0; i < toUpdateList.size(); i++) {
+				PluginObject myPlugin = toUpdateList.get(i);
+				System.out.println("To set to updated: " + myPlugin.getFilename() + ", " + myPlugin.getNewTimestamp());
+			}
+			for (int i = 0; i < toRemoveList.size(); i++) {
+				PluginObject myPlugin = toRemoveList.get(i);
+				System.out.println("To set to uninstalled: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
+			}
+		}
 	}
 
 	private void clickToQuitPluginManager() {
