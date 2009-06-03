@@ -35,7 +35,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class PluginDataReader {
-	private boolean tempDemo = false; //if true, use UpdateFiji.java's code...
+	private boolean tempDemo = true; //if true, use UpdateFiji.java's code...
 
 	private List<PluginObject> pluginList;
 	private Map<String, String> digests;

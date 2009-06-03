@@ -116,5 +116,9 @@ public class Controller {
 			}
 		}
 	}
+
+	public List<PluginObject> getPluginList() {
+		return pluginList;
+	}
 }
 

@@ -65,7 +65,6 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 			};
 	private JTextField txtSearch;
 	private JComboBox comboBoxViewingOptions;
-	private PluginTableModel pluginTableModel;
 	private PluginTable table;
 	private JLabel lblPluginSummary;
 	private JTextPane txtPluginDetails;
@@ -90,13 +89,32 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 
 		setUpUserInterface();
 
-		//Retrieves the data and displays them
-		pluginTableModel.update(pluginDataReader.getExistingPluginList());
-
 		setVisible(true);
 	}
 
 	private void setUpUserInterface() {
+		/* Create textpane to hold the information and its scrollpane */
+		txtPluginDetails = new JTextPane();
+		txtPluginDetails.setEditable(false);
+		txtPluginDetails.setPreferredSize(new Dimension(335,315));
+		JScrollPane txtScrollpane = new JScrollPane(txtPluginDetails);
+		txtScrollpane.getViewport().setBackground(txtPluginDetails.getBackground());
+		txtScrollpane.setPreferredSize(new Dimension(335,315));
+
+		/* Tabbed pane of plugin details to hold the textpane (w/ scrollpane) */
+		JTabbedPane tabbedPane = new JTabbedPane();
+		JPanel panelPluginDetails = new JPanel();
+		panelPluginDetails.setLayout(new BorderLayout());
+		panelPluginDetails.add(txtScrollpane, BorderLayout.CENTER);
+		tabbedPane.addTab("Details", null, panelPluginDetails, "Individual Plugin information");
+		tabbedPane.setPreferredSize(new Dimension(335,315));
+
+		JPanel rightPanel = new JPanel();
+		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+		rightPanel.add(Box.createVerticalGlue());
+		rightPanel.add(tabbedPane);
+		rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
+
 		/* Create text search */
 		JLabel lblSearch1 = new JLabel("Search:", SwingConstants.LEFT);
 		txtSearch = new JTextField();
@@ -130,103 +148,17 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		lblTablePanel.add(Box.createHorizontalGlue());
 		lblTablePanel.setLayout(new BoxLayout(lblTablePanel, BoxLayout.X_AXIS));
 
-		/* Create the plugin table */
-		table = new PluginTable();
-		setupTableModel(); //set pluginTableModel and table column widths
-		table.setColumnSelectionAllowed(false);
-		table.setRowSelectionAllowed(true);
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-
-			public void valueChanged(ListSelectionEvent event) {
-				int viewRow = table.getSelectedRow();
-				if (viewRow < 0) {
-					//Selection got filtered away
-				} else {
-					int modelRow = table.convertRowIndexToModel(viewRow);
-					PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
-					txtPluginDetails.setText("");
-					TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BOLD_BLACK_TITLE);
-					if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE)
-						TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.ITALIC_BLACK);
-					TextPaneFormat.insertText(txtPluginDetails, "\n\nMd5 Sum", TextPaneFormat.BOLD_BLACK);
-					TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum());
-					TextPaneFormat.insertText(txtPluginDetails, "\n\nLast Modified: ", TextPaneFormat.BOLD_BLACK);
-					TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp());
-					TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
-					ArrayList<Dependency> myDependencies = (ArrayList<Dependency>) myPlugin.getDependencies();
-					String strDependencies = "";
-					if (myDependencies != null) {
-						int noOfDependencies = myDependencies.size();
-						for (int i = 0; i < noOfDependencies; i++) {
-							Dependency dependency = myDependencies.get(i);
-							strDependencies +=  dependency.getFilename() + " (" + dependency.getTimestamp() + ")";
-							if (i != noOfDependencies -1 && noOfDependencies != 1) //if last index
-								strDependencies += ",\n";
-						}
-						if (strDependencies.equals("")) strDependencies = "None";
-					} else {
-						strDependencies = "None";
-					}
-					TextPaneFormat.insertText(txtPluginDetails, "\n" + strDependencies);
-					TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
-					String strDescription = "";
-					if (myPlugin.getDescription() == null || myPlugin.getDescription().trim().equals("")) {
-						strDescription = "None";
-					} else
-						strDescription = myPlugin.getDescription();
-					TextPaneFormat.insertText(txtPluginDetails, "\n" + strDescription);
-					if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
-						TextPaneFormat.insertText(txtPluginDetails, "\n\nUpdate Details", TextPaneFormat.BOLD_BLACK_TITLE);
-						TextPaneFormat.insertText(txtPluginDetails, "\n\nNew Md5 Sum", TextPaneFormat.BOLD_BLACK);
-						TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getNewMd5Sum());
-						TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
-						TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getNewTimestamp());
-					}
-				}
-			}
-
-		});
-
-		//Set appearance of table
-		table.setShowGrid(false);
-		table.setIntercellSpacing(new Dimension(0,0));
-		table.setAutoResizeMode(JTableX.AUTO_RESIZE_ALL_COLUMNS);
-		table.setRequestFocusEnabled(false);
-		table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-
-			// method to over-ride - returns cell renderer component
-			public Component getTableCellRendererComponent(JTable table, Object value, 
-					boolean isSelected, boolean hasFocus, int row, int column) {
-
-				// let the default renderer prepare the component for us
-				Component comp = super.getTableCellRendererComponent(table, value,
-						isSelected, hasFocus, row, column);
-				int modelRow = table.convertRowIndexToModel(row);
-				PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
-
-				if (myPlugin.getAction() == PluginObject.ACTION_NONE) {
-					//if there is no action
-					comp.setFont(comp.getFont().deriveFont(Font.PLAIN));
-				} else {
-					//if an action is specified by user, bold the field
-					comp.setFont(comp.getFont().deriveFont(Font.BOLD));
-				}
-
-				return comp;
-			}
-		});
-		
-		/* create the scrollpane that holds the table */
-		JScrollPane pluginListScrollpane = new JScrollPane(table);
-		pluginListScrollpane.getViewport().setBackground(table.getBackground());
-
 		/* Label text for plugin summaries */
 		lblPluginSummary = new JLabel();
 		JPanel lblSummaryPanel = new JPanel();
 		lblSummaryPanel.add(lblPluginSummary);
 		lblSummaryPanel.add(Box.createHorizontalGlue());
 		lblSummaryPanel.setLayout(new BoxLayout(lblSummaryPanel, BoxLayout.X_AXIS));
+
+		/* Create the plugin table and set up its scrollpane */
+		table = new PluginTable(controller, this);
+		JScrollPane pluginListScrollpane = new JScrollPane(table);
+		pluginListScrollpane.getViewport().setBackground(table.getBackground());
 
 		JPanel leftPanel = new JPanel();
 		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
@@ -239,30 +171,6 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		leftPanel.add(pluginListScrollpane);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,5)));
 		leftPanel.add(lblSummaryPanel);
-
-		/* Create textpane to hold the information */
-		txtPluginDetails = new JTextPane();
-		txtPluginDetails.setEditable(false);
-		txtPluginDetails.setPreferredSize(new Dimension(335,315));
-
-		/* Create scrollpane to hold the textpane */
-		JScrollPane txtScrollpane = new JScrollPane(txtPluginDetails);
-		txtScrollpane.getViewport().setBackground(txtPluginDetails.getBackground());
-		txtScrollpane.setPreferredSize(new Dimension(335,315));
-
-		/* Tabbed pane of plugin details to hold the textpane (w/ scrollpane) */
-		JTabbedPane tabbedPane = new JTabbedPane();
-		JPanel panelPluginDetails = new JPanel();
-		panelPluginDetails.setLayout(new BorderLayout());
-		panelPluginDetails.add(txtScrollpane, BorderLayout.CENTER);
-		tabbedPane.addTab("Details", null, panelPluginDetails, "Individual Plugin information");
-		tabbedPane.setPreferredSize(new Dimension(335,315));
-
-		JPanel rightPanel = new JPanel();
-		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-		rightPanel.add(Box.createVerticalGlue());
-		rightPanel.add(tabbedPane);
-		rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
 
 		JPanel topPanel = new JPanel();
 		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
@@ -307,29 +215,8 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		getContentPane().add(bottomPanel);
 	}
 
-	//Set up the table model
-	private void setupTableModel() {
-		table.setModel(pluginTableModel = new PluginTableModel(controller));
-		table.getModel().addTableModelListener(this); //listen for changes (tableChanged(TableModelEvent e))
-		TableColumn col1 = table.getColumnModel().getColumn(0);
-		TableColumn col2 = table.getColumnModel().getColumn(1);
-
-		//Minimum width of 370 (250 + 120)
-		col1.setPreferredWidth(250);
-		col1.setMinWidth(250);
-		col1.setResizable(false);
-		col2.setPreferredWidth(120);
-		col2.setMinWidth(120);
-		col2.setResizable(false);
-	}
-
 	//Whenever Viewing Options in the ComboBox has been changed
 	private void comboBoxViewListener() {
-		//Remove the old pluginList display, if any
-		table.getModel().removeTableModelListener(this);
-		//Preparing the new pluginList display
-		setupTableModel();
-
 		List<PluginObject> viewList = new ArrayList<PluginObject>();
 		int selectedIndex = comboBoxViewingOptions.getSelectedIndex();
 
@@ -363,7 +250,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		}
 
 		//Directly update the table for display
-		pluginTableModel.update(viewList);
+		table.setupTableModel(viewList);
 	}
 
 	private void clickToBeginOperations() {
@@ -393,6 +280,47 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 
 	public void actionPerformed(ActionEvent e) {
 		
+	}
+
+	public void displayPluginDetails(PluginObject myPlugin) {
+		txtPluginDetails.setText("");
+		TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BOLD_BLACK_TITLE);
+		if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE)
+			TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.ITALIC_BLACK);
+		TextPaneFormat.insertText(txtPluginDetails, "\n\nMd5 Sum", TextPaneFormat.BOLD_BLACK);
+		TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum());
+		TextPaneFormat.insertText(txtPluginDetails, "\n\nLast Modified: ", TextPaneFormat.BOLD_BLACK);
+		TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp());
+		TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
+		ArrayList<Dependency> myDependencies = (ArrayList<Dependency>) myPlugin.getDependencies();
+		String strDependencies = "";
+		if (myDependencies != null) {
+			int noOfDependencies = myDependencies.size();
+			for (int i = 0; i < noOfDependencies; i++) {
+				Dependency dependency = myDependencies.get(i);
+				strDependencies +=  dependency.getFilename() + " (" + dependency.getTimestamp() + ")";
+				if (i != noOfDependencies -1 && noOfDependencies != 1) //if last index
+					strDependencies += ",\n";
+			}
+			if (strDependencies.equals("")) strDependencies = "None";
+		} else {
+			strDependencies = "None";
+		}
+		TextPaneFormat.insertText(txtPluginDetails, "\n" + strDependencies);
+		TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
+		String strDescription = "";
+		if (myPlugin.getDescription() == null || myPlugin.getDescription().trim().equals("")) {
+			strDescription = "None";
+		} else
+			strDescription = myPlugin.getDescription();
+		TextPaneFormat.insertText(txtPluginDetails, "\n" + strDescription);
+		if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+			TextPaneFormat.insertText(txtPluginDetails, "\n\nUpdate Details", TextPaneFormat.BOLD_BLACK_TITLE);
+			TextPaneFormat.insertText(txtPluginDetails, "\n\nNew Md5 Sum", TextPaneFormat.BOLD_BLACK);
+			TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getNewMd5Sum());
+			TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
+			TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getNewTimestamp());
+		}
 	}
 
 	//When a value in the table has been modified by the user

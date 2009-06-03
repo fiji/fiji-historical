@@ -1,19 +1,31 @@
 package fiji.PluginManager;
 
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumn;
 
 /*
  * This class' role is to be in charge of how the Table should be displayed
  */
 public class PluginTable extends JTable {
+	private Controller controller;
+	private PluginTableModel pluginTableModel;
+	private PluginManager pluginManager;
+
 	static String[] arrUninstalledOptions = { "Not installed", "Install it" };
 	static String[] arrInstalledOptions = { "Installed", "Remove it" };
 	static String[] arrUpdateableOptions = { "Installed", "Remove it", "Update it" };
@@ -21,7 +33,84 @@ public class PluginTable extends JTable {
 	private TableCellEditor installedOptions = new DefaultCellEditor(new JComboBox(arrInstalledOptions));
 	private TableCellEditor updateableOptions = new DefaultCellEditor(new JComboBox(arrUpdateableOptions));
 
-	//constructors remain the same
+	//NOTE: To be created only after related display components are created
+	//Namely: lblPluginSummary, txtPluginDetails
+	public PluginTable(Controller controller, PluginManager pluginManager) {
+		this.controller = controller;
+		this.pluginManager = pluginManager;
+
+		//default display: All plugins shown
+		setupTableModel(controller.getPluginList());
+
+		//set up the table properties and other settings
+		setColumnSelectionAllowed(false);
+		setRowSelectionAllowed(true);
+		//this.setRowSelectionInterval(0, 1); //1st row selected
+		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+
+			//Called when a row is selected
+			public void valueChanged(ListSelectionEvent event) {
+				int viewRow = getSelectedRow();
+				if (viewRow < 0) {
+					//Selection got filtered away
+				} else {
+					int modelRow = convertRowIndexToModel(viewRow);
+					PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
+					displayPluginDetails(myPlugin);
+				}
+			}
+
+		});
+
+		//Set appearance of table
+		setShowGrid(false);
+		setIntercellSpacing(new Dimension(0,0));
+		setAutoResizeMode(JTableX.AUTO_RESIZE_ALL_COLUMNS);
+		setRequestFocusEnabled(false);
+		setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+
+			// method to over-ride - returns cell renderer component
+			public Component getTableCellRendererComponent(JTable table, Object value, 
+					boolean isSelected, boolean hasFocus, int row, int column) {
+
+				// let the default renderer prepare the component for us
+				Component comp = super.getTableCellRendererComponent(table, value,
+						isSelected, hasFocus, row, column);
+				int modelRow = table.convertRowIndexToModel(row);
+				PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
+
+				if (myPlugin.getAction() == PluginObject.ACTION_NONE) {
+					//if there is no action
+					comp.setFont(comp.getFont().deriveFont(Font.PLAIN));
+				} else {
+					//if an action is specified by user, bold the field
+					comp.setFont(comp.getFont().deriveFont(Font.BOLD));
+				}
+
+				return comp;
+			}
+		});
+	}
+
+	//Set up table model, to be called each time display list is to be changed
+	public void setupTableModel(List<PluginObject> myList) {
+		getModel().removeTableModelListener(pluginManager);
+		setModel(pluginTableModel = new PluginTableModel(controller));
+		getModel().addTableModelListener(pluginManager); //listen for changes (tableChanged(TableModelEvent e))
+		TableColumn col1 = getColumnModel().getColumn(0);
+		TableColumn col2 = getColumnModel().getColumn(1);
+
+		//Minimum width of 370 (250 + 120)
+		col1.setPreferredWidth(250);
+		col1.setMinWidth(250);
+		col1.setResizable(false);
+		col2.setPreferredWidth(120);
+		col2.setMinWidth(120);
+		col2.setResizable(false);
+
+		pluginTableModel.update(myList);
+	}
 
 	public TableCellEditor getCellEditor(int row, int col) {
 		PluginTableModel pluginTableModel = (PluginTableModel)this.getModel();
@@ -41,6 +130,10 @@ public class PluginTable extends JTable {
 				throw new Error("Error while assigning combo-boxes to data!");
 		} else
 			throw new Error("Unidentified Column number for Plugin Table");
+	}
+
+	private void displayPluginDetails(PluginObject myPlugin) {
+		pluginManager.displayPluginDetails(myPlugin);
 	}
 }
 
@@ -264,21 +357,6 @@ class PluginTableModel extends AbstractTableModel {
 				throw new Error("Invalid status specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
 			}
 			fireTableChanged(new TableModelEvent(this));
-			/*PluginJAR jar = jEdit.getPluginJAR(entry.jar);
-			if(jar == null)
-			{
-				if(value.equals(Boolean.FALSE))
-					return;
-
-				loadPluginJAR(entry.jar);
-			}
-			else
-			{
-				if(value.equals(Boolean.TRUE))
-					return;
-
-				unloadPluginJARWithDialog(jar);
-			}*/
 		}
 	}
 
