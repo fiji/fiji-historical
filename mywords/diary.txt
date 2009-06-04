@@ -349,3 +349,25 @@ Revised implementation tasklist from Thursday to Friday, in order:
 6-Further improve coding conventions
 
 Knowing my coding abilities at this stage, probably hard to complete all tasks...
+
+
+
+4th June, Thursday
+-removeDependent() for Controller class implemented
+   -The algorithm for removal seemed more straightforward than that of adding. Weird.
+-Refactored Installer.java by having additional Downloader.java
+-Refactored PluginDataReader.java with a new class LoadStatusDisplay inside
+   -Separation of presentation from content using Observer pattern
+
+Alas... Still need to implement the presentation when it comes to download current.txt
+
+What remains a mystery...
+
+"How the DataReader knows so fully well how to parse a text file into a plugin list, while the PluginCollection does not" - I thought PluginCollection is just a collection of plugins, while the DataReader's responsibility is to "read data", which parsing text file is considered part of?
+
+For PluginCollection:
+"make an inner class that implements Iterator<PluginObject> and that knows how to filter by a multitude of parameters."
+
+"Perhaps an inner interface 'Filter' (not 'PluginFilter', as we know already that this is all about plugins) would just have one method: boolean matchesFilter(PluginObject plugin)"
+
+Wait? What is meant by filter? Is it by giving a PluginCollection method (Just one method) some parameters which would then loop through the list and selects a new list that fits the requirements stated by the parameters? I don't quite get matchesFilter() suggestion either. Why filter by plugin when I thought all these while I'm filtering by PluginObject.STATUS_INSTALLED and the like?
