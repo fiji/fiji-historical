@@ -35,7 +35,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class PluginDataReader {
-	private boolean tempDemo = true; //if true, use UpdateFiji.java's code...
+	private boolean tempDemo = false; //if true, use UpdateFiji.java's code...
 
 	private List<PluginObject> pluginList;
 	private Map<String, String> digests;
@@ -190,7 +190,6 @@ public class PluginDataReader {
 			queueDirectory(queue, "retro");
 			queueDirectory(queue, "misc");
 		} else {
-			System.out.println("very second.....");
 			for (int i = 0; i < only.length; i++)
 				queue.add(only[i]);
 		}
@@ -257,17 +256,6 @@ public class PluginDataReader {
 		}
 		in.close();
 	}
-	/*public void copyFile(InputStream in, OutputStream out) throws IOException {
-		byte[] buffer = new byte[65536];
-		int count;
-		while ((count = in.read(buffer)) >= 0) {
-			out.write(buffer, 0, count);
-			downloadedBytes += count;
-			System.out.println("Downloaded so far: " + downloadedBytes);
-		}
-		in.close();
-		out.close();
-	}*/
 
 	/* Called after local plugin files have been processed */
 	public void buildFullPluginList(URL listFile) {

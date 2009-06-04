@@ -73,7 +73,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 
 	public PluginManager() {
 		super("Plugin Manager");
-		setSize(750,540);
+		//setSize(750,540);
 
 		//Firstly, get information from local, existing plugins
 		pluginDataReader = new PluginDataReader();
@@ -90,6 +90,8 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		setUpUserInterface();
 
 		setVisible(true);
+		
+		pack();
 	}
 
 	private void setUpUserInterface() {
@@ -256,7 +258,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 	private void clickToBeginOperations() {
 		//in later implementations, this should liase with Controller
 		//if status says there's a list to download...
-		boolean tempDemo = true;
+		boolean tempDemo = false;
 		if (!tempDemo) {
 		frameDownloader = new DownloadUI(this);
 		//Installer installer = new Installer(((PluginCollection)pluginList).getListWhereActionIsSpecified(), updateURL);

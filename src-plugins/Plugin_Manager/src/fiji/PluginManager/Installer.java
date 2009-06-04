@@ -10,6 +10,8 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -34,7 +36,7 @@ import java.net.URLDecoder;
  * This class' main role is to download selected files, as well as indicate those that
  * are marked for deletion. It is able to track the number of bytes downloaded.
 */
-public class Installer implements Runnable {
+public class Installer implements Runnable, Observer {
 	private PluginDataProcessor pluginDataProcessor;
 	private String updateURL;
 	private final String updateDirectory = "update";
@@ -44,6 +46,7 @@ public class Installer implements Runnable {
 	private List<PluginObject> toUninstallList;
 	private List<PluginObject> downloadedList;
 	private List<PluginObject> waitingList;
+	private List<PluginObject> failedDownloadsList;
 	private PluginObject currentlyDownloading;
 	private int totalBytes;
 	private int downloadedBytes;
@@ -56,6 +59,7 @@ public class Installer implements Runnable {
 		toInstallList = new PluginCollection();
 		waitingList = new PluginCollection();
 		downloadedList = new PluginCollection();
+		failedDownloadsList = new PluginCollection();
 
 		//divide into two groups
 		toUninstallList = ((PluginCollection)selectedList).getListWhereActionUninstall();
@@ -66,26 +70,6 @@ public class Installer implements Runnable {
 				toInstallList.add(myPlugin);
 			}
 		}
-	}
-
-	public void update(HttpURLConnection myConnection, String targetPath)
-	throws FileNotFoundException, IOException {
-		System.out.println(currentlyDownloading.getFilename() + " began downloading...");
-		new File(targetPath).getParentFile().mkdirs();
-		copyFile(myConnection.getInputStream(), new FileOutputStream(targetPath));
-	}
-
-	public void copyFile(InputStream in, OutputStream out)
-			throws IOException {
-		byte[] buffer = new byte[65536];
-		int count;
-		while ((count = in.read(buffer)) >= 0) {
-			out.write(buffer, 0, count);
-			downloadedBytes += count;
-			System.out.println("Downloaded so far: " + downloadedBytes);
-		}
-		in.close();
-		out.close();
 	}
 
 	//start processing on contents of deletionList
@@ -111,6 +95,9 @@ public class Installer implements Runnable {
 		return waitingList;
 	}
 
+	public List<PluginObject> getListOfFailedDownloads() {
+		return failedDownloadsList;
+	}
 	public PluginObject getCurrentDownload() {
 		return currentlyDownloading;
 	}
@@ -169,6 +156,7 @@ public class Installer implements Runnable {
 
 			String fullPath = pluginDataProcessor.prefix(updateDirectory +
 					File.separator + name);
+			String downloadURL = "";
 			try {
 				if (name.startsWith("fiji-")) {
 					boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
@@ -179,13 +167,11 @@ public class Installer implements Runnable {
 				}
 
 				//Download the file specified at this iteration
-				System.out.println("Trying to establish connection for " + new URL(new URL(updateURL), name + "-" + date).getPath());
-				HttpURLConnection myConnection = (HttpURLConnection)(new URL(new URL(updateURL), name + "-" + date)).openConnection();
-				System.out.println("Connection for " + new URL(new URL(updateURL), name + "-" + date).getPath() + " established.");
-				update(myConnection, fullPath);
-				myConnection.disconnect();
-				//update(new URL(updateURL), name, "-" + date, fullPath);
-				//String digest = (String)remote.digests.get(name);
+				downloadURL = new URL(new URL(updateURL), name + "-" + date).toString();
+				Downloader downloader = new Downloader(downloadURL, fullPath);
+				downloader.register(this);
+				downloader.startDownload(); //download (after which will close connection)
+
 				String realDigest = pluginDataProcessor.getDigest(name, fullPath);
 				if (!realDigest.equals(digest))
 					throw new Exception("Wrong checksum: Recorded Md5 sum " + digest + " != Actual Md5 sum " + realDigest);
@@ -196,14 +182,34 @@ public class Installer implements Runnable {
 				downloadedList.add(currentlyDownloading);
 				System.out.println(currentlyDownloading.getFilename() + " finished download.");
 				currentlyDownloading = null;
+
+			} catch (MalformedURLException e) {
+				waitingList.remove(currentlyDownloading);
+				failedDownloadsList.add(currentlyDownloading);
+				currentlyDownloading = null;
+				System.out.println("URL: " + downloadURL + " has unknown protocol.");
+			} catch (IOException e) {
+				waitingList.remove(currentlyDownloading);
+				failedDownloadsList.add(currentlyDownloading);
+				currentlyDownloading = null;
+				System.out.println("I/O Exception while opening connection to " + downloadURL);
 			} catch(Exception e) {
-				//try to delete the file
+				//try to delete the file (probably this be the only catch - DRY)
 				try {
 					new File(fullPath).delete();
 				} catch (Exception e2) { }
-				throw new Error("Could not update " + name + ": " + e.getMessage());
+				waitingList.remove(currentlyDownloading);
+				failedDownloadsList.add(currentlyDownloading);
+				currentlyDownloading = null;
+				System.out.println("Could not update " + name + ": " + e.getMessage());
 			}
 		}
+	}
+
+	public void refreshData(Observable subject) {
+		Downloader myDownloader = (Downloader)subject;
+		downloadedBytes += myDownloader.getNumOfBytes();
+		System.out.println("Downloaded so far: " + downloadedBytes);
 	}
 
 }

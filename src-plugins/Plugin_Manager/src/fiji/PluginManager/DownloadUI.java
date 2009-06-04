@@ -18,7 +18,6 @@ import java.util.List;
 class DownloadUI extends JFrame {
 	private PluginManager pluginManager; //Used if opened from Plugin Manager UI
 	private Installer installer; //To grab data from (Used if Plugin Manager UI not null)
-	private PluginDataReader pluginDataReader; //To grab data from (Used if Plugin Manager UI is null)
 
 	private Timer timer;
 	private JButton btnClose;
@@ -33,13 +32,6 @@ class DownloadUI extends JFrame {
 	//Download Window opened from Plugin Manager UI
 	public DownloadUI(PluginManager pluginManager) {
 		this.pluginManager = pluginManager;
-		setUpUserInterface();
-		setupButtonsAndListeners();
-	}
-
-	//Download Window for downloading current.txt and/or database file
-	public DownloadUI(PluginDataReader pluginDataReader) {
-		this.pluginDataReader = pluginDataReader;
 		setUpUserInterface();
 		setupButtonsAndListeners();
 	}
@@ -92,8 +84,6 @@ class DownloadUI extends JFrame {
 			//Timer to check for download
 			timer = new Timer();
 			timer.schedule(new DownloadStatus(), 0, 100); //status refreshes every 100 ms
-		} else {
-			//Not loaded from PluginManager UI
 		}
 	}
 
@@ -108,6 +98,7 @@ class DownloadUI extends JFrame {
 				//List<PluginObject> toUninstallList;
 				List<PluginObject> downloadedList = installer.getListOfDownloaded();
 				List<PluginObject> waitingList = installer.getListOfWaiting();
+				List<PluginObject> failedList = installer.getListOfFailedDownloads();
 				PluginObject currentlyDownloading = installer.getCurrentDownload();
 				int totalBytes = installer.getBytesTotal();
 				int downloadedBytes = installer.getBytesDownloaded();
@@ -125,6 +116,10 @@ class DownloadUI extends JFrame {
 						PluginObject myPlugin = downloadedList.get(i);
 						if (i != 0) strCurrentStatus += "\n";
 						strCurrentStatus += "Finished downloading " + myPlugin.getFilename();
+					}
+					for (int i=0; i < failedList.size(); i++) {
+						PluginObject myPlugin = failedList.get(i);
+						strCurrentStatus += "\n" + myPlugin.getFilename() + " failed to download.";
 					}
 					if (currentlyDownloading != null) {
 						strCurrentStatus += "\nNow downloading " + currentlyDownloading.getFilename();
@@ -199,7 +194,6 @@ class DownloadUI extends JFrame {
 
 	public void setInstaller(Installer installer) {
 		if (this.installer != null) throw new Error("Installer object already exists.");
-		else if (pluginManager == null) throw new Error("Plugin Download/Removal tasks are not shown here.");
 		else {
 			this.installer = installer;
 			installer.startDelete();

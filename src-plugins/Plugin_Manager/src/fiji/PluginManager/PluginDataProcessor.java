@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -166,17 +167,17 @@ public class PluginDataProcessor {
 
 	public String[] getDigestAndDateFromFile(String path){
 		try {
-		String fullPath = prefix(path);
-		String digest = getDigest(path, fullPath);
-		long modified = new File(fullPath).lastModified();
+			String fullPath = prefix(path);
+			String digest = getDigest(path, fullPath);
+			long modified = new File(fullPath).lastModified();
 
-		if (useMacPrefix && path.startsWith(macPrefix))
-			path = path.substring(macPrefix.length());
-		if (File.separator.equals("\\"))
-			path = path.replace("\\", "/");
+			if (useMacPrefix && path.startsWith(macPrefix))
+				path = path.substring(macPrefix.length());
+			if (File.separator.equals("\\"))
+				path = path.replace("\\", "/");
 
-		String[] myDigestAndDate = {path, digest, timestamp(modified)};
-		return myDigestAndDate;
+			String[] myDigestAndDate = {path, digest, timestamp(modified)};
+			return myDigestAndDate;
 		} catch (Exception e) {
 			if (e instanceof FileNotFoundException && path.startsWith("fiji-"))
 				return null;
