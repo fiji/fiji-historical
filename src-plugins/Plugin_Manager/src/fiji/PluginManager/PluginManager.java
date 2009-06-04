@@ -285,9 +285,9 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 					myPlugin.getAction() == PluginObject.ACTION_REVERSE)
 					controller.removeDependent(toRemoveList, myPlugin);
 			}
-			toInstallList = controller.getUnlistedInstalls(toInstallList);
-			toUpdateList = controller.getUnlistedUpdates(toUpdateList);
-			toRemoveList = controller.getUnlistedRemoves(toRemoveList);
+			//toInstallList = controller.getUnlistedInstalls(toInstallList);
+			//toUpdateList = controller.getUnlistedUpdates(toUpdateList);
+			//toRemoveList = controller.getUnlistedRemoves(toRemoveList);
 			System.out.println("------------------------------------------------------------");
 			for (int i = 0; i < toInstallList.size(); i++) {
 				PluginObject myPlugin = toInstallList.get(i);

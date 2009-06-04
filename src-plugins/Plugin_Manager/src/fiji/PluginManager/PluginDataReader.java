@@ -87,7 +87,7 @@ public class PluginDataReader {
 		PluginObject pluginA = new PluginObject("PluginA.jar", "65c3ecc1bbd7564f92545ffd2521f9d96509ca64", "20090429190842", "This is a description of Plugin A", Adependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
 		Dependency dependencyB1 = new Dependency("PluginD.jar", "20090420190033");
-		Dependency dependencyB2 = new Dependency("PluginH.jar", "20081224666220");
+		Dependency dependencyB2 = new Dependency("PluginH.jar", "20090524666220");
 		Dependency dependencyB3 = new Dependency("PluginC.jar", "20081011183621");
 		ArrayList<Dependency> Bdependency = new ArrayList<Dependency>();
 		Bdependency.add(dependencyB1);

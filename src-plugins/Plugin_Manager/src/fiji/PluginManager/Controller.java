@@ -98,8 +98,31 @@ public class Controller {
 		}
 	}
 
+	//comes up with a list of plugins needed to be removed if selected is removed
 	public void removeDependent(List<PluginObject> changeToUninstallList, PluginObject selectedPlugin) {
-		
+		//Search through entire list
+		for (int i = 0; i < pluginList.size(); i++) {
+			PluginObject plugin = pluginList.get(i);
+			boolean inUninstallList = changeToUninstallList.contains(plugin);
+			if (inUninstallList) {
+				continue; //already in UninstallList ==> Its dependents are assumed to be too
+			} else {
+				List<Dependency> dependencyList = plugin.getDependencies();
+				if (dependencyList == null || dependencyList.size() == 0) {
+					//do nothing
+				} else {
+					for (int j = 0; j < dependencyList.size(); j++) {
+						Dependency dependency = dependencyList.get(j);
+						String dependencyFilename = dependency.getFilename();
+						if (dependencyFilename.equals(selectedPlugin.getFilename())) {
+							changeToUninstallList.add(plugin);
+							removeDependent(changeToUninstallList, plugin);
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
 
 	//Using a compiled list of dependencies for all plugins selected by user
