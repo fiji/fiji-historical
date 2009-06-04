@@ -30,13 +30,23 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Vector;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class PluginDataReader {
+public class PluginDataReader implements Observable {
 	private boolean tempDemo = false; //if true, use UpdateFiji.java's code...
 
+	static byte STATUS_INACTIVE = 0; //doing nothing
+	static byte STATUS_CALC = 1; //calculating Md5 sums
+	static byte STATUS_DOWNLOAD = 2; //downloading important information
+	private byte readerStatus = STATUS_INACTIVE; //default
+	private String filename;
+	private int currentlyLoaded;
+	private int totalToLoad;
+
+	private Vector<Observer> observersList;
 	private List<PluginObject> pluginList;
 	private Map<String, String> digests;
 	private Map<String, String> dates;
@@ -48,6 +58,9 @@ public class PluginDataReader {
 	private PluginDataProcessor pluginDataProcessor;
 
 	public PluginDataReader() {
+		observersList = new Vector<Observer>();
+		register(new LoadStatusDisplay());
+
 		pluginList = new PluginCollection();
 		if (!tempDemo) {
 
@@ -162,13 +175,14 @@ public class PluginDataReader {
 		return string.substring(0, string.length() - suffix.length());
 	}
 
-	public void initialize(String fijiPath) {
+	private void initialize(String fijiPath) {
 		initialize(fijiPath, null);
 	}
 
 	//NOTE: This method along with initialize(String fijiPath) looks redundant, will
 	//look into it again
-	public void initialize(String fijiPath, String[] only) {
+	//Generate required information from the local plugins
+	private void initialize(String fijiPath, String[] only) {
 		//is the below line even needed?
 		//this.fijiPath = (fijiPath == null ? pluginDataProcessor.getDefaultFijiPath() : fijiPath);
 		List<String> queue = new ArrayList<String>();
@@ -194,31 +208,53 @@ public class PluginDataReader {
 				queue.add(only[i]);
 		}
 
+		//To calculate the Md5 sums on the local side
 		Iterator<String> iter = queue.iterator();
-		int i = 0, total = queue.size();
+		readerStatus = PluginDataReader.STATUS_CALC;
+		currentlyLoaded = 0;
+		totalToLoad = queue.size();
 		while (iter.hasNext()) {
-			String name = (String)iter.next();
-			//To do: Perhaps move GUI-related stuff over to PluginManager
-			if (hasGUI)
-				IJ.showStatus("Checksumming " + name + "...");
+			filename = (String)iter.next();
+			notifyObservers();
 
-			String[] digestAndDate = pluginDataProcessor.getDigestAndDateFromFile(name);
-
+			String[] digestAndDate = pluginDataProcessor.getDigestAndDateFromFile(filename);
 			//index 0: path name, index 1: digest, index 2: date
 			if (digestAndDate != null && digestAndDate[1] != null && digestAndDate[2] != null) {
 				digests.put(digestAndDate[0], digestAndDate[1]);
 				dates.put(digestAndDate[0], digestAndDate[2]);
 			}
 
-			if (hasGUI)
-				IJ.showProgress(++i, total);
+			++currentlyLoaded;
+			notifyObservers();
 		}
-		if (hasGUI)
-			IJ.showStatus("");
+	}
+
+	public byte getReaderStatus() {
+		return readerStatus;
+	}
+
+	public String getFilename() {
+		return filename;
+	}
+
+	public int getCurrentlyLoaded() {
+		return currentlyLoaded;
+	}
+
+	public int getTotalToLoad() {
+		return totalToLoad;
+	}
+
+	public List<PluginObject> getExistingPluginList() {
+		return pluginList;
+	}
+
+	public PluginDataProcessor getPluginDataProcessor() {
+		return pluginDataProcessor;
 	}
 
 	//recursively looks into a directory and adds the relevant file
-	public void queueDirectory(List<String> queue, String path) {
+	private void queueDirectory(List<String> queue, String path) {
 		File dir = new File(pluginDataProcessor.prefix(path));
 		if (!dir.isDirectory())
 			return;
@@ -233,11 +269,7 @@ public class PluginDataReader {
 					path + File.separator + list[i]);
 	}
 
-	public List<PluginObject> getExistingPluginList() {
-		return pluginList;
-	}
-
-	public void initializeFromList(InputStream input) throws IOException {
+	private void initializeFromList(InputStream input) throws IOException {
 		BufferedReader in =
 			new BufferedReader(new InputStreamReader(input));
 		String line;
@@ -260,6 +292,9 @@ public class PluginDataReader {
 	/* Called after local plugin files have been processed */
 	public void buildFullPluginList(URL listFile) {
 	//public void combineUpdatesWithPluginList(String strURL) {
+		readerStatus = PluginDataReader.STATUS_DOWNLOAD;
+		notifyObservers();
+
 		try {
 			initializeFromList(listFile.openStream());
 			//fetchUpdateInformation(strURL);
@@ -355,7 +390,38 @@ public class PluginDataReader {
 
 	}
 
-	public PluginDataProcessor getPluginDataProcessor() {
-		return pluginDataProcessor;
+	public void notifyObservers() {
+		// Send notify to all Observers
+		for (int i = 0; i < observersList.size(); i++) {
+			Observer observer = (Observer) observersList.elementAt(i);
+			observer.refreshData(this);
+		}
 	}
+
+	public void register(Observer obs) {
+		observersList.addElement(obs);
+	}
+
+	public void unRegister(Observer obs) {
+	}
+}
+
+class LoadStatusDisplay implements Observer {
+	public LoadStatusDisplay() {
+		IJ.showStatus("Starting up Plugin Manager");
+	}
+
+	public void refreshData(Observable subject) {
+		PluginDataReader pluginDataReader = (PluginDataReader)subject;
+		if (pluginDataReader.getReaderStatus() == PluginDataReader.STATUS_CALC) {
+			IJ.showStatus("Checksumming " + pluginDataReader.getFilename() + "...");
+			IJ.showProgress(pluginDataReader.getCurrentlyLoaded(), pluginDataReader.getTotalToLoad());
+		} else if (pluginDataReader.getReaderStatus() == PluginDataReader.STATUS_DOWNLOAD) {
+			IJ.showStatus("Downloading " + pluginDataReader.getFilename() + "...");
+			IJ.showProgress(pluginDataReader.getCurrentlyLoaded(), pluginDataReader.getTotalToLoad());
+		} else {
+			IJ.showStatus("");
+		}
+	}
+
 }
