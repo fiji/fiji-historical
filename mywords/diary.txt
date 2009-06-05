@@ -390,3 +390,9 @@ Tasks pushed to next week:
 - Have a layout manager for DownloadUI
 
 Problems: Tried cancelling downloads, but even after interrupting the thread, the download continues!
+
+Tasks for next week:
+- Have a layout manager for Download UI
+- Resolve the weird issue of continuing downloads of course
+- Continue Dependency-checking for Controller.java ==> Presentation issues ==> How to present the information? Implement.
+- Start going into thinking up of and developing the database
