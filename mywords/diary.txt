@@ -371,3 +371,22 @@ For PluginCollection:
 "Perhaps an inner interface 'Filter' (not 'PluginFilter', as we know already that this is all about plugins) would just have one method: boolean matchesFilter(PluginObject plugin)"
 
 Wait? What is meant by filter? Is it by giving a PluginCollection method (Just one method) some parameters which would then loop through the list and selects a new list that fits the requirements stated by the parameters? I don't quite get matchesFilter() suggestion either. Why filter by plugin when I thought all these while I'm filtering by PluginObject.STATUS_INSTALLED and the like?
+
+
+
+5th June, Friday
+Display status when loading
+- Downloader.java modified to create new Connection after its constructors are called - So that filesize can be retrieved as a method
+- PluginDataReader.java now allow displaying download status of current.txt.
+- LoadStatusDisplay now observes PluginDataReader, which in turn observes Downloader.
+
+Refactoring
+- PluginCollection now implements "Filter" pattern
+- Use Iterator when able to (Installer class)
+
+Next task later: PluginTable refactoring
+-Also... Able to delete incomplete files when download manager is cancelled
+-Clean up clode (and improve coding conventions)
+
+Tasks pushed to next week:
+- Have a layout manager for DownloadUI

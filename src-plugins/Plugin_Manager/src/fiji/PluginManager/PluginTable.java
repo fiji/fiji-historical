@@ -4,15 +4,19 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.ArrayList;
+import java.util.EventObject;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.CellEditorListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
@@ -22,9 +26,9 @@ import javax.swing.table.TableColumn;
  * This class' role is to be in charge of how the Table should be displayed
  */
 public class PluginTable extends JTable {
-	private Controller controller;
 	private PluginTableModel pluginTableModel;
 	private PluginManager pluginManager;
+	private PluginDataReader pluginDataReader;
 
 	static String[] arrUninstalledOptions = { "Not installed", "Install it" };
 	static String[] arrInstalledOptions = { "Installed", "Remove it" };
@@ -35,12 +39,12 @@ public class PluginTable extends JTable {
 
 	//NOTE: To be created only after related display components are created
 	//Namely: lblPluginSummary, txtPluginDetails
-	public PluginTable(Controller controller, PluginManager pluginManager) {
-		this.controller = controller;
+	public PluginTable(PluginDataReader pluginDataReader, PluginManager pluginManager) {
+		this.pluginDataReader = pluginDataReader;
 		this.pluginManager = pluginManager;
 
 		//default display: All plugins shown
-		setupTableModel(controller.getPluginList());
+		setupTableModel(pluginDataReader.getExistingPluginList());
 
 		//set up the table properties and other settings
 		setColumnSelectionAllowed(false);
@@ -96,7 +100,7 @@ public class PluginTable extends JTable {
 	//Set up table model, to be called each time display list is to be changed
 	public void setupTableModel(List<PluginObject> myList) {
 		getModel().removeTableModelListener(pluginManager);
-		setModel(pluginTableModel = new PluginTableModel(controller));
+		setModel(pluginTableModel = new PluginTableModel());
 		getModel().addTableModelListener(pluginManager); //listen for changes (tableChanged(TableModelEvent e))
 		TableColumn col1 = getColumnModel().getColumn(0);
 		TableColumn col2 = getColumnModel().getColumn(1);
@@ -131,20 +135,23 @@ public class PluginTable extends JTable {
 		} else
 			throw new Error("Unidentified Column number for Plugin Table");
 	}
+	
+	public Iterator<PluginObject> getEntries() {
+		//question... return full list or just the ones in the table?
+		return pluginTableModel.getEntries();
+	}
 
 	private void displayPluginDetails(PluginObject myPlugin) {
 		pluginManager.displayPluginDetails(myPlugin);
 	}
-}
 
+}
 class PluginTableModel extends AbstractTableModel {
 	private List<PluginObject> entries;
-	private Controller controller;
 
-	public PluginTableModel(Controller controller) {
+	public PluginTableModel() {
 		super();
 		entries = new ArrayList<PluginObject>();
-		this.controller = controller;
 	}
 
 	public int getColumnCount() {
@@ -170,7 +177,12 @@ class PluginTableModel extends AbstractTableModel {
 		}
 	}
 
+	public Iterator<PluginObject> getEntries() {
+		return entries.iterator();
+	}
+
 	public PluginObject getEntry(int rowIndex) {
+		//in the future, you might need to convert this to actual TABLE row index
 		return (PluginObject)entries.get(rowIndex);
 	}
 

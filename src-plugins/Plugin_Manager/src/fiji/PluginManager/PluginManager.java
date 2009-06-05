@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -156,7 +157,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		lblSummaryPanel.setLayout(new BoxLayout(lblSummaryPanel, BoxLayout.X_AXIS));
 
 		/* Create the plugin table and set up its scrollpane */
-		table = new PluginTable(controller, this);
+		table = new PluginTable(pluginDataReader, this);
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());
 
@@ -375,21 +376,20 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		}
 	}
 
-	//When a value in the table has been modified by the user
-	public void tableChanged(TableModelEvent e) {
+	public void tableChanged(TableModelEvent arg0) {
 		//QUESTION: should we count objects in the view-table or objects in the entire list?
-		PluginTableModel model = (PluginTableModel)e.getSource();
-		int size = model.getRowCount();
+		int size = 0;
 		int installCount = 0;
 		int removeCount = 0;
 		int updateCount = 0;
-		for (int i = 0; i < size; i++) {
-			PluginObject myPlugin = model.getEntry(i);
+		Iterator<PluginObject> pluginsData = table.getEntries();
+
+		while (pluginsData.hasNext()) {
+			PluginObject myPlugin = pluginsData.next();
 			if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
 				myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
 				installCount += 1;
-			}
-			else if ((myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
+			} else if ((myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
 				myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) &&
 				myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
 				removeCount += 1;
@@ -397,6 +397,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 						myPlugin.getAction() == PluginObject.ACTION_UPDATE) {
 				updateCount += 1;
 			}
+			size += 1;
 		}
 		lblPluginSummary.setText("Total: " + size + ", To install: " + installCount +
 				", To remove: " + removeCount + ", To update: " + updateCount);
