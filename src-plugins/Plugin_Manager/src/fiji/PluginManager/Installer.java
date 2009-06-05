@@ -40,6 +40,9 @@ public class Installer implements Runnable, Observer {
 	private PluginDataProcessor pluginDataProcessor;
 	private String updateURL;
 	private final String updateDirectory = "update";
+	private List<PluginObject> pluginsWaiting;
+	private Thread myThread;
+
 	private Iterator<PluginObject> tempIter;
 
 	//Keeping track of status
@@ -63,7 +66,8 @@ public class Installer implements Runnable, Observer {
 		//divide into two groups
 		PluginCollection pluginCollection = (PluginCollection)pluginDataReader.getExistingPluginList();
 		iterUninstall = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONSUNINSTALL);
-		iterWaiting = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
+		pluginsWaiting = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
+		iterWaiting = pluginsWaiting.iterator();
 		//just a temporary arrangement
 		tempIter = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
 	}
@@ -102,8 +106,14 @@ public class Installer implements Runnable, Observer {
 
 	//start processing on contents of updateList
 	public void startDownload() {
-		Thread myThread = new Thread(this);
+		myThread = new Thread(this);
 		myThread.start();
+	}
+
+	//stop download
+	public void stopDownload() {
+		myThread.interrupt();
+		myThread = null;
 	}
 
 	public void run() {
@@ -199,6 +209,27 @@ public class Installer implements Runnable, Observer {
 			}
 		}
 		isDownloading = false;
+	}
+
+	public void deleteUnfinished() {
+		Iterator<PluginObject> iterator = pluginsWaiting.iterator();
+		while (iterator.hasNext()) {
+			PluginObject plugin = iterator.next();
+			//if this plugin in waiting list is not fully downloaded yet
+			if (!downloadedList.contains(plugin)) {
+				String name = plugin.getFilename();
+				String fullPath = pluginDataProcessor.prefix(updateDirectory +
+					File.separator + name);
+				if (name.startsWith("fiji-")) {
+					boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
+					String macPrefix = pluginDataProcessor.getMacPrefix();
+					fullPath = pluginDataProcessor.prefix((useMacPrefix ? macPrefix : "") + name);
+				}
+				try {
+					new File(fullPath).delete();
+				} catch (Exception e2) { }
+			}
+		}
 	}
 
 	public void refreshData(Observable subject) {

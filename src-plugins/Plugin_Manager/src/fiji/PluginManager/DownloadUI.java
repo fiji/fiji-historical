@@ -150,21 +150,10 @@ class DownloadUI extends JFrame {
 					"Revert Download?",
 					JOptionPane.YES_NO_OPTION,
 					JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
-				//below comment: loop through the waitingList
-				/*
-					String fullPath = pluginDataProcessor.prefix(updateDirectory +
-					File.separator + name);
-					if (name.startsWith("fiji-")) {
-						boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
-						String macPrefix = pluginDataProcessor.getMacPrefix();
-						fullPath = pluginDataProcessor.prefix((useMacPrefix ? macPrefix : "") + name);
-					}
-					try {
-						new File(fullPath).delete();
-					} catch (Exception e2) { }*/
+				installer.stopDownload();
+				installer.deleteUnfinished();
 					
 				pluginManager.clickBackToPluginManager();
-				//delete or just let those that are already downloaded remain?
 			}
 		}
 	}
