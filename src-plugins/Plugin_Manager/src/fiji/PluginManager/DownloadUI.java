@@ -97,11 +97,11 @@ class DownloadUI extends JFrame {
 			else {
 				//List<PluginObject> toUninstallList;
 				List<PluginObject> downloadedList = installer.getListOfDownloaded();
-				List<PluginObject> waitingList = installer.getListOfWaiting();
 				List<PluginObject> failedList = installer.getListOfFailedDownloads();
 				PluginObject currentlyDownloading = installer.getCurrentDownload();
 				int totalBytes = installer.getBytesTotal();
 				int downloadedBytes = installer.getBytesDownloaded();
+				boolean stillDownloading = installer.stillDownloading();
 				String strCurrentStatus = "";
 
 				if (totalBytes == 0 || downloadedBytes == 0) {
@@ -127,7 +127,7 @@ class DownloadUI extends JFrame {
 					txtProgressDetails.setText(strCurrentStatus);
 
 					//check if download has finished (Whether 100% success or not)
-					if (waitingList.size() == 0) {
+					if (stillDownloading == false) {
 						showProgressComplete();
 						txtProgressDetails.setText(txtProgressDetails.getText() + "\nAll download tasks completed.");
 						timer.cancel();

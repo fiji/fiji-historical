@@ -228,22 +228,22 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		} else if (selectedIndex == 1) {
 
 			//if "View installed plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getAlreadyInstalledList();
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUSALREADYINSTALLED);
 
 		} else if (selectedIndex == 2) {
 
 			//if "View uninstalled plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getListWhereStatus(PluginObject.STATUS_UNINSTALLED);
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUSUNINSTALLED);
 
 		} else if (selectedIndex == 3) {
 
 			//if "View up-to-date plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getListWhereStatus(PluginObject.STATUS_INSTALLED);
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUSINSTALLED);
 
 		} else if (selectedIndex == 4) {
 
 			//if "View update-able plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getListWhereStatus(PluginObject.STATUS_MAY_UPDATE);
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUSMAYUPDATE);
 
 		} else {
 			throw new Error("Viewing option specified does not exist!");
@@ -261,9 +261,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		frameDownloader = new DownloadUI(this);
 		//Installer installer = new Installer(((PluginCollection)pluginList).getListWhereActionIsSpecified(), updateURL);
 		frameDownloader.setVisible(true);
-		installer = new Installer(pluginDataReader.getPluginDataProcessor(),
-				((PluginCollection)pluginDataReader.getExistingPluginList()).getListWhereActionIsSpecified(),
-				updateURL);
+		installer = new Installer(pluginDataReader, updateURL);
 		frameDownloader.setInstaller(installer);
 		setEnabled(false);
 		} else {

@@ -40,41 +40,38 @@ public class Installer implements Runnable, Observer {
 	private PluginDataProcessor pluginDataProcessor;
 	private String updateURL;
 	private final String updateDirectory = "update";
-	private List<PluginObject> toInstallList;
+	private Iterator<PluginObject> tempIter;
 
 	//Keeping track of status
-	private List<PluginObject> toUninstallList;
+	private Iterator<PluginObject> iterUninstall;
 	private List<PluginObject> downloadedList;
-	private List<PluginObject> waitingList;
+	private Iterator<PluginObject> iterWaiting;
 	private List<PluginObject> failedDownloadsList;
 	private PluginObject currentlyDownloading;
 	private int totalBytes;
 	private int downloadedBytes;
+	private boolean isDownloading;
 
 	//Assume the list passed to constructor is a list of only plugins that wanted change
-	public Installer(PluginDataProcessor pluginDataProcessor, List<PluginObject> selectedList, String updateURL) {
+	public Installer(PluginDataReader pluginDataReader, String updateURL) {
 		this.updateURL = updateURL;
-		this.pluginDataProcessor = pluginDataProcessor;
+		this.pluginDataProcessor = pluginDataReader.getPluginDataProcessor();
 
-		toInstallList = new PluginCollection();
-		waitingList = new PluginCollection();
 		downloadedList = new PluginCollection();
 		failedDownloadsList = new PluginCollection();
 
 		//divide into two groups
-		toUninstallList = ((PluginCollection)selectedList).getListWhereActionUninstall();
-		for (int i = 0; i < selectedList.size(); i++) {
-			PluginObject myPlugin = selectedList.get(i);
-			if (!toUninstallList.contains(myPlugin)) {
-				waitingList.add(myPlugin);
-				toInstallList.add(myPlugin);
-			}
-		}
+		PluginCollection pluginCollection = (PluginCollection)pluginDataReader.getExistingPluginList();
+		iterUninstall = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONSUNINSTALL);
+		iterWaiting = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
+		//just a temporary arrangement
+		tempIter = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
 	}
 
 	//start processing on contents of deletionList
 	public void startDelete() {
-		for (int i = 0; i < toUninstallList.size(); i++) {
+		while (iterUninstall.hasNext()) {
+			PluginObject plugin = iterUninstall.next();
 			//do deleting
 		}
 	}
@@ -91,13 +88,14 @@ public class Installer implements Runnable, Observer {
 		return downloadedList;
 	}
 
-	public List<PluginObject> getListOfWaiting() {
-		return waitingList;
+	public boolean stillDownloading() {
+		return isDownloading;
 	}
 
 	public List<PluginObject> getListOfFailedDownloads() {
 		return failedDownloadsList;
 	}
+
 	public PluginObject getCurrentDownload() {
 		return currentlyDownloading;
 	}
@@ -109,9 +107,10 @@ public class Installer implements Runnable, Observer {
 	}
 
 	public void run() {
+		isDownloading = true;
 		//Temporary arrangement - This segment gets the size of the file
-		for (int i = 0; i < toInstallList.size(); i++) {
-			PluginObject myPlugin = toInstallList.get(i);
+		while (tempIter.hasNext()) {
+			PluginObject myPlugin = tempIter.next();
 			String name = myPlugin.getFilename();
 			String digest = null;
 			String date = null;
@@ -139,9 +138,8 @@ public class Installer implements Runnable, Observer {
 		}
 
 		//Downloads the file(s), one by one
-		Iterator<PluginObject> iterInstallList = toInstallList.listIterator();
-		while (iterInstallList.hasNext()) {
-			PluginObject myPlugin = iterInstallList.next();
+		while (iterWaiting.hasNext()) {
+			PluginObject myPlugin = iterWaiting.next();
 			currentlyDownloading = myPlugin;
 			String name = myPlugin.getFilename();
 			String digest = null;
@@ -178,18 +176,15 @@ public class Installer implements Runnable, Observer {
 				if (name.startsWith("fiji-") && !pluginDataProcessor.getPlatform().startsWith("win"))
 					Runtime.getRuntime().exec(new String[] {
 							"chmod", "0755", savePath});
-				waitingList.remove(currentlyDownloading);
 				downloadedList.add(currentlyDownloading);
 				System.out.println(currentlyDownloading.getFilename() + " finished download.");
 				currentlyDownloading = null;
 
 			} catch (MalformedURLException e) {
-				waitingList.remove(currentlyDownloading);
 				failedDownloadsList.add(currentlyDownloading);
 				currentlyDownloading = null;
 				System.out.println("URL: " + downloadURL + " has unknown protocol.");
 			} catch (IOException e) {
-				waitingList.remove(currentlyDownloading);
 				failedDownloadsList.add(currentlyDownloading);
 				currentlyDownloading = null;
 				System.out.println("I/O Exception while opening connection to " + downloadURL);
@@ -198,12 +193,12 @@ public class Installer implements Runnable, Observer {
 				try {
 					new File(savePath).delete();
 				} catch (Exception e2) { }
-				waitingList.remove(currentlyDownloading);
 				failedDownloadsList.add(currentlyDownloading);
 				currentlyDownloading = null;
 				System.out.println("Could not update " + name + ": " + e.getMessage());
 			}
 		}
+		isDownloading = false;
 	}
 
 	public void refreshData(Observable subject) {
