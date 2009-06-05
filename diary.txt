@@ -24,3 +24,31 @@ Today was a good day for me as all the issues related with jmathlib interpreter 
 
 31 May 09
 Today i started with checking the working of refresh_scripts.java and it was working fine.However it was a poor code according to gitte and had various errors according to code conventions of fiji.So i had to look at this file again.Further i also tried to implement an external function in java realted to calculating the mesh of a matrix.There were some errors and i had to look closely at the source code of all the token classes already implemented in the Jmathlib.There are so many token classes and handling them appeared a bit tedious task to me.I also searched on the net to fix some of the limitations of JMathlib such as how to read from a jar file directly and other stiffs related to functionloader when jmathlib is not running in standalone mode.
+
+04 June 09
+Today again i am writing my diary after some days of gap and i felt too much self contempt today.But i hope it will help me in continuing my work well.
+I went through the source code again trying to find out the exact place where the working of two cases standalone and non standalone mode goes
+different and why in non-standalone mode we are not able to execute any .m file placed in the same directory as a function within another .m file.
+It all starts from the executeExpression() method where we pass the parameter as a function name or the script written inside the file read by 
+Refresh_JMahtLib_Scripts.java.Now in case of the name of a .m file written inside the .m file as a function,the constructor of Interpreter by calling
+new Interpreter(false) from Refresh_JMathaLib_Scripts.java sets all the global parameters by calling the constructor of GlobalValues.java in which
+further the constructor of FunctionManager.java is called which makes the functionloader list according to whether it is standalone or non standalone.
+So in our case, the list is made from webFucntionLoader which creates the list according to the harcoded path in webFunctionsList.dat file.
+So till now an expression tree is constructed and the method called in executeExpression() is the evaluate() method which brings us to the
+FunctionToken.java in which there is special handling for return and variable tokens.Then the findFunction() is called which brings us to back to
+FunctionManager.java.Again here there is different mode of operation for standalone and embedded mode.In our case of embedded mode,webFunctionLoader
+ findfunction() comes into picture and it operates by searching for the function in its own functionlist which is created by the hardcoded path already.
+In our case, the filename inside the file is present in the same directory and its not listed in the webFunctionList.dat file.So it can't operate on
+that file resolved as function name again by reading from the file and doing all the operations for executing the script in the file.So here comes the
+ difference when the list is different for the two cases standalone and non-standalone and the processing goes also different in the two cases.I hope
+gitte can understand that i have done my analysis and understand the problem.
+The solutions can be as:
+1. Either adding support for adding the .m file present in the same directory anyhow in the weBFunctionsList.dat file.This will need telling JMathLib 
+where the .m file lies as it is not in the src of jmathlib.
+2.One recursive approach having duplication of code  done again in Refresh_JMathLib_Scripts.java by again reading from the file and doing the same stuff
+already done.
+
+I had decided to go for whole source code of Jmathlib but its wise not to go through whole in one night otherwise i will have the same condition as 
+earlier that i have read the code and then also i am not able to map the correct flow of execution.
+
+ 
