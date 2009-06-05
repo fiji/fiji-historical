@@ -383,10 +383,10 @@ Display status when loading
 Refactoring
 - PluginCollection now implements "Filter" pattern
 - Use Iterator when able to (Installer class)
-
-Next task later: PluginTable refactoring
--Also... Able to delete incomplete files when download manager is cancelled
--Clean up clode (and improve coding conventions)
+- Clean up clode (and improve coding conventions)
 
 Tasks pushed to next week:
+- Delete incomplete files when download manager is cancelled ==> Still work to be done
 - Have a layout manager for DownloadUI
+
+Problems: Tried cancelling downloads, but even after interrupting the thread, the download continues!
