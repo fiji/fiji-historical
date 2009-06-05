@@ -52,7 +52,9 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 	private PluginDataReader pluginDataReader;
 	private Installer installer;
 	private String updateURL = "http://pacific.mpi-cbg.de/update/current.txt";
-	//private String ... //current.txt and database.txt address tentatively......
+	private String updateLocal = "current.txt";
+	private String dbURL = "...";
+	private String dbLocal = "...";
 
 	/* User Interface elements */
 	private DownloadUI frameDownloader;
@@ -78,11 +80,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		//Firstly, get information from local, existing plugins
 		pluginDataReader = new PluginDataReader();
 		//Get information from server to build on information
-		try {
-			pluginDataReader.buildFullPluginList(new URL(updateURL));
-		} catch (MalformedURLException e) {
-			throw new Error(updateURL + " specifies an unknown protocol.");
-		}
+		pluginDataReader.buildFullPluginList(updateURL, updateLocal);
 
 		//initialize the data...
 		controller = new Controller(pluginDataReader.getExistingPluginList());

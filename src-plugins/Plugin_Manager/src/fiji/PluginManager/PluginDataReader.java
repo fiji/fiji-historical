@@ -3,39 +3,19 @@ import ij.IJ;
 import ij.Menus;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-
-import java.net.URL;
-import java.net.URLDecoder;
-
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
-import java.text.DecimalFormat;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
 
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-
-public class PluginDataReader implements Observable {
+public class PluginDataReader implements Observable, Observer {
 	private boolean tempDemo = false; //if true, use UpdateFiji.java's code...
 
 	static byte STATUS_INACTIVE = 0; //doing nothing
@@ -45,21 +25,22 @@ public class PluginDataReader implements Observable {
 	private String filename;
 	private int currentlyLoaded;
 	private int totalToLoad;
+	private final String saveDirectory = "plugininfo";
 
+	private LoadStatusDisplay loadStatusDisplay;
 	private Vector<Observer> observersList;
 	private List<PluginObject> pluginList;
 	private Map<String, String> digests;
 	private Map<String, String> dates;
 	private Map<String, String> latestDates;
 	private Map<String, String> latestDigests;
-	private String fijiPath;
-	private boolean hasGUI;
 
 	private PluginDataProcessor pluginDataProcessor;
 
 	public PluginDataReader() {
 		observersList = new Vector<Observer>();
-		register(new LoadStatusDisplay());
+		loadStatusDisplay = new LoadStatusDisplay(this);
+		register(loadStatusDisplay);
 
 		pluginList = new PluginCollection();
 		if (!tempDemo) {
@@ -68,7 +49,6 @@ public class PluginDataReader implements Observable {
 		digests = new TreeMap<String, String>();
 		latestDates = new TreeMap<String, String>();
 		latestDigests = new TreeMap<String, String>();
-		hasGUI = true;
 		
 		String path = stripSuffix(stripSuffix(Menus.getPlugInsPath(),
 				File.separator),
@@ -175,38 +155,25 @@ public class PluginDataReader implements Observable {
 		return string.substring(0, string.length() - suffix.length());
 	}
 
-	private void initialize(String fijiPath) {
-		initialize(fijiPath, null);
-	}
-
-	//NOTE: This method along with initialize(String fijiPath) looks redundant, will
-	//look into it again
 	//Generate required information from the local plugins
-	private void initialize(String fijiPath, String[] only) {
-		//is the below line even needed?
-		//this.fijiPath = (fijiPath == null ? pluginDataProcessor.getDefaultFijiPath() : fijiPath);
+	private void initialize(String fijiPath) {
 		List<String> queue = new ArrayList<String>();
 
 		//To get a list of plugins on the local side
-		if (only == null || only.length == 0) {
-			String platform = pluginDataProcessor.getPlatform();
-			String macPrefix = pluginDataProcessor.getMacPrefix();
-			boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
-			if (platform.equals("macosx")) {
-				queue.add((useMacPrefix ? macPrefix : "") + "fiji-macosx");
-				queue.add((useMacPrefix ? macPrefix : "") + "fiji-tiger");
-			} else
-				queue.add("fiji-" + platform);
+		String platform = pluginDataProcessor.getPlatform();
+		String macPrefix = pluginDataProcessor.getMacPrefix();
+		boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
+		if (platform.equals("macosx")) {
+			queue.add((useMacPrefix ? macPrefix : "") + "fiji-macosx");
+			queue.add((useMacPrefix ? macPrefix : "") + "fiji-tiger");
+		} else
+			queue.add("fiji-" + platform);
 
-			queue.add("ij.jar");
-			queueDirectory(queue, "plugins");
-			queueDirectory(queue, "jars");
-			queueDirectory(queue, "retro");
-			queueDirectory(queue, "misc");
-		} else {
-			for (int i = 0; i < only.length; i++)
-				queue.add(only[i]);
-		}
+		queue.add("ij.jar");
+		queueDirectory(queue, "plugins");
+		queueDirectory(queue, "jars");
+		queueDirectory(queue, "retro");
+		queueDirectory(queue, "misc");
 
 		//To calculate the Md5 sums on the local side
 		Iterator<String> iter = queue.iterator();
@@ -215,9 +182,8 @@ public class PluginDataReader implements Observable {
 		totalToLoad = queue.size();
 		while (iter.hasNext()) {
 			filename = (String)iter.next();
-			notifyObservers();
-
 			String[] digestAndDate = pluginDataProcessor.getDigestAndDateFromFile(filename);
+
 			//index 0: path name, index 1: digest, index 2: date
 			if (digestAndDate != null && digestAndDate[1] != null && digestAndDate[2] != null) {
 				digests.put(digestAndDate[0], digestAndDate[1]);
@@ -269,11 +235,12 @@ public class PluginDataReader implements Observable {
 					path + File.separator + list[i]);
 	}
 
-	private void initializeFromList(InputStream input) throws IOException {
-		BufferedReader in =
-			new BufferedReader(new InputStreamReader(input));
+	private void readUpdateFile(String fileLocation) throws Exception {
+		FileInputStream fstream = new FileInputStream(fileLocation);
+		DataInputStream in = new DataInputStream(fstream);
+		BufferedReader br = new BufferedReader(new InputStreamReader(in));
 		String line;
-		while ((line = in.readLine()) != null) {
+		while ((line = br.readLine()) != null) {
 			int space = line.indexOf(' ');
 			if (space < 0)
 				continue;
@@ -286,26 +253,47 @@ public class PluginDataReader implements Observable {
 			latestDates.put(path, date);
 			latestDigests.put(path, digest);
 		}
-		in.close();
+		br.close();
+	}
+
+	private void readDatabaseFile() {
+		//placeholder for perhaps XML parsing of the DB file
 	}
 
 	/* Called after local plugin files have been processed */
-	public void buildFullPluginList(URL listFile) {
-	//public void combineUpdatesWithPluginList(String strURL) {
+	public void buildFullPluginList(String updateURL, String updateFile) {
+		//First file to download: updateFile from updateURL
+		currentlyLoaded = 0;
+		totalToLoad = 0;
 		readerStatus = PluginDataReader.STATUS_DOWNLOAD;
+		String updateFileLocation = pluginDataProcessor.prefix(saveDirectory +
+				File.separator + updateFile);
+		filename = updateFile;
 		notifyObservers();
 
+		//save content downloaded to a local folder
 		try {
-			initializeFromList(listFile.openStream());
-			//fetchUpdateInformation(strURL);
-		} catch (FileNotFoundException e) {
-			IJ.showMessage("No updates found");
-			return; /* nothing to do, please move along */
-		} catch (Exception e) {
-			IJ.error("Error getting current versions: " + e);
-			return;
+			Downloader downloader = new Downloader(updateURL, updateFileLocation);
+			downloader.register(this);
+			totalToLoad += downloader.getSize();
+			downloader.startDownload(); //download (after which will close connection)
+		} catch(Exception e) {
+			//try to delete the file (probably this be the only catch - DRY)
+			try {
+				new File(updateFileLocation).delete();
+			} catch (Exception e2) { }
+			throw new Error("Could not download " + updateFile + " successfully: " + e.getMessage());
 		}
 
+		//reads the file downloaded
+		try {
+			readUpdateFile(updateFileLocation);
+			readDatabaseFile();
+		} catch (Exception e) {
+			throw new Error("Failed to read the downloaded file(s). Error Message: " + e.getMessage());
+		}
+
+		//Converts data gathered into lists of PluginObject, ready for UI classes usage
 		Iterator<String> iterLatest = latestDigests.keySet().iterator();
 		while (iterLatest.hasNext()) {
 			String name = iterLatest.next();
@@ -368,6 +356,8 @@ public class PluginDataReader implements Observable {
 			}
 		}
 
+		readerStatus = PluginDataReader.STATUS_INACTIVE;
+		notifyObservers();
 		/*
 		boolean someAreNotWritable = false;
 		for (int i = 0; i < list.size(); i++) {
@@ -387,9 +377,9 @@ public class PluginDataReader implements Observable {
 			}
 			IJ.showMessage("Some" + msg);
 		}*/
-
 	}
 
+	//Being observed, PluginDataReader notifies LoadStatusDisplay
 	public void notifyObservers() {
 		// Send notify to all Observers
 		for (int i = 0; i < observersList.size(); i++) {
@@ -398,29 +388,46 @@ public class PluginDataReader implements Observable {
 		}
 	}
 
+	//Being observed, PluginDataReader adds observers
 	public void register(Observer obs) {
 		observersList.addElement(obs);
 	}
 
-	public void unRegister(Observer obs) {
+	public void unRegister(Observer obs) {}
+
+	//As Observer of Downloaders, PluginDataReader gathers download information
+	public void refreshData(Observable subject) {
+		Downloader myDownloader = (Downloader)subject;
+		currentlyLoaded += myDownloader.getNumOfBytes();
+		System.out.println("Downloaded so far: " + currentlyLoaded);
+		notifyObservers(); //Notify since data is observed by LoadStatusDisplay
 	}
+
 }
 
 class LoadStatusDisplay implements Observer {
-	public LoadStatusDisplay() {
+	private PluginDataReader pluginDataReader;
+
+	public LoadStatusDisplay(PluginDataReader pluginDataReader) {
+		this.pluginDataReader = pluginDataReader;
 		IJ.showStatus("Starting up Plugin Manager");
 	}
 
 	public void refreshData(Observable subject) {
-		PluginDataReader pluginDataReader = (PluginDataReader)subject;
-		if (pluginDataReader.getReaderStatus() == PluginDataReader.STATUS_CALC) {
-			IJ.showStatus("Checksumming " + pluginDataReader.getFilename() + "...");
-			IJ.showProgress(pluginDataReader.getCurrentlyLoaded(), pluginDataReader.getTotalToLoad());
-		} else if (pluginDataReader.getReaderStatus() == PluginDataReader.STATUS_DOWNLOAD) {
-			IJ.showStatus("Downloading " + pluginDataReader.getFilename() + "...");
-			IJ.showProgress(pluginDataReader.getCurrentlyLoaded(), pluginDataReader.getTotalToLoad());
-		} else {
-			IJ.showStatus("");
+		if (subject == pluginDataReader) { //if pluginDataReader is sending data directly
+			if (pluginDataReader.getReaderStatus() == PluginDataReader.STATUS_CALC) {
+				IJ.showStatus("Checksumming " + pluginDataReader.getFilename() + "...");
+				IJ.showProgress(pluginDataReader.getCurrentlyLoaded(), pluginDataReader.getTotalToLoad());
+			} else if (pluginDataReader.getReaderStatus() == PluginDataReader.STATUS_DOWNLOAD) {
+				IJ.showStatus("Downloading " + pluginDataReader.getFilename() + "...");
+				int percentage = 0;
+				if (pluginDataReader.getTotalToLoad() > 0) {
+					percentage = pluginDataReader.getCurrentlyLoaded() * 100 / pluginDataReader.getTotalToLoad();
+				}
+				IJ.showProgress(percentage, 100);
+			} else {
+				IJ.showStatus("");
+			}
 		}
 	}
 

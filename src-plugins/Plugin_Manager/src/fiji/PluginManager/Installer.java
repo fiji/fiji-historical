@@ -154,30 +154,30 @@ public class Installer implements Runnable, Observer {
 				date = myPlugin.getNewTimestamp();
 			}
 
-			String fullPath = pluginDataProcessor.prefix(updateDirectory +
+			String savePath = pluginDataProcessor.prefix(updateDirectory +
 					File.separator + name);
 			String downloadURL = "";
 			try {
 				if (name.startsWith("fiji-")) {
 					boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
 					String macPrefix = pluginDataProcessor.getMacPrefix();
-					fullPath = pluginDataProcessor.prefix((useMacPrefix ? macPrefix : "") + name);
-					File orig = new File(fullPath);
-					orig.renameTo(new File(fullPath + ".old"));
+					savePath = pluginDataProcessor.prefix((useMacPrefix ? macPrefix : "") + name);
+					File orig = new File(savePath);
+					orig.renameTo(new File(savePath + ".old"));
 				}
 
 				//Download the file specified at this iteration
 				downloadURL = new URL(new URL(updateURL), name + "-" + date).toString();
-				Downloader downloader = new Downloader(downloadURL, fullPath);
+				Downloader downloader = new Downloader(downloadURL, savePath);
 				downloader.register(this);
 				downloader.startDownload(); //download (after which will close connection)
 
-				String realDigest = pluginDataProcessor.getDigest(name, fullPath);
+				String realDigest = pluginDataProcessor.getDigest(name, savePath);
 				if (!realDigest.equals(digest))
 					throw new Exception("Wrong checksum: Recorded Md5 sum " + digest + " != Actual Md5 sum " + realDigest);
 				if (name.startsWith("fiji-") && !pluginDataProcessor.getPlatform().startsWith("win"))
 					Runtime.getRuntime().exec(new String[] {
-							"chmod", "0755", fullPath});
+							"chmod", "0755", savePath});
 				waitingList.remove(currentlyDownloading);
 				downloadedList.add(currentlyDownloading);
 				System.out.println(currentlyDownloading.getFilename() + " finished download.");
@@ -196,7 +196,7 @@ public class Installer implements Runnable, Observer {
 			} catch(Exception e) {
 				//try to delete the file (probably this be the only catch - DRY)
 				try {
-					new File(fullPath).delete();
+					new File(savePath).delete();
 				} catch (Exception e2) { }
 				waitingList.remove(currentlyDownloading);
 				failedDownloadsList.add(currentlyDownloading);

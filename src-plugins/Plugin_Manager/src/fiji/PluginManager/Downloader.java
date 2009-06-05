@@ -11,32 +11,30 @@ import java.net.URL;
 import java.util.Vector;
 
 public class Downloader implements Observable {
-	private String strURL;
 	private String strDestination;
 	private int downloadedBytes;
+	private HttpURLConnection myConnection;
 	private Vector<Observer> observersList;
 
-	public Downloader(String strURL, String strDestination) {
+	public Downloader(String strURL, String strDestination) throws Exception {
 		if (strURL == null || strDestination == null)
 			throw new Error("Downloader constructor parameters cannot be null");
-		this.strURL = strURL;
 		this.strDestination = strDestination;
 		downloadedBytes = 0; //start with nothing downloaded
 		observersList = new Vector<Observer>();
+		myConnection = (HttpURLConnection)(new URL(strURL)).openConnection();
 	}
 
-	public void startDownload() throws Exception {
-		HttpURLConnection myConnection = (HttpURLConnection)(new URL(strURL)).openConnection();
-		save(myConnection, strDestination);
-		myConnection.disconnect();
+	public int getSize() {
+		return myConnection.getContentLength();
 	}
 
-	private void save(HttpURLConnection myConnection, String targetPath)
-	throws FileNotFoundException, IOException {
+	public void startDownload() throws FileNotFoundException, IOException {
 		System.out.println("Trying to connect to " + myConnection.getURL().toString() + "...");
-		new File(targetPath).getParentFile().mkdirs();
+		new File(strDestination).getParentFile().mkdirs();
 		copyFile(myConnection.getInputStream(),
-				new FileOutputStream(targetPath));
+				new FileOutputStream(strDestination));
+		myConnection.disconnect();
 	}
 
 	private void copyFile(InputStream in, OutputStream out)
