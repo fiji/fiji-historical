@@ -1,4 +1,4 @@
-package fiji.PluginManager;
+package fiji.pluginManager;
 import ij.plugin.PlugIn;
 
 import java.awt.BorderLayout;
@@ -30,8 +30,10 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-
-public class PluginManager extends JFrame implements PlugIn, ActionListener, TableModelListener {
+/*
+ * Main User Interface
+ */
+public class PluginManager extends JFrame implements PlugIn, TableModelListener {
 	private Controller controller;
 	private List<PluginObject> viewList;
 	private PluginDataReader pluginDataReader;
@@ -298,10 +300,6 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		setEnabled(true);
 	}
 
-	public void actionPerformed(ActionEvent e) {
-		
-	}
-
 	public void displayPluginDetails(PluginObject myPlugin) {
 		txtPluginDetails.setText("");
 		TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BOLD_BLACK_TITLE);
@@ -368,7 +366,6 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 
 		size = viewList.size();
 		for (int i = 0; i < size; i++) {
-			//PluginObject myPlugin = model.getEntry(i);
 			PluginObject myPlugin = viewList.get(i);
 			if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
 				myPlugin.getAction() == PluginObject.ACTION_REVERSE) {

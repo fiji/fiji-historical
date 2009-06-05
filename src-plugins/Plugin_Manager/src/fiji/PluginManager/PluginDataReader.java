@@ -1,4 +1,4 @@
-package fiji.PluginManager;
+package fiji.pluginManager;
 import ij.IJ;
 import ij.Menus;
 
@@ -15,6 +15,12 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
 
+/*
+ * PluginDataReader's overall role is to be in charge of building of a plugin list
+ * for interface usage. In other words, its instructions are to first read through
+ * data of local plugins, then upon command, download remote information about
+ * plugin updates, and from there build up the actual list ("PluginObject").
+ */
 public class PluginDataReader implements Observable, Observer {
 	private boolean tempDemo = false; //if true, use UpdateFiji.java's code...
 

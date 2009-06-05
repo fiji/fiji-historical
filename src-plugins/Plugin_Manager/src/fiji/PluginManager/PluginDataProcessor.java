@@ -1,4 +1,4 @@
-package fiji.PluginManager;
+package fiji.pluginManager;
 
 import java.io.File;
 import java.io.FileInputStream;

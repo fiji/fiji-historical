@@ -1,4 +1,4 @@
-package fiji.PluginManager;
+package fiji.pluginManager;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -68,7 +68,7 @@ public class PluginTable extends JTable {
 		//Set appearance of table
 		setShowGrid(false);
 		setIntercellSpacing(new Dimension(0,0));
-		setAutoResizeMode(JTableX.AUTO_RESIZE_ALL_COLUMNS);
+		setAutoResizeMode(PluginTable.AUTO_RESIZE_ALL_COLUMNS);
 		setRequestFocusEnabled(false);
 		setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
 
@@ -111,7 +111,6 @@ public class PluginTable extends JTable {
 		col2.setMinWidth(120);
 		col2.setResizable(false);
 
-		//pluginTableModel.update(myList);
 		pluginTableModel.fireTableChanged(new TableModelEvent(pluginTableModel));
 	}
 

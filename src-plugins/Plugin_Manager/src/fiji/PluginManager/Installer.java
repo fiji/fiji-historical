@@ -1,4 +1,4 @@
-package fiji.PluginManager;
+package fiji.pluginManager;
 import ij.IJ;
 
 import java.security.DigestInputStream;

@@ -1,4 +1,4 @@
-package fiji.PluginManager;
+package fiji.pluginManager;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -10,6 +10,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Vector;
 
+/*
+ * Directly responsibility: Download a file given its URL to a given destination
+ */
 public class Downloader implements Observable {
 	private String strDestination;
 	private int downloadedBytes;

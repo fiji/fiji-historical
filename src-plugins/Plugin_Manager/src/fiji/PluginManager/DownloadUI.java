@@ -1,4 +1,4 @@
-package fiji.PluginManager;
+package fiji.pluginManager;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -15,6 +15,9 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
 
+/*
+ * Interface of a separate window, when downloading plugins.
+ */
 class DownloadUI extends JFrame {
 	private PluginManager pluginManager; //Used if opened from Plugin Manager UI
 	private Installer installer; //To grab data from (Used if Plugin Manager UI not null)

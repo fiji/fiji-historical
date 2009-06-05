@@ -1,4 +1,4 @@
-package fiji.PluginManager;
+package fiji.pluginManager;
 import ij.Menus;
 
 import java.io.File;
@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * Determine the dependencies of the plugin.
+ * Determine the dependencies of the plugin through ADD and REMOVE scenarios.
+ * The dependencies are determined based on the assumption that the user has already
+ * selected the plugins he/she wanted to add or remove and indicated to take action.
  */
 public class Controller {
 	private List<PluginObject> pluginList; //current states of all plugins
