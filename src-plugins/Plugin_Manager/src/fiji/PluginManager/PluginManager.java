@@ -1,25 +1,17 @@
 package fiji.PluginManager;
 import ij.plugin.PlugIn;
-import ij.plugin.frame.PlugInFrame;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.CellEditor;
-import javax.swing.DefaultCellEditor;
 import javax.swing.JFrame;
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
@@ -29,19 +21,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.ImageIcon;
-import javax.swing.JTable;
 import javax.swing.JTextPane;
-import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -50,6 +33,7 @@ import javax.swing.text.StyleConstants;
 
 public class PluginManager extends JFrame implements PlugIn, ActionListener, TableModelListener {
 	private Controller controller;
+	private List<PluginObject> viewList;
 	private PluginDataReader pluginDataReader;
 	private Installer installer;
 	private String updateURL = "http://pacific.mpi-cbg.de/update/current.txt";
@@ -76,7 +60,6 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 
 	public PluginManager() {
 		super("Plugin Manager");
-		//setSize(750,540);
 
 		//Firstly, get information from local, existing plugins
 		pluginDataReader = new PluginDataReader();
@@ -86,6 +69,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		//initialize the data...
 		controller = new Controller(pluginDataReader.getExistingPluginList());
 
+		viewList = pluginDataReader.getExistingPluginList(); //initial view: All plugins
 		setUpUserInterface();
 
 		setVisible(true);
@@ -157,7 +141,7 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		lblSummaryPanel.setLayout(new BoxLayout(lblSummaryPanel, BoxLayout.X_AXIS));
 
 		/* Create the plugin table and set up its scrollpane */
-		table = new PluginTable(pluginDataReader, this);
+		table = new PluginTable(viewList, this);
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());
 
@@ -218,7 +202,6 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 
 	//Whenever Viewing Options in the ComboBox has been changed
 	private void comboBoxViewListener() {
-		List<PluginObject> viewList = new ArrayList<PluginObject>();
 		int selectedIndex = comboBoxViewingOptions.getSelectedIndex();
 
 		if (selectedIndex == 0) {
@@ -376,16 +359,17 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 		}
 	}
 
-	public void tableChanged(TableModelEvent arg0) {
+	public void tableChanged(TableModelEvent e) {
 		//QUESTION: should we count objects in the view-table or objects in the entire list?
 		int size = 0;
 		int installCount = 0;
 		int removeCount = 0;
 		int updateCount = 0;
-		Iterator<PluginObject> pluginsData = table.getEntries();
 
-		while (pluginsData.hasNext()) {
-			PluginObject myPlugin = pluginsData.next();
+		size = viewList.size();
+		for (int i = 0; i < size; i++) {
+			//PluginObject myPlugin = model.getEntry(i);
+			PluginObject myPlugin = viewList.get(i);
 			if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
 				myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
 				installCount += 1;
@@ -397,8 +381,8 @@ public class PluginManager extends JFrame implements PlugIn, ActionListener, Tab
 						myPlugin.getAction() == PluginObject.ACTION_UPDATE) {
 				updateCount += 1;
 			}
-			size += 1;
 		}
+
 		lblPluginSummary.setText("Total: " + size + ", To install: " + installCount +
 				", To remove: " + removeCount + ", To update: " + updateCount);
 	}
