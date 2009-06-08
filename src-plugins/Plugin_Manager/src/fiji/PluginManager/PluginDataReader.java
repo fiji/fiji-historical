@@ -264,6 +264,8 @@ public class PluginDataReader implements Observable, Observer {
 
 	private void readDatabaseFile() {
 		//placeholder for perhaps XML parsing of the DB file
+		
+		//Role is to determine the timestamp (i.e.: version) of the plugins on local side
 	}
 
 	/* Called after local plugin files have been processed */

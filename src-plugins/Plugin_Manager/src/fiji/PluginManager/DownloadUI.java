@@ -1,5 +1,7 @@
 package fiji.pluginManager;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -10,6 +12,8 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -37,18 +41,16 @@ class DownloadUI extends JFrame {
 		this.pluginManager = pluginManager;
 		setUpUserInterface();
 		setupButtonsAndListeners();
+		pack();
 	}
 
 	private void setUpUserInterface() {
-		setLayout(null);
-		//getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
-		setSize(600, 400);
 		setTitle("Download");
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
 		/* progress bar */
 		progressBar = new JProgressBar();
-		progressBar.setBounds(15, 30, 555, 30);
+		progressBar.setPreferredSize(new Dimension(555, 30));
 		progressBar.setStringPainted(true);
 		progressBar.setString("100%");
 		progressBar.setMinimum(0);
@@ -58,22 +60,32 @@ class DownloadUI extends JFrame {
 		/* Create textpane to hold the information */
 		txtProgressDetails = new JTextPane();
 		txtProgressDetails.setEditable(false);
-		txtProgressDetails.setBounds(0, 0, 555, 200);
+		txtProgressDetails.setPreferredSize(new Dimension(555, 200));
 
 		/* Create scrollpane to hold the textpane */
 		JScrollPane txtScrollpane = new JScrollPane(txtProgressDetails);
 		txtScrollpane.getViewport().setBackground(txtProgressDetails.getBackground());
-		txtScrollpane.setBounds(15, 90, 555, 200);
+		txtScrollpane.setPreferredSize(new Dimension(555, 200));
 
 		/* Button to cancel progressing task (Or press done when complete) */
 		btnClose = new JButton(strCloseWhenFinished);
-		btnClose.setBounds(460, 315, 115, 30);
 		btnClose.setToolTipText(toolTipWhenFinished);
 		isProgressing = false;
+		JPanel btnPanel = new JPanel();
+		btnPanel.setLayout(new BoxLayout(btnPanel, BoxLayout.X_AXIS));
+		btnPanel.add(Box.createHorizontalGlue());
+		btnPanel.add(btnClose);
 
-		getContentPane().add(progressBar);
-		getContentPane().add(txtScrollpane);
-		getContentPane().add(btnClose);
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+		panel.add(progressBar);
+		panel.add(Box.createRigidArea(new Dimension(0,15)));
+		panel.add(txtScrollpane);
+		panel.add(Box.createRigidArea(new Dimension(0, 15)));
+		panel.add(btnPanel);
+		getContentPane().setLayout(new BorderLayout());
+		getContentPane().add(panel, BorderLayout.CENTER);
 	}
 
 	private void setupButtonsAndListeners() {
