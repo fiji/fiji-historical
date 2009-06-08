@@ -65,8 +65,10 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 		//Firstly, get information from local, existing plugins
 		pluginDataReader = new PluginDataReader();
+		if (!pluginDataReader.tempDemo) {
 		//Get information from server to build on information
 		pluginDataReader.buildFullPluginList(updateURL, updateLocal);
+		}
 
 		//initialize the data...
 		controller = new Controller(pluginDataReader.getExistingPluginList());
@@ -242,7 +244,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private void clickToBeginOperations() {
 		//in later implementations, this should liase with Controller
 		//if status says there's a list to download...
-		boolean tempDemo = false;
+		boolean tempDemo = pluginDataReader.tempDemo;
 		if (!tempDemo) {
 		frameDownloader = new DownloadUI(this);
 		//Installer installer = new Installer(((PluginCollection)pluginList).getListWhereActionIsSpecified(), updateURL);

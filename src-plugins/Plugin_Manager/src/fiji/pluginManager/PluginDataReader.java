@@ -22,7 +22,7 @@ import java.util.Vector;
  * plugin updates, and from there build up the actual list ("PluginObject").
  */
 public class PluginDataReader implements Observable, Observer {
-	private boolean tempDemo = false; //if true, use UpdateFiji.java's code...
+	public boolean tempDemo = true; //if true, use artificial database...
 
 	static byte STATUS_INACTIVE = 0; //doing nothing
 	static byte STATUS_CALC = 1; //calculating Md5 sums
@@ -49,6 +49,7 @@ public class PluginDataReader implements Observable, Observer {
 		register(loadStatusDisplay);
 
 		pluginList = new PluginCollection();
+
 		if (!tempDemo) {
 
 		dates = new TreeMap<String, String>();
@@ -63,7 +64,6 @@ public class PluginDataReader implements Observable, Observer {
 		initialize(path);
 
 		} else {
-
 
 		//How to get "database" of information:
 		//1.) build a list of installed plugins
