@@ -24,22 +24,28 @@ public class Controller {
 		//First retrieve the dependency list
 		List<Dependency> dependencyList = new ArrayList<Dependency>();
 		boolean updateableState = (selectedPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE);
+		boolean selectedInInstallList = changeToInstallList.contains(selectedPlugin);
+		boolean selectedInUpdateList = changeToUpdateList.contains(selectedPlugin);
+
 		if (updateableState) {
-			boolean selectedInInstallList = changeToInstallList.contains(selectedPlugin);
-			boolean selectedInUpdateList = changeToUpdateList.contains(selectedPlugin);
-			//does not belong to any list, implies its the FIRST selected plugin
-			if (!selectedInInstallList && !selectedInUpdateList) {
-				//if action indicate to update further, then use new dependencies
-				if (selectedPlugin.getAction() == PluginObject.ACTION_UPDATE)
-					dependencyList = selectedPlugin.getNewDependencies();
-				else //otherwise, as per normal
-					dependencyList = selectedPlugin.getDependencies();
-			} else { //if it is already in a list
+			//if it is already in a list
+			if (selectedInInstallList || selectedInUpdateList) {
 				if (!selectedInInstallList && selectedInUpdateList)
 					dependencyList = selectedPlugin.getNewDependencies();
 				else if (selectedInInstallList && !selectedInUpdateList)
 					dependencyList = selectedPlugin.getDependencies();
 				//else... Can't possibly have both true at the same time
+			}
+			//does not belong to any list, implies its the FIRST selected plugin
+			else {
+				//if action indicate to update further, then use new dependencies
+				if (selectedPlugin.getAction() == PluginObject.ACTION_UPDATE) {
+					dependencyList = selectedPlugin.getNewDependencies();
+					changeToUpdateList.add(selectedPlugin);
+				}
+				/*else { //otherwise, as per normal
+					dependencyList = selectedPlugin.getDependencies();
+				}*/
 			}
 		} else //otherwise, as per normal
 			dependencyList = selectedPlugin.getDependencies();
@@ -102,6 +108,9 @@ public class Controller {
 
 	//comes up with a list of plugins needed to be removed if selected is removed
 	public void removeDependent(List<PluginObject> changeToUninstallList, PluginObject selectedPlugin) {
+		if (!changeToUninstallList.contains(selectedPlugin)) {
+			changeToUninstallList.add(selectedPlugin);
+		}
 		//Search through entire list
 		for (int i = 0; i < pluginList.size(); i++) {
 			PluginObject plugin = pluginList.get(i);
