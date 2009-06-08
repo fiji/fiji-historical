@@ -41,7 +41,7 @@ public class Installer implements Runnable, Observer {
 	private String updateURL;
 	private final String updateDirectory = "update";
 	private List<PluginObject> pluginsWaiting;
-	private Thread myThread;
+	private volatile Thread downloadThread;
 
 	private Iterator<PluginObject> tempIter;
 
@@ -106,20 +106,21 @@ public class Installer implements Runnable, Observer {
 
 	//start processing on contents of updateList
 	public void startDownload() {
-		myThread = new Thread(this);
-		myThread.start();
+		downloadThread = new Thread(this);
+		downloadThread.start();
 	}
 
 	//stop download
 	public void stopDownload() {
-		myThread.interrupt();
-		myThread = null;
+		//thread will check if downloadThread is null, and stop action where necessary
+		downloadThread = null;
 	}
 
 	public void run() {
+		Thread thisThread = Thread.currentThread();
 		isDownloading = true;
 		//Temporary arrangement - This segment gets the size of the file
-		while (tempIter.hasNext()) {
+		while (tempIter.hasNext() && thisThread == downloadThread) {
 			PluginObject myPlugin = tempIter.next();
 			String name = myPlugin.getFilename();
 			String digest = null;
@@ -148,7 +149,7 @@ public class Installer implements Runnable, Observer {
 		}
 
 		//Downloads the file(s), one by one
-		while (iterWaiting.hasNext()) {
+		while (iterWaiting.hasNext() && thisThread == downloadThread) {
 			PluginObject myPlugin = iterWaiting.next();
 			currentlyDownloading = myPlugin;
 			String name = myPlugin.getFilename();
@@ -162,33 +163,47 @@ public class Installer implements Runnable, Observer {
 				date = myPlugin.getNewTimestamp();
 			}
 
-			String savePath = pluginDataProcessor.prefix(updateDirectory +
-					File.separator + name);
+			String savePath = pluginDataProcessor.getSavePath(updateDirectory, name);
 			String downloadURL = "";
 			try {
 				if (name.startsWith("fiji-")) {
-					boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
-					String macPrefix = pluginDataProcessor.getMacPrefix();
-					savePath = pluginDataProcessor.prefix((useMacPrefix ? macPrefix : "") + name);
 					File orig = new File(savePath);
 					orig.renameTo(new File(savePath + ".old"));
 				}
 
-				//Download the file specified at this iteration
+				//Establish connection to file for this iteration
 				downloadURL = new URL(new URL(updateURL), name + "-" + date).toString();
 				Downloader downloader = new Downloader(downloadURL, savePath);
 				downloader.register(this);
-				downloader.startDownload(); //download (after which will close connection)
 
-				String realDigest = pluginDataProcessor.getDigest(name, savePath);
-				if (!realDigest.equals(digest))
-					throw new Exception("Wrong checksum: Recorded Md5 sum " + digest + " != Actual Md5 sum " + realDigest);
-				if (name.startsWith("fiji-") && !pluginDataProcessor.getPlatform().startsWith("win"))
-					Runtime.getRuntime().exec(new String[] {
-							"chmod", "0755", savePath});
-				downloadedList.add(currentlyDownloading);
-				System.out.println(currentlyDownloading.getFilename() + " finished download.");
-				currentlyDownloading = null;
+				//Prepare the necessary download input and output streams
+				downloader.prepareDownload();
+				byte[] buffer = downloader.createNewBuffer();
+				int count;
+
+				//while file is writing and download is NOT cancelled yet
+				while ((count = downloader.getNextPart(buffer)) >= 0 &&
+						thisThread == downloadThread) {
+					downloader.writePart(buffer, count);
+				}
+				downloader.endConnection(); //end connection once download done
+
+				//if download is not yet cancelled, check if downloaded has valid md5 sum
+				if (thisThread == downloadThread) {
+					String realDigest = pluginDataProcessor.getDigest(name, savePath);
+					if (!realDigest.equals(digest))
+						throw new Exception("Wrong checksum: Recorded Md5 sum " + digest + " != Actual Md5 sum " + realDigest);
+					if (name.startsWith("fiji-") && !pluginDataProcessor.getPlatform().startsWith("win"))
+						Runtime.getRuntime().exec(new String[] {
+								"chmod", "0755", savePath});
+					downloadedList.add(currentlyDownloading);
+					System.out.println(currentlyDownloading.getFilename() + " finished download.");
+					System.out.println((thisThread == downloadThread) ? "Thread not stopped" : "Thread stopped, but downloaded????");
+					currentlyDownloading = null;
+				} else {
+					//if download is cancelled, delete any possible incomplete files
+					deleteUnfinished();
+				}
 
 			} catch (MalformedURLException e) {
 				failedDownloadsList.add(currentlyDownloading);
@@ -209,25 +224,22 @@ public class Installer implements Runnable, Observer {
 			}
 		}
 		isDownloading = false;
+		System.out.println("END OF THREAD");
 	}
 
-	public void deleteUnfinished() {
+	private void deleteUnfinished() {
 		Iterator<PluginObject> iterator = pluginsWaiting.iterator();
 		while (iterator.hasNext()) {
 			PluginObject plugin = iterator.next();
 			//if this plugin in waiting list is not fully downloaded yet
 			if (!downloadedList.contains(plugin)) {
 				String name = plugin.getFilename();
-				String fullPath = pluginDataProcessor.prefix(updateDirectory +
-					File.separator + name);
-				if (name.startsWith("fiji-")) {
-					boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
-					String macPrefix = pluginDataProcessor.getMacPrefix();
-					fullPath = pluginDataProcessor.prefix((useMacPrefix ? macPrefix : "") + name);
-				}
+				String fullPath = pluginDataProcessor.getSavePath(updateDirectory, name);
 				try {
-					new File(fullPath).delete();
-				} catch (Exception e2) { }
+					System.out.println("Trying to delete " + fullPath + "...");
+					new File(fullPath).delete(); //delete file, if it exists
+					System.out.println("Deletion operation of " + fullPath + " complete.");
+				} catch (Exception e2) { System.out.println("Error occurred while deleting " + fullPath + "..."); }
 			}
 		}
 	}

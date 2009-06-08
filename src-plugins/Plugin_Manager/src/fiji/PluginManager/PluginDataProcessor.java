@@ -149,6 +149,17 @@ public class PluginDataProcessor {
 		return toHex(digest.digest());
 	}
 
+	//Gets the absolute save-to directory using specified parameters
+	public String getSavePath(String saveDirectory, String pluginName) {
+		String savePath = prefix(saveDirectory + File.separator + pluginName);
+		if (pluginName.startsWith("fiji-")) {
+			boolean useMacPrefix = getUseMacPrefix();
+			String macPrefix = getMacPrefix();
+			savePath = prefix((useMacPrefix ? macPrefix : "") + pluginName);
+		}
+		return savePath;
+	}
+
 	public String prefix(String path) {
 		return fijiPath + File.separator
 			+ (forServer && path.startsWith("fiji-") ?

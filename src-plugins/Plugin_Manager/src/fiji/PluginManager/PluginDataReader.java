@@ -31,7 +31,7 @@ public class PluginDataReader implements Observable, Observer {
 	private String filename;
 	private int currentlyLoaded;
 	private int totalToLoad;
-	private final String saveDirectory = "plugininfo";
+	private final String infoDirectory = "plugininfo";
 
 	private LoadStatusDisplay loadStatusDisplay;
 	private Vector<Observer> observersList;
@@ -256,6 +256,7 @@ public class PluginDataReader implements Observable, Observer {
 				continue;
 			String date = line.substring(space + 1, space2);
 			String digest = line.substring(space2 + 1);
+			//Note, you can check date and digest for validity before adding to the treemaps
 			latestDates.put(path, date);
 			latestDigests.put(path, digest);
 		}
@@ -274,17 +275,29 @@ public class PluginDataReader implements Observable, Observer {
 		currentlyLoaded = 0;
 		totalToLoad = 0;
 		readerStatus = PluginDataReader.STATUS_DOWNLOAD;
-		String updateFileLocation = pluginDataProcessor.prefix(saveDirectory +
+		String updateFileLocation = pluginDataProcessor.prefix(infoDirectory +
 				File.separator + updateFile);
 		filename = updateFile;
 		notifyObservers();
 
 		//save content downloaded to a local folder
 		try {
+			//Establishes connection
 			Downloader downloader = new Downloader(updateURL, updateFileLocation);
 			downloader.register(this);
 			totalToLoad += downloader.getSize();
-			downloader.startDownload(); //download (after which will close connection)
+
+			//Prepare the necessary download input and output streams
+			downloader.prepareDownload();
+			byte[] buffer = downloader.createNewBuffer();
+			int count;
+
+			//Start actual downloading and writing to file
+			while ((count = downloader.getNextPart(buffer)) >= 0) {
+				downloader.writePart(buffer, count);
+			}
+			downloader.endConnection(); //end connection once download done
+
 		} catch(Exception e) {
 			//try to delete the file (probably this be the only catch - DRY)
 			try {

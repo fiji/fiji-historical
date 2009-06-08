@@ -163,8 +163,6 @@ class DownloadUI extends JFrame {
 					JOptionPane.YES_NO_OPTION,
 					JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
 				installer.stopDownload();
-				installer.deleteUnfinished();
-					
 				pluginManager.clickBackToPluginManager();
 			}
 		}

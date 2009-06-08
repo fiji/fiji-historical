@@ -18,6 +18,8 @@ public class Downloader implements Observable {
 	private int downloadedBytes;
 	private HttpURLConnection myConnection;
 	private Vector<Observer> observersList;
+	private InputStream in;
+	private OutputStream out;
 
 	public Downloader(String strURL, String strDestination) throws Exception {
 		if (strURL == null || strDestination == null)
@@ -32,29 +34,51 @@ public class Downloader implements Observable {
 		return myConnection.getContentLength();
 	}
 
+	//Todo: Removal of this method anticipated
 	public void startDownload() throws FileNotFoundException, IOException {
-		System.out.println("Trying to connect to " + myConnection.getURL().toString() + "...");
-		new File(strDestination).getParentFile().mkdirs();
-		copyFile(myConnection.getInputStream(),
-				new FileOutputStream(strDestination));
-		myConnection.disconnect();
+		prepareDownload();
+		copyFile();
 	}
 
-	private void copyFile(InputStream in, OutputStream out)
-	throws IOException {
-		byte[] buffer = new byte[65536];
+	//Todo: Removal of this method anticipated
+	private void copyFile() throws IOException {
+		byte[] buffer = createNewBuffer();
 		int count;
-		while ((count = in.read(buffer)) >= 0) {
-			out.write(buffer, 0, count);
-			downloadedBytes = count;
-			notifyObservers();
+		while ((count = getNextPart(buffer)) >= 0) {
+			writePart(buffer, count);
 		}
-		in.close();
-		out.close();
+		endConnection();
+	}
+
+	public void prepareDownload() throws FileNotFoundException, IOException {
+		System.out.println("Trying to connect to " + myConnection.getURL().toString() + "...");
+		new File(strDestination).getParentFile().mkdirs();
+		in = myConnection.getInputStream();
+		out = new FileOutputStream(strDestination);
+	}
+
+	public byte[] createNewBuffer() {
+		return new byte[65536];
+	}
+
+	public int getNextPart(byte[] buffer) throws IOException {
+		return in.read(buffer);
+	}
+
+	public void writePart(byte[] buffer, int count) throws IOException {
+		out.write(buffer, 0, count);
+		downloadedBytes = count;
+		notifyObservers();
 	}
 
 	public int getNumOfBytes() {
 		return downloadedBytes;
+	}
+
+	public void endConnection() throws IOException {
+		in.close();
+		out.close();
+		myConnection.disconnect();
 	}
 
 	public void notifyObservers() {
