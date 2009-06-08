@@ -396,3 +396,39 @@ Tasks for next week:
 - Resolve the weird issue of continuing downloads of course
 - Continue Dependency-checking for Controller.java ==> Presentation issues ==> How to present the information? Implement.
 - Start going into thinking up of and developing the database
+
+
+
+8th June, Monday
+Completed:
+- Layout Manager for Download UI.
+- Cancelling of download issues resolved - Thread.interrupt() doesn't work, tracking null reference to Thread is used instead
+- Refactored Downloader.java. Allowed for finer control.
+- Refactored PluginDataProcessor.java to have a new getSavePath(String saveDirectory, String pluginName) to avoid repeating code inside Installer.java
+
+Future:
+In lieu of construction and reading of a database file (In order to get plugin description, timestamps, dependencies and perhaps filesize?), I anticipate further reworking on PluginDataReader:
+- 1st Step: DOWNLOAD current.txt and/or remote DB
+- 2nd Step: Initialize, get information from local plugins (Currently that's the first step)
+     - STORE digest of each file in TreeMap
+     - READ the DB file
+     - For each file,
+        - if (digest == DB's digest) STORE timestamp of file from DB in TreeMap
+     - If digest is not found at DB, get timestamp from file itself, STORE in TreeMap
+     - Note: You may want to look into splitting "getDigestAndDateFromFile()" into two separate func in PluginDataProcessor
+- 3rd Step: Read current.txt to STORE latest digest and latest timestamp in TreeMaps
+- 4th Step: Convert to PluginObjects....
+
+Past considerations: Problems with using PluginObjects themselves as Dependency references
+- PluginObjects are defined as ONE instance for each Plugin with NO regards to version, only additional update info if any
+- Dependencies may be based on different versions of a Plugin - Problematic to identify the actual instance used for display
+- If we force only one instance per Plugin, displaying actual dependencies' md5 sums and dates require additional attributes, doubly so if any updates
+- In the case of a dependency where there already exists a newer version of a Plugin, information like Plugin Description becomes redundant (Two existing instances of the same Plugin)
+
+I think its best to stick to the old use of Dependency object.
+
+
+
+9th June, Tuesday
+Upcoming task:
+- Checking, comparing dependencies
