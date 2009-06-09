@@ -5,7 +5,9 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /*
  * Determine the dependencies of the plugin through ADD and REMOVE scenarios.
@@ -32,9 +34,13 @@ public class Controller {
 			if (updateableState) {
 				//in context of "addDependency", it can only mean "update the plugin"
 				changeToUpdateList.add(selectedPlugin);
+				selectedInInstallList = false;
+				selectedInUpdateList = true;
 			} else {
 				//in context of "addDependency", it can only mean "install the plugin"
 				changeToInstallList.add(selectedPlugin);
+				selectedInInstallList = true;
+				selectedInUpdateList = false;
 			}
 		} //else... (Plugin already added earlier)
 
@@ -143,6 +149,82 @@ public class Controller {
 					}
 				}
 			}
+		}
+	}
+
+	//placeholder methods, if needed
+	public void unifyInstallAndUpdateList(Map<PluginObject,List<PluginObject>> installDependenciesMap,
+			Map<PluginObject,List<PluginObject>> updateDependenciesMap,
+			List<PluginObject> installList,
+			List<PluginObject> updateList) {
+
+		Iterator<List<PluginObject>> iterInstallLists = installDependenciesMap.values().iterator();
+		while (iterInstallLists.hasNext()) {
+			List<PluginObject> dependencies = iterInstallLists.next();
+			//For every plugin in each dependency list
+			for (int i = 0; i < dependencies.size(); i++) {
+				PluginObject pluginDependency = dependencies.get(i);
+				//if install list does not contain the plugin yet, add it
+				if (!installList.contains(pluginDependency)) {
+					installList.add(pluginDependency);
+				}
+			}
+		}
+	
+		Iterator<List<PluginObject>> iterUpdateLists = updateDependenciesMap.values().iterator();
+		while (iterUpdateLists.hasNext()) {
+			List<PluginObject> dependencies = iterUpdateLists.next();
+			//For every plugin in each dependency list
+			for (int i = 0; i < dependencies.size(); i++) {
+				PluginObject pluginDependency = dependencies.get(i);
+				//if install list does not contain the plugin yet, add it
+				if (!updateList.contains(pluginDependency)) {
+					updateList.add(pluginDependency);
+				}
+			}
+		}
+
+		Iterator<PluginObject> iterInstall = installList.iterator();
+		while (iterInstall.hasNext()) {
+			PluginObject plugin = iterInstall.next();
+			if (updateList.contains(plugin)) {
+				installList.remove(plugin); //since it already exists in "Update list"
+			}
+		}
+	}
+
+	//placeholder methods, if needed
+	public void unifyUninstallList(Map<PluginObject,List<PluginObject>> uninstallDependentsMap,
+			List<PluginObject> uninstallList) {
+
+		Iterator<List<PluginObject>> iterUninstallLists = uninstallDependentsMap.values().iterator();
+		while (iterUninstallLists.hasNext()) {
+			List<PluginObject> dependents = iterUninstallLists.next();
+			//For every plugin in each dependency list
+			for (int i = 0; i < dependents.size(); i++) {
+				PluginObject pluginDependent = dependents.get(i);
+				//if install list does not contain the plugin yet, add it
+				if (!uninstallList.contains(pluginDependent)) {
+					uninstallList.add(pluginDependent);
+				}
+			}
+		}
+	}
+
+	private boolean conflicts(List<PluginObject> list1, List<PluginObject> list2) {
+		Iterator<PluginObject> iter = list1.iterator();
+		while (iter.hasNext()) {
+			PluginObject thisPlugin = iter.next();
+			if (list2.contains(thisPlugin)) return true;
+		}
+		return false;
+	}
+
+	public boolean conflicts(List<PluginObject> installList, List<PluginObject> updateList, List<PluginObject> uninstallList) {
+		if (!conflicts(installList, uninstallList) && !conflicts(updateList, uninstallList)) {
+			return false;
+		} else {
+			return true;
 		}
 	}
 

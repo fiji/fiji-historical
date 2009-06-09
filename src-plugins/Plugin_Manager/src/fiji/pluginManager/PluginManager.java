@@ -7,7 +7,10 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -255,38 +258,131 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		} else {
 			//if just a demo
 			List<PluginObject> myList = controller.getPluginList();
-			List<PluginObject> toInstallList = new ArrayList<PluginObject>();
-			List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
-			List<PluginObject> toRemoveList = new ArrayList<PluginObject>();
+			Map<PluginObject,List<PluginObject>> installDependenciesMap = new HashMap<PluginObject,List<PluginObject>>();
+			Map<PluginObject,List<PluginObject>> updateDependenciesMap = new HashMap<PluginObject,List<PluginObject>>();
+			Map<PluginObject,List<PluginObject>> uninstallDependentsMap = new HashMap<PluginObject,List<PluginObject>>();
+			List<PluginObject> changeList = new PluginCollection();
+
+			//Go through the list of available plugins
+			//Note: A "filter pattern" for FILTER_ACTIONSSPECIFIED can be used
 			for (int i = 0; i < myList.size(); i++) {
+				
+				//Check if plugins are indicated to change (install/uninstall/update)
+				List<PluginObject> toInstallList = new ArrayList<PluginObject>();
+				List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
+				List<PluginObject> toRemoveList = new ArrayList<PluginObject>();
 				PluginObject myPlugin = myList.get(i);
-				if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
-					myPlugin.getAction() == PluginObject.ACTION_REVERSE)
+				if ((myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
+					myPlugin.getAction() == PluginObject.ACTION_REVERSE) ||
+					(myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE &&
+					myPlugin.getAction() == PluginObject.ACTION_UPDATE)) {
+					
+					changeList.add(myPlugin);
 					controller.addDependency(toInstallList, toUpdateList, myPlugin);
-				else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE &&
-					myPlugin.getAction() == PluginObject.ACTION_UPDATE)
-					controller.addDependency(toInstallList, toUpdateList, myPlugin);
-				else if ((myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
+					installDependenciesMap.put(myPlugin, toInstallList);
+					updateDependenciesMap.put(myPlugin, toUpdateList);
+					
+				} else if ((myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
 					myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) &&
-					myPlugin.getAction() == PluginObject.ACTION_REVERSE)
+					myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
+					
+					changeList.add(myPlugin);
 					controller.removeDependent(toRemoveList, myPlugin);
+					uninstallDependentsMap.put(myPlugin, toRemoveList);
+					
+				}
+				
 			}
-			//toInstallList = controller.getUnlistedInstalls(toInstallList);
-			//toUpdateList = controller.getUnlistedUpdates(toUpdateList);
-			//toRemoveList = controller.getUnlistedRemoves(toRemoveList);
-			System.out.println("------------------------------------------------------------");
+
+			//Compile a list of plugin names that conflicts with uninstalling (if any)
+			List<String[]> installConflicts = new ArrayList<String[]>();
+			List<String[]> updateConflicts = new ArrayList<String[]>();
+			Iterator<PluginObject> iterInstall = installDependenciesMap.keySet().iterator();
+			while (iterInstall.hasNext()) {
+				PluginObject pluginAdd = iterInstall.next();
+				List<PluginObject> toInstallList = installDependenciesMap.get(pluginAdd);
+				List<PluginObject> toUpdateList = updateDependenciesMap.get(pluginAdd);
+				Iterator<PluginObject> iterUninstall = uninstallDependentsMap.keySet().iterator();
+				while (iterUninstall.hasNext()) {
+					PluginObject pluginUninstall = iterUninstall.next();
+					List<PluginObject> toUninstallList = uninstallDependentsMap.get(pluginUninstall);
+
+					if (controller.conflicts(toInstallList, toUpdateList, toUninstallList)) {
+						String installName = pluginAdd.getFilename();
+						String uninstallName = pluginUninstall.getFilename();
+						String[] arrNames = {installName, uninstallName};
+						if (pluginAdd.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+							updateConflicts.add(arrNames);
+						} else {
+							installConflicts.add(arrNames);
+						}
+					}
+				}
+			}
+
+			//Combines all the dependencies for individual plugins into one list
+			List<PluginObject> toInstallList = new PluginCollection();
+			List<PluginObject> toUpdateList = new PluginCollection();
+			List<PluginObject> toRemoveList = new PluginCollection();
+			controller.unifyInstallAndUpdateList(installDependenciesMap,
+					updateDependenciesMap,
+					toInstallList,
+					toUpdateList);
+			controller.unifyUninstallList(uninstallDependentsMap, toRemoveList);
+
+			//remove any unnecessary information
+			//suggestion... here you might wanna reuse your "filter pattern"?
+			//i.e.: move your methods from controller to PluginCollection
+			toInstallList = controller.getUnlistedInstalls(toInstallList);
+			toUpdateList = controller.getUnlistedUpdates(toUpdateList);
+			toRemoveList = controller.getUnlistedRemoves(toRemoveList);
+
+			//Actual display of information
+			System.out.println("Output simulation");
+			for (int i = 0; i < changeList.size(); i++) {
+				//try filtering through the filtered (use "filter pattern" again)
+				PluginObject myPlugin = changeList.get(i);
+				String pluginName = myPlugin.getFilename();
+				String pluginDescription = myPlugin.getDescription();
+				String outputStr = (i+1) + ": " + pluginName + "; Description: " + pluginDescription + "; Action: ";
+				if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED) {
+					outputStr += "To Uninstall";
+				} else if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
+					outputStr += "To install";
+				} else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+					if (myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
+						outputStr += "To Uninstall";
+					} else if (myPlugin.getAction() == PluginObject.ACTION_UPDATE) {
+						outputStr += "To Update";
+					}
+				}
+				System.out.println(outputStr);
+			}
+			System.out.println("----------The following additional installations/removals are to be made----------");
 			for (int i = 0; i < toInstallList.size(); i++) {
 				PluginObject myPlugin = toInstallList.get(i);
-				System.out.println("To set to installed: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
+				System.out.println("To be installed: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
 			}
 			for (int i = 0; i < toUpdateList.size(); i++) {
 				PluginObject myPlugin = toUpdateList.get(i);
-				System.out.println("To set to updated: " + myPlugin.getFilename() + ", " + myPlugin.getNewTimestamp());
+				System.out.println("To be updated: " + myPlugin.getFilename() + ", " + myPlugin.getNewTimestamp());
 			}
 			for (int i = 0; i < toRemoveList.size(); i++) {
 				PluginObject myPlugin = toRemoveList.get(i);
-				System.out.println("To set to uninstalled: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
+				System.out.println("To be uninstalled: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
 			}
+			System.out.println("----------Conflicts are listed as follows:----------");
+			for (int i = 0; i < installConflicts.size(); i++) {
+				String[] names = installConflicts.get(i);
+				System.out.println("Installing " + names[0] + " would conflict with uninstalling " + names[1]);
+			}
+			for (int i = 0; i < updateConflicts.size(); i++) {
+				String[] names = updateConflicts.get(i);
+				System.out.println("Updating " + names[0] + " would conflict with uninstalling " + names[1]);
+			}
+			System.out.println("End Output Simulation");
+			//Supposedly, if no conflicts are found (size == 0), upon confirmation,
+			//program will start download, using both "changeList" and "toInstallList" and "toUpdateList" and "toRemoveList"
 		}
 	}
 
