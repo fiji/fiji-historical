@@ -430,5 +430,14 @@ I think its best to stick to the old use of Dependency object.
 
 
 9th June, Tuesday
-Upcoming task:
-- Checking, comparing dependencies
+Completed:
+- Dependency-information gathering is refined. Able to detect the very first plugin that was called by the method and add it to the preliminary lists.
+- Conflicts detection done. Display done.
+- Refactored Controller.java, PluginCollection.java, and PluginManager.java to keep to the spirit of "DRY".
+   ==> Repeating code now changed to use of a "Filter"
+
+Next tasks to consider:
+- Refactoring TextPaneFormat and PluginManager... "DRY" principle still applies...
+- Refactoring to have a simpler "for (PluginObject myPlugin : change_removeList)" when possible
+- best if PluginObject can have methods like isInstallable(), isDeletable()
+- Actual interface display of plugin dependency check
