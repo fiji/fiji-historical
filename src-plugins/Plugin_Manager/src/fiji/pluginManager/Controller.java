@@ -228,58 +228,6 @@ public class Controller {
 		}
 	}
 
-	//Using a compiled list of dependencies for all plugins selected by user
-	//Objective is to show user only information that was previously invisible
-	public List<PluginObject> getUnlistedInstalls(List<PluginObject> toInstallList) {
-		List<PluginObject> unlistedInstalls = new ArrayList<PluginObject>();
-		for (int i = 0; i < toInstallList.size(); i++) {
-			PluginObject plugin = toInstallList.get(i);
-			if ((plugin.getStatus() == PluginObject.STATUS_INSTALLED ||
-				plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) &&
-				plugin.getAction() == PluginObject.ACTION_REVERSE) {
-				unlistedInstalls.add(plugin);
-			} else if (plugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
-					plugin.getAction() == PluginObject.ACTION_NONE) {
-				unlistedInstalls.add(plugin);
-			}
-		}
-		return unlistedInstalls;
-	}
-
-	//Using a compiled list of dependencies of all plugins selected by user
-	//Objective is to show user only information that was previously invisible
-	public List<PluginObject> getUnlistedUpdates(List<PluginObject> toUpdateList) {
-		List<PluginObject> unlistedUpdates = new ArrayList<PluginObject>();
-		for (int i = 0; i < toUpdateList.size(); i++) {
-			PluginObject plugin = toUpdateList.get(i);
-			if (plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE &&
-				plugin.getAction() != PluginObject.ACTION_UPDATE) {
-				unlistedUpdates.add(plugin);
-			}
-		}
-		return unlistedUpdates;
-	}
-
-	//Using a compiled list of dependencies of all plugins deselected by user
-	//Objective is to show user only information that was previously invisible
-	public List<PluginObject> getUnlistedRemoves(List<PluginObject> toUninstallList) {
-		List<PluginObject> unlistedRemoves = new ArrayList<PluginObject>();
-		for (int i = 0; i < toUninstallList.size(); i++) {
-			PluginObject plugin = toUninstallList.get(i);
-			if (plugin.getStatus() == PluginObject.STATUS_INSTALLED &&
-				plugin.getAction() == PluginObject.ACTION_NONE) {
-				unlistedRemoves.add(plugin);
-			} else if (plugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
-					plugin.getAction() == PluginObject.ACTION_REVERSE) {
-				unlistedRemoves.add(plugin);
-			} else if (plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE &&
-					plugin.getAction() != PluginObject.ACTION_REVERSE) {
-				unlistedRemoves.add(plugin);
-			}
-		}
-		return unlistedRemoves;
-	}
-
 	//forces action for every plugin in the list to "install"
 	public void setToInstall(List<PluginObject> selectedList) {
 		for (int i = 0; i < selectedList.size(); i++) {

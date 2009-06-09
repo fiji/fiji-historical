@@ -65,7 +65,7 @@ public class Installer implements Runnable, Observer {
 
 		//divide into two groups
 		PluginCollection pluginCollection = (PluginCollection)pluginDataReader.getExistingPluginList();
-		iterUninstall = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONSUNINSTALL);
+		iterUninstall = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONS_UNINSTALL);
 		pluginsWaiting = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
 		iterWaiting = pluginsWaiting.iterator();
 		//just a temporary arrangement

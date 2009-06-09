@@ -219,22 +219,22 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		} else if (selectedIndex == 1) {
 
 			//if "View installed plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUSALREADYINSTALLED);
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUS_ALREADYINSTALLED);
 
 		} else if (selectedIndex == 2) {
 
 			//if "View uninstalled plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUSUNINSTALLED);
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUS_UNINSTALLED);
 
 		} else if (selectedIndex == 3) {
 
 			//if "View up-to-date plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUSINSTALLED);
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUS_INSTALLED);
 
 		} else if (selectedIndex == 4) {
 
 			//if "View update-able plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUSMAYUPDATE);
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUS_MAYUPDATE);
 
 		} else {
 			throw new Error("Viewing option specified does not exist!");
@@ -257,41 +257,32 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		setEnabled(false);
 		} else {
 			//if just a demo
-			List<PluginObject> myList = controller.getPluginList();
+			List<PluginObject> pluginList = pluginDataReader.getExistingPluginList();
+			List<PluginObject> changeList = ((PluginCollection)pluginList).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED);
+			List<PluginObject> change_addOrUpdateList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
+			List<PluginObject> change_removeList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_UNINSTALL);
+
+			//Generates a map of plugins and their individual dependencies/dependents
 			Map<PluginObject,List<PluginObject>> installDependenciesMap = new HashMap<PluginObject,List<PluginObject>>();
 			Map<PluginObject,List<PluginObject>> updateDependenciesMap = new HashMap<PluginObject,List<PluginObject>>();
 			Map<PluginObject,List<PluginObject>> uninstallDependentsMap = new HashMap<PluginObject,List<PluginObject>>();
-			List<PluginObject> changeList = new PluginCollection();
 
-			//Go through the list of available plugins
-			//Note: A "filter pattern" for FILTER_ACTIONSSPECIFIED can be used
-			for (int i = 0; i < myList.size(); i++) {
-				
-				//Check if plugins are indicated to change (install/uninstall/update)
+			//Going through list requesting for ADD or UPDATE
+			for (PluginObject myPlugin : change_addOrUpdateList) {
+				//Generate lists of dependencies for each plugin
 				List<PluginObject> toInstallList = new ArrayList<PluginObject>();
 				List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
+				controller.addDependency(toInstallList, toUpdateList, myPlugin);
+				installDependenciesMap.put(myPlugin, toInstallList);
+				updateDependenciesMap.put(myPlugin, toUpdateList);
+			}
+
+			//Going through list requesting for REMOVE
+			for (PluginObject myPlugin : change_removeList) {
+				//Generate lists of dependents for each plugin
 				List<PluginObject> toRemoveList = new ArrayList<PluginObject>();
-				PluginObject myPlugin = myList.get(i);
-				if ((myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
-					myPlugin.getAction() == PluginObject.ACTION_REVERSE) ||
-					(myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE &&
-					myPlugin.getAction() == PluginObject.ACTION_UPDATE)) {
-					
-					changeList.add(myPlugin);
-					controller.addDependency(toInstallList, toUpdateList, myPlugin);
-					installDependenciesMap.put(myPlugin, toInstallList);
-					updateDependenciesMap.put(myPlugin, toUpdateList);
-					
-				} else if ((myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
-					myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) &&
-					myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
-					
-					changeList.add(myPlugin);
-					controller.removeDependent(toRemoveList, myPlugin);
-					uninstallDependentsMap.put(myPlugin, toRemoveList);
-					
-				}
-				
+				controller.removeDependent(toRemoveList, myPlugin);
+				uninstallDependentsMap.put(myPlugin, toRemoveList);
 			}
 
 			//Compile a list of plugin names that conflicts with uninstalling (if any)
@@ -330,12 +321,10 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 					toUpdateList);
 			controller.unifyUninstallList(uninstallDependentsMap, toRemoveList);
 
-			//remove any unnecessary information
-			//suggestion... here you might wanna reuse your "filter pattern"?
-			//i.e.: move your methods from controller to PluginCollection
-			toInstallList = controller.getUnlistedInstalls(toInstallList);
-			toUpdateList = controller.getUnlistedUpdates(toUpdateList);
-			toRemoveList = controller.getUnlistedRemoves(toRemoveList);
+			//Objective is to show user only information that was previously invisible
+			toInstallList = ((PluginCollection)toInstallList).getList(PluginCollection.FILTER_UNLISTED_TO_INSTALL);
+			toUpdateList = ((PluginCollection)toUpdateList).getList(PluginCollection.FILTER_UNLISTED_TO_UPDATE);
+			toRemoveList = ((PluginCollection)toRemoveList).getList(PluginCollection.FILTER_UNLISTED_TO_UNINSTALL);
 
 			//Actual display of information
 			System.out.println("Output simulation");
