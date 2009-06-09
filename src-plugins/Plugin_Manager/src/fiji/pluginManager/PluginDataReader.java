@@ -140,7 +140,7 @@ public class PluginDataReader implements Observable, Observer {
 		ArrayList<Dependency> Kdependency = new ArrayList<Dependency>();
 		Kdependency.add(dependencyK1);
 		PluginObject pluginK = new PluginObject("PluginK.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20081221866291", "This is a description of Plugin K", Kdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-		
+
 		pluginList.add(pluginA);
 		pluginList.add(pluginB);
 		pluginList.add(pluginC);

@@ -27,28 +27,38 @@ public class Controller {
 		boolean selectedInInstallList = changeToInstallList.contains(selectedPlugin);
 		boolean selectedInUpdateList = changeToUpdateList.contains(selectedPlugin);
 
+		//Does not belong in any lists yet
+		if (!selectedInInstallList && !selectedInUpdateList) {
+			if (updateableState) {
+				//in context of "addDependency", it can only mean "update the plugin"
+				changeToUpdateList.add(selectedPlugin);
+			} else {
+				//in context of "addDependency", it can only mean "install the plugin"
+				changeToInstallList.add(selectedPlugin);
+			}
+		} //else... (Plugin already added earlier)
+
+		//if "Update-able" state
 		if (updateableState) {
-			//if it is already in a list
-			if (selectedInInstallList || selectedInUpdateList) {
-				if (!selectedInInstallList && selectedInUpdateList)
-					dependencyList = selectedPlugin.getNewDependencies();
-				else if (selectedInInstallList && !selectedInUpdateList)
-					dependencyList = selectedPlugin.getDependencies();
-				//else... Can't possibly have both true at the same time
-			}
-			//does not belong to any list, implies its the FIRST selected plugin
-			else {
-				//if action indicate to update further, then use new dependencies
+			//if in updateList, use update's dependencies, if not, go on as per normal
+			if (!selectedInInstallList && selectedInUpdateList) {
+				dependencyList = selectedPlugin.getNewDependencies();
+			} else if (selectedInInstallList && !selectedInUpdateList) {
+				//if already in the "Install" list but indicated to update
 				if (selectedPlugin.getAction() == PluginObject.ACTION_UPDATE) {
-					dependencyList = selectedPlugin.getNewDependencies();
+					changeToInstallList.remove(selectedPlugin);
 					changeToUpdateList.add(selectedPlugin);
-				}
-				/*else { //otherwise, as per normal
+					dependencyList = selectedPlugin.getNewDependencies();
+				} else {
 					dependencyList = selectedPlugin.getDependencies();
-				}*/
+				}
 			}
-		} else //otherwise, as per normal
+		}
+		//Otherwise, it only means "installable", no updates
+		else {
+			//if it is not an "Update-able" state, then go on as per normal
 			dependencyList = selectedPlugin.getDependencies();
+		}
 
 		//if there are no dependencies for this selected plugin
 		if (dependencyList == null || dependencyList.size() == 0) {
@@ -89,7 +99,7 @@ public class Controller {
 						//if previous "update-able" prerequisite only requires an install
 						else if (inInstallList && !inUpdateList &&
 								plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
-							//Check again, if this current dependency's plugin is outdated
+							//Then check again if this current dependency's plugin is outdated
 							if (plugin.getTimestamp().compareTo(dependency.getTimestamp()) < 0) {
 								changeToInstallList.remove(plugin);
 								changeToUpdateList.add(plugin); //add to update list ("special" case)
