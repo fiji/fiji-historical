@@ -441,3 +441,28 @@ Next tasks to consider:
 - Refactoring to have a simpler "for (PluginObject myPlugin : change_removeList)" when possible
 - best if PluginObject can have methods like isInstallable(), isDeletable()
 - Actual interface display of plugin dependency check
+
+
+
+10th June, Wednesday
+Completed:
+- Refactored TextPaneFormat inside PluginManager: New insertDependenciesList method to cater to multiple use of listing dependencies of a plugin
+- Refactored mainly PluginCollection, Controller, PluginObject
+   ==> Simplify code reading through the use of "for (PluginObject plugin : pluginList)"
+   ==> PluginObject now has new methods like isInstallable(), toUpdate(), and so on
+   ==> Thus further simplify reading of the code, without needing to read longer lines like plugin.getStatus() == PluginObject.STATUS_INSTALLED
+- Researched use of Java XPath API: It certainly makes it more convenient to parse XML data
+   ==> Sample XML file and test class has been created
+
+Core features of Plugin Manager remaining to be implemented so far
+- Actual interface display of displaying plugin dependencies and conflicts
+- XML database and their (placeholder!) contents
+- List by search term: Search by filename or by description? ==> Requires refining of this point
+- Removal of plugins
+- Unaddressed point: What application should do when download/removal of plugin is finished????
+- 3rd party plugins' support
+
+Regarding CLASS plugins
+==> Location at run-time is fixed
+==> It should be safe to assume that Fiji won't introduce CLASS plugins to current.txt?
+==> If so, they belong to 3rd party plugins category
