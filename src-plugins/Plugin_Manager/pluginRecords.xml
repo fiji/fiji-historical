@@ -1,0 +1,48 @@
+<document>
+
+<plugin filename="PluginA.jar">
+	<description>This is a short description or summary of PluginA.jar</description>
+	<version>
+		<checksum>65c3ecc1bbd7564f92545ffd2521f9d96509ca64</checksum>
+		<timestamp>20090429190842</timestamp>
+		<filesize>5123</filesize>
+		<dependency filename="PluginD.jar" timestamp="20090420190033"/>
+	</version>
+</plugin>
+
+<plugin filename="PluginB.jar">
+	<description>This is a short description or summary of PluginB.jar</description>
+	<version>
+		<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
+		<timestamp>20090429190854</timestamp>
+		<filesize>5456</filesize>
+		<dependency filename="PluginD.jar" timestamp="20090420190033"/>
+		<dependency filename="PluginH.jar" timestamp="20090524666220"/>
+		<dependency filename="PluginC.jar" timestamp="20081011183621"/>
+	</version>
+</plugin>
+
+<plugin filename="PluginC.jar">
+	<description>This is a short description or summary of PluginC.jar</description>
+	<version>
+		<checksum>1a992dbc077ef84020d44a980c7992ba6c8edf3d</checksum>
+		<timestamp>20090425190854</timestamp>
+		<filesize>5789</filesize>
+	</version>
+</plugin>
+
+<plugin filename="PluginH.jar">
+	<description>This is a short description or summary of PluginH.jar</description>
+	<version>
+		<checksum>33c88dc1fbd7564f92587ffdc521f9de6507ca65</checksum>
+		<timestamp>20081224666220</timestamp>
+		<filesize>6123</filesize>
+	</version>
+	<version>
+		<checksum>23d88dc1fbd7564f92087ffdc529acce6500ef60</checksum>
+		<timestamp>20090524666220</timestamp>
+		<filesize>6321</filesize>
+	</version>
+</plugin>
+
+</document>
