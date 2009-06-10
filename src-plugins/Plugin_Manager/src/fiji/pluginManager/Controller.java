@@ -1,9 +1,4 @@
 package fiji.pluginManager;
-import ij.Menus;
-
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -25,7 +20,7 @@ public class Controller {
 	public void addDependency(List<PluginObject> changeToInstallList, List<PluginObject> changeToUpdateList, PluginObject selectedPlugin) {
 		//First retrieve the dependency list
 		List<Dependency> dependencyList = new ArrayList<Dependency>();
-		boolean updateableState = (selectedPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE);
+		boolean updateableState = selectedPlugin.isUpdateable();
 		boolean selectedInInstallList = changeToInstallList.contains(selectedPlugin);
 		boolean selectedInUpdateList = changeToUpdateList.contains(selectedPlugin);
 
@@ -51,7 +46,7 @@ public class Controller {
 				dependencyList = selectedPlugin.getNewDependencies();
 			} else if (selectedInInstallList && !selectedInUpdateList) {
 				//if already in the "Install" list but indicated to update
-				if (selectedPlugin.getAction() == PluginObject.ACTION_UPDATE) {
+				if (selectedPlugin.toUpdate()) {
 					changeToInstallList.remove(selectedPlugin);
 					changeToUpdateList.add(selectedPlugin);
 					dependencyList = selectedPlugin.getNewDependencies();
@@ -71,11 +66,9 @@ public class Controller {
 			return;
 		} else {
 			//if there are dependencies, check for prerequisites
-			for (int i = 0; i < dependencyList.size(); i++) {
+			for (Dependency dependency : dependencyList) {
 
-				Dependency dependency = dependencyList.get(i);
-				for (int j = 0; j < pluginList.size(); j++) {
-					PluginObject plugin = pluginList.get(j);
+				for (PluginObject plugin : pluginList) {
 
 					//if Prerequisite is found,
 					if (plugin.getFilename().equals(dependency.getFilename())) {
@@ -85,14 +78,13 @@ public class Controller {
 						if (!inInstallList && !inUpdateList) {
 
 							//if prerequisite installed/uninstalled
-							if (plugin.getStatus() == PluginObject.STATUS_INSTALLED ||
-								plugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
+							if (plugin.isRemovableOnly() || plugin.isInstallable()) {
 								//add to list
 								changeToInstallList.add(plugin);
 								addDependency(changeToInstallList, changeToUpdateList, plugin);
 							}
 							//if prerequisite is update-able
-							else if (plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+							else if (plugin.isUpdateable()) {
 								//if current dependency's plugin is outdated
 								if (plugin.getTimestamp().compareTo(dependency.getTimestamp()) < 0) {
 									changeToUpdateList.add(plugin); //add to update list ("special" case)
@@ -103,8 +95,7 @@ public class Controller {
 							}
 						}
 						//if previous "update-able" prerequisite only requires an install
-						else if (inInstallList && !inUpdateList &&
-								plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+						else if (inInstallList && !inUpdateList && plugin.isUpdateable()) {
 							//Then check again if this current dependency's plugin is outdated
 							if (plugin.getTimestamp().compareTo(dependency.getTimestamp()) < 0) {
 								changeToInstallList.remove(plugin);
@@ -128,8 +119,8 @@ public class Controller {
 			changeToUninstallList.add(selectedPlugin);
 		}
 		//Search through entire list
-		for (int i = 0; i < pluginList.size(); i++) {
-			PluginObject plugin = pluginList.get(i);
+		for (PluginObject plugin : pluginList) {
+
 			boolean inUninstallList = changeToUninstallList.contains(plugin);
 			if (inUninstallList) {
 				continue; //already in UninstallList ==> Its dependents are assumed to be too
@@ -138,8 +129,7 @@ public class Controller {
 				if (dependencyList == null || dependencyList.size() == 0) {
 					//do nothing
 				} else {
-					for (int j = 0; j < dependencyList.size(); j++) {
-						Dependency dependency = dependencyList.get(j);
+					for (Dependency dependency : dependencyList) {
 						String dependencyFilename = dependency.getFilename();
 						if (dependencyFilename.equals(selectedPlugin.getFilename())) {
 							changeToUninstallList.add(plugin);
@@ -149,7 +139,8 @@ public class Controller {
 					}
 				}
 			}
-		}
+
+		} //end of search through pluginList
 	}
 
 	//placeholder methods, if needed
@@ -162,21 +153,19 @@ public class Controller {
 		while (iterInstallLists.hasNext()) {
 			List<PluginObject> dependencies = iterInstallLists.next();
 			//For every plugin in each dependency list
-			for (int i = 0; i < dependencies.size(); i++) {
-				PluginObject pluginDependency = dependencies.get(i);
+			for (PluginObject pluginDependency : dependencies) {
 				//if install list does not contain the plugin yet, add it
 				if (!installList.contains(pluginDependency)) {
 					installList.add(pluginDependency);
 				}
 			}
 		}
-	
+
 		Iterator<List<PluginObject>> iterUpdateLists = updateDependenciesMap.values().iterator();
 		while (iterUpdateLists.hasNext()) {
 			List<PluginObject> dependencies = iterUpdateLists.next();
 			//For every plugin in each dependency list
-			for (int i = 0; i < dependencies.size(); i++) {
-				PluginObject pluginDependency = dependencies.get(i);
+			for (PluginObject pluginDependency : dependencies) {
 				//if install list does not contain the plugin yet, add it
 				if (!updateList.contains(pluginDependency)) {
 					updateList.add(pluginDependency);
@@ -201,8 +190,7 @@ public class Controller {
 		while (iterUninstallLists.hasNext()) {
 			List<PluginObject> dependents = iterUninstallLists.next();
 			//For every plugin in each dependency list
-			for (int i = 0; i < dependents.size(); i++) {
-				PluginObject pluginDependent = dependents.get(i);
+			for (PluginObject pluginDependent : dependents) {
 				//if install list does not contain the plugin yet, add it
 				if (!uninstallList.contains(pluginDependent)) {
 					uninstallList.add(pluginDependent);
@@ -230,43 +218,36 @@ public class Controller {
 
 	//forces action for every plugin in the list to "install"
 	public void setToInstall(List<PluginObject> selectedList) {
-		for (int i = 0; i < selectedList.size(); i++) {
-			PluginObject plugin = selectedList.get(i);
-			if (plugin.getStatus() == PluginObject.STATUS_INSTALLED ||
-				plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
-				plugin.setAction(PluginObject.ACTION_NONE);
-			} else if (plugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
-				plugin.setAction(PluginObject.ACTION_REVERSE);
+		for (PluginObject plugin : selectedList) {
+			if (plugin.isRemovableOnly() || plugin.isUpdateable()) {
+				plugin.setActionNone();
+			} else if (plugin.isInstallable()) {
+				plugin.setActionToInstall();
 			}
 		}
 	}
 
 	//forces action for every update-able plugin in the list to be "update"
 	public void setToUpdate(List<PluginObject> selectedList) {
-		for (int i = 0; i < selectedList.size(); i++) {
-			PluginObject plugin = selectedList.get(i);
-			if (plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
-				plugin.setAction(PluginObject.ACTION_UPDATE);
+		for (PluginObject plugin : selectedList) {
+			if (plugin.isUpdateable()) {
+				plugin.setActionToUpdate();
 			}
 		}
 	}
 
 	//forces action for every plugin in the list to be "uninstall"
 	public void setToRemove(List<PluginObject> selectedList) {
-		for (int i = 0; i < selectedList.size(); i++) {
-			PluginObject plugin = selectedList.get(i);
-			if (plugin.getStatus() == PluginObject.STATUS_INSTALLED) {
-				plugin.setAction(PluginObject.ACTION_REVERSE);
-			} else if (plugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
-				plugin.setAction(PluginObject.ACTION_NONE);
-			} else if (plugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
-				plugin.setAction(PluginObject.ACTION_REVERSE);
+		for (PluginObject plugin : selectedList) {
+			if (plugin.isRemovableOnly()) {
+				plugin.setActionToRemove();
+			} else if (plugin.isInstallable()) {
+				plugin.setActionNone();
+			} else if (plugin.isUpdateable()) {
+				plugin.setActionToRemove();
 			}
 		}
 	}
 
-	public List<PluginObject> getPluginList() {
-		return pluginList;
-	}
 }
 

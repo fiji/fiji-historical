@@ -82,7 +82,7 @@ public class PluginTable extends JTable {
 				int modelRow = table.convertRowIndexToModel(row);
 				PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
 
-				if (myPlugin.getAction() == PluginObject.ACTION_NONE) {
+				if (!myPlugin.actionSpecified()) {
 					//if there is no action
 					comp.setFont(comp.getFont().deriveFont(Font.PLAIN));
 				} else {
@@ -122,11 +122,11 @@ public class PluginTable extends JTable {
 		if (col == 0) {
 			return super.getCellEditor(row,col);
 		} else if (col == 1) {
-			if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) //if plugin is not installed
+			if (myPlugin.isInstallable()) //if plugin is not installed
 				return uninstalledOptions;
-			else if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED) //if plugin is installed
+			else if (myPlugin.isRemovableOnly()) //if plugin is installed
 				return installedOptions;
-			else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) //if plugin is installed
+			else if (myPlugin.isUpdateable()) //if plugin is installed
 				return updateableOptions;
 			else
 				throw new Error("Error while assigning combo-boxes to data!");
@@ -189,33 +189,32 @@ public class PluginTable extends JTable {
 				case 0:
 					return entry.getFilename();
 				case 1:
-					byte currentStatus = entry.getStatus();
-					byte actionToTake = entry.getAction();
-					if (currentStatus == PluginObject.STATUS_UNINSTALLED) { //if not installed 
-						if (actionToTake == PluginObject.ACTION_NONE)
+					if (entry.isInstallable()) { //if not installed
+						if (!entry.actionSpecified()) {
 							return PluginTable.arrUninstalledOptions[0]; //"Not installed"
-						else if (actionToTake == PluginObject.ACTION_REVERSE)
+						} else if (entry.toInstall()) {
 							return PluginTable.arrUninstalledOptions[1]; //"Install"
-						else
+						} else {
 							throw new Error("INVALID action value for Uninstalled Plugin");
-					} else if (currentStatus == PluginObject.STATUS_INSTALLED) { //if installed
-						if (actionToTake == PluginObject.ACTION_NONE)
+						}
+					} else if (entry.isRemovableOnly()) { //if installed and no updates
+						if (!entry.actionSpecified()) {
 							return PluginTable.arrInstalledOptions[0]; //"Installed"
-						else if (actionToTake == PluginObject.ACTION_REVERSE)
+						} else if (entry.toRemove()) {
 							return PluginTable.arrInstalledOptions[1]; //"Remove"
-						else
+						} else {
 							throw new Error("INVALID action value for Installed Plugin");
-					} else if (currentStatus == PluginObject.STATUS_MAY_UPDATE) { //if installed AND update-able
-						if (actionToTake == PluginObject.ACTION_NONE)
+						}
+					} else if (entry.isUpdateable()) { //if installed and update-able
+						if (!entry.actionSpecified()) {
 							return PluginTable.arrUpdateableOptions[0]; //"Installed"
-						else if (actionToTake == PluginObject.ACTION_REVERSE)
+						} else if (entry.toRemove()) {
 							return PluginTable.arrUpdateableOptions[1]; //"Remove"
-						else if (actionToTake == PluginObject.ACTION_UPDATE)
+						} else if (entry.toUpdate()) {
 							return PluginTable.arrUpdateableOptions[2]; //"Update"
-						else
+						} else {
 							throw new Error("INVALID action value for Update-able Plugin");
-					} else {
-						throw new Error("INVALID Plugin Status retrieved!");
+						}
 					}
 				default:
 					throw new Error("Column out of range");
@@ -228,52 +227,52 @@ public class PluginTable extends JTable {
 
 		public void setValueAt(Object value, int rowIndex, int columnIndex) {
 			PluginObject entry = (PluginObject)entries.get(rowIndex);
-			if(columnIndex == 1) {
+			if (columnIndex == 1) {
 				String newValue = (String)value;
 				//if current status of selected plugin is "not installed"
-				if (entry.getStatus() == PluginObject.STATUS_UNINSTALLED) {
+				if (entry.isInstallable()) {
 					//if option chosen is "Not installed"
 					if (newValue.equals(PluginTable.arrUninstalledOptions[0])) {
-						entry.setAction(PluginObject.ACTION_NONE);
+						entry.setActionNone();
 					}
 					//if option chosen is "Install"
 					else if (newValue.equals(PluginTable.arrUninstalledOptions[1])) {
-						entry.setAction(PluginObject.ACTION_REVERSE);
+						entry.setActionToInstall();
 					}
 					//otherwise...
 					else {
-						throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
+						throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isInstallable() ? "Installable" : "NOT Installable"));
 					}
-				} else if (entry.getStatus() == PluginObject.STATUS_INSTALLED) {
+				} else if (entry.isRemovableOnly()) {
 					//if option chosen is "Installed"
 					if (newValue.equals(PluginTable.arrInstalledOptions[0])) {
-						entry.setAction(PluginObject.ACTION_NONE);
+						entry.setActionNone();
 					}
 					//if option chosen is "Remove" (Or uninstall it)
 					else if (newValue.equals(PluginTable.arrInstalledOptions[1])) {
 						//TO IMPLEMENT: To check whether it is valid to remove w/o violating dependencies
-						entry.setAction(PluginObject.ACTION_REVERSE);
+						entry.setActionToRemove();
 					}
 					//otherwise...
 					else {
-						throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
+						throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isRemovableOnly() ? "Uninstallable" : "NOT Uninstallable"));
 					}
-				} else if (entry.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+				} else if (entry.isUpdateable()) {
 					//if option chosen is "Installed"
 					if (newValue.equals(PluginTable.arrUpdateableOptions[0])) {
-						entry.setAction(PluginObject.ACTION_NONE);
+						entry.setActionNone();
 					}
 					//if option chosen is "Remove" (Or uninstall it)
 					else if (newValue.equals(PluginTable.arrUpdateableOptions[1])) {
-						entry.setAction(PluginObject.ACTION_REVERSE);
+						entry.setActionToRemove();
 					}
 					//if option chosen is "Update"
 					else if (newValue.equals(PluginTable.arrUpdateableOptions[2])) {
-						entry.setAction(PluginObject.ACTION_UPDATE);
+						entry.setActionToUpdate();
 					}
 					//otherwise...
 					else {
-						throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
+						throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isUpdateable() ? "Updateable" : "NOT Updateable"));
 					}
 				} else {
 					throw new Error("Invalid status specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());

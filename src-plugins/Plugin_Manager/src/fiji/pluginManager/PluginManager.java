@@ -302,7 +302,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 						String installName = pluginAdd.getFilename();
 						String uninstallName = pluginUninstall.getFilename();
 						String[] arrNames = {installName, uninstallName};
-						if (pluginAdd.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+						if (pluginAdd.isUpdateable()) {
 							updateConflicts.add(arrNames);
 						} else {
 							installConflicts.add(arrNames);
@@ -334,16 +334,16 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 				String pluginName = myPlugin.getFilename();
 				String pluginDescription = myPlugin.getDescription();
 				String outputStr = (i+1) + ": " + pluginName + "; Description: " + pluginDescription + "; Action: ";
-				if (myPlugin.getStatus() == PluginObject.STATUS_INSTALLED) {
+				if (myPlugin.isRemovableOnly()) {
+					//obviously, if its in "changes" list, then action is uninstall
 					outputStr += "To Uninstall";
-				} else if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
+				} else if (myPlugin.isInstallable()) {
+					//obviously, if its in "changes" list, then action is install
 					outputStr += "To install";
-				} else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
-					if (myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
-						outputStr += "To Uninstall";
-					} else if (myPlugin.getAction() == PluginObject.ACTION_UPDATE) {
-						outputStr += "To Update";
-					}
+				} else if (myPlugin.isUpdateable() && myPlugin.toRemove()) {
+					outputStr += "To Uninstall";
+				} else if (myPlugin.toUpdate()) {
+					outputStr += "To Update";
 				}
 				System.out.println(outputStr);
 			}
@@ -391,7 +391,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		txtPluginDetails.setText("");
 		try {
 			TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BOLD_BLACK_TITLE);
-			if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE)
+			if (myPlugin.isUpdateable())
 				TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.ITALIC_BLACK);
 			TextPaneFormat.insertText(txtPluginDetails, "\n\nMd5 Sum", TextPaneFormat.BOLD_BLACK);
 			TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum());
@@ -407,7 +407,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			} else
 				strDescription = myPlugin.getDescription();
 			TextPaneFormat.insertText(txtPluginDetails, "\n" + strDescription);
-			if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+			if (myPlugin.isUpdateable()) {
 				TextPaneFormat.insertText(txtPluginDetails, "\n\nUpdate Details", TextPaneFormat.BOLD_BLACK_TITLE);
 				TextPaneFormat.insertText(txtPluginDetails, "\n\nNew Md5 Sum", TextPaneFormat.BOLD_BLACK);
 				TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getNewMd5Sum());
@@ -430,17 +430,12 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		int updateCount = 0;
 
 		size = viewList.size();
-		for (int i = 0; i < size; i++) {
-			PluginObject myPlugin = viewList.get(i);
-			if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED &&
-				myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
+		for (PluginObject myPlugin : viewList) {
+			if (myPlugin.toInstall()) {
 				installCount += 1;
-			} else if ((myPlugin.getStatus() == PluginObject.STATUS_INSTALLED ||
-				myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) &&
-				myPlugin.getAction() == PluginObject.ACTION_REVERSE) {
+			} else if (myPlugin.toRemove()) {
 				removeCount += 1;
-			} else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE &&
-						myPlugin.getAction() == PluginObject.ACTION_UPDATE) {
+			} else if (myPlugin.toUpdate()) {
 				updateCount += 1;
 			}
 		}

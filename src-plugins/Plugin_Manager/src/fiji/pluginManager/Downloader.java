@@ -83,8 +83,7 @@ public class Downloader implements Observable {
 
 	public void notifyObservers() {
 		// Send notify to all Observers
-		for (int i = 0; i < observersList.size(); i++) {
-			Observer observer = (Observer) observersList.elementAt(i);
+		for (Observer observer : observersList) {
 			observer.refreshData(this);
 		}
 	}

@@ -8,7 +8,6 @@ public class PluginObject {
 	private String timestamp; //Version of plugin file ("Co-Identifier")
 	private String newMd5Sum; //if any
 	private String newTimestamp; //if any
-	private String directory; //Where should the plugin file (Loaded) be located
 	private String description;
 	public static final byte STATUS_UNINSTALLED = 0; //Meaning current status is not installed
 	public static final byte STATUS_INSTALLED = 1; //Meaning current status is installed
@@ -21,10 +20,11 @@ public class PluginObject {
 	private List<Dependency> newDependency;
 	private List<Dependency> dependency; //Dependency object: filename and timestamp
 
-	public PluginObject(String strFilename, String md5Sum, String timestamp) {
+	public PluginObject(String strFilename, String md5Sum, String timestamp, byte status) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
 		this.timestamp = timestamp;
+		this.status = status;
 	}
 
 	public PluginObject(String strFilename, String md5Sum, String timestamp, String description, List<Dependency> dependency, byte status, byte action) {
@@ -37,11 +37,15 @@ public class PluginObject {
 		this.action = action;
 	}
 
-	public void setToUpdateable(String newMd5Sum, String newTimestamp, List<Dependency> newDependency) {
+	public void setUpdateDetails(String newMd5Sum, String newTimestamp, List<Dependency> newDependency) {
 		setStatus(PluginObject.STATUS_MAY_UPDATE); //set status, if not done so already
 		this.newMd5Sum = newMd5Sum;
 		this.newTimestamp = newTimestamp;
 		this.newDependency = newDependency;
+	}
+
+	private void setStatus(byte status) {
+		this.status = status;
 	}
 
 	public void setDescription(String description) {
@@ -52,11 +56,32 @@ public class PluginObject {
 		this.dependency = dependency;
 	}
 
-	public void setStatus(byte status) {
-		this.status = status;
+	public void setActionToInstall() {
+		if (isInstallable())
+			setAction(PluginObject.ACTION_REVERSE);
+		else
+			throw new Error("Plugin " + strFilename + " cannot install as its current state is not UNINSTALLED.");
 	}
 
-	public void setAction(byte action) {
+	public void setActionToRemove() {
+		if (isRemovable())
+			setAction(PluginObject.ACTION_REVERSE);
+		else
+			throw new Error("Plugin " + strFilename + " cannot remove as its current state was never installed.");
+	}
+
+	public void setActionToUpdate() {
+		if (isUpdateable())
+			setAction(PluginObject.ACTION_UPDATE);
+		else
+			throw new Error("Plugin " + strFilename + " cannot update as its current state is not UPDATEABLE.");
+	}
+
+	public void setActionNone() {
+		setAction(PluginObject.ACTION_NONE);
+	}
+
+	private void setAction(byte action) {
 		this.action = action;
 	}
 
@@ -67,7 +92,7 @@ public class PluginObject {
 	public String getmd5Sum() {
 		return md5Sum;
 	}
-	
+
 	public String getNewMd5Sum() {
 		return newMd5Sum;
 	}
@@ -75,13 +100,9 @@ public class PluginObject {
 	public String getTimestamp() {
 		return timestamp;
 	}
-	
+
 	public String getNewTimestamp() {
 		return newTimestamp;
-	}
-
-	public String getDirectory() {
-		return directory;
 	}
 
 	public String getDescription() {
@@ -95,7 +116,7 @@ public class PluginObject {
 	public Dependency getDependency(int index) {
 		return dependency.get(index);
 	}
-	
+
 	public List<Dependency> getNewDependencies() {
 		return newDependency;
 	}
@@ -110,5 +131,38 @@ public class PluginObject {
 
 	public byte getAction() {
 		return action;
+	}
+
+	public boolean isInstallable() {
+		return (status == PluginObject.STATUS_UNINSTALLED);
+	}
+
+	public boolean isUpdateable() {
+		return (status == PluginObject.STATUS_MAY_UPDATE);
+	}
+
+	public boolean isRemovableOnly() {
+		return (status == PluginObject.STATUS_INSTALLED);
+	}
+
+	public boolean isRemovable() {
+		return (status == PluginObject.STATUS_INSTALLED ||
+				status == PluginObject.STATUS_MAY_UPDATE);
+	}
+
+	public boolean actionSpecified() {
+		return (action != PluginObject.ACTION_NONE);
+	}
+
+	public boolean toUpdate() {
+		return (isUpdateable() && action == PluginObject.ACTION_UPDATE);
+	}
+
+	public boolean toRemove() {
+		return (isRemovable() && action == PluginObject.ACTION_REVERSE);
+	}
+
+	public boolean toInstall() {
+		return (isInstallable() && action == PluginObject.ACTION_REVERSE);
 	}
 }

@@ -1,36 +1,12 @@
 package fiji.pluginManager;
-import ij.IJ;
 
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.Vector;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLDecoder;
 
 /*
  * This class' main role is to download selected files, as well as indicate those that
@@ -75,7 +51,7 @@ public class Installer implements Runnable, Observer {
 	//start processing on contents of deletionList
 	public void startDelete() {
 		while (iterUninstall.hasNext()) {
-			PluginObject plugin = iterUninstall.next();
+			//PluginObject plugin = iterUninstall.next();
 			//do deleting
 		}
 	}
@@ -123,13 +99,10 @@ public class Installer implements Runnable, Observer {
 		while (tempIter.hasNext() && thisThread == downloadThread) {
 			PluginObject myPlugin = tempIter.next();
 			String name = myPlugin.getFilename();
-			String digest = null;
 			String date = null;
-			if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
-				digest = myPlugin.getmd5Sum();
+			if (myPlugin.isInstallable()) {
 				date = myPlugin.getTimestamp();
-			} else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
-				digest = myPlugin.getNewMd5Sum();
+			} else if (myPlugin.isUpdateable()) {
 				date = myPlugin.getNewTimestamp();
 			}
 
@@ -155,10 +128,10 @@ public class Installer implements Runnable, Observer {
 			String name = myPlugin.getFilename();
 			String digest = null;
 			String date = null;
-			if (myPlugin.getStatus() == PluginObject.STATUS_UNINSTALLED) {
+			if (myPlugin.isInstallable()) {
 				digest = myPlugin.getmd5Sum();
 				date = myPlugin.getTimestamp();
-			} else if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+			} else if (myPlugin.isUpdateable()) {
 				digest = myPlugin.getNewMd5Sum();
 				date = myPlugin.getNewTimestamp();
 			}
@@ -239,7 +212,9 @@ public class Installer implements Runnable, Observer {
 					System.out.println("Trying to delete " + fullPath + "...");
 					new File(fullPath).delete(); //delete file, if it exists
 					System.out.println("Deletion operation of " + fullPath + " complete.");
-				} catch (Exception e2) { System.out.println("Error occurred while deleting " + fullPath + "..."); }
+				} catch (Exception e2) {
+					System.out.println("Error occurred while deleting " + fullPath + "...");
+				}
 			}
 		}
 	}

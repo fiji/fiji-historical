@@ -116,13 +116,13 @@ public class PluginDataReader implements Observable, Observer {
 		PluginObject pluginF = new PluginObject("PluginF.jar", "1b992dbca07ef84020d44a980c7902ba6c82dfee", "20090420191023", "This is a description of Plugin F", Fdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 		
 		PluginObject pluginG = new PluginObject("PluginG.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d", "20090415160854", "This is a description of Plugin G", null, PluginObject.STATUS_MAY_UPDATE, PluginObject.ACTION_NONE);
-		pluginG.setToUpdateable("2c992db3327ef8402bd44b980c7992da6c8eefd9", "20090502130854", null);
+		pluginG.setUpdateDetails("2c992db3327ef8402bd44b980c7992da6c8eefd9", "20090502130854", null);
 		
 		Dependency dependencyH1 = new Dependency("PluginD.jar", "20090420190033");
 		ArrayList<Dependency> HnewDependency = new ArrayList<Dependency>();
 		HnewDependency.add(dependencyH1);
 		PluginObject pluginH = new PluginObject("PluginH.jar", "33c88dc1fbd7564f92587ffdc521f9de6507ca65", "20081224666220", "This is a description of Plugin H", null, PluginObject.STATUS_MAY_UPDATE, PluginObject.ACTION_NONE);
-		pluginH.setToUpdateable("23d88dc1fbd7564f92087ffdc529acce6500ef60", "20090524666220", HnewDependency);
+		pluginH.setUpdateDetails("23d88dc1fbd7564f92087ffdc529acce6500ef60", "20090524666220", HnewDependency);
 		
 		Dependency dependencyI1 = new Dependency("PluginF.jar", "20090420191023");
 		Dependency dependencyI2 = new Dependency("PluginK.jar", "20081221866291");
@@ -337,8 +337,7 @@ public class PluginDataReader implements Observable, Observer {
 			System.out.println(name + ", digest: " + digest + ", timestamp: " + date);
 
 			if (digest != null && remoteDigest.equals(digest)) {
-				myPlugin = new PluginObject(name, digest, date);
-				myPlugin.setStatus(PluginObject.STATUS_INSTALLED);
+				myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED);
 				pluginList.add(myPlugin);
 				continue;
 			}
@@ -350,13 +349,11 @@ public class PluginDataReader implements Observable, Observer {
 			}*/
 			//if new file
 			if (digest == null) {
-				myPlugin = new PluginObject(name, remoteDigest, remoteDate);
-				myPlugin.setStatus(PluginObject.STATUS_UNINSTALLED);
+				myPlugin = new PluginObject(name, remoteDigest, remoteDate, PluginObject.STATUS_UNINSTALLED);
 				pluginList.add(myPlugin);
 			} else { //if its to be updated
-				myPlugin = new PluginObject(name, digest, date);
-				myPlugin.setToUpdateable(remoteDigest, remoteDate, null);
-				myPlugin.setStatus(PluginObject.STATUS_MAY_UPDATE);
+				myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_MAY_UPDATE);
+				myPlugin.setUpdateDetails(remoteDigest, remoteDate, null);
 				pluginList.add(myPlugin);
 			}
 		}
@@ -370,9 +367,7 @@ public class PluginDataReader implements Observable, Observer {
 				String digest = digests.get(name);
 				String date = dates.get(name);
 				//implies third-party plugin
-				PluginObject myPlugin = new PluginObject(name, digest, date);
-				myPlugin.setStatus(PluginObject.STATUS_INSTALLED);
-				//add it anyway?
+				PluginObject myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED);
 				pluginList.add(myPlugin);
 			}
 		}
