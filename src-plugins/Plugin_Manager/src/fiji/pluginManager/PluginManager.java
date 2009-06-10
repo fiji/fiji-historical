@@ -389,58 +389,36 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	public void displayPluginDetails(PluginObject myPlugin) {
 		txtPluginDetails.setText("");
-		TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BOLD_BLACK_TITLE);
-		if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE)
-			TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.ITALIC_BLACK);
-		TextPaneFormat.insertText(txtPluginDetails, "\n\nMd5 Sum", TextPaneFormat.BOLD_BLACK);
-		TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum());
-		TextPaneFormat.insertText(txtPluginDetails, "\n\nLast Modified: ", TextPaneFormat.BOLD_BLACK);
-		TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp());
-		TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
-		ArrayList<Dependency> myDependencies = (ArrayList<Dependency>) myPlugin.getDependencies();
-		String strDependencies = "";
-		if (myDependencies != null) {
-			int noOfDependencies = myDependencies.size();
-			for (int i = 0; i < noOfDependencies; i++) {
-				Dependency dependency = myDependencies.get(i);
-				strDependencies +=  dependency.getFilename() + " (" + dependency.getTimestamp() + ")";
-				if (i != noOfDependencies -1 && noOfDependencies != 1) //if last index
-					strDependencies += ",\n";
-			}
-			if (strDependencies.equals("")) strDependencies = "None";
-		} else {
-			strDependencies = "None";
-		}
-		TextPaneFormat.insertText(txtPluginDetails, "\n" + strDependencies);
-		TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
-		String strDescription = "";
-		if (myPlugin.getDescription() == null || myPlugin.getDescription().trim().equals("")) {
-			strDescription = "None";
-		} else
-			strDescription = myPlugin.getDescription();
-		TextPaneFormat.insertText(txtPluginDetails, "\n" + strDescription);
-		if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
-			TextPaneFormat.insertText(txtPluginDetails, "\n\nUpdate Details", TextPaneFormat.BOLD_BLACK_TITLE);
-			TextPaneFormat.insertText(txtPluginDetails, "\n\nNew Md5 Sum", TextPaneFormat.BOLD_BLACK);
-			TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getNewMd5Sum());
-			TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
-			TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getNewTimestamp());
+		try {
+			TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BOLD_BLACK_TITLE);
+			if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE)
+				TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.ITALIC_BLACK);
+			TextPaneFormat.insertText(txtPluginDetails, "\n\nMd5 Sum", TextPaneFormat.BOLD_BLACK);
+			TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum());
+			TextPaneFormat.insertText(txtPluginDetails, "\n\nLast Modified: ", TextPaneFormat.BOLD_BLACK);
+			TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp());
 			TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
-			ArrayList<Dependency> myNewDependencies = (ArrayList<Dependency>) myPlugin.getNewDependencies();
-			strDependencies = "";
-			if (myNewDependencies != null) {
-				int noOfDependencies = myNewDependencies.size();
-				for (int i = 0; i < noOfDependencies; i++) {
-					Dependency dependency = myNewDependencies.get(i);
-					strDependencies +=  dependency.getFilename() + " (" + dependency.getTimestamp() + ")";
-					if (i != noOfDependencies -1 && noOfDependencies != 1) //if last index
-						strDependencies += ",\n";
-				}
-				if (strDependencies.equals("")) strDependencies = "None";
-			} else {
-				strDependencies = "None";
+			ArrayList<Dependency> myDependencies = (ArrayList<Dependency>) myPlugin.getDependencies();
+			TextPaneFormat.insertDependenciesList(txtPluginDetails, myDependencies);
+			TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
+			String strDescription = "";
+			if (myPlugin.getDescription() == null || myPlugin.getDescription().trim().equals("")) {
+				strDescription = "None";
+			} else
+				strDescription = myPlugin.getDescription();
+			TextPaneFormat.insertText(txtPluginDetails, "\n" + strDescription);
+			if (myPlugin.getStatus() == PluginObject.STATUS_MAY_UPDATE) {
+				TextPaneFormat.insertText(txtPluginDetails, "\n\nUpdate Details", TextPaneFormat.BOLD_BLACK_TITLE);
+				TextPaneFormat.insertText(txtPluginDetails, "\n\nNew Md5 Sum", TextPaneFormat.BOLD_BLACK);
+				TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getNewMd5Sum());
+				TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
+				TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getNewTimestamp());
+				TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
+				ArrayList<Dependency> myNewDependencies = (ArrayList<Dependency>) myPlugin.getNewDependencies();
+				TextPaneFormat.insertDependenciesList(txtPluginDetails, myNewDependencies);
 			}
-			TextPaneFormat.insertText(txtPluginDetails, "\n" + strDependencies);
+		} catch (BadLocationException e) {
+			throw new Error("Problem with printing Plugin information: " + e.getMessage());
 		}
 	}
 
@@ -516,19 +494,31 @@ class TextPaneFormat {
 		StyleConstants.setFontSize(BOLD_BLACK_TITLE, 18);
 	}
 
-	public static void insertText(JTextPane textPane, String text, AttributeSet set) {
-		try {
-			textPane.getDocument().insertString(textPane.getDocument().getLength(), text, set);
-		} catch (BadLocationException e) {
-			e.printStackTrace();
-		}
+	public static void insertText(JTextPane textPane, String text, AttributeSet set)
+	throws BadLocationException {
+		textPane.getDocument().insertString(textPane.getDocument().getLength(), text, set);
 	}
 
-	public static void insertText(JTextPane textPane, String text) {
-		try {
-			textPane.getDocument().insertString(textPane.getDocument().getLength(), text, TextPaneFormat.BLACK);
-		} catch (BadLocationException e) {
-			e.printStackTrace();
+	public static void insertText(JTextPane textPane, String text)
+	throws BadLocationException {
+		textPane.getDocument().insertString(textPane.getDocument().getLength(), text, TextPaneFormat.BLACK);
+	}
+
+	public static void insertDependenciesList(JTextPane textPane, List<Dependency> dependencyList)
+	throws BadLocationException {
+		String strDependencies = "";
+		if (dependencyList != null) {
+			int noOfDependencies = dependencyList.size();
+			for (int i = 0; i < noOfDependencies; i++) {
+				Dependency dependency = dependencyList.get(i);
+				strDependencies +=  dependency.getFilename() + " (" + dependency.getTimestamp() + ")";
+				if (i != noOfDependencies -1 && noOfDependencies != 1) //if last index
+					strDependencies += ",\n";
+			}
+			if (strDependencies.equals("")) strDependencies = "None";
+		} else {
+			strDependencies = "None";
 		}
+		insertText(textPane, "\n" + strDependencies);
 	}
 }
