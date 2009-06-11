@@ -48,6 +48,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	/* User Interface elements */
 	private DownloadUI frameDownloader;
+	private ConfirmationUI frameConfirmation;
 	private String[] arrViewingOptions = {
 			"View all plugins",
 			"View installed plugins only",
@@ -77,11 +78,12 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		setUpUserInterface();
 
 		setVisible(true);
-		
 		pack();
 	}
 
 	private void setUpUserInterface() {
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
 		/* Create textpane to hold the information and its scrollpane */
 		txtPluginDetails = new JTextPane();
 		txtPluginDetails.setEditable(false);
@@ -248,101 +250,15 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		boolean tempDemo = pluginDataReader.tempDemo;
 		if (!tempDemo) {
 		frameDownloader = new DownloadUI(this);
-		//Installer installer = new Installer(((PluginCollection)pluginList).getListWhereActionIsSpecified(), updateURL);
 		frameDownloader.setVisible(true);
 		installer = new Installer(pluginDataReader, updateURL);
 		frameDownloader.setInstaller(installer);
 		setEnabled(false);
 		} else {
-			//initialize the data...
-			controller = new Controller(pluginDataReader.getExistingPluginList());
-			List<PluginObject> changeList = controller.getListOfActionSpecified();
-			Map<PluginObject,List<PluginObject>> installDependenciesMap = controller.getInstallDependenciesMappings();
-			Map<PluginObject,List<PluginObject>> updateDependenciesMap = controller.getUpdateDependenciesMappings();
-			Map<PluginObject,List<PluginObject>> uninstallDependentsMap = controller.getUninstallDependentsMappings();
-			List<PluginObject> toInstallList = controller.getEntireInstallList();
-			List<PluginObject> toUpdateList = controller.getEntireUpdateList();
-			List<PluginObject> toRemoveList = controller.getEntireRemoveList();
-
-			//Compile a list of plugin names that conflicts with uninstalling (if any)
-			List<String[]> installConflicts = new ArrayList<String[]>();
-			List<String[]> updateConflicts = new ArrayList<String[]>();
-			Iterator<PluginObject> iterInstall = installDependenciesMap.keySet().iterator();
-			while (iterInstall.hasNext()) {
-				PluginObject pluginAdd = iterInstall.next();
-				List<PluginObject> pluginInstallList = installDependenciesMap.get(pluginAdd);
-				List<PluginObject> pluginUpdateList = updateDependenciesMap.get(pluginAdd);
-				Iterator<PluginObject> iterUninstall = uninstallDependentsMap.keySet().iterator();
-				while (iterUninstall.hasNext()) {
-					PluginObject pluginUninstall = iterUninstall.next();
-					List<PluginObject> pluginUninstallList = uninstallDependentsMap.get(pluginUninstall);
-
-					if (controller.conflicts(pluginInstallList, pluginUpdateList, pluginUninstallList)) {
-						String installName = pluginAdd.getFilename();
-						String uninstallName = pluginUninstall.getFilename();
-						String[] arrNames = {installName, uninstallName};
-						if (pluginAdd.isUpdateable()) {
-							updateConflicts.add(arrNames);
-						} else {
-							installConflicts.add(arrNames);
-						}
-					}
-				}
-			}
-
-			//Objective is to show user only information that was previously invisible
-			toInstallList = ((PluginCollection)toInstallList).getList(PluginCollection.FILTER_UNLISTED_TO_INSTALL);
-			toUpdateList = ((PluginCollection)toUpdateList).getList(PluginCollection.FILTER_UNLISTED_TO_UPDATE);
-			toRemoveList = ((PluginCollection)toRemoveList).getList(PluginCollection.FILTER_UNLISTED_TO_UNINSTALL);
-
-			//Actual display of information
-			System.out.println("Output simulation");
-			for (int i = 0; i < changeList.size(); i++) {
-				//try filtering through the filtered (use "filter pattern" again)
-				PluginObject myPlugin = changeList.get(i);
-				String pluginName = myPlugin.getFilename();
-				String pluginDescription = myPlugin.getDescription();
-				String outputStr = (i+1) + ": " + pluginName + "; Description: " + pluginDescription + "; Action: ";
-				if (myPlugin.isRemovableOnly()) {
-					//obviously, if its in "changes" list, then action is uninstall
-					outputStr += "To Uninstall";
-				} else if (myPlugin.isInstallable()) {
-					//obviously, if its in "changes" list, then action is install
-					outputStr += "To install";
-				} else if (myPlugin.isUpdateable() && myPlugin.toRemove()) {
-					outputStr += "To Uninstall";
-				} else if (myPlugin.toUpdate()) {
-					outputStr += "To Update";
-				}
-				System.out.println(outputStr);
-			}
-			System.out.println("----------The following additional installations/removals are to be made----------");
-			for (int i = 0; i < toInstallList.size(); i++) {
-				PluginObject myPlugin = toInstallList.get(i);
-				System.out.println("To be installed: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
-			}
-			for (int i = 0; i < toUpdateList.size(); i++) {
-				PluginObject myPlugin = toUpdateList.get(i);
-				System.out.println("To be updated: " + myPlugin.getFilename() + ", " + myPlugin.getNewTimestamp());
-			}
-			for (int i = 0; i < toRemoveList.size(); i++) {
-				PluginObject myPlugin = toRemoveList.get(i);
-				System.out.println("To be uninstalled: " + myPlugin.getFilename() + ", " + myPlugin.getTimestamp());
-			}
-			System.out.println("----------Conflicts are listed as follows:----------");
-			for (int i = 0; i < installConflicts.size(); i++) {
-				String[] names = installConflicts.get(i);
-				System.out.println("Installing " + names[0] + " would conflict with uninstalling " + names[1]);
-			}
-			for (int i = 0; i < updateConflicts.size(); i++) {
-				String[] names = updateConflicts.get(i);
-				System.out.println("Updating " + names[0] + " would conflict with uninstalling " + names[1]);
-			}
-			System.out.println("End Output Simulation");
-			//Supposedly, if no conflicts are found (size == 0), upon confirmation,
-			//program will start download, using both "changeList" and "toInstallList" and "toUpdateList" and "toRemoveList"
-			
-			controller = null;
+			frameConfirmation = new ConfirmationUI(this);
+			frameConfirmation.setVisible(true);
+			frameConfirmation.displayInformation(new Controller(pluginDataReader.getExistingPluginList()));
+			setEnabled(false);
 		}
 	}
 
@@ -351,9 +267,18 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		dispose();
 	}
 
-	public void clickBackToPluginManager() {
+	public void fromDownloaderToPluginManager() {
 		frameDownloader.setVisible(false);
 		setEnabled(true);
+		frameDownloader.dispose();
+		frameDownloader = null;
+	}
+
+	public void fromConfirmationToPluginManager() {
+		frameConfirmation.setVisible(false);
+		setEnabled(true);
+		frameConfirmation.dispose();
+		frameConfirmation = null;
 	}
 
 	public void displayPluginDetails(PluginObject myPlugin) {
@@ -494,5 +419,13 @@ class TextPaneFormat {
 			strDependencies = "None";
 		}
 		insertText(textPane, "\n" + strDependencies);
+	}
+	
+	public static void insertPluginNamelist(JTextPane textPane, List<PluginObject> myList)
+	throws BadLocationException {
+		for (int i = 0; i < myList.size(); i++) {
+			PluginObject myPlugin = myList.get(i);
+			insertText(textPane, "\n" + myPlugin.getFilename());
+		}
 	}
 }

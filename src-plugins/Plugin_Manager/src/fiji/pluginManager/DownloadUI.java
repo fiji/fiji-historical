@@ -155,7 +155,7 @@ class DownloadUI extends JFrame {
 	private void backToPluginManager() {
 		//plugin manager will deal with this
 		if (!isProgressing)
-			pluginManager.clickBackToPluginManager();
+			pluginManager.fromDownloaderToPluginManager();
 		else {
 			if (JOptionPane.showConfirmDialog(this,
 					"Are you sure you want to cancel the ongoing download?",
@@ -163,7 +163,7 @@ class DownloadUI extends JFrame {
 					JOptionPane.YES_NO_OPTION,
 					JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
 				installer.stopDownload();
-				pluginManager.clickBackToPluginManager();
+				pluginManager.fromDownloaderToPluginManager();
 			}
 		}
 	}

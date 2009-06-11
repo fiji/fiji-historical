@@ -1,9 +1,14 @@
 package fiji.pluginManager;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -15,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
+import javax.swing.text.BadLocationException;
 
 public class ConfirmationUI extends JFrame {
 	private PluginManager pluginManager; //Used if opened from Plugin Manager UI
@@ -27,10 +33,6 @@ public class ConfirmationUI extends JFrame {
 	private String msgConflictExists = "Conflicts exist. Please return to resolve them.";
 	private String msgConflictNone = "No conflicts found. You may proceed.";
 
-	public static void main(String args[]) {
-		new ConfirmationUI(null).setVisible(true);
-	}
-
 	public ConfirmationUI(PluginManager pluginManager) {
 		this.pluginManager = pluginManager;
 		setupUserInterface();
@@ -39,7 +41,7 @@ public class ConfirmationUI extends JFrame {
 
 	private void setupUserInterface() {
 		setTitle("Dependency and Conflict check");
-		//setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
 		/* Create textpane to hold the information and its scrollpane */
 		txtPluginList = new JTextPane();
@@ -93,7 +95,7 @@ public class ConfirmationUI extends JFrame {
 		conflictsPanel.add(txtScrollpane3, BorderLayout.CENTER);
 		conflictsPanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
 
-		lblStatus = new JLabel(msgConflictExists);
+		lblStatus = new JLabel();
 
 		//Buttons to start actions
 		btnDownload = new JButton();
@@ -102,7 +104,7 @@ public class ConfirmationUI extends JFrame {
 		btnDownload.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				//
+				startActualChanges();
 			}
 
 		});
@@ -113,7 +115,7 @@ public class ConfirmationUI extends JFrame {
 		btnCancel.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				//
+				backToPluginManager();
 			}
 
 		});
@@ -131,5 +133,126 @@ public class ConfirmationUI extends JFrame {
 		getContentPane().add(listsPanel);
 		getContentPane().add(conflictsPanel);
 		getContentPane().add(buttonPanel);
+	}
+
+	private void startActualChanges() {
+		//
+	}
+
+	private void backToPluginManager() {
+		pluginManager.fromConfirmationToPluginManager();
+	}
+
+	public void displayInformation(Controller controller) {
+		//Gets the necessary information
+		List<PluginObject> changeList = controller.getListOfActionSpecified();
+		Map<PluginObject,List<PluginObject>> installDependenciesMap = controller.getInstallDependenciesMappings();
+		Map<PluginObject,List<PluginObject>> updateDependenciesMap = controller.getUpdateDependenciesMappings();
+		Map<PluginObject,List<PluginObject>> uninstallDependentsMap = controller.getUninstallDependentsMappings();
+		List<PluginObject> toInstallList = controller.getEntireInstallList();
+		List<PluginObject> toUpdateList = controller.getEntireUpdateList();
+		List<PluginObject> toRemoveList = controller.getEntireRemoveList();
+
+		//Compile a list of plugin names that conflicts with uninstalling (if any)
+		List<String[]> installConflicts = new ArrayList<String[]>();
+		List<String[]> updateConflicts = new ArrayList<String[]>();
+		Iterator<PluginObject> iterInstall = installDependenciesMap.keySet().iterator();
+		while (iterInstall.hasNext()) {
+			PluginObject pluginAdd = iterInstall.next();
+			List<PluginObject> pluginInstallList = installDependenciesMap.get(pluginAdd);
+			List<PluginObject> pluginUpdateList = updateDependenciesMap.get(pluginAdd);
+			Iterator<PluginObject> iterUninstall = uninstallDependentsMap.keySet().iterator();
+			while (iterUninstall.hasNext()) {
+				PluginObject pluginUninstall = iterUninstall.next();
+				List<PluginObject> pluginUninstallList = uninstallDependentsMap.get(pluginUninstall);
+
+				if (controller.conflicts(pluginInstallList, pluginUpdateList, pluginUninstallList)) {
+					String installName = pluginAdd.getFilename();
+					String uninstallName = pluginUninstall.getFilename();
+					String[] arrNames = {installName, uninstallName};
+					if (pluginAdd.isUpdateable()) {
+						updateConflicts.add(arrNames);
+					} else {
+						installConflicts.add(arrNames);
+					}
+				}
+			}
+		}
+
+		//Objective is to show user only information that was previously invisible
+		toInstallList = ((PluginCollection)toInstallList).getList(PluginCollection.FILTER_UNLISTED_TO_INSTALL);
+		toUpdateList = ((PluginCollection)toUpdateList).getList(PluginCollection.FILTER_UNLISTED_TO_UPDATE);
+		toRemoveList = ((PluginCollection)toRemoveList).getList(PluginCollection.FILTER_UNLISTED_TO_UNINSTALL);
+
+		//Actual display of information
+		try {
+			//textpane listing plugins explicitly set by user to take action
+			for (int i = 0; i < changeList.size(); i++) {
+				PluginObject myPlugin = changeList.get(i);
+				String pluginName = myPlugin.getFilename();
+				String pluginDescription = myPlugin.getDescription();
+
+				String strAction = "";
+				if (myPlugin.isRemovableOnly()) {
+					//obviously, if its in "changes" list, then action is uninstall
+					strAction = "To Uninstall";
+				} else if (myPlugin.isInstallable()) {
+					//obviously, if its in "changes" list, then action is install
+					strAction = "To install";
+				} else if (myPlugin.isUpdateable() && myPlugin.toRemove()) {
+					strAction = "To Uninstall";
+				} else if (myPlugin.toUpdate()) {
+					strAction = "To Update";
+				}
+
+				TextPaneFormat.insertText(txtPluginList, pluginName, TextPaneFormat.BOLD_BLACK_TITLE);
+				TextPaneFormat.insertText(txtPluginList, "\n" + pluginDescription + "\n\n");
+				TextPaneFormat.insertText(txtPluginList, "Action: ", TextPaneFormat.BOLD_BLACK);
+				TextPaneFormat.insertText(txtPluginList, strAction + "\n\n");
+			}
+
+			//textpane listing additional plugins to add/remove
+			if (toInstallList.size() > 0) {
+			TextPaneFormat.insertText(txtAdditionalList, "To Install", TextPaneFormat.BOLD_BLACK_TITLE);
+			TextPaneFormat.insertPluginNamelist(txtAdditionalList, toInstallList);
+			}
+			if (toUpdateList.size() > 0) {
+			TextPaneFormat.insertText(txtAdditionalList, "\n\nTo Update", TextPaneFormat.BOLD_BLACK_TITLE);
+			TextPaneFormat.insertPluginNamelist(txtAdditionalList, toUpdateList);
+			}
+			if (toRemoveList.size() > 0) {
+			TextPaneFormat.insertText(txtAdditionalList, "\n\nTo Remove", TextPaneFormat.BOLD_BLACK_TITLE);
+			TextPaneFormat.insertPluginNamelist(txtAdditionalList, toRemoveList);
+			}
+			if (toInstallList.size() == 0 && toUpdateList.size() == 0 && toRemoveList.size() == 0) {
+				TextPaneFormat.insertText(txtAdditionalList, "None.");
+			}
+
+			//conflicts list textpane
+			for (int i = 0; i < installConflicts.size(); i++) {
+				String[] names = installConflicts.get(i);
+				TextPaneFormat.insertText(txtConflictsList, "Installing " + names[0] + " would conflict with uninstalling " + names[1] + "\n");
+			}
+			for (int i = 0; i < updateConflicts.size(); i++) {
+				String[] names = updateConflicts.get(i);
+				TextPaneFormat.insertText(txtConflictsList, "Updating " + names[0] + " would conflict with uninstalling " + names[1] + "\n");
+			}
+
+			if (installConflicts.size() == 0 && updateConflicts.size() == 0) {
+				TextPaneFormat.insertText(txtConflictsList, "None.");
+				btnDownload.setEnabled(true);
+				lblStatus.setText(msgConflictNone);
+				lblStatus.setForeground(Color.GREEN);
+			} else {
+				btnDownload.setEnabled(false);
+				lblStatus.setText(msgConflictExists);
+				lblStatus.setForeground(Color.RED);
+			}
+
+		} catch (BadLocationException e) {
+			throw new Error("Problem with printing Plugin information: " + e.getMessage());
+		}
+
+		controller = null;
 	}
 }
