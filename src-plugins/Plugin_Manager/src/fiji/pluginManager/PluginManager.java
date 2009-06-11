@@ -73,9 +73,6 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		pluginDataReader.buildFullPluginList(updateURL, updateLocal);
 		}
 
-		//initialize the data...
-		controller = new Controller(pluginDataReader.getExistingPluginList());
-
 		viewList = pluginDataReader.getExistingPluginList(); //initial view: All plugins
 		setUpUserInterface();
 
@@ -257,34 +254,15 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		frameDownloader.setInstaller(installer);
 		setEnabled(false);
 		} else {
-			//if just a demo
-			List<PluginObject> pluginList = pluginDataReader.getExistingPluginList();
-			List<PluginObject> changeList = ((PluginCollection)pluginList).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED);
-			List<PluginObject> change_addOrUpdateList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
-			List<PluginObject> change_removeList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_UNINSTALL);
-
-			//Generates a map of plugins and their individual dependencies/dependents
-			Map<PluginObject,List<PluginObject>> installDependenciesMap = new HashMap<PluginObject,List<PluginObject>>();
-			Map<PluginObject,List<PluginObject>> updateDependenciesMap = new HashMap<PluginObject,List<PluginObject>>();
-			Map<PluginObject,List<PluginObject>> uninstallDependentsMap = new HashMap<PluginObject,List<PluginObject>>();
-
-			//Going through list requesting for ADD or UPDATE
-			for (PluginObject myPlugin : change_addOrUpdateList) {
-				//Generate lists of dependencies for each plugin
-				List<PluginObject> toInstallList = new ArrayList<PluginObject>();
-				List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
-				controller.addDependency(toInstallList, toUpdateList, myPlugin);
-				installDependenciesMap.put(myPlugin, toInstallList);
-				updateDependenciesMap.put(myPlugin, toUpdateList);
-			}
-
-			//Going through list requesting for REMOVE
-			for (PluginObject myPlugin : change_removeList) {
-				//Generate lists of dependents for each plugin
-				List<PluginObject> toRemoveList = new ArrayList<PluginObject>();
-				controller.removeDependent(toRemoveList, myPlugin);
-				uninstallDependentsMap.put(myPlugin, toRemoveList);
-			}
+			//initialize the data...
+			controller = new Controller(pluginDataReader.getExistingPluginList());
+			List<PluginObject> changeList = controller.getListOfActionSpecified();
+			Map<PluginObject,List<PluginObject>> installDependenciesMap = controller.getInstallDependenciesMappings();
+			Map<PluginObject,List<PluginObject>> updateDependenciesMap = controller.getUpdateDependenciesMappings();
+			Map<PluginObject,List<PluginObject>> uninstallDependentsMap = controller.getUninstallDependentsMappings();
+			List<PluginObject> toInstallList = controller.getEntireInstallList();
+			List<PluginObject> toUpdateList = controller.getEntireUpdateList();
+			List<PluginObject> toRemoveList = controller.getEntireRemoveList();
 
 			//Compile a list of plugin names that conflicts with uninstalling (if any)
 			List<String[]> installConflicts = new ArrayList<String[]>();
@@ -292,14 +270,14 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			Iterator<PluginObject> iterInstall = installDependenciesMap.keySet().iterator();
 			while (iterInstall.hasNext()) {
 				PluginObject pluginAdd = iterInstall.next();
-				List<PluginObject> toInstallList = installDependenciesMap.get(pluginAdd);
-				List<PluginObject> toUpdateList = updateDependenciesMap.get(pluginAdd);
+				List<PluginObject> pluginInstallList = installDependenciesMap.get(pluginAdd);
+				List<PluginObject> pluginUpdateList = updateDependenciesMap.get(pluginAdd);
 				Iterator<PluginObject> iterUninstall = uninstallDependentsMap.keySet().iterator();
 				while (iterUninstall.hasNext()) {
 					PluginObject pluginUninstall = iterUninstall.next();
-					List<PluginObject> toUninstallList = uninstallDependentsMap.get(pluginUninstall);
+					List<PluginObject> pluginUninstallList = uninstallDependentsMap.get(pluginUninstall);
 
-					if (controller.conflicts(toInstallList, toUpdateList, toUninstallList)) {
+					if (controller.conflicts(pluginInstallList, pluginUpdateList, pluginUninstallList)) {
 						String installName = pluginAdd.getFilename();
 						String uninstallName = pluginUninstall.getFilename();
 						String[] arrNames = {installName, uninstallName};
@@ -311,16 +289,6 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 					}
 				}
 			}
-
-			//Combines all the dependencies for individual plugins into one list
-			List<PluginObject> toInstallList = new PluginCollection();
-			List<PluginObject> toUpdateList = new PluginCollection();
-			List<PluginObject> toRemoveList = new PluginCollection();
-			controller.unifyInstallAndUpdateList(installDependenciesMap,
-					updateDependenciesMap,
-					toInstallList,
-					toUpdateList);
-			controller.unifyUninstallList(uninstallDependentsMap, toRemoveList);
 
 			//Objective is to show user only information that was previously invisible
 			toInstallList = ((PluginCollection)toInstallList).getList(PluginCollection.FILTER_UNLISTED_TO_INSTALL);
@@ -373,6 +341,8 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			System.out.println("End Output Simulation");
 			//Supposedly, if no conflicts are found (size == 0), upon confirmation,
 			//program will start download, using both "changeList" and "toInstallList" and "toUpdateList" and "toRemoveList"
+			
+			controller = null;
 		}
 	}
 
@@ -382,8 +352,6 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	public void clickBackToPluginManager() {
-		//in later implementations, this should liase with Controller
-		//e.g: controller.hasDownloadEnded()... Controller checks download complete or not...
 		frameDownloader.setVisible(false);
 		setEnabled(true);
 	}

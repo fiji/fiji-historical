@@ -1,5 +1,6 @@
 package fiji.pluginManager;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -12,12 +13,92 @@ import java.util.Map;
 public class Controller {
 	private List<PluginObject> pluginList; //current states of all plugins
 
+	//The different structures of the same information that the user can retrieve
+	private List<PluginObject> changeList;
+	private Map<PluginObject,List<PluginObject>> installDependenciesMap;
+	private Map<PluginObject,List<PluginObject>> updateDependenciesMap;
+	private Map<PluginObject,List<PluginObject>> uninstallDependentsMap;
+	private List<PluginObject> toInstallList;
+	private List<PluginObject> toUpdateList;
+	private List<PluginObject> toRemoveList;
+
 	public Controller(List<PluginObject> pluginList) {
 		this.pluginList = pluginList;
+		changeList = ((PluginCollection)pluginList).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED);
+		List<PluginObject> change_addOrUpdateList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
+		List<PluginObject> change_removeList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_UNINSTALL);
+
+		//Generates a map of plugins and their individual dependencies/dependents
+		installDependenciesMap = new HashMap<PluginObject,List<PluginObject>>();
+		updateDependenciesMap = new HashMap<PluginObject,List<PluginObject>>();
+		uninstallDependentsMap = new HashMap<PluginObject,List<PluginObject>>();
+
+		//Going through list requesting for ADD or UPDATE
+		for (PluginObject myPlugin : change_addOrUpdateList) {
+			//Generate lists of dependencies for each plugin
+			List<PluginObject> toInstallList = new ArrayList<PluginObject>();
+			List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
+			addDependency(toInstallList, toUpdateList, myPlugin);
+			installDependenciesMap.put(myPlugin, toInstallList);
+			updateDependenciesMap.put(myPlugin, toUpdateList);
+		}
+
+		//Going through list requesting for REMOVE
+		for (PluginObject myPlugin : change_removeList) {
+			//Generate lists of dependents for each plugin
+			List<PluginObject> toRemoveList = new ArrayList<PluginObject>();
+			removeDependent(toRemoveList, myPlugin);
+			uninstallDependentsMap.put(myPlugin, toRemoveList);
+		}
+
+		//Combines all the dependencies for individual plugins into one list
+		toInstallList = new PluginCollection();
+		toUpdateList = new PluginCollection();
+		toRemoveList = new PluginCollection();
+		unifyInstallAndUpdateList(installDependenciesMap,
+				updateDependenciesMap,
+				toInstallList,
+				toUpdateList);
+		unifyUninstallList(uninstallDependentsMap, toRemoveList);
+	}
+
+	//returns list of plugins where actions are explicitly set
+	public List<PluginObject> getListOfActionSpecified() {
+		return changeList;
+	}
+
+	//returns mappings of plugins explicitly set "Install" to their corresponding dependencies
+	public Map<PluginObject,List<PluginObject>> getInstallDependenciesMappings() {
+		return installDependenciesMap;
+	}
+
+	//returns mappings of plugins explicitly set "Update" to their corresponding dependencies
+	public Map<PluginObject,List<PluginObject>> getUpdateDependenciesMappings() {
+		return updateDependenciesMap;
+	}
+
+	//returns mappings of plugins explicitly set "Uninstall" to their corresponding dependents
+	public Map<PluginObject,List<PluginObject>> getUninstallDependentsMappings() {
+		return uninstallDependentsMap;
+	}
+
+	//returns the whole list of plugins that need to be installed, including unspecified
+	public List<PluginObject> getEntireInstallList() {
+		return toInstallList;
+	}
+
+	//returns the whole list of plugins that need to be updated, including unspecified
+	public List<PluginObject> getEntireUpdateList() {
+		return toUpdateList;
+	}
+
+	//returns the whole list of plugins that need to be removed, including unspecified
+	public List<PluginObject> getEntireRemoveList() {
+		return toRemoveList;
 	}
 
 	//comes up with a list of plugins needed for download to go with this selected plugin
-	public void addDependency(List<PluginObject> changeToInstallList, List<PluginObject> changeToUpdateList, PluginObject selectedPlugin) {
+	private void addDependency(List<PluginObject> changeToInstallList, List<PluginObject> changeToUpdateList, PluginObject selectedPlugin) {
 		//First retrieve the dependency list
 		List<Dependency> dependencyList = new ArrayList<Dependency>();
 		boolean updateableState = selectedPlugin.isUpdateable();
@@ -114,7 +195,7 @@ public class Controller {
 	}
 
 	//comes up with a list of plugins needed to be removed if selected is removed
-	public void removeDependent(List<PluginObject> changeToUninstallList, PluginObject selectedPlugin) {
+	private void removeDependent(List<PluginObject> changeToUninstallList, PluginObject selectedPlugin) {
 		if (!changeToUninstallList.contains(selectedPlugin)) {
 			changeToUninstallList.add(selectedPlugin);
 		}
@@ -143,8 +224,9 @@ public class Controller {
 		} //end of search through pluginList
 	}
 
-	//placeholder methods, if needed
-	public void unifyInstallAndUpdateList(Map<PluginObject,List<PluginObject>> installDependenciesMap,
+	//combine the mapping of installs into one single list of "to install" plugins
+	//the same goes for the mapping of updates ==> "to update" list
+	private void unifyInstallAndUpdateList(Map<PluginObject,List<PluginObject>> installDependenciesMap,
 			Map<PluginObject,List<PluginObject>> updateDependenciesMap,
 			List<PluginObject> installList,
 			List<PluginObject> updateList) {
@@ -166,7 +248,7 @@ public class Controller {
 			List<PluginObject> dependencies = iterUpdateLists.next();
 			//For every plugin in each dependency list
 			for (PluginObject pluginDependency : dependencies) {
-				//if install list does not contain the plugin yet, add it
+				//if update list does not contain the plugin yet, add it
 				if (!updateList.contains(pluginDependency)) {
 					updateList.add(pluginDependency);
 				}
@@ -182,8 +264,8 @@ public class Controller {
 		}
 	}
 
-	//placeholder methods, if needed
-	public void unifyUninstallList(Map<PluginObject,List<PluginObject>> uninstallDependentsMap,
+	//combine the mapping of uninstalls into one single list of "to uninstall" plugins
+	private void unifyUninstallList(Map<PluginObject,List<PluginObject>> uninstallDependentsMap,
 			List<PluginObject> uninstallList) {
 
 		Iterator<List<PluginObject>> iterUninstallLists = uninstallDependentsMap.values().iterator();
