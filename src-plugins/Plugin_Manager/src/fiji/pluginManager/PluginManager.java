@@ -173,7 +173,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 		//Buttons to start actions
 		btnStart = new JButton();
-		btnStart.setText("Start");
+		btnStart.setText("Apply changes");
 		btnStart.setToolTipText("Start installing/uninstalling specified plugins");
 		btnStart.addActionListener(new ActionListener() {
 
@@ -182,11 +182,12 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			}
 
 		});
+		btnStart.setEnabled(false);
 
 		//Buttons to quit Plugin Manager
 		btnOK = new JButton();
-		btnOK.setText("OK");
-		btnOK.setToolTipText("Exit Plugin Manager");
+		btnOK.setText("Cancel");
+		btnOK.setToolTipText("Exit Plugin Manager without applying changes");
 		btnOK.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
@@ -417,6 +418,9 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 				ArrayList<Dependency> myNewDependencies = (ArrayList<Dependency>) myPlugin.getNewDependencies();
 				TextPaneFormat.insertDependenciesList(txtPluginDetails, myNewDependencies);
 			}
+			//ensure first line of text is always shown (i.e.: scrolled to top)
+			txtPluginDetails.setSelectionStart(0);
+			txtPluginDetails.setSelectionEnd(0);
 		} catch (BadLocationException e) {
 			throw new Error("Problem with printing Plugin information: " + e.getMessage());
 		}
@@ -442,6 +446,13 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 		lblPluginSummary.setText("Total: " + size + ", To install: " + installCount +
 				", To remove: " + removeCount + ", To update: " + updateCount);
+		if (btnStart != null) {
+			List<PluginObject> myList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED);
+			if (myList.size() > 0)
+				btnStart.setEnabled(true);
+			else
+				btnStart.setEnabled(false);
+		}
 	}
 
 	/* Returns an ImageIcon, or null if the path was invalid. */
