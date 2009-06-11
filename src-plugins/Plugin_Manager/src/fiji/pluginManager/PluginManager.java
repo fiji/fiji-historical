@@ -249,12 +249,9 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		//if status says there's a list to download...
 		boolean tempDemo = pluginDataReader.tempDemo;
 		if (!tempDemo) {
-		frameDownloader = new DownloadUI(this);
-		frameDownloader.setVisible(true);
-		installer = new Installer(pluginDataReader, updateURL);
-		frameDownloader.setInstaller(installer);
-		setEnabled(false);
+		openDownloader();
 		} else {
+			//actually, this should be the final one to use in the real Manager
 			frameConfirmation = new ConfirmationUI(this);
 			frameConfirmation.setVisible(true);
 			frameConfirmation.displayInformation(new Controller(pluginDataReader.getExistingPluginList()));
@@ -265,6 +262,15 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private void clickToQuitPluginManager() {
 		//in later implementations, this should have some notifications
 		dispose();
+	}
+
+	public void openDownloader() {
+		fromConfirmationToPluginManager();
+		frameDownloader = new DownloadUI(this);
+		frameDownloader.setVisible(true);
+		installer = new Installer(pluginDataReader, updateURL);
+		frameDownloader.setInstaller(installer);
+		setEnabled(false);
 	}
 
 	public void fromDownloaderToPluginManager() {
