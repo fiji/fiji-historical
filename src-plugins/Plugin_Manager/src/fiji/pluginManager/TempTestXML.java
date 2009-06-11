@@ -43,25 +43,28 @@ public class TempTestXML {
 
 		//Then get the plugins' individual information
 		for (String filename : filenameList) {
-			expr = xpath.compile("//plugin[@filename='" + filename + "']/description/text()");
-			result = expr.evaluate(doc, XPathConstants.STRING);
-			String strDescription = (String)result;
 			System.out.println("--------------------");
 			System.out.println("Plugin name: " + filename);
-			System.out.println("Plugin description: " + strDescription);
 
-			expr = xpath.compile("//plugin[@filename='" + filename + "']/version/checksum/text() |" +
-					" //plugin[@filename='" + filename + "']/version/timestamp/text() |" +
-					" //plugin[@filename='" + filename + "']/version/filesize/text()");
+			String versionQuery = "//plugin[@filename='" + filename + "']/version/";
+			String checksumQuery = versionQuery + "checksum/text()";
+			String timestampQuery = versionQuery + "timestamp/text()";
+			String descriptionQuery = versionQuery + "description/text()";
+			String filesizeQuery = versionQuery + "filesize/text()";
+
+			expr = xpath.compile(checksumQuery + " | " + timestampQuery + " | " +
+					descriptionQuery + " | " + filesizeQuery);
 			result = expr.evaluate(doc, XPathConstants.NODESET);
 			nodes = (NodeList)result;
 			String versionDetails = "";
 			for (int i = 0; i < nodes.getLength(); i++) {
-				int index = (i+1) % 3;
+				int index = (i+1) % 4;
 				if (index == 1) {
-					versionDetails += "This is " + filename + " version with sum=" + nodes.item(i).getNodeValue() + "; ";
+					versionDetails += "This is " + filename + " version:\n\tchecksum=" + nodes.item(i).getNodeValue() + ";\n\t";
 				} else if (index == 2) {
-					versionDetails += "timestamp=" + nodes.item(i).getNodeValue() + "; ";
+					versionDetails += "timestamp=" + nodes.item(i).getNodeValue() + ";\n\t";
+				} else if (index == 3) {
+					versionDetails += "description=" + nodes.item(i).getNodeValue() + ";\n\t";
 				} else if (index == 0) {
 					versionDetails += "filesize=" + nodes.item(i).getNodeValue() + ";";
 					if (i < nodes.getLength() -1) {
