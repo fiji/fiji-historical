@@ -60,19 +60,54 @@ public class TempTestXML {
 			for (int i = 0; i < nodes.getLength(); i++) {
 				int index = (i+1) % 4;
 				if (index == 1) {
-					versionDetails += "This is " + filename + " version:\n\tchecksum=" + nodes.item(i).getNodeValue() + ";\n\t";
+					String checksum = nodes.item(i).getNodeValue();
+					versionDetails += "This is " + filename + " version:\n\tchecksum=" + checksum + ";\n\t";
 				} else if (index == 2) {
-					versionDetails += "timestamp=" + nodes.item(i).getNodeValue() + ";\n\t";
+					String timestamp = nodes.item(i).getNodeValue();
+					versionDetails += "timestamp=" + timestamp + ";\n\t";
 				} else if (index == 3) {
-					versionDetails += "description=" + nodes.item(i).getNodeValue() + ";\n\t";
+					String description = nodes.item(i).getNodeValue();
+					versionDetails += "description=" + description + ";\n\t";
 				} else if (index == 0) {
-					versionDetails += "filesize=" + nodes.item(i).getNodeValue() + ";";
+					int filesize = Integer.parseInt(nodes.item(i).getNodeValue());
+					versionDetails += "filesize=" + filesize + ";";
 					if (i < nodes.getLength() -1) {
 						versionDetails += "\n";
 					}
 				}
 			}
 			System.out.println(versionDetails);
+
+			System.out.println("Plugin Dependencies List (Right now only list dependencies of ALL versions, doesn't really sort out...)");
+			String dependencyQuery = versionQuery + "dependency/";
+			String dependencyFilenameQuery = dependencyQuery + "filename/text()";
+			String dependencyDateQuery = dependencyQuery + "date/text()";
+			String dependencyRelationQuery = dependencyQuery + "relation/text()";
+			expr = xpath.compile(dependencyFilenameQuery + " | " + dependencyDateQuery + " | " +
+					dependencyRelationQuery);
+			result = expr.evaluate(doc, XPathConstants.NODESET);
+			nodes = (NodeList)result;
+			String dependencyDetails = "";
+			for (int i = 0; i < nodes.getLength(); i++) {
+				int index = (i+1) % 3;
+				if (index == 1) {
+					String dependencyName = nodes.item(i).getNodeValue();
+					dependencyDetails += "This is " + filename + " dependency " + ((i/3)+1) + " :\n\tfilename=" + dependencyName + ";\n\t";
+				} else if (index == 2) {
+					String date = nodes.item(i).getNodeValue();
+					dependencyDetails += "date=" + date + ";\n\t";
+				} else if (index == 0) {
+					String relation = nodes.item(i).getNodeValue();
+					if (relation.equals("at-least")) {
+						dependencyDetails += "relation=" + relation + ";";
+					}
+					if (i < nodes.getLength() -1) {
+						dependencyDetails += "\n";
+					}
+				}
+			}
+			System.out.println(dependencyDetails);
+
 			System.out.println("--------------------");
 		}
 	}
