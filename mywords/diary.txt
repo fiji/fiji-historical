@@ -466,3 +466,49 @@ Regarding CLASS plugins
 ==> Location at run-time is fixed
 ==> It should be safe to assume that Fiji won't introduce CLASS plugins to current.txt?
 ==> If so, they belong to 3rd party plugins category
+
+
+
+11th June, Thursday
+Tasks I did today:
+- Minor improvements to the UI of PluginManager.java
+   ==> Button text changed, enabling/disabling at appropriate times, text content scrolling issues.
+- The UI displaying conflicts and dependencies has been implemented
+   ==> Implemented the feature to download plugins upon clicking "Confirmation" button
+   ==> (Although not tested yet since its still using artificial plugins)
+- XML file's content structure... Modified a little
+   ==> May need further modification to make it easier for coding purposes (And might make it more readable too)
+   ==> Or maybe not...
+
+Upon a second look:
+- I could first call "//plugin/attribute::filename"
+- Use the list of names generated to loop and get each version through calling "//plugin[@filename='" + filename + "']/version/timestamp/text()".
+- Use the list of timestamps (versions) generated to retrieve the data as and when needed.
+- For example "//plugin[@filename='" + filename + "']/version[timestamp='" + timestamp + "']/files/dependency/*/text()" to get all dependency information of a stated version of a stated plugin.
+
+
+
+12th June, Friday
+Tasks completed:
+- Displayed XML data (Plugin information) in a logical manner using TempTestXML.java
+
+Regarding rework on PluginDataReader (New version):
+- 1st Step: DOWNLOAD the XML file
+- 2nd Step: Initialize, get information from local plugins (Currently that's the first step)
+     - STORE digest of each local file in "local" TreeMap
+     - READ the XML file
+     - For each plugin in XML file
+        - Get latest timestamps
+        - STORE latest timestamp, and corresponding digests in "remote" TreeMaps
+     - For each local file,
+        - if (digest == XML list's digest) STORE XML list's retrieved timestamp in "local" TreeMap
+     - If digest is not found at DB, get timestamp from file itself, STORE in "local" TreeMap
+     - Note: You may want to look into splitting "getDigestAndDateFromFile()" into two separate func in PluginDataProcessor
+- 3rd Step: Convert to PluginObjects....
+
+Tasks for next week:
+- Minor UI modification for PluginManager UI: Implement arrow keys
+- Implement that above algorithm (w/ placeholder code)
+- Plugin Manager: List by search term (Search by filename or by description?)
+
+I think I'll have to start writing some plugin information and save as an XML file for testing purposes.
