@@ -1,6 +1,7 @@
 package fiji.pluginManager;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.w3c.dom.Document;
@@ -10,6 +11,16 @@ import javax.xml.parsers.*;
 import javax.xml.xpath.*;
 
 public class TempTestXML {
+
+	private static List<String> getDataFromQueryResult(Object queryResult) {
+		NodeList nodes = (NodeList) queryResult;
+		List<String> myList = new ArrayList<String>();
+		for (int i = 0; i < nodes.getLength(); i++) {
+			myList.add(nodes.item(i).getNodeValue());
+		}
+		return myList;
+	}
+
 	public static void main(String[] args) 
 		throws ParserConfigurationException, SAXException, 
 			IOException, XPathExpressionException {
@@ -32,83 +43,77 @@ public class TempTestXML {
 		//Note right now you only focus on getting out the output, not how the information
 		//is to be integrated into a pluginObject.
 
-		//First get the list of plugins' names
-		List<String> filenameList = new ArrayList<String>();
+		//Get the list of plugins' names
 		expr = xpath.compile("//plugin/attribute::filename");
 		Object result = expr.evaluate(doc, XPathConstants.NODESET);
-		NodeList nodes = (NodeList) result;
-		for (int i = 0; i < nodes.getLength(); i++) {
-			filenameList.add(nodes.item(i).getNodeValue());
-		}
+		List<String> filenameList = getDataFromQueryResult(result);
 
 		//Then get the plugins' individual information
 		for (String filename : filenameList) {
-			System.out.println("--------------------");
+			System.out.println("------------------------------------------------------------");
 			System.out.println("Plugin name: " + filename);
 
-			String versionQuery = "//plugin[@filename='" + filename + "']/version/";
-			String checksumQuery = versionQuery + "checksum/text()";
-			String timestampQuery = versionQuery + "timestamp/text()";
-			String descriptionQuery = versionQuery + "description/text()";
-			String filesizeQuery = versionQuery + "filesize/text()";
-
-			expr = xpath.compile(checksumQuery + " | " + timestampQuery + " | " +
-					descriptionQuery + " | " + filesizeQuery);
+			//Get the list of versions (timestamps) of iterated plugin
+			String pluginQuery = "//plugin[@filename='" + filename + "']/";
+			String timestampQuery = pluginQuery + "version/timestamp/text()";
+			
+			expr = xpath.compile(timestampQuery);
 			result = expr.evaluate(doc, XPathConstants.NODESET);
-			nodes = (NodeList)result;
-			String versionDetails = "";
-			for (int i = 0; i < nodes.getLength(); i++) {
-				int index = (i+1) % 4;
-				if (index == 1) {
-					String checksum = nodes.item(i).getNodeValue();
-					versionDetails += "This is " + filename + " version:\n\tchecksum=" + checksum + ";\n\t";
-				} else if (index == 2) {
-					String timestamp = nodes.item(i).getNodeValue();
-					versionDetails += "timestamp=" + timestamp + ";\n\t";
-				} else if (index == 3) {
-					String description = nodes.item(i).getNodeValue();
-					versionDetails += "description=" + description + ";\n\t";
-				} else if (index == 0) {
-					int filesize = Integer.parseInt(nodes.item(i).getNodeValue());
-					versionDetails += "filesize=" + filesize + ";";
-					if (i < nodes.getLength() -1) {
-						versionDetails += "\n";
-					}
-				}
-			}
-			System.out.println(versionDetails);
+			List<String> timestampList = getDataFromQueryResult(result);
+			//... TODO: Might want to get input from existing plugins and thus get to
+			//    loop through only corresponding along with new timestamps...
 
-			System.out.println("Plugin Dependencies List (Right now only list dependencies of ALL versions, doesn't really sort out...)");
-			String dependencyQuery = versionQuery + "dependency/";
-			String dependencyFilenameQuery = dependencyQuery + "filename/text()";
-			String dependencyDateQuery = dependencyQuery + "date/text()";
-			String dependencyRelationQuery = dependencyQuery + "relation/text()";
-			expr = xpath.compile(dependencyFilenameQuery + " | " + dependencyDateQuery + " | " +
-					dependencyRelationQuery);
-			result = expr.evaluate(doc, XPathConstants.NODESET);
-			nodes = (NodeList)result;
-			String dependencyDetails = "";
-			for (int i = 0; i < nodes.getLength(); i++) {
-				int index = (i+1) % 3;
-				if (index == 1) {
-					String dependencyName = nodes.item(i).getNodeValue();
-					dependencyDetails += "This is " + filename + " dependency " + ((i/3)+1) + " :\n\tfilename=" + dependencyName + ";\n\t";
-				} else if (index == 2) {
-					String date = nodes.item(i).getNodeValue();
-					dependencyDetails += "date=" + date + ";\n\t";
-				} else if (index == 0) {
-					String relation = nodes.item(i).getNodeValue();
-					if (relation.equals("at-least")) {
-						dependencyDetails += "relation=" + relation + ";";
-					}
-					if (i < nodes.getLength() -1) {
-						dependencyDetails += "\n";
-					}
-				}
-			}
-			System.out.println(dependencyDetails);
+			for (String timestamp : timestampList) {
+				System.out.println("-------------------------");
 
-			System.out.println("--------------------");
+				//retrieve the information of an iterated version of an iterated plugin
+				String pluginVersionQuery = pluginQuery + "version[timestamp='" + timestamp + "']/";
+				String checksumQuery = pluginVersionQuery + "checksum/text()";
+				String descriptionQuery = pluginVersionQuery + "description/text()";
+				String filesizeQuery = pluginVersionQuery + "filesize/text()";
+				expr = xpath.compile(checksumQuery + " | " +
+						descriptionQuery + " | " +
+						filesizeQuery);
+				result = expr.evaluate(doc, XPathConstants.NODESET);
+				List<String> arrayResults = getDataFromQueryResult(result);
+				String strChecksum = arrayResults.get(0);
+				String strDescription = arrayResults.get(1);
+				int filesize = Integer.parseInt(arrayResults.get(2));
+
+				System.out.println("Version (Timestamp): " + timestamp + "\nChecksum: " + strChecksum + "\nDescription: " + strDescription + "\nFilesize: " + filesize);
+
+				//retrieve the dependencies of an iterated version of an iterated plugin
+				String dependencyQuery = pluginVersionQuery + "dependency/";
+				String dependencyFilenameQuery = dependencyQuery + "filename/text()";
+				String dependencyDateQuery = dependencyQuery + "date/text()";
+				String dependencyRelationQuery = dependencyQuery + "relation/text()";
+				expr = xpath.compile(dependencyFilenameQuery + " | " +
+						dependencyDateQuery + " | " +
+						dependencyRelationQuery);
+				result = expr.evaluate(doc, XPathConstants.NODESET);
+				List<String> arrayDependencies = getDataFromQueryResult(result);
+				List<Dependency> dependencyList = new ArrayList<Dependency>();
+				//compiles a list of Dependency objects for each version
+				for (int i = 0; i < arrayDependencies.size(); i += 3) {
+					String dependencyFilename = arrayDependencies.get(i);
+					String dependencyTimestamp = arrayDependencies.get(i+1);
+					String dependencyRelation = arrayDependencies.get(i+2);
+					Dependency iterDependency = new Dependency(dependencyFilename, dependencyTimestamp);
+					dependencyList.add(iterDependency);
+				}
+
+				System.out.println("Dependencies:");
+				if (dependencyList.size() > 0) {
+					for (Dependency dependency : dependencyList) {
+						System.out.println(dependency.getFilename() + "; " + dependency.getTimestamp());
+					}
+				} else {
+					System.out.println("None.");
+				}
+				System.out.println("-------------------------");
+			}
+
+			System.out.println("------------------------------------------------------------");
 		}
 	}
 }
