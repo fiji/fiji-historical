@@ -9,6 +9,27 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		boolean matchesFilter(PluginObject plugin);
 	}
 
+	private static class TextFilter implements Filter {
+		String text;
+
+		public TextFilter(String text) {
+			this.text = text.trim().toLowerCase();
+		}
+
+		//determining whether search text fits description/title
+		public boolean matchesFilter(PluginObject plugin) {
+			String lcFilename = plugin.getFilename().trim().toLowerCase();
+			String lcDescription = plugin.getDescription().trim().toLowerCase();
+			boolean existsInTitle = (lcFilename.indexOf(text) >= 0);
+			boolean existsInDescription = (lcDescription.indexOf(text) >= 0);
+			return (existsInTitle || existsInDescription);
+		}
+	}
+
+	public static Filter getFilterForText(String searchText) {
+		return new TextFilter(searchText);
+	}
+
 	//take in only plugins that are neither installed nor told to do so
 	public static final Filter FILTER_UNLISTED_TO_INSTALL = new Filter() {
 		public boolean matchesFilter(PluginObject plugin) {

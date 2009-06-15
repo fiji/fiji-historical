@@ -26,6 +26,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.ImageIcon;
 import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.text.AttributeSet;
@@ -109,6 +111,21 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		/* Create text search */
 		JLabel lblSearch1 = new JLabel("Search:", SwingConstants.LEFT);
 		txtSearch = new JTextField();
+		txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+
+			public void changedUpdate(DocumentEvent e) {
+				changeListingListener();
+			}
+
+			public void removeUpdate(DocumentEvent e) {
+				changeListingListener();
+			}
+
+			public void insertUpdate(DocumentEvent e) {
+				changeListingListener();
+			}
+
+		});
 
 		JPanel searchPanel = new JPanel();
 		searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.X_AXIS));
@@ -122,7 +139,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		comboBoxViewingOptions.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				comboBoxViewListener();
+				changeListingListener();
 			}
 
 		});
@@ -207,34 +224,41 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		getContentPane().add(bottomPanel);
 	}
 
-	//Whenever Viewing Options in the ComboBox has been changed
-	private void comboBoxViewListener() {
+	//Whenever search text or ComboBox has been changed
+	private void changeListingListener() {
 		int selectedIndex = comboBoxViewingOptions.getSelectedIndex();
+
+		if (txtSearch.getText().trim().isEmpty()) {
+			viewList = pluginDataReader.getExistingPluginList();
+		} else {
+			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.getFilterForText(txtSearch.getText().trim()));
+		}
 
 		if (selectedIndex == 0) {
 
 			//if "View all plugins"
-			viewList = pluginDataReader.getExistingPluginList();
+			//do nothing
+			//viewList = pluginDataReader.getExistingPluginList();
 
 		} else if (selectedIndex == 1) {
 
 			//if "View installed plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUS_ALREADYINSTALLED);
+			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_ALREADYINSTALLED);
 
 		} else if (selectedIndex == 2) {
 
 			//if "View uninstalled plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUS_UNINSTALLED);
+			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_UNINSTALLED);
 
 		} else if (selectedIndex == 3) {
 
 			//if "View up-to-date plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUS_INSTALLED);
+			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_INSTALLED);
 
 		} else if (selectedIndex == 4) {
 
 			//if "View update-able plugins"
-			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_STATUS_MAYUPDATE);
+			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_MAYUPDATE);
 
 		} else {
 			throw new Error("Viewing option specified does not exist!");
