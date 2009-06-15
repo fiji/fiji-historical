@@ -3,6 +3,7 @@ package fiji.pluginManager;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.Iterator;
@@ -11,6 +12,7 @@ import java.util.List;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ListSelectionEvent;
@@ -43,11 +45,7 @@ public class PluginTable extends JTable {
 
 		//default display: All plugins shown
 		setupTableModel(pluginList);
-
-		//set up the table properties and other settings
-		setColumnSelectionAllowed(false);
-		setRowSelectionAllowed(true);
-		//this.setRowSelectionInterval(0, 1); //1st row selected
+		
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
@@ -93,6 +91,13 @@ public class PluginTable extends JTable {
 				return comp;
 			}
 		});
+
+		//set up the table properties and other settings
+		setCellSelectionEnabled(true);
+		setColumnSelectionAllowed(false);
+		setRowSelectionAllowed(true);
+		changeSelection(0, 0, false, false);
+		requestFocusInWindow();
 	}
 
 	//Set up table model, to be called each time display list is to be changed
