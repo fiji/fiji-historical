@@ -512,3 +512,16 @@ Tasks for next week:
 - Plugin Manager: List by search term (Search by filename or by description?)
 
 I think I'll have to start writing some plugin information and save as an XML file for testing purposes.
+
+
+
+15th June, Monday
+Tasks Completed:
+- Implementation of arrow keys of PluginManager UI: Frustratingly failed
+   ==> (Though its sort of implemented by default, just not the way required).
+   ==> How to listen for the event where the text is _clicked_ where an individual component in a row is selected?
+- Listing by search term: Both filename and by description. Somewhat crude though, but easily expandable (I hope).
+- Artificial testing XML file created (Belongs in pluginInfo folder)
+
+Work in progress: 
+- XML Parsing.
