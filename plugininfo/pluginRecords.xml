@@ -22,13 +22,13 @@
 	<version>
 		<checksum>75a2edd1bef7364f92545ffa2521f95578ca0962</checksum>
 		<timestamp>20090310102296</timestamp>
-		<description>This is a short description or summary of PluginA.jar</description>
+		<description>This is a short description of PluginA.jar</description>
 		<filesize>4096</filesize>
 	</version>
 	<version>
 		<checksum>65c3ecc1bbd7564f92545ffd2521f9d96509ca64</checksum>
 		<timestamp>20090429190842</timestamp>
-		<description>This is a short description or summary of PluginA.jar</description>
+		<description>This is a short description of PluginA.jar. A for Apple, no circular dependencies, but its dependencies does.</description>
 		<filesize>5123</filesize>
 		<dependency>
 			<filename>PluginD.jar</filename>
@@ -42,7 +42,7 @@
 	<version>
 		<checksum>a32cfa95caf7720c02d7fee8908b02347b780def</checksum>
 		<timestamp>20090221162294</timestamp>
-		<description>This is a short description or summary of PluginB.jar</description>
+		<description>This is a short description of PluginB.jar</description>
 		<filesize>5456</filesize>
 		<dependency>
 			<filename>PluginD.jar</filename>
@@ -58,7 +58,7 @@
 	<version>
 		<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
 		<timestamp>20090429190854</timestamp>
-		<description>This is a short description or summary of PluginB.jar</description>
+		<description>This is a short description of PluginB.jar. A new version of pluginB.jar as of late April 2009.</description>
 		<filesize>5456</filesize>
 		<dependency>
 			<filename>PluginD.jar</filename>
@@ -82,7 +82,7 @@
 	<version>
 		<checksum>1a992dbc077ef84020d44a980c7992ba6c8edf3d</checksum>
 		<timestamp>20090425190854</timestamp>
-		<description>This is a short description or summary of PluginC.jar</description>
+		<description>This is a short description of PluginC.jar.</description>
 		<filesize>5789</filesize>
 	</version>
 </plugin>
@@ -91,7 +91,7 @@
 	<version>
 		<checksum>61c3ecc1add7364f92545ffd2521e9d96508cb62</checksum>
 		<timestamp>20090420190033</timestamp>
-		<description>This is a short description or summary of PluginD.jar</description>
+		<description>This is a short description of PluginD.jar. Let one hope he won't get the same letter for exams.</description>
 		<filesize>8350</filesize>
 		<dependency>
 			<filename>PluginF.jar</filename>
@@ -110,7 +110,7 @@
 	<version>
 		<checksum>8114fe93cbf7720c01c7ff97c28b007b79900dc7</checksum>
 		<timestamp>20090311213621</timestamp>
-		<description>This is a short description or summary of PluginE.jar</description>
+		<description>This is a short summary of PluginE.jar. E for Elementary.</description>
 		<filesize>17749</filesize>
 		<dependency>
 			<filename>PluginG.jar</filename>
@@ -124,7 +124,7 @@
 	<version>
 		<checksum>1b992dbca07ef84020d44a980c7902ba6c82dfee</checksum>
 		<timestamp>20090420191023</timestamp>
-		<description>This is a short description or summary of PluginF.jar</description>
+		<description>This is a short summary of PluginF.jar... Nothing else...</description>
 		<filesize>18012</filesize>
 		<dependency>
 			<filename>PluginI.jar</filename>
@@ -138,13 +138,13 @@
 	<version>
 		<checksum>1a992dbc077ef84020d44a980c7992ba6c8edf3d</checksum>
 		<timestamp>20090415160854</timestamp>
-		<description>This is a short description or summary of PluginG.jar</description>
+		<description>This is a short summary of PluginG.jar. G for great.</description>
 		<filesize>20300</filesize>
 	</version>
 	<version>
 		<checksum>2c992db3327ef8402bd44b980c7992da6c8eefd9</checksum>
 		<timestamp>20090502130854</timestamp>
-		<description>This is a short description or summary of PluginG.jar</description>
+		<description>This is a short summary of PluginG.jar. G for great. The second time.</description>
 		<filesize>22350</filesize>
 	</version>
 </plugin>
@@ -153,14 +153,20 @@
 	<version>
 		<checksum>33c88dc1fbd7564f92587ffdc521f9de6507ca65</checksum>
 		<timestamp>20081224666220</timestamp>
-		<description>This is a short description or summary of PluginH.jar</description>
+		<description>This is a short summary of PluginH.jar. The first version of this plugin that does nothing.</description>
 		<filesize>6123</filesize>
+	</version>
+	<version>
+		<checksum>72bce89afef7564f464872fdc521f9de65133a64</checksum>
+		<timestamp>20090217335128</timestamp>
+		<description>This is a short summary of PluginH.jar.</description>
+		<filesize>6423</filesize>
 	</version>
 	<version>
 		<checksum>23d88dc1fbd7564f92087ffdc529acce6500ef60</checksum>
 		<timestamp>20090524666220</timestamp>
-		<description>This is a short description or summary of PluginH.jar</description>
-		<filesize>6321</filesize>
+		<description>This is a short description of PluginH.jar. Thanks to some upgrade, it needs PluginD.jar (Dependency).</description>
+		<filesize>8621</filesize>
 		<dependency>
 			<filename>PluginD.jar</filename>
 			<date>20090420190033</date>
@@ -173,7 +179,7 @@
 	<version>
 		<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
 		<timestamp>20090429190854</timestamp>
-		<description>This is a short description or summary of PluginI.jar</description>
+		<description>This is a short summary of PluginI.jar. The letter I, referring to the first person.</description>
 		<filesize>9310</filesize>
 		<dependency>
 			<filename>PluginF.jar</filename>
@@ -192,7 +198,7 @@
 	<version>
 		<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
 		<timestamp>20090521181954</timestamp>
-		<description>This is a short description or summary of PluginJ.jar</description>
+		<description>This is a short summary of PluginJ.jar. J for Junior. Junior plugin that relies on PluginI.jar.</description>
 		<filesize>5588</filesize>
 		<dependency>
 			<filename>PluginI.jar</filename>
@@ -206,7 +212,7 @@
 	<version>
 		<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
 		<timestamp>20081221866291</timestamp>
-		<description>This is a short description or summary of PluginK.jar</description>
+		<description>This is a short description or summary of PluginK.jar. Circular dependencies, vicious circle...</description>
 		<filesize>35060</filesize>
 		<dependency>
 			<filename>PluginJ.jar</filename>

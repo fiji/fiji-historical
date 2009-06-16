@@ -9,6 +9,7 @@ public class PluginObject {
 	private String newMd5Sum; //if any
 	private String newTimestamp; //if any
 	private String description;
+	private String newDescription;
 	public static final byte STATUS_UNINSTALLED = 0; //Meaning current status is not installed
 	public static final byte STATUS_INSTALLED = 1; //Meaning current status is installed
 	public static final byte STATUS_MAY_UPDATE = 2; //Meaning installed AND update-able
@@ -37,10 +38,11 @@ public class PluginObject {
 		this.action = action;
 	}
 
-	public void setUpdateDetails(String newMd5Sum, String newTimestamp, List<Dependency> newDependency) {
+	public void setUpdateDetails(String newMd5Sum, String newTimestamp, String newDescription, List<Dependency> newDependency) {
 		setStatus(PluginObject.STATUS_MAY_UPDATE); //set status, if not done so already
 		this.newMd5Sum = newMd5Sum;
 		this.newTimestamp = newTimestamp;
+		this.newDescription = newDescription;
 		this.newDependency = newDependency;
 	}
 
@@ -107,6 +109,10 @@ public class PluginObject {
 
 	public String getDescription() {
 		return description;
+	}
+	
+	public String getNewDescription() {
+		return newDescription;
 	}
 
 	public List<Dependency> getDependencies() {

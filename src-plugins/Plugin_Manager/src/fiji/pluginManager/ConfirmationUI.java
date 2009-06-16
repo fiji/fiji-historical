@@ -215,23 +215,23 @@ public class ConfirmationUI extends JFrame {
 				}
 
 				TextPaneFormat.insertText(txtPluginList, pluginName, TextPaneFormat.BOLD_BLACK_TITLE);
-				TextPaneFormat.insertText(txtPluginList, "\n" + pluginDescription + "\n\n");
-				TextPaneFormat.insertText(txtPluginList, "Action: ", TextPaneFormat.BOLD_BLACK);
+				TextPaneFormat.insertDescription(txtPluginList, pluginDescription);
+				TextPaneFormat.insertText(txtPluginList, "\n\nAction: ", TextPaneFormat.BOLD_BLACK);
 				TextPaneFormat.insertText(txtPluginList, strAction + "\n\n");
 			}
 
 			//textpane listing additional plugins to add/remove
 			if (toInstallList.size() > 0) {
-			TextPaneFormat.insertText(txtAdditionalList, "To Install", TextPaneFormat.BOLD_BLACK_TITLE);
-			TextPaneFormat.insertPluginNamelist(txtAdditionalList, toInstallList);
+				TextPaneFormat.insertText(txtAdditionalList, "To Install", TextPaneFormat.BOLD_BLACK_TITLE);
+				TextPaneFormat.insertPluginNamelist(txtAdditionalList, toInstallList);
 			}
 			if (toUpdateList.size() > 0) {
-			TextPaneFormat.insertText(txtAdditionalList, "\n\nTo Update", TextPaneFormat.BOLD_BLACK_TITLE);
-			TextPaneFormat.insertPluginNamelist(txtAdditionalList, toUpdateList);
+				TextPaneFormat.insertText(txtAdditionalList, "\n\nTo Update", TextPaneFormat.BOLD_BLACK_TITLE);
+				TextPaneFormat.insertPluginNamelist(txtAdditionalList, toUpdateList);
 			}
 			if (toRemoveList.size() > 0) {
-			TextPaneFormat.insertText(txtAdditionalList, "\n\nTo Remove", TextPaneFormat.BOLD_BLACK_TITLE);
-			TextPaneFormat.insertPluginNamelist(txtAdditionalList, toRemoveList);
+				TextPaneFormat.insertText(txtAdditionalList, "\n\nTo Remove", TextPaneFormat.BOLD_BLACK_TITLE);
+				TextPaneFormat.insertPluginNamelist(txtAdditionalList, toRemoveList);
 			}
 			if (toInstallList.size() == 0 && toUpdateList.size() == 0 && toRemoveList.size() == 0) {
 				TextPaneFormat.insertText(txtAdditionalList, "None.");

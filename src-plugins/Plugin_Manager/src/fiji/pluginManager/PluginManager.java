@@ -43,8 +43,8 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private List<PluginObject> viewList;
 	private PluginDataReader pluginDataReader;
 	private Installer installer;
-	private String updateURL = "http://pacific.mpi-cbg.de/update/current.txt";
-	private String updateLocal = "current.txt";
+	private String updateURL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
+	private String updateLocal = "current.txt";//should be XML file actually
 	private String dbURL = "...";
 	private String dbLocal = "...";
 
@@ -70,11 +70,10 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		super("Plugin Manager");
 
 		//Firstly, get information from local, existing plugins
-		pluginDataReader = new PluginDataReader();
-		if (!pluginDataReader.tempDemo) {
-		//Get information from server to build on information
-		pluginDataReader.buildFullPluginList(updateURL, updateLocal);
-		}
+		pluginDataReader = new PluginDataReader(updateURL, updateLocal);
+		pluginDataReader.downloadXMLFile(); //should be XML file actually
+		pluginDataReader.buildLocalPluginInformation(); //2nd step
+		pluginDataReader.buildFullPluginList(); //3rd step
 
 		viewList = pluginDataReader.getExistingPluginList(); //initial view: All plugins
 		setUpUserInterface();
@@ -319,18 +318,12 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 				TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.ITALIC_BLACK);
 			TextPaneFormat.insertText(txtPluginDetails, "\n\nMd5 Sum", TextPaneFormat.BOLD_BLACK);
 			TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum());
-			TextPaneFormat.insertText(txtPluginDetails, "\n\nLast Modified: ", TextPaneFormat.BOLD_BLACK);
+			TextPaneFormat.insertText(txtPluginDetails, "\n\nDate: ", TextPaneFormat.BOLD_BLACK);
 			TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp());
 			TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
-			ArrayList<Dependency> myDependencies = (ArrayList<Dependency>) myPlugin.getDependencies();
-			TextPaneFormat.insertDependenciesList(txtPluginDetails, myDependencies);
+			TextPaneFormat.insertDependenciesList(txtPluginDetails, myPlugin.getDependencies());
 			TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
-			String strDescription = "";
-			if (myPlugin.getDescription() == null || myPlugin.getDescription().trim().equals("")) {
-				strDescription = "None";
-			} else
-				strDescription = myPlugin.getDescription();
-			TextPaneFormat.insertText(txtPluginDetails, "\n" + strDescription);
+			TextPaneFormat.insertDescription(txtPluginDetails, myPlugin.getDescription());
 			if (myPlugin.isUpdateable()) {
 				TextPaneFormat.insertText(txtPluginDetails, "\n\nUpdate Details", TextPaneFormat.BOLD_BLACK_TITLE);
 				TextPaneFormat.insertText(txtPluginDetails, "\n\nNew Md5 Sum", TextPaneFormat.BOLD_BLACK);
@@ -338,8 +331,9 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 				TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
 				TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getNewTimestamp());
 				TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
-				ArrayList<Dependency> myNewDependencies = (ArrayList<Dependency>) myPlugin.getNewDependencies();
-				TextPaneFormat.insertDependenciesList(txtPluginDetails, myNewDependencies);
+				TextPaneFormat.insertDependenciesList(txtPluginDetails, myPlugin.getNewDependencies());
+				TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
+				TextPaneFormat.insertDescription(txtPluginDetails, myPlugin.getNewDescription());
 			}
 			//ensure first line of text is always shown (i.e.: scrolled to top)
 			txtPluginDetails.setSelectionStart(0);
@@ -450,7 +444,16 @@ class TextPaneFormat {
 		}
 		insertText(textPane, "\n" + strDependencies);
 	}
-	
+
+	public static void insertDescription(JTextPane textPane, String description)
+	throws BadLocationException {
+		if (description == null || description.trim().equals("")) {
+			insertText(textPane, "\nNo description available.");
+		} else {
+			insertText(textPane, "\n" + description);
+		}
+	}
+
 	public static void insertPluginNamelist(JTextPane textPane, List<PluginObject> myList)
 	throws BadLocationException {
 		for (int i = 0; i < myList.size(); i++) {

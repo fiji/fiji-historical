@@ -176,7 +176,7 @@ public class PluginDataProcessor {
 		return new String(buffer);
 	}
 
-	public String[] getDigestAndDateFromFile(String path){
+	private String[] getDigestAndDateFromFile(String path){
 		try {
 			String fullPath = prefix(path);
 			String digest = getDigest(path, fullPath);
@@ -193,6 +193,23 @@ public class PluginDataProcessor {
 			if (e instanceof FileNotFoundException && path.startsWith("fiji-"))
 				return null;
 			throw new Error("Could not get digest: " + prefix(path) + " (" + e + ")");
+		}
+	}
+
+	public String getTimestampFromFile(String filename) {
+		String fullPath = prefix(filename);
+		long modified = new File(fullPath).lastModified();
+		return timestamp(modified);
+	}
+
+	public String getDigestFromFile(String filename) {
+		try {
+			String fullPath = prefix(filename);
+			return getDigest(filename, fullPath);
+		} catch (Exception e) {
+			if (e instanceof FileNotFoundException && filename.startsWith("fiji-"))
+				return null;
+			throw new Error("Could not get digest: " + prefix(filename) + " (" + e + ")");
 		}
 	}
 
