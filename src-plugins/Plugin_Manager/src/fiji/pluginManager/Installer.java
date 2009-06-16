@@ -4,7 +4,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -18,8 +17,6 @@ public class Installer implements Runnable, Observer {
 	private final String updateDirectory = "update";
 	private List<PluginObject> pluginsWaiting;
 	private volatile Thread downloadThread;
-
-	private Iterator<PluginObject> tempIter;
 
 	//Keeping track of status
 	private Iterator<PluginObject> iterUninstall;
@@ -44,8 +41,6 @@ public class Installer implements Runnable, Observer {
 		iterUninstall = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONS_UNINSTALL);
 		pluginsWaiting = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
 		iterWaiting = pluginsWaiting.iterator();
-		//just a temporary arrangement
-		tempIter = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
 	}
 
 	//start processing on contents of deletionList
@@ -95,30 +90,17 @@ public class Installer implements Runnable, Observer {
 	public void run() {
 		Thread thisThread = Thread.currentThread();
 		isDownloading = true;
-		//Temporary arrangement - This segment gets the size of the file
-		while (tempIter.hasNext() && thisThread == downloadThread) {
-			PluginObject myPlugin = tempIter.next();
-			String name = myPlugin.getFilename();
-			String date = null;
-			if (myPlugin.isInstallable()) {
-				date = myPlugin.getTimestamp();
-			} else if (myPlugin.isUpdateable()) {
-				date = myPlugin.getNewTimestamp();
+		//This segment gets the size of the file
+		for (PluginObject myPlugin : pluginsWaiting) {
+			if (thisThread == downloadThread) {
+				if (myPlugin.isInstallable()) {
+					totalBytes += myPlugin.getFilesize();
+				} else if (myPlugin.isUpdateable()) {
+					totalBytes += myPlugin.getNewFilesize();
+				}
+				System.out.println("totalBytes so far: " + totalBytes);
 			}
-
-			try {
-				System.out.println("Trying to establish connection for " + new URL(new URL(updateURL), name + "-" + date).getPath());
-				URL myURL = new URL(updateURL);
-				HttpURLConnection myConn = (HttpURLConnection)(new URL(myURL, name + "-" + date)).openConnection();
-				System.out.println("Connection for " + new URL(new URL(updateURL), name + "-" + date).getPath() + " established.");
-				totalBytes += myConn.getContentLength();
-				System.out.println("total bytes so far: " + totalBytes);
-				myConn.disconnect();
-			} catch (MalformedURLException e) {
-				throw new Error(updateURL + " has unknown protocol.");
-			} catch (IOException e) {
-				throw new Error("I/O Exception while opening connection to " + updateURL);
-			}
+			else if (thisThread != downloadThread) break;
 		}
 
 		//Downloads the file(s), one by one
@@ -183,6 +165,7 @@ public class Installer implements Runnable, Observer {
 				currentlyDownloading = null;
 				System.out.println("URL: " + downloadURL + " has unknown protocol.");
 			} catch (IOException e) {
+				System.out.println("stupid and ugly: " + currentlyDownloading.getFilename());
 				failedDownloadsList.add(currentlyDownloading);
 				currentlyDownloading = null;
 				System.out.println("I/O Exception while opening connection to " + downloadURL);
@@ -193,7 +176,7 @@ public class Installer implements Runnable, Observer {
 				} catch (Exception e2) { }
 				failedDownloadsList.add(currentlyDownloading);
 				currentlyDownloading = null;
-				System.out.println("Could not update " + name + ": " + e.getMessage());
+				System.out.println("Could not update " + name + ": " + e.getLocalizedMessage());
 			}
 		}
 		isDownloading = false;

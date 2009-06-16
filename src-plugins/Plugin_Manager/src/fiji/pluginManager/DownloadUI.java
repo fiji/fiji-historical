@@ -119,7 +119,7 @@ class DownloadUI extends JFrame {
 				boolean stillDownloading = installer.stillDownloading();
 				String strCurrentStatus = "";
 
-				if (totalBytes == 0 || downloadedBytes == 0) {
+				if (totalBytes == 0) {
 					//Remain at 0
 					showProgressStart("Starting up download now...");
 					setPercentageComplete(0);
@@ -134,7 +134,8 @@ class DownloadUI extends JFrame {
 					}
 					for (int i=0; i < failedList.size(); i++) {
 						PluginObject myPlugin = failedList.get(i);
-						strCurrentStatus += "\n" + myPlugin.getFilename() + " failed to download.";
+						if (i != 0 && !strCurrentStatus.equals("")) strCurrentStatus += "\n";
+						strCurrentStatus += myPlugin.getFilename() + " failed to download.";
 					}
 					if (currentlyDownloading != null) {
 						strCurrentStatus += "\nNow downloading " + currentlyDownloading.getFilename();
@@ -144,7 +145,15 @@ class DownloadUI extends JFrame {
 					//check if download has finished (Whether 100% success or not)
 					if (stillDownloading == false) {
 						showProgressComplete();
-						txtProgressDetails.setText(txtProgressDetails.getText() + "\nAll download tasks completed.");
+						if (downloadedList.size() > 0) {
+							int totalSize = downloadedList.size() + failedList.size();
+							txtProgressDetails.setText(txtProgressDetails.getText() + "\n" +
+									downloadedList.size() + " of " + totalSize +
+									" download tasks completed.");
+						} else {
+							txtProgressDetails.setText(txtProgressDetails.getText() +
+									"\nDownload(s) failed.");
+						}
 						timer.cancel();
 					}
 				}

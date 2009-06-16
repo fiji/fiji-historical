@@ -216,9 +216,13 @@ public class ConfirmationUI extends JFrame {
 
 				TextPaneFormat.insertText(txtPluginList, pluginName, TextPaneFormat.BOLD_BLACK_TITLE);
 				TextPaneFormat.insertDescription(txtPluginList, pluginDescription);
-				TextPaneFormat.insertText(txtPluginList, "\n\nAction: ", TextPaneFormat.BOLD_BLACK);
+				TextPaneFormat.insertBlankLine(txtPluginList);
+				TextPaneFormat.insertText(txtPluginList, "Action: ", TextPaneFormat.BOLD_BLACK);
 				TextPaneFormat.insertText(txtPluginList, strAction + "\n\n");
 			}
+			//ensure first line of text is always shown (i.e.: scrolled to top)
+			txtPluginList.setSelectionStart(0);
+			txtPluginList.setSelectionEnd(0);
 
 			//textpane listing additional plugins to add/remove
 			if (toInstallList.size() > 0) {
@@ -226,16 +230,21 @@ public class ConfirmationUI extends JFrame {
 				TextPaneFormat.insertPluginNamelist(txtAdditionalList, toInstallList);
 			}
 			if (toUpdateList.size() > 0) {
-				TextPaneFormat.insertText(txtAdditionalList, "\n\nTo Update", TextPaneFormat.BOLD_BLACK_TITLE);
+				TextPaneFormat.insertBlankLine(txtAdditionalList);
+				TextPaneFormat.insertText(txtAdditionalList, "To Update", TextPaneFormat.BOLD_BLACK_TITLE);
 				TextPaneFormat.insertPluginNamelist(txtAdditionalList, toUpdateList);
 			}
 			if (toRemoveList.size() > 0) {
-				TextPaneFormat.insertText(txtAdditionalList, "\n\nTo Remove", TextPaneFormat.BOLD_BLACK_TITLE);
+				TextPaneFormat.insertBlankLine(txtAdditionalList);
+				TextPaneFormat.insertText(txtAdditionalList, "To Remove", TextPaneFormat.BOLD_BLACK_TITLE);
 				TextPaneFormat.insertPluginNamelist(txtAdditionalList, toRemoveList);
 			}
 			if (toInstallList.size() == 0 && toUpdateList.size() == 0 && toRemoveList.size() == 0) {
 				TextPaneFormat.insertText(txtAdditionalList, "None.");
 			}
+			//ensure first line of text is always shown (i.e.: scrolled to top)
+			txtAdditionalList.setSelectionStart(0);
+			txtAdditionalList.setSelectionEnd(0);
 
 			//conflicts list textpane
 			for (int i = 0; i < installConflicts.size(); i++) {
@@ -246,13 +255,18 @@ public class ConfirmationUI extends JFrame {
 				String[] names = updateConflicts.get(i);
 				TextPaneFormat.insertText(txtConflictsList, "Updating " + names[0] + " would conflict with uninstalling " + names[1] + "\n");
 			}
+			//ensure first line of text is always shown (i.e.: scrolled to top)
+			txtConflictsList.setSelectionStart(0);
+			txtConflictsList.setSelectionEnd(0);
 
+			//enable download button if no conflicts recorded
 			if (installConflicts.size() == 0 && updateConflicts.size() == 0) {
 				TextPaneFormat.insertText(txtConflictsList, "None.");
 				btnDownload.setEnabled(true);
 				lblStatus.setText(msgConflictNone);
 				lblStatus.setForeground(Color.GREEN);
 			} else {
+				//otherwise, prevent user from clicking to download
 				btnDownload.setEnabled(false);
 				lblStatus.setText(msgConflictExists);
 				lblStatus.setForeground(Color.RED);

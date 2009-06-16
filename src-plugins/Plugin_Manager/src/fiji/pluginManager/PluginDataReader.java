@@ -296,7 +296,12 @@ public class PluginDataReader implements Observable, Observer {
 					//set latest update details
 					String updatedDescription = xmlFileReader.getDescriptionFrom(name, remoteDate);
 					List<Dependency> updatedDependencies = xmlFileReader.getDependenciesFrom(name, remoteDate);
-					myPlugin.setUpdateDetails(remoteDigest, remoteDate, updatedDescription, updatedDependencies);
+					int updatedFilesize = xmlFileReader.getFilesizeFrom(name, remoteDate);
+					myPlugin.setUpdateDetails(remoteDigest,
+							remoteDate,
+							updatedDescription,
+							updatedDependencies,
+							updatedFilesize);
 				}
 
 				String pluginDate = myPlugin.getTimestamp();
@@ -306,6 +311,7 @@ public class PluginDataReader implements Observable, Observer {
 					//Use filename and timestamp to get associated description & dependencies
 					myPlugin.setDescription(xmlFileReader.getDescriptionFrom(name, pluginDate));
 					myPlugin.setDependency(xmlFileReader.getDependenciesFrom(name, pluginDate));
+					myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(name, pluginDate));
 				}
 				pluginList.add(myPlugin);
 			}

@@ -31,7 +31,7 @@ public class XMLFileReader {
 
 	public XMLFileReader(String fileLocation) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
 		domFactory = DocumentBuilderFactory.newInstance();
-		domFactory.setNamespaceAware(true); // never forget this!
+		domFactory.setNamespaceAware(true);
 		builder = domFactory.newDocumentBuilder();
 		doc = builder.parse(fileLocation);
 
@@ -96,6 +96,15 @@ public class XMLFileReader {
 			latestDigests.put(filename, updates.get(0));
 			latestDates.put(filename, updates.get(1));
 		}
+	}
+
+	//Get filesize associated with specified version, assumed filename & timestamp are correct
+	public int getFilesizeFrom(String filename, String timestamp) throws XPathExpressionException {
+		String pluginQuery = "//plugin[@filename='" + filename + "']/";
+		String versionQuery = pluginQuery + "version[timestamp='" + timestamp + "']/";
+		String filesizeQuery = versionQuery + "filesize[1]/text()";
+		String strFilesize = (String)evaluateQueryAsString(filesizeQuery);
+		return Integer.parseInt(strFilesize);
 	}
 
 	//Get description associated with specified version, assumed filename & timestamp are correct

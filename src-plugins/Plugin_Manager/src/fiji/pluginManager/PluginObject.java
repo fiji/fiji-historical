@@ -1,7 +1,6 @@
 package fiji.pluginManager;
 import java.util.List;
 
-
 public class PluginObject {
 	private String strFilename; //Identifier
 	private String md5Sum; //Used for comparison: Determine if update needed
@@ -10,6 +9,8 @@ public class PluginObject {
 	private String newTimestamp; //if any
 	private String description;
 	private String newDescription;
+	private int filesize;
+	private int newFilesize;
 	public static final byte STATUS_UNINSTALLED = 0; //Meaning current status is not installed
 	public static final byte STATUS_INSTALLED = 1; //Meaning current status is installed
 	public static final byte STATUS_MAY_UPDATE = 2; //Meaning installed AND update-able
@@ -38,12 +39,13 @@ public class PluginObject {
 		this.action = action;
 	}
 
-	public void setUpdateDetails(String newMd5Sum, String newTimestamp, String newDescription, List<Dependency> newDependency) {
+	public void setUpdateDetails(String newMd5Sum, String newTimestamp, String newDescription, List<Dependency> newDependency, int newFilesize) {
 		setStatus(PluginObject.STATUS_MAY_UPDATE); //set status, if not done so already
 		this.newMd5Sum = newMd5Sum;
 		this.newTimestamp = newTimestamp;
 		this.newDescription = newDescription;
 		this.newDependency = newDependency;
+		this.newFilesize = newFilesize;
 	}
 
 	private void setStatus(byte status) {
@@ -56,6 +58,10 @@ public class PluginObject {
 
 	public void setDependency(List<Dependency> dependency) {
 		this.dependency = dependency;
+	}
+
+	public void setFilesize(int filesize) {
+		this.filesize = filesize;
 	}
 
 	public void setActionToInstall() {
@@ -115,6 +121,10 @@ public class PluginObject {
 		return newDescription;
 	}
 
+	public int getFilesize() {
+		return filesize;
+	}
+
 	public List<Dependency> getDependencies() {
 		return dependency;
 	}
@@ -129,6 +139,10 @@ public class PluginObject {
 	
 	public Dependency getNewDependency(int index) {
 		return newDependency.get(index);
+	}
+	
+	public int getNewFilesize() {
+		return newFilesize;
 	}
 
 	public byte getStatus() {

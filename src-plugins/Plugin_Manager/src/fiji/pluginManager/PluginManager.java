@@ -39,14 +39,12 @@ import javax.swing.text.StyleConstants;
  * Main User Interface
  */
 public class PluginManager extends JFrame implements PlugIn, TableModelListener {
-	private Controller controller;
 	private List<PluginObject> viewList;
 	private PluginDataReader pluginDataReader;
 	private Installer installer;
-	private String updateURL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
-	private String updateLocal = "current.txt";//should be XML file actually
-	private String dbURL = "...";
-	private String dbLocal = "...";
+	//fileURL = "http://pacific.mpi-cbg.de/update/current.txt" //my guess its should be in the same place...
+	private String fileURL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
+	private String saveFile = "current.txt";//should be XML file actually
 
 	/* User Interface elements */
 	private DownloadUI frameDownloader;
@@ -70,7 +68,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		super("Plugin Manager");
 
 		//Firstly, get information from local, existing plugins
-		pluginDataReader = new PluginDataReader(updateURL, updateLocal);
+		pluginDataReader = new PluginDataReader(fileURL, saveFile);
 		pluginDataReader.downloadXMLFile(); //should be XML file actually
 		pluginDataReader.buildLocalPluginInformation(); //2nd step
 		pluginDataReader.buildFullPluginList(); //3rd step
@@ -233,32 +231,25 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			viewList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.getFilterForText(txtSearch.getText().trim()));
 		}
 
+		//if "View all plugins"
 		if (selectedIndex == 0) {
-
-			//if "View all plugins"
 			//do nothing
-			//viewList = pluginDataReader.getExistingPluginList();
-
-		} else if (selectedIndex == 1) {
-
-			//if "View installed plugins"
+		}
+		//if "View installed plugins"
+		else if (selectedIndex == 1) {
 			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_ALREADYINSTALLED);
-
-		} else if (selectedIndex == 2) {
-
-			//if "View uninstalled plugins"
+		}
+		//if "View uninstalled plugins"
+		else if (selectedIndex == 2) {
 			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_UNINSTALLED);
-
-		} else if (selectedIndex == 3) {
-
-			//if "View up-to-date plugins"
+		}
+		//if "View up-to-date plugins"
+		else if (selectedIndex == 3) {
 			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_INSTALLED);
-
-		} else if (selectedIndex == 4) {
-
-			//if "View update-able plugins"
+		}
+		//if "View update-able plugins"
+		else if (selectedIndex == 4) {
 			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_MAYUPDATE);
-
 		} else {
 			throw new Error("Viewing option specified does not exist!");
 		}
@@ -268,18 +259,10 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	private void clickToBeginOperations() {
-		//in later implementations, this should liase with Controller
-		//if status says there's a list to download...
-		boolean tempDemo = pluginDataReader.tempDemo;
-		if (!tempDemo) {
-		openDownloader();
-		} else {
-			//actually, this should be the final one to use in the real Manager
-			frameConfirmation = new ConfirmationUI(this);
-			frameConfirmation.setVisible(true);
-			frameConfirmation.displayInformation(new Controller(pluginDataReader.getExistingPluginList()));
-			setEnabled(false);
-		}
+		frameConfirmation = new ConfirmationUI(this);
+		frameConfirmation.setVisible(true);
+		frameConfirmation.displayInformation(new Controller(pluginDataReader.getExistingPluginList()));
+		setEnabled(false);
 	}
 
 	private void clickToQuitPluginManager() {
@@ -291,7 +274,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		fromConfirmationToPluginManager();
 		frameDownloader = new DownloadUI(this);
 		frameDownloader.setVisible(true);
-		installer = new Installer(pluginDataReader, updateURL);
+		installer = new Installer(pluginDataReader, fileURL);
 		frameDownloader.setInstaller(installer);
 		setEnabled(false);
 	}
@@ -316,23 +299,32 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BOLD_BLACK_TITLE);
 			if (myPlugin.isUpdateable())
 				TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.ITALIC_BLACK);
-			TextPaneFormat.insertText(txtPluginDetails, "\n\nMd5 Sum", TextPaneFormat.BOLD_BLACK);
+			TextPaneFormat.insertBlankLine(txtPluginDetails);
+			TextPaneFormat.insertText(txtPluginDetails, "Md5 Sum", TextPaneFormat.BOLD_BLACK);
 			TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getmd5Sum());
-			TextPaneFormat.insertText(txtPluginDetails, "\n\nDate: ", TextPaneFormat.BOLD_BLACK);
-			TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getTimestamp());
-			TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
+			TextPaneFormat.insertBlankLine(txtPluginDetails);
+			TextPaneFormat.insertText(txtPluginDetails, "Date: ", TextPaneFormat.BOLD_BLACK);
+			TextPaneFormat.insertText(txtPluginDetails, myPlugin.getTimestamp());
+			TextPaneFormat.insertBlankLine(txtPluginDetails);
+			TextPaneFormat.insertText(txtPluginDetails, "Dependency", TextPaneFormat.BOLD_BLACK);
 			TextPaneFormat.insertDependenciesList(txtPluginDetails, myPlugin.getDependencies());
-			TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
+			TextPaneFormat.insertBlankLine(txtPluginDetails);
+			TextPaneFormat.insertText(txtPluginDetails, "Description", TextPaneFormat.BOLD_BLACK);
 			TextPaneFormat.insertDescription(txtPluginDetails, myPlugin.getDescription());
 			if (myPlugin.isUpdateable()) {
-				TextPaneFormat.insertText(txtPluginDetails, "\n\nUpdate Details", TextPaneFormat.BOLD_BLACK_TITLE);
-				TextPaneFormat.insertText(txtPluginDetails, "\n\nNew Md5 Sum", TextPaneFormat.BOLD_BLACK);
+				TextPaneFormat.insertBlankLine(txtPluginDetails);
+				TextPaneFormat.insertText(txtPluginDetails, "Update Details", TextPaneFormat.BOLD_BLACK_TITLE);
+				TextPaneFormat.insertBlankLine(txtPluginDetails);
+				TextPaneFormat.insertText(txtPluginDetails, "New Md5 Sum", TextPaneFormat.BOLD_BLACK);
 				TextPaneFormat.insertText(txtPluginDetails, "\n" + myPlugin.getNewMd5Sum());
-				TextPaneFormat.insertText(txtPluginDetails, "\n\nReleased: ", TextPaneFormat.BOLD_BLACK);
-				TextPaneFormat.insertText(txtPluginDetails, "" + myPlugin.getNewTimestamp());
-				TextPaneFormat.insertText(txtPluginDetails, "\n\nDependency", TextPaneFormat.BOLD_BLACK);
+				TextPaneFormat.insertBlankLine(txtPluginDetails);
+				TextPaneFormat.insertText(txtPluginDetails, "Released: ", TextPaneFormat.BOLD_BLACK);
+				TextPaneFormat.insertText(txtPluginDetails, myPlugin.getNewTimestamp());
+				TextPaneFormat.insertBlankLine(txtPluginDetails);
+				TextPaneFormat.insertText(txtPluginDetails, "Dependency", TextPaneFormat.BOLD_BLACK);
 				TextPaneFormat.insertDependenciesList(txtPluginDetails, myPlugin.getNewDependencies());
-				TextPaneFormat.insertText(txtPluginDetails, "\n\nDescription", TextPaneFormat.BOLD_BLACK);
+				TextPaneFormat.insertBlankLine(txtPluginDetails);
+				TextPaneFormat.insertText(txtPluginDetails, "Description", TextPaneFormat.BOLD_BLACK);
 				TextPaneFormat.insertDescription(txtPluginDetails, myPlugin.getNewDescription());
 			}
 			//ensure first line of text is always shown (i.e.: scrolled to top)
@@ -460,5 +452,9 @@ class TextPaneFormat {
 			PluginObject myPlugin = myList.get(i);
 			insertText(textPane, "\n" + myPlugin.getFilename());
 		}
+	}
+
+	public static void insertBlankLine(JTextPane textPane) throws BadLocationException {
+		insertText(textPane, "\n\n");
 	}
 }
