@@ -8,8 +8,11 @@ import java.util.Map;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
 import javax.xml.parsers.*;
 import javax.xml.xpath.*;
+import org.xml.sax.ErrorHandler;
 
 /*
  * XML File Reader, as name implies, reads an already downloaded XML file of containing all
@@ -31,8 +34,10 @@ public class XMLFileReader {
 
 	public XMLFileReader(String fileLocation) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
 		domFactory = DocumentBuilderFactory.newInstance();
+		domFactory.setValidating(true);
 		domFactory.setNamespaceAware(true);
 		builder = domFactory.newDocumentBuilder();
+		builder.setErrorHandler(new XMLFileErrorHandler());
 		doc = builder.parse(fileLocation);
 
 		factory = XPathFactory.newInstance();
@@ -257,4 +262,18 @@ public class XMLFileReader {
 		}
 	}
 
+}
+class XMLFileErrorHandler implements ErrorHandler {
+	public void error(SAXParseException exception) throws SAXException {
+		throw new Error("Error occurred when parsing XML file: " + exception.getLocalizedMessage());
+	}
+
+	public void fatalError(SAXParseException exception) throws SAXException {
+		throw new Error("Fatal error occurred when parsing XML file: " + exception.getLocalizedMessage());
+	}
+
+	public void warning(SAXParseException exception) throws SAXException {
+		System.out.println("XML File Warning: " + exception.getLocalizedMessage());
+	}
+	
 }
