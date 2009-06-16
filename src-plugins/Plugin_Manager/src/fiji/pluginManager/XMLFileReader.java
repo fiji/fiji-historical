@@ -11,6 +11,14 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.*;
 import javax.xml.xpath.*;
 
+/*
+ * XML File Reader, as name implies, reads an already downloaded XML file of containing all
+ * existing records of Fiji plugins. Upon specific requests (call methods), it will retrieve
+ * the associated information using an XPath expression.
+ * 
+ * XML document is parsed just once when constructor is called thus avoiding parsing each
+ * time information is retrieved.
+ */
 public class XMLFileReader {
 	private DocumentBuilderFactory domFactory;
 	private DocumentBuilder builder;

@@ -74,7 +74,6 @@ public class PluginDataReader implements Observable, Observer {
 		latestDates = new TreeMap<String, String>();
 		latestDigests = new TreeMap<String, String>();
 		pluginList = new PluginCollection();
-		//buildLocalPluginInformation();
 
 		//initialize location of downloads and local plugins
 		path = stripSuffix(stripSuffix(Menus.getPlugInsPath(),
