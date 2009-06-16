@@ -525,3 +525,19 @@ Tasks Completed:
 
 Work in progress: 
 - XML Parsing.
+
+
+
+16th June, Tuesday
+Tasks Completed:
+- XMLFileReader parses & returns appropriate information as requested by PluginDataReader.
+   ==> Works for the artificial list of plugins
+   ==> *Should* work for real actual plugins (Not tested yet)
+- pluginObject expanded to include newDescription, filesize and newFilesize
+- Instead of that temporary "simulation", calculation of filesize replaced it (Which requires those filesize/newFilesize integer attributes)
+- Able to check XML document for validation (DTD), if not valid, application does not load.
+
+
+
+17th June, Wednesday
+...
