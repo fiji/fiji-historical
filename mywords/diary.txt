@@ -540,4 +540,21 @@ Tasks Completed:
 
 
 17th June, Wednesday
-...
+Tasks Completed:
+- Worked out that in PluginDataReader should throw Error objects to the PluginManager UI, where the UI will handle the presentation of the error
+   ==> Shouldn't be occurring anyway as any error will render application unable to run properly.
+- New UI Class: RecordsBuilderUI.java
+   ==> User Interface of editing and uploading plugins (And selecting which one to do too)
+
+Algorithm for editing:
+- Developer wants to edit and upload plugin(s)
+   ==> Takes action.
+- Loading RecordsBuilderUI
+   ==> plugin information generated from LOCAL side
+- Interface of RecordsBuilderUI displayed, list of plugins shown
+- Developer deselects/selects plugin(s) to upload
+   ==> PluginObject removed/added from a special list
+- Developer chooses to edit description
+   ==> PluginObject's description attribute will be edited
+- Developer chooses to upload plugin(s)
+   ==> Upload the plugins in the special list (Do we generate an updated current.xml/current.txt as well?)
