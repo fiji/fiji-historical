@@ -265,15 +265,14 @@ public class XMLFileReader {
 }
 class XMLFileErrorHandler implements ErrorHandler {
 	public void error(SAXParseException exception) throws SAXException {
-		throw new Error("Error occurred when parsing XML file: " + exception.getLocalizedMessage());
+		throw new Error(exception.getLocalizedMessage());
 	}
 
 	public void fatalError(SAXParseException exception) throws SAXException {
-		throw new Error("Fatal error occurred when parsing XML file: " + exception.getLocalizedMessage());
+		throw new Error(exception.getLocalizedMessage());
 	}
 
 	public void warning(SAXParseException exception) throws SAXException {
 		System.out.println("XML File Warning: " + exception.getLocalizedMessage());
 	}
-	
 }

@@ -1,4 +1,5 @@
 package fiji.pluginManager;
+import ij.IJ;
 import ij.plugin.PlugIn;
 
 import java.awt.BorderLayout;
@@ -66,18 +67,23 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	public PluginManager() {
 		super("Plugin Manager");
+		try {
+			pluginDataReader = new PluginDataReader(fileURL, saveFile);
+			pluginDataReader.downloadXMLFile(); //should be XML file actually
+			pluginDataReader.buildLocalPluginInformation(); //2nd step
+			pluginDataReader.buildFullPluginList(); //3rd step
 
-		//Firstly, get information from local, existing plugins
-		pluginDataReader = new PluginDataReader(fileURL, saveFile);
-		pluginDataReader.downloadXMLFile(); //should be XML file actually
-		pluginDataReader.buildLocalPluginInformation(); //2nd step
-		pluginDataReader.buildFullPluginList(); //3rd step
+			viewList = pluginDataReader.getExistingPluginList(); //initial view: All plugins
+			setUpUserInterface();
 
-		viewList = pluginDataReader.getExistingPluginList(); //initial view: All plugins
-		setUpUserInterface();
-
-		setVisible(true);
-		pack();
+			setVisible(true);
+			pack();
+		} catch (Error e) {
+			//Interface side: This should handle presentation side of exceptions
+			//i.e.: pluginDataReader should throw _Error_ objects to here.
+			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getLocalizedMessage());
+			dispose();
+		}
 	}
 
 	private void setUpUserInterface() {

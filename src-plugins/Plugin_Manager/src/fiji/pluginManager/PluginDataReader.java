@@ -20,6 +20,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 /*
  * PluginDataReader's overall role is to be in charge of building of a plugin list
@@ -239,13 +240,13 @@ public class PluginDataReader implements Observable, Observer {
 			}
 
 		} catch (ParserConfigurationException e1) {
-			throw new Error("Configuration error within XMLFileReader class: " + e1.getLocalizedMessage());
+			throw new Error(e1.getLocalizedMessage());
 		} catch (IOException e2) {
-			throw new Error("Failed to read given XML file.");
+			throw new Error(e2.getLocalizedMessage());
 		} catch (SAXException e3) {
-			throw new Error("SAXException: " + e3.getLocalizedMessage());
+			throw new Error(e3.getLocalizedMessage());
 		} catch (XPathExpressionException e) {
-			throw new Error("Please check if XPath expression is valid: " + e.getLocalizedMessage());
+			throw new Error(e.getLocalizedMessage());
 		}
 	}
 
@@ -353,7 +354,7 @@ public class PluginDataReader implements Observable, Observer {
 			IJ.showMessage("Some" + msg);
 		}*/
 		} catch (XPathExpressionException e) {
-			throw new Error("Please check if XPath expression is valid: " + e.getLocalizedMessage());
+			throw new Error(e.getLocalizedMessage());
 		}
 	}
 
