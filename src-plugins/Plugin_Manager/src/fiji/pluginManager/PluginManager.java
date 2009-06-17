@@ -42,7 +42,6 @@ import javax.swing.text.StyleConstants;
 public class PluginManager extends JFrame implements PlugIn, TableModelListener {
 	private List<PluginObject> viewList;
 	private PluginDataReader pluginDataReader;
-	private Installer installer;
 	//fileURL = "http://pacific.mpi-cbg.de/update/current.txt" //my guess its should be in the same place...
 	private String fileURL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
 	private String saveFile = "current.txt";//should be XML file actually
@@ -50,6 +49,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	/* User Interface elements */
 	private DownloadUI frameDownloader;
 	private ConfirmationUI frameConfirmation;
+	private RecordsBuilderUI frameRecordsBuilder;
 	private String[] arrViewingOptions = {
 			"View all plugins",
 			"View installed plugins only",
@@ -64,6 +64,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private JTextPane txtPluginDetails;
 	private JButton btnStart;
 	private JButton btnOK;
+	private JButton tmpBtnLoad;
 
 	public PluginManager() {
 		super("Plugin Manager");
@@ -190,7 +191,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		topPanel.add(rightPanel);
 		topPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 5, 15));
 
-		//Buttons to start actions
+		//Button to start actions
 		btnStart = new JButton();
 		btnStart.setText("Apply changes");
 		btnStart.setToolTipText("Start installing/uninstalling specified plugins");
@@ -202,8 +203,20 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 		});
 		btnStart.setEnabled(false);
+		
+		//Button to start Records Builder
+		tmpBtnLoad = new JButton();
+		tmpBtnLoad.setText("Build Records");
+		tmpBtnLoad.setToolTipText("You read it right, build plugin records for server!");
+		tmpBtnLoad.addActionListener(new ActionListener() {
 
-		//Buttons to quit Plugin Manager
+			public void actionPerformed(ActionEvent e) {
+				clickGotoRecordsBuilder();
+			}
+
+		});
+		
+		//Button to quit Plugin Manager
 		btnOK = new JButton();
 		btnOK.setText("Cancel");
 		btnOK.setToolTipText("Exit Plugin Manager without applying changes");
@@ -219,6 +232,8 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
 		bottomPanel.add(btnStart);
 		bottomPanel.add(Box.createHorizontalGlue());
+		bottomPanel.add(tmpBtnLoad);
+		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
 		bottomPanel.add(btnOK);
 		bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
 
@@ -264,6 +279,12 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		table.setupTableModel(viewList);
 	}
 
+	private void clickGotoRecordsBuilder() {
+		frameRecordsBuilder = new RecordsBuilderUI(this);
+		frameRecordsBuilder.setVisible(true);
+		setEnabled(false);
+	}
+
 	private void clickToBeginOperations() {
 		frameConfirmation = new ConfirmationUI(this);
 		frameConfirmation.setVisible(true);
@@ -280,23 +301,29 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		fromConfirmationToPluginManager();
 		frameDownloader = new DownloadUI(this);
 		frameDownloader.setVisible(true);
-		installer = new Installer(pluginDataReader, fileURL);
-		frameDownloader.setInstaller(installer);
+		frameDownloader.setInstaller(new Installer(pluginDataReader, fileURL));
 		setEnabled(false);
+	}
+
+	public void fromRecordsBuilderToPluginManager() {
+		frameRecordsBuilder.setVisible(false);
+		frameRecordsBuilder.dispose();
+		frameRecordsBuilder = null;
+		setEnabled(true);
 	}
 
 	public void fromDownloaderToPluginManager() {
 		frameDownloader.setVisible(false);
-		setEnabled(true);
 		frameDownloader.dispose();
 		frameDownloader = null;
+		setEnabled(true);
 	}
 
 	public void fromConfirmationToPluginManager() {
 		frameConfirmation.setVisible(false);
-		setEnabled(true);
 		frameConfirmation.dispose();
 		frameConfirmation = null;
+		setEnabled(true);
 	}
 
 	public void displayPluginDetails(PluginObject myPlugin) {

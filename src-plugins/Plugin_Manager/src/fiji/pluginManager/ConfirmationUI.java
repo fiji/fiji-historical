@@ -23,7 +23,7 @@ import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
 
 public class ConfirmationUI extends JFrame {
-	private PluginManager pluginManager; //Used if opened from Plugin Manager UI
+	private PluginManager pluginManager;
 	private JTextPane txtPluginList;
 	private JTextPane txtAdditionalList;
 	private JTextPane txtConflictsList;
