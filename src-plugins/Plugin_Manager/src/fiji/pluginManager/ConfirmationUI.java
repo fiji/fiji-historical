@@ -147,7 +147,7 @@ public class ConfirmationUI extends JFrame {
 	}
 
 	private void backToPluginManager() {
-		pluginManager.fromConfirmationToPluginManager();
+		pluginManager.backToPluginManager();
 	}
 
 	public void displayInformation(Controller controller) {

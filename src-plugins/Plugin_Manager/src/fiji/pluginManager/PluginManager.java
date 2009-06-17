@@ -47,9 +47,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private String saveFile = "current.txt";//should be XML file actually
 
 	/* User Interface elements */
-	private DownloadUI frameDownloader;
-	private ConfirmationUI frameConfirmation;
-	private RecordsBuilderUI frameRecordsBuilder;
+	private JFrame loadedFrame;
 	private String[] arrViewingOptions = {
 			"View all plugins",
 			"View installed plugins only",
@@ -280,15 +278,16 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	private void clickGotoRecordsBuilder() {
-		frameRecordsBuilder = new RecordsBuilderUI(this);
-		frameRecordsBuilder.setVisible(true);
+		loadedFrame = new RecordsBuilderUI(this);
+		loadedFrame.setVisible(true);
 		setEnabled(false);
 	}
 
 	private void clickToBeginOperations() {
-		frameConfirmation = new ConfirmationUI(this);
-		frameConfirmation.setVisible(true);
-		frameConfirmation.displayInformation(new Controller(pluginDataReader.getExistingPluginList()));
+		loadedFrame = new ConfirmationUI(this);
+		ConfirmationUI confirmationUI = (ConfirmationUI)loadedFrame;
+		confirmationUI.displayInformation(new Controller(pluginDataReader.getExistingPluginList()));
+		loadedFrame.setVisible(true);
 		setEnabled(false);
 	}
 
@@ -298,31 +297,18 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	public void openDownloader() {
-		fromConfirmationToPluginManager();
-		frameDownloader = new DownloadUI(this);
-		frameDownloader.setVisible(true);
-		frameDownloader.setInstaller(new Installer(pluginDataReader, fileURL));
+		backToPluginManager();
+		loadedFrame = new DownloadUI(this);
+		loadedFrame.setVisible(true);
+		DownloadUI downloadUI = (DownloadUI)loadedFrame;
+		downloadUI.setInstaller(new Installer(pluginDataReader, fileURL));
 		setEnabled(false);
 	}
 
-	public void fromRecordsBuilderToPluginManager() {
-		frameRecordsBuilder.setVisible(false);
-		frameRecordsBuilder.dispose();
-		frameRecordsBuilder = null;
-		setEnabled(true);
-	}
-
-	public void fromDownloaderToPluginManager() {
-		frameDownloader.setVisible(false);
-		frameDownloader.dispose();
-		frameDownloader = null;
-		setEnabled(true);
-	}
-
-	public void fromConfirmationToPluginManager() {
-		frameConfirmation.setVisible(false);
-		frameConfirmation.dispose();
-		frameConfirmation = null;
+	public void backToPluginManager() {
+		loadedFrame.setVisible(false);
+		loadedFrame.dispose();
+		loadedFrame = null;
 		setEnabled(true);
 	}
 
