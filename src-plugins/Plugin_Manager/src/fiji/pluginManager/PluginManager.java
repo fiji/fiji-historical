@@ -44,7 +44,6 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private PluginDataReader pluginDataReader;
 	private String fileURL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
 	private String saveFile = "current.txt";//should be XML file actually
-	private List<PluginObject> pluginRecords;
 
 	/* User Interface elements */
 	private boolean isDeveloper = true; //temporarily activated by change of code
@@ -63,7 +62,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private JTextPane txtPluginDetails;
 	private JButton btnStart;
 	private JButton btnOK;
-	
+
 	//For developers
 	private JButton btnUpload;
 	private JButton btnEditDescriptions;
@@ -199,6 +198,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 				}
 
 			});
+			btnEditDescriptions.setEnabled(false);
 			editButtonPanel.add(btnEditDescriptions);
 			editButtonPanel.add(Box.createHorizontalGlue());
 			rightPanel.add(editButtonPanel);
@@ -384,6 +384,9 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	private void clickToEditDescriptions() {
 		System.out.println("TODO: Plugins that are \"Upload-able\" would be able to edit their descriptions.");
+		loadedFrame = new DescriptionEditorUI(this, table.getSelectedPlugin());
+		loadedFrame.setVisible(true);
+		setEnabled(false);
 	}
 
 	private void clickToBeginOperations() {
@@ -418,6 +421,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	public void displayPluginDetails(PluginObject myPlugin) {
 		txtPluginDetails.setText("");
 		try {
+			//Display plugin data, text with different formatting
 			TextPaneFormat.insertText(txtPluginDetails, myPlugin.getFilename(), TextPaneFormat.BOLD_BLACK_TITLE);
 			if (myPlugin.isUpdateable())
 				TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.ITALIC_BLACK);
@@ -449,9 +453,16 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 				TextPaneFormat.insertText(txtPluginDetails, "Description", TextPaneFormat.BOLD_BLACK);
 				TextPaneFormat.insertDescription(txtPluginDetails, myPlugin.getNewDescription());
 			}
+
 			//ensure first line of text is always shown (i.e.: scrolled to top)
 			txtPluginDetails.setSelectionStart(0);
 			txtPluginDetails.setSelectionEnd(0);
+
+			//if uploadable, then description is editable too
+			if (myPlugin.isUploadable())
+				btnEditDescriptions.setEnabled(true);
+			else
+				btnEditDescriptions.setEnabled(false);
 		} catch (BadLocationException e) {
 			throw new Error("Problem with printing Plugin information: " + e.getMessage());
 		}
