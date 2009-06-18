@@ -62,6 +62,18 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 	};
 
+	public static final Filter FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return (plugin.actionSpecified() && !plugin.toUpload());
+		}
+	};
+
+	public static final Filter FILTER_ACTIONS_UPLOAD = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return plugin.toUpload();
+		}
+	};
+
 	public static final Filter FILTER_ACTIONS_UNINSTALL = new Filter() {
 		public boolean matchesFilter(PluginObject plugin) {
 			return plugin.toRemove();

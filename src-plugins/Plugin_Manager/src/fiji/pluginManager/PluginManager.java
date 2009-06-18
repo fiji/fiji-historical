@@ -310,6 +310,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 				}
 
 			});
+			btnUpload.setEnabled(false);
 		}
 
 		//Button to quit Plugin Manager
@@ -476,12 +477,18 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 		lblPluginSummary.setText("Total: " + size + ", To install: " + installCount +
 				", To remove: " + removeCount + ", To update: " + updateCount);
-		if (btnStart != null) {
-			List<PluginObject> myList = ((PluginCollection)pluginDataReader.getExistingPluginList()).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED);
+		enablingButtonIfAnyActions(btnStart, PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
+		enablingButtonIfAnyActions(btnUpload, PluginCollection.FILTER_ACTIONS_UPLOAD);
+	}
+
+	private void enablingButtonIfAnyActions(JButton button, PluginCollection.Filter filter) {
+		PluginCollection pluginList = (PluginCollection)pluginDataReader.getExistingPluginList();
+		if (button != null) {
+			List<PluginObject> myList = pluginList.getList(filter);
 			if (myList.size() > 0)
-				btnStart.setEnabled(true);
+				button.setEnabled(true);
 			else
-				btnStart.setEnabled(false);
+				button.setEnabled(false);
 		}
 	}
 
