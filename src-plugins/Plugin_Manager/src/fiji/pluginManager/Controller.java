@@ -24,7 +24,7 @@ public class Controller {
 
 	public Controller(List<PluginObject> pluginList) {
 		this.pluginList = pluginList;
-		changeList = ((PluginCollection)pluginList).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED);
+		changeList = ((PluginCollection)pluginList).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
 		List<PluginObject> change_addOrUpdateList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
 		List<PluginObject> change_removeList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_UNINSTALL);
 

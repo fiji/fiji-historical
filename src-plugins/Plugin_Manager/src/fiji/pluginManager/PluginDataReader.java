@@ -193,8 +193,8 @@ public class PluginDataReader implements Observable, Observer {
 			queue.add("PluginE.jar");
 			queue.add("PluginG.jar");
 			queue.add("PluginH.jar");
-			//digests.put("PluginE.jar", "8114fe93cbf7720c01c7ff97c28b007b79900dc7");
-			digests.put("PluginE.jar", "cb19fe73cbf562c011e7fa87c28b007b7c990dc3"); //test non-existent digest
+			digests.put("PluginE.jar", "8114fe93cbf7720c01c7ff97c28b007b79900dc7");
+			//digests.put("PluginE.jar", "cb19fe73cbf562c011e7fa87c28b007b7c990dc3"); //test non-existent digest
 			digests.put("PluginG.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d");
 			//digests.put("PluginH.jar", "33c88dc1fbd7564f92587ffdc521f9de6507ca65");
 			digests.put("PluginH.jar", "43e68dc9fbd7964ecd587ffdc621f9de6050ba69"); //test non-existent digest
