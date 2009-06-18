@@ -21,12 +21,17 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.text.BadLocationException;
 
-public class RecordsBuilderUI extends JFrame {
+public class RecordsBuilderUI extends JFrame implements TableModelListener {
 	private PluginManager pluginManager;
-	private JList listLocalPlugins;
+	private PluginTable table;
 	private JLabel lblFilename;
 	private JLabel lblDigest; //not too sure if this is really needed
 	private JLabel lblDate;
@@ -37,12 +42,12 @@ public class RecordsBuilderUI extends JFrame {
 	private JButton btnClose;
 
 	private List<PluginObject> pluginRecords;
+	private PluginObject currentPlugin;
+	private boolean descriptionChanged;
 
 	public RecordsBuilderUI(PluginManager pluginManager) {
 		this.pluginManager = pluginManager;
-		setupUserInterface();
-		pack();
-
+		
 		pluginRecords = new PluginCollection();
 		Dependency dependencyA1 = new Dependency("PluginD.jar", "20090420190033");
 		ArrayList<Dependency> Adependency = new ArrayList<Dependency>();
@@ -112,70 +117,14 @@ public class RecordsBuilderUI extends JFrame {
 		pluginRecords.add(pluginI);
 		pluginRecords.add(pluginJ);
 		pluginRecords.add(pluginK);
-
-		DefaultListModel listModel = (DefaultListModel)listLocalPlugins.getModel();
-		for (PluginObject plugin : pluginRecords) {
-			listModel.addElement(plugin.getFilename());
-		}
+		
+		setupUserInterface();
+		pack();
 	}
 
 	private void setupUserInterface() {
 		setTitle("Build Plugin information");
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
-		JLabel lblPluginList = new JLabel("Plugins on the local side");
-		JPanel lblPanel = new JPanel();
-		lblPanel.setLayout(new BoxLayout(lblPanel, BoxLayout.X_AXIS));
-		lblPanel.add(lblPluginList);
-		lblPanel.add(Box.createHorizontalGlue());
-
-		listLocalPlugins = new JList();
-		listLocalPlugins.setModel(new DefaultListModel());
-		listLocalPlugins.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		listLocalPlugins.setPreferredSize(new Dimension(270, 370));
-		JScrollPane listScrollpane = new JScrollPane(listLocalPlugins);
-		listScrollpane.getViewport().setBackground(listLocalPlugins.getBackground());
-		listScrollpane.setPreferredSize(new Dimension(300, 370));
-		listLocalPlugins.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-
-			//Called when a row is selected
-			public void valueChanged(ListSelectionEvent event) {
-				String selectedName = (String)listLocalPlugins.getSelectedValue();
-				if (selectedName == null) {
-					//Selection got filtered away
-				} else {
-					for (PluginObject plugin : pluginRecords) {
-						if (plugin.getFilename().equals(selectedName)) {
-							lblFilename.setText("Filename: " + plugin.getFilename());
-							lblDigest.setText("Md5 sum: " + plugin.getmd5Sum());
-							lblDate.setText("Timestamp: " + plugin.getTimestamp());
-							lblFilesize.setText("Filesize: " + plugin.getFilesize());
-							List<Dependency> dependencyList = plugin.getDependencies();
-							DefaultListModel listModel = new DefaultListModel();
-							if (dependencyList != null) {
-								for (Dependency dependency : dependencyList) {
-									listModel.addElement(dependency.getFilename() + "; " + dependency.getTimestamp());
-								}
-							} else if (dependencyList == null || dependencyList.size() == 0) {
-								listModel.addElement("None.");
-							}
-							listDependencies.setModel(listModel);
-							//ignore dependencies first
-							if (plugin.getDescription() != null)
-								txtDescription.setText(plugin.getDescription());
-							break;
-						}
-					}
-					//private JList listDependencies;
-				}
-			}
-
-		});
-
-		JPanel leftPanel = new JPanel();
-		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-		leftPanel.add(lblPanel);
-		leftPanel.add(listScrollpane);
 
 		JPanel rightPanel = new JPanel();
 		rightPanel.setLayout(new GridBagLayout());
@@ -242,10 +191,10 @@ public class RecordsBuilderUI extends JFrame {
 		rightPanel.add(lblDependenciesTitle, c);
 
 		listDependencies = new JList();
-		listDependencies.setPreferredSize(new Dimension(400, 80));
+		listDependencies.setPreferredSize(new Dimension(340, 80));
 		JScrollPane dependenciesScrollpane = new JScrollPane(listDependencies);
 		dependenciesScrollpane.getViewport().setBackground(listDependencies.getBackground());
-		dependenciesScrollpane.setPreferredSize(new Dimension(430, 80));
+		dependenciesScrollpane.setPreferredSize(new Dimension(365, 80));
 		c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
@@ -267,10 +216,25 @@ public class RecordsBuilderUI extends JFrame {
 
 		//Only editing of description is allowed, the rest are generated automatically
 		txtDescription = new JTextArea();
-		txtDescription.setPreferredSize(new Dimension(400, 180));
+		txtDescription.setPreferredSize(new Dimension(340, 140));
+		txtDescription.getDocument().addDocumentListener(new DocumentListener() {
+
+			public void changedUpdate(DocumentEvent e) {
+				descriptionTextChanged();
+			}
+
+			public void removeUpdate(DocumentEvent e) {
+				descriptionTextChanged();
+			}
+
+			public void insertUpdate(DocumentEvent e) {
+				descriptionTextChanged();
+			}
+
+		});
 		JScrollPane txtScrollpane = new JScrollPane(txtDescription);
 		txtScrollpane.getViewport().setBackground(txtDescription.getBackground());
-		txtScrollpane.setPreferredSize(new Dimension(430, 180));
+		txtScrollpane.setPreferredSize(new Dimension(365, 140));
 		c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 0;
@@ -279,6 +243,64 @@ public class RecordsBuilderUI extends JFrame {
 		c.weightx = 0.5;
 		c.weighty = 0.5;
 		rightPanel.add(txtScrollpane, c);
+
+		//buttons to control the saving of text description
+		JButton btnSave = new JButton("Save");
+		btnSave.setToolTipText("Save plugin description");
+		btnSave.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				PluginObject plugin = table.getSelectedPlugin();
+				if (!txtDescription.getText().trim().equals("")) {
+					plugin.setDescription(txtDescription.getText().trim());
+				}
+			}
+
+		});
+
+		//buttons to control the saving of text description
+		JButton btnReset = new JButton("Reset");
+		btnReset.setToolTipText("Reset back to empty description");
+		btnReset.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				PluginObject plugin = table.getSelectedPlugin();
+				plugin.setDescription(null);
+				txtDescription.setText("");
+			}
+
+		});
+
+		JPanel saveBtnPanel = new JPanel();
+		saveBtnPanel.setLayout(new BoxLayout(saveBtnPanel, BoxLayout.X_AXIS));
+		saveBtnPanel.add(Box.createHorizontalGlue());
+		saveBtnPanel.add(btnSave);
+		saveBtnPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+		saveBtnPanel.add(btnReset);
+		c = new GridBagConstraints();
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 9;
+		c.ipady = 0;
+		c.weightx = 0.5;
+		c.weighty = 0.5;
+		rightPanel.add(saveBtnPanel, c);
+
+		JLabel lblPluginList = new JLabel("Plugins on the local side");
+		JPanel lblPanel = new JPanel();
+		lblPanel.setLayout(new BoxLayout(lblPanel, BoxLayout.X_AXIS));
+		lblPanel.add(lblPluginList);
+		lblPanel.add(Box.createHorizontalGlue());
+
+		/* Create the plugin table and set up its scrollpane */
+		table = new PluginTable(pluginRecords, null);
+		JScrollPane pluginListScrollpane = new JScrollPane(table);
+		pluginListScrollpane.getViewport().setBackground(table.getBackground());
+
+		JPanel leftPanel = new JPanel();
+		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+		leftPanel.add(lblPanel);
+		leftPanel.add(pluginListScrollpane);
 
 		JPanel topPanel = new JPanel();
 		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
@@ -309,9 +331,8 @@ public class RecordsBuilderUI extends JFrame {
 
 		JPanel bottomPanel = new JPanel();
 		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
-		bottomPanel.add(Box.createHorizontalGlue());
 		bottomPanel.add(btnUpload);
-		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+		bottomPanel.add(Box.createHorizontalGlue());
 		bottomPanel.add(btnClose);
 		bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 15, 15));
 
@@ -322,6 +343,50 @@ public class RecordsBuilderUI extends JFrame {
 
 	private void backToPluginManager() {
 		pluginManager.backToPluginManager();
+	}
+
+	public void descriptionTextChanged() {
+		PluginObject plugin = table.getSelectedPlugin();
+		if (!txtDescription.getText().equals(plugin.getDescription())) {
+			descriptionChanged = true;
+		}
+	}
+
+	public boolean descriptionChanged() {
+		return descriptionChanged;
+	}
+
+	public PluginObject getCurrentPlugin() {
+		return currentPlugin;
+	}
+
+	public void setCurrentPlugin(PluginObject currentPlugin) {
+		this.currentPlugin = currentPlugin;
+		lblFilename.setText("Filename: " + currentPlugin.getFilename());
+		lblDigest.setText("Md5 sum: " + currentPlugin.getmd5Sum());
+		lblDate.setText("Timestamp: " + currentPlugin.getTimestamp());
+		lblFilesize.setText("Filesize: " + currentPlugin.getFilesize());
+		List<Dependency> dependencyList = currentPlugin.getDependencies();
+		DefaultListModel listModel = new DefaultListModel();
+		if (dependencyList != null) {
+			for (Dependency dependency : dependencyList) {
+				listModel.addElement(dependency.getFilename() + "; " + dependency.getTimestamp());
+			}
+		} else if (dependencyList == null || dependencyList.size() == 0) {
+			listModel.addElement("None.");
+		}
+		listDependencies.setModel(listModel);
+		if (currentPlugin.getDescription() != null)
+			txtDescription.setText(currentPlugin.getDescription());
+		else
+			txtDescription.setText("");
+		descriptionChanged = false;
+	}
+
+	@Override
+	public void tableChanged(TableModelEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

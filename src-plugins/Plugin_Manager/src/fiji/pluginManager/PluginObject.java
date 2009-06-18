@@ -11,6 +11,7 @@ public class PluginObject {
 	private String newDescription;
 	private int filesize;
 	private int newFilesize;
+	private boolean isFiji;
 	public static final byte STATUS_UNINSTALLED = 0; //Meaning current status is not installed
 	public static final byte STATUS_INSTALLED = 1; //Meaning current status is installed
 	public static final byte STATUS_MAY_UPDATE = 2; //Meaning installed AND update-able
@@ -18,15 +19,17 @@ public class PluginObject {
 	public static final byte ACTION_NONE = 0; //No action; Remain as it is
 	public static final byte ACTION_REVERSE = 1; //Install if not installed, Uninstall if installed
 	public static final byte ACTION_UPDATE = 2; //Only possibly valid for (status == 2)
+	public static final byte ACTION_UPLOAD = 3; //Only possible for Developers
 	private byte action = ACTION_NONE; //default
 	private List<Dependency> newDependency;
 	private List<Dependency> dependency; //Dependency object: filename and timestamp
 
-	public PluginObject(String strFilename, String md5Sum, String timestamp, byte status) {
+	public PluginObject(String strFilename, String md5Sum, String timestamp, byte status, boolean isFiji) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
 		this.timestamp = timestamp;
 		this.status = status;
+		this.isFiji = isFiji;
 	}
 
 	public PluginObject(String strFilename, String md5Sum, String timestamp, String description, List<Dependency> dependency, byte status, byte action) {
@@ -83,6 +86,13 @@ public class PluginObject {
 			setAction(PluginObject.ACTION_UPDATE);
 		else
 			throw new Error("Plugin " + strFilename + " cannot update as its current state is not UPDATEABLE.");
+	}
+
+	public void setActionToUpload() {
+		if (isUploadable()) {
+			setAction(PluginObject.ACTION_UPLOAD);
+		} else
+			throw new Error("Plugin " + strFilename + " is not defined to be uploaded.");
 	}
 
 	public void setActionNone() {
@@ -153,6 +163,11 @@ public class PluginObject {
 		return action;
 	}
 
+	public boolean isUploadable() {
+		return ((isUpdateable() && getTimestamp().compareTo(getNewTimestamp()) > 0)
+				|| (isRemovableOnly() && !isFijiPlugin()));
+	}
+
 	public boolean isInstallable() {
 		return (status == PluginObject.STATUS_UNINSTALLED);
 	}
@@ -184,5 +199,13 @@ public class PluginObject {
 
 	public boolean toInstall() {
 		return (isInstallable() && action == PluginObject.ACTION_REVERSE);
+	}
+
+	public boolean toUpload() {
+		return (isUploadable() && action == PluginObject.ACTION_UPLOAD);
+	}
+
+	public boolean isFijiPlugin() {
+		return isFiji;
 	}
 }

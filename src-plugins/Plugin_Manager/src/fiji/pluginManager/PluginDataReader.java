@@ -285,15 +285,15 @@ public class PluginDataReader implements Observable, Observer {
 
 				//if latest version installed
 				if (digest != null && remoteDigest.equals(digest)) {
-					myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED);
+					myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, true);
 				}
 				//if new file (Not installed yet)
 				else if (digest == null) {
-					myPlugin = new PluginObject(name, remoteDigest, remoteDate, PluginObject.STATUS_UNINSTALLED);
+					myPlugin = new PluginObject(name, remoteDigest, remoteDate, PluginObject.STATUS_UNINSTALLED, true);
 				}
 				//if its installed but can be updated
 				else {
-					myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_MAY_UPDATE);
+					myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_MAY_UPDATE, true);
 					//set latest update details
 					String updatedDescription = xmlFileReader.getDescriptionFrom(name, remoteDate);
 					List<Dependency> updatedDependencies = xmlFileReader.getDependenciesFrom(name, remoteDate);
@@ -327,7 +327,7 @@ public class PluginDataReader implements Observable, Observer {
 					String date = dates.get(name);
 					//implies third-party plugin
 					//no extra information available (i.e: description & dependencies)
-					PluginObject myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED);
+					PluginObject myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, false);
 					pluginList.add(myPlugin);
 				}
 			}

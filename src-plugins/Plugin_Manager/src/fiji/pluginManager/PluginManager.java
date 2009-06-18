@@ -42,11 +42,12 @@ import javax.swing.text.StyleConstants;
 public class PluginManager extends JFrame implements PlugIn, TableModelListener {
 	private List<PluginObject> viewList;
 	private PluginDataReader pluginDataReader;
-	//fileURL = "http://pacific.mpi-cbg.de/update/current.txt" //my guess its should be in the same place...
 	private String fileURL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
 	private String saveFile = "current.txt";//should be XML file actually
+	private List<PluginObject> pluginRecords;
 
 	/* User Interface elements */
+	private boolean isDeveloper = true; //temporarily activated by change of code
 	private JFrame loadedFrame;
 	private String[] arrViewingOptions = {
 			"View all plugins",
@@ -62,19 +63,96 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private JTextPane txtPluginDetails;
 	private JButton btnStart;
 	private JButton btnOK;
-	private JButton tmpBtnLoad;
+	
+	//For developers
+	private JButton btnUpload;
+	private JButton btnEditDescriptions;
 
 	public PluginManager() {
 		super("Plugin Manager");
 		try {
-			pluginDataReader = new PluginDataReader(fileURL, saveFile);
-			pluginDataReader.downloadXMLFile(); //should be XML file actually
-			pluginDataReader.buildLocalPluginInformation(); //2nd step
-			pluginDataReader.buildFullPluginList(); //3rd step
+			/*if (isDeveloper) {
+				//pluginRecords simulates the gathering of plugin information
+				pluginRecords = new PluginCollection();
+				Dependency dependencyA1 = new Dependency("PluginD.jar", "20090420190033");
+				ArrayList<Dependency> Adependency = new ArrayList<Dependency>();
+				Adependency.add(dependencyA1);
+				PluginObject pluginA = new PluginObject("PluginA.jar", "65c3ecc1bbd7564f92545ffd2521f9d96509ca64", "20090429190842", null, Adependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
 
-			viewList = pluginDataReader.getExistingPluginList(); //initial view: All plugins
+				Dependency dependencyB1 = new Dependency("PluginD.jar", "20090420190033");
+				Dependency dependencyB2 = new Dependency("PluginH.jar", "20090524666220");
+				Dependency dependencyB3 = new Dependency("PluginC.jar", "20081011183621");
+				ArrayList<Dependency> Bdependency = new ArrayList<Dependency>();
+				Bdependency.add(dependencyB1);
+				Bdependency.add(dependencyB2);
+				Bdependency.add(dependencyB3);
+				PluginObject pluginB = new PluginObject("PluginB.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20090429190854", null, Bdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+
+				PluginObject pluginC = new PluginObject("PluginC.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d", "20090425190854", null, null, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+
+				Dependency dependencyD1 = new Dependency("PluginF.jar", "20090420191023");
+				Dependency dependencyD3 = new Dependency("PluginE.jar", "20090311213621");
+				ArrayList<Dependency> Ddependency = new ArrayList<Dependency>();
+				Ddependency.add(dependencyD1);
+				Ddependency.add(dependencyD3);
+				PluginObject pluginD = new PluginObject("PluginD.jar", "61c3ecc1add7364f92545ffd2521e9d96508cb62", "20090420190033", null, Ddependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+
+				Dependency dependencyE1 = new Dependency("PluginG.jar", "20090125190842");
+				ArrayList<Dependency> Edependency = new ArrayList<Dependency>();
+				Edependency.add(dependencyE1);
+				PluginObject pluginE = new PluginObject("PluginE.jar", "8114fe93cbf7720c01c7ff97c28b007b79900dc7", "20090311213621", null, Edependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+
+				Dependency dependencyF1 = new Dependency("PluginI.jar", "20090501190854");
+				ArrayList<Dependency> Fdependency = new ArrayList<Dependency>();
+				Fdependency.add(dependencyF1);
+				PluginObject pluginF = new PluginObject("PluginF.jar", "1b992dbca07ef84020d44a980c7902ba6c82dfee", "20090420191023", null, Fdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+				
+				PluginObject pluginG = new PluginObject("PluginG.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d", "20090415160854", null, null, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+
+				Dependency dependencyH1 = new Dependency("PluginD.jar", "20090420190033");
+				ArrayList<Dependency> HnewDependency = new ArrayList<Dependency>();
+				HnewDependency.add(dependencyH1);
+				PluginObject pluginH = new PluginObject("PluginH.jar", "33c88dc1fbd7564f92587ffdc521f9de6507ca65", "20081224666220", null, null, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+
+				Dependency dependencyI1 = new Dependency("PluginF.jar", "20090420191023");
+				Dependency dependencyI2 = new Dependency("PluginK.jar", "20081221866291");
+				ArrayList<Dependency> Idependency = new ArrayList<Dependency>();
+				Idependency.add(dependencyI1);
+				Idependency.add(dependencyI2);
+				PluginObject pluginI = new PluginObject("PluginI.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20090429190854", null, Idependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+
+				Dependency dependencyJ1 = new Dependency("PluginI.jar", "20090404090854");
+				ArrayList<Dependency> Jdependency = new ArrayList<Dependency>();
+				Jdependency.add(dependencyJ1);
+				PluginObject pluginJ = new PluginObject("PluginJ.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20090521181954", null, Jdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+
+				Dependency dependencyK1 = new Dependency("PluginJ.jar", "20090404090854");
+				ArrayList<Dependency> Kdependency = new ArrayList<Dependency>();
+				Kdependency.add(dependencyK1);
+				PluginObject pluginK = new PluginObject("PluginK.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20081221866291", null, Kdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
+
+				pluginRecords.add(pluginA);
+				pluginRecords.add(pluginB);
+				pluginRecords.add(pluginC);
+				pluginRecords.add(pluginD);
+				pluginRecords.add(pluginE);
+				pluginRecords.add(pluginF);
+				pluginRecords.add(pluginG);
+				pluginRecords.add(pluginH);
+				pluginRecords.add(pluginI);
+				pluginRecords.add(pluginJ);
+				pluginRecords.add(pluginK);
+				
+				viewList = pluginRecords;
+			} else {*/
+				pluginDataReader = new PluginDataReader(fileURL, saveFile);
+				pluginDataReader.downloadXMLFile(); //should be XML file actually
+				pluginDataReader.buildLocalPluginInformation(); //2nd step
+				pluginDataReader.buildFullPluginList(); //3rd step
+
+				viewList = pluginDataReader.getExistingPluginList(); //initial view: All plugins
+
 			setUpUserInterface();
-
 			setVisible(true);
 			pack();
 		} catch (Error e) {
@@ -108,7 +186,25 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
 		rightPanel.add(Box.createVerticalGlue());
 		rightPanel.add(tabbedPane);
-		rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
+
+		if (isDeveloper) {
+			JPanel editButtonPanel = new JPanel();
+			editButtonPanel.setLayout(new BoxLayout(editButtonPanel, BoxLayout.X_AXIS));
+			btnEditDescriptions = new JButton("Edit Descriptions");
+			btnEditDescriptions.setToolTipText("Edit the descriptions of selected plugin");
+			btnEditDescriptions.addActionListener(new ActionListener() {
+
+				public void actionPerformed(ActionEvent e) {
+					clickToEditDescriptions();
+				}
+
+			});
+			editButtonPanel.add(btnEditDescriptions);
+			editButtonPanel.add(Box.createHorizontalGlue());
+			rightPanel.add(editButtonPanel);
+		} else {
+			rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
+		}
 
 		/* Create text search */
 		JLabel lblSearch1 = new JLabel("Search:", SwingConstants.LEFT);
@@ -201,19 +297,21 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 		});
 		btnStart.setEnabled(false);
-		
-		//Button to start Records Builder
-		tmpBtnLoad = new JButton();
-		tmpBtnLoad.setText("Build Records");
-		tmpBtnLoad.setToolTipText("You read it right, build plugin records for server!");
-		tmpBtnLoad.addActionListener(new ActionListener() {
 
-			public void actionPerformed(ActionEvent e) {
-				clickGotoRecordsBuilder();
-			}
+		if (isDeveloper) {
+			//Button to start uploading to server
+			btnUpload = new JButton();
+			btnUpload.setText("Upload to server");
+			btnUpload.setToolTipText("Upload the selected plugins to server");
+			btnUpload.addActionListener(new ActionListener() {
 
-		});
-		
+				public void actionPerformed(ActionEvent e) {
+					clickToUploadRecords();
+				}
+
+			});
+		}
+
 		//Button to quit Plugin Manager
 		btnOK = new JButton();
 		btnOK.setText("Cancel");
@@ -229,9 +327,11 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		JPanel bottomPanel = new JPanel();
 		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
 		bottomPanel.add(btnStart);
+		if (isDeveloper) {
+			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			bottomPanel.add(btnUpload);
+		}
 		bottomPanel.add(Box.createHorizontalGlue());
-		bottomPanel.add(tmpBtnLoad);
-		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
 		bottomPanel.add(btnOK);
 		bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
 
@@ -277,10 +377,12 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		table.setupTableModel(viewList);
 	}
 
-	private void clickGotoRecordsBuilder() {
-		loadedFrame = new RecordsBuilderUI(this);
-		loadedFrame.setVisible(true);
-		setEnabled(false);
+	private void clickToUploadRecords() {
+		System.out.println("TODO: Select plugins that are indicated to action UPLOAD. Then get their information... connect to server... Not sure how to implement yet.");
+	}
+
+	private void clickToEditDescriptions() {
+		System.out.println("TODO: Plugins that are \"Upload-able\" would be able to edit their descriptions.");
 	}
 
 	private void clickToBeginOperations() {
@@ -381,6 +483,10 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			else
 				btnStart.setEnabled(false);
 		}
+	}
+
+	public boolean isDeveloper() {
+		return isDeveloper;
 	}
 
 	/* Returns an ImageIcon, or null if the path was invalid. */
