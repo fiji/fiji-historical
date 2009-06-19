@@ -320,6 +320,9 @@ public class PluginDataReader implements Observable, Observer {
 					myPlugin.setDescription(xmlFileReader.getDescriptionFrom(name, pluginDate));
 					myPlugin.setDependency(xmlFileReader.getDependenciesFrom(name, pluginDate));
 					myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(name, pluginDate));
+				} else { //if digest of this plugin does not exist in the records
+					//TODO: Placeholder code for calculating filesizes
+					//and perhaps dependency (Using DependencyAnalyzer) from file itself
 				}
 				pluginList.add(myPlugin);
 			}
