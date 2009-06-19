@@ -40,12 +40,6 @@ public class PluginTable extends JTable {
 	static String[] arrDevelUninstalledOptions = { "Not installed", "Install it" };
 	static String[] arrDevelInstalledOptions = { "Installed", "Remove it", "Upload" };
 	static String[] arrDevelUpdateableOptions = { "Installed", "Remove it", "Update it", "Upload" };
-	private TableCellEditor uninstalledOptions = new DefaultCellEditor(new JComboBox(arrUninstalledOptions));
-	private TableCellEditor installedOptions = new DefaultCellEditor(new JComboBox(arrInstalledOptions));
-	private TableCellEditor updateableOptions = new DefaultCellEditor(new JComboBox(arrUpdateableOptions));
-	private TableCellEditor develUninstalledOptions = new DefaultCellEditor(new JComboBox(arrDevelUninstalledOptions));
-	private TableCellEditor develInstalledOptions = new DefaultCellEditor(new JComboBox(arrDevelInstalledOptions));
-	private TableCellEditor develUpdateableOptions = new DefaultCellEditor(new JComboBox(arrDevelUpdateableOptions));
 
 	//NOTE: To be created only after related display components are created
 	//Namely: lblPluginSummary, txtPluginDetails
@@ -141,34 +135,44 @@ public class PluginTable extends JTable {
 		if (col == 0) {
 			return super.getCellEditor(row,col);
 		} else if (col == 1) {
-			if (isDeveloper) {
-				if (myPlugin.isInstallable()) {
-					return develUninstalledOptions;
-				} else if (myPlugin.isRemovableOnly()) {
-					if (myPlugin.isUploadable()) {
-						return develInstalledOptions;
-					} else {
-						return installedOptions;
-					}
-				} else if (myPlugin.isUpdateable()) {
-					if (myPlugin.isUploadable()) {
-						//if timestamp is newer than the latest version, indicates local modification
-						return develUpdateableOptions;
-					} else {
-						return updateableOptions;
-					}
-				}
-			} else {
-				if (myPlugin.isInstallable()) //if plugin is not installed
-					return uninstalledOptions;
-				else if (myPlugin.isRemovableOnly()) //if plugin is installed
-					return installedOptions;
-				else if (myPlugin.isUpdateable()) //if plugin is installed and may update
-					return updateableOptions;
-			}
-			throw new Error("Error while assigning combo-boxes to data!");
+			String[] arrOptions = getOptionsAccordingToState(myPlugin, isDeveloper);
+			return new DefaultCellEditor(new JComboBox(arrOptions));
 		} else
 			throw new Error("Unidentified Column number for Plugin Table");
+	}
+
+	public static String[] getOptionsAccordingToState(PluginObject entry, boolean isDeveloper) {
+		String[] optionsArray = null;
+		if (isDeveloper) {
+			if (entry.isInstallable()) {
+				optionsArray = PluginTable.arrDevelUninstalledOptions;
+			} else if (entry.isRemovableOnly()) {
+				if (entry.isUploadable()) {
+					optionsArray = PluginTable.arrDevelInstalledOptions;
+				} else {
+					optionsArray = PluginTable.arrInstalledOptions;
+				}
+			} else if (entry.isUpdateable()) {
+				if (entry.isUploadable()) {
+					//if timestamp is newer than the latest version, indicates local modification
+					optionsArray = PluginTable.arrDevelUpdateableOptions;
+				} else {
+					optionsArray = PluginTable.arrUpdateableOptions;
+				}
+			}
+		} else {
+			if (entry.isInstallable()) {
+				optionsArray = PluginTable.arrUninstalledOptions;
+			} else if (entry.isRemovableOnly()) {
+				optionsArray = PluginTable.arrInstalledOptions;
+			} else if (entry.isUpdateable()) {
+				optionsArray = PluginTable.arrUpdateableOptions;
+			}
+		}
+		if (optionsArray == null)
+			throw new Error("Failed to get available display options for Plugin's ComboBoxes.");
+		else
+			return optionsArray;
 	}
 
 	public PluginObject getPluginFromRow(int viewRow) {
@@ -227,40 +231,6 @@ public class PluginTable extends JTable {
 			return entries.size();
 		}
 
-		private String[] getOptionsAccordingToState(PluginObject entry) {
-			String[] optionsArray = null;
-			if (isDeveloper) {
-				if (entry.isInstallable()) {
-					optionsArray = PluginTable.arrDevelUninstalledOptions;
-				} else if (entry.isRemovableOnly()) {
-					if (entry.isUploadable()) {
-						optionsArray = PluginTable.arrDevelInstalledOptions;
-					} else {
-						optionsArray = PluginTable.arrInstalledOptions;
-					}
-				} else if (entry.isUpdateable()) {
-					if (entry.isUploadable()) {
-						//if timestamp is newer than the latest version, indicates local modification
-						optionsArray = PluginTable.arrDevelUpdateableOptions;
-					} else {
-						optionsArray = PluginTable.arrUpdateableOptions;
-					}
-				}
-			} else {
-				if (entry.isInstallable()) {
-					optionsArray = PluginTable.arrUninstalledOptions;
-				} else if (entry.isRemovableOnly()) {
-					optionsArray = PluginTable.arrInstalledOptions;
-				} else if (entry.isUpdateable()) {
-					optionsArray = PluginTable.arrUpdateableOptions;
-				}
-			}
-			if (optionsArray == null)
-				throw new Error("Failed to get available display options for Plugin's ComboBoxes.");
-			else
-				return optionsArray;
-		}
-
 		public Object getValueAt(int rowIndex, int columnIndex) {
 			PluginObject entry = (PluginObject)entries.get(rowIndex);
 			switch (columnIndex) {
@@ -274,7 +244,7 @@ public class PluginTable extends JTable {
 		}
 		
 		private String getValue(PluginObject entry) {
-			String[] optionsArray = getOptionsAccordingToState(entry);
+			String[] optionsArray = PluginTable.getOptionsAccordingToState(entry, isDeveloper);
 			
 			if (entry.isInstallable()) { //if not installed
 				if (!entry.actionSpecified()) {
@@ -325,8 +295,8 @@ public class PluginTable extends JTable {
 		}
 
 		private void setValue(String newValue, PluginObject entry) {
+			String[] optionsArray = PluginTable.getOptionsAccordingToState(entry, isDeveloper);
 			//if current status of selected plugin is "not installed"
-			String[] optionsArray = getOptionsAccordingToState(entry);
 			if (entry.isInstallable()) {
 				//if option chosen is "Not installed"
 				if (newValue.equals(optionsArray[0])) {
