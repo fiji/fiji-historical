@@ -171,10 +171,6 @@ public class PluginTable extends JTable {
 			throw new Error("Unidentified Column number for Plugin Table");
 	}
 
-	public PluginObject getSelectedPlugin() {
-		return getPluginFromRow(getSelectedRow());
-	}
-
 	public PluginObject getPluginFromRow(int viewRow) {
 		int modelRow = convertRowIndexToModel(viewRow);
 		return pluginTableModel.getEntry(modelRow);

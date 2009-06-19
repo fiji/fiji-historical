@@ -8,6 +8,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -27,7 +28,6 @@ public class DescriptionEditorUI extends JFrame {
 		super("Description Editor: " + selectedPlugin.getFilename());
 		this.pluginManager = pluginManager;
 		this.selectedPlugin = selectedPlugin;
-		textChanged = false;
 		setUpUserInterface();
 		pack();
 	}
@@ -53,6 +53,7 @@ public class DescriptionEditorUI extends JFrame {
 		});
 		if (selectedPlugin.getDescription() != null)
 			txtDescription.setText(selectedPlugin.getDescription());
+		textChanged = false;
 		JScrollPane txtScrollpane = new JScrollPane(txtDescription);
 		txtScrollpane.getViewport().setBackground(txtDescription.getBackground());
 		txtScrollpane.setPreferredSize(new Dimension(450, 200));
@@ -64,19 +65,18 @@ public class DescriptionEditorUI extends JFrame {
 		btnSave.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				//
+				saveText();
 			}
 
 		});
 
 		//Button to cancel and return to Plugin Manager
 		btnCancel = new JButton();
-		btnCancel.setText("Cancel");
+		btnCancel.setText("Close");
 		btnCancel.setToolTipText("Exit Description Editor");
 		btnCancel.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				//TODO: use the boolean value textChanged to verify first...
 				backToPluginManager();
 			}
 
@@ -85,9 +85,8 @@ public class DescriptionEditorUI extends JFrame {
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
 		buttonPanel.add(btnSave);
-		buttonPanel.add(Box.createRigidArea(new Dimension(15, 0)));
-		buttonPanel.add(btnCancel);
 		buttonPanel.add(Box.createHorizontalGlue());
+		buttonPanel.add(btnCancel);
 		buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
 		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
@@ -96,6 +95,23 @@ public class DescriptionEditorUI extends JFrame {
 	}
 
 	private void backToPluginManager() {
+		if (textChanged) {
+			int option = JOptionPane.showConfirmDialog(this,
+					"Description has changed.\n\nSave it before exiting Editor?",
+					"Save?",
+					JOptionPane.YES_NO_CANCEL_OPTION,
+					JOptionPane.WARNING_MESSAGE);
+			if (option == JOptionPane.CANCEL_OPTION) {
+				return;
+			} else if (option == JOptionPane.YES_OPTION) {
+				saveText();
+			} //else ("No"), just exit
+		}
 		pluginManager.backToPluginManager();
+	}
+	
+	private void saveText() {
+		selectedPlugin.setDescription(txtDescription.getText().trim());
+		textChanged = false;
 	}
 }

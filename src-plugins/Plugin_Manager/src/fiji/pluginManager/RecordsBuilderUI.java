@@ -250,7 +250,7 @@ public class RecordsBuilderUI extends JFrame implements TableModelListener {
 		btnSave.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				PluginObject plugin = table.getSelectedPlugin();
+				PluginObject plugin=null;// = table.getSelectedPlugin();
 				if (!txtDescription.getText().trim().equals("")) {
 					plugin.setDescription(txtDescription.getText().trim());
 				}
@@ -264,7 +264,7 @@ public class RecordsBuilderUI extends JFrame implements TableModelListener {
 		btnReset.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				PluginObject plugin = table.getSelectedPlugin();
+				PluginObject plugin = null;// = table.getSelectedPlugin();
 				plugin.setDescription(null);
 				txtDescription.setText("");
 			}
@@ -346,7 +346,7 @@ public class RecordsBuilderUI extends JFrame implements TableModelListener {
 	}
 
 	public void descriptionTextChanged() {
-		PluginObject plugin = table.getSelectedPlugin();
+		PluginObject plugin=null;// = table.getSelectedPlugin();
 		if (!txtDescription.getText().equals(plugin.getDescription())) {
 			descriptionChanged = true;
 		}
