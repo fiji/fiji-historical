@@ -558,3 +558,37 @@ Algorithm for editing:
    ==> PluginObject's description attribute will be edited
 - Developer chooses to upload plugin(s)
    ==> Upload the plugins in the special list (Do we generate an updated current.xml/current.txt as well?)
+
+
+
+18th-19th June, Thursday-Friday
+Tasks Completed:
+- PluginManager UI is now "merged" wih RecordsBuilderUI: Both share the same interface, having user and developer version.
+- Created a new "Upload" option on ComboBoxes for the Developer version of the UI.
+- Able to edit description text for "Upload-able" Plugins: A new status and action created for the PluginObject.
+- Created placeholder classes: DependencyAnalyzer & Uploader
+
+Next Immediate Work to take on:
+- Refactor XMLFileBuilder?
+- Developer verison: After clicking on "Upload" button, upload data to server
+
+What these data to upload to server consists of:
+- They are plugins that are "uploadable" and are set to "Upload"
+- Additional new plugin information inserted into XML document
+- Upload new XML document along with the required plugins to server
+
+Incremental tasks (In order):
+1.) Refactor XMLFileBuilder (?) ==> Look into SAX I guess...
+
+2.) Convert ByteCodeAnalyzer (From Fake.java) into a Dependency Analyzer class.
+3.) For starters, DependencyAnayzer.java should be used on selected Plugins after "Upload" button is clicked.
+4.) You need REAL plugins to test this...
+
+5.) Inserting updated plugin data in XML document and current.txt format.
+6.) Refer to old Fiji_Updater, how to upload plugins
+7.) Perhaps refer to old Fiji_Updater... On how to upload a new current.txt (?)
+8.) I'd have to ask for permission to test uploading?
+
+Note: For developer version, database of plugins at the remote side should be locked when he starts the Plugin Manager, the lock is to be released only after developer stops using.
+
+2nd Note: For the developer version, it appears that implementation is best to calculate the dependencies of "Uploadable Fiji Plugins" (isFijiPlugin() && isUploadable()) after the user clicks to Install/Remove/Upload, and for the case of Install/Remove, that's before Controller gets its hands on these plugins. Just for future note.
