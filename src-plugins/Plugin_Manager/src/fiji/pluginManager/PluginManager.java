@@ -380,11 +380,19 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	private void clickToUploadRecords() {
+		//After uploading, you might need to restart Fiji (?)
 		System.out.println("TODO: Select plugins that are indicated to action UPLOAD. Then get their information... connect to server... Not sure how to implement yet.");
+		//TODO: In the future, a UI might hold the below code in the form of
+		//loadedFrame = new UploaderFrame(this);
+		//...
+		//uploaderFrame.setUploader(new Uploader(pluginDataReader));
+		//inside of .setUploader()... start the actions (generateDocuments(), etc etc)
+		Uploader uploader = new Uploader(pluginDataReader);
+		uploader.generateDocuments();
+		uploader.uploadToServer();
 	}
 
 	private void clickToEditDescriptions() {
-		System.out.println("TODO: Plugins that are \"Upload-able\" would be able to edit their descriptions.");
 		loadedFrame = new DescriptionEditorUI(this, currentPlugin);
 		loadedFrame.setVisible(true);
 		setEnabled(false);
@@ -461,10 +469,12 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			txtPluginDetails.setSelectionEnd(0);
 
 			//if uploadable, then description is editable too
-			if (currentPlugin.isUploadable())
-				btnEditDescriptions.setEnabled(true);
-			else
-				btnEditDescriptions.setEnabled(false);
+			if (isDeveloper) {
+				if (currentPlugin.isUploadable())
+					btnEditDescriptions.setEnabled(true);
+				else
+					btnEditDescriptions.setEnabled(false);
+			}
 		} catch (BadLocationException e) {
 			throw new Error("Problem with printing Plugin information: " + e.getMessage());
 		}
