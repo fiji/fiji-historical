@@ -317,8 +317,14 @@ public class PluginDataReader implements Observable, Observer {
 					myPlugin.setDependency(xmlFileReader.getDependenciesFrom(name, pluginDate));
 					myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(name, pluginDate));
 				} else { //if digest of this plugin does not exist in the records
-					//TODO: Placeholder code for calculating filesizes
-					//and perhaps dependency (Using DependencyAnalyzer) from file itself
+					//TODO: Placeholder code for calculating perhaps dependency
+					//(Using DependencyAnalyzer) from file itself
+					if (!tempDemo) {
+					long filesize = new File(myPlugin.getFilename()).length();
+					myPlugin.setFilesize(Integer.parseInt("" + filesize));
+					} else {
+					myPlugin.setFilesize(4500);
+					}
 				}
 				pluginList.add(myPlugin);
 			}
@@ -362,28 +368,6 @@ public class PluginDataReader implements Observable, Observer {
 		//}
 	}
 
-	/*private void readUpdateFile(String fileLocation) throws Exception {
-		FileInputStream fstream = new FileInputStream(fileLocation);
-		DataInputStream in = new DataInputStream(fstream);
-		BufferedReader br = new BufferedReader(new InputStreamReader(in));
-		String line;
-		while ((line = br.readLine()) != null) {
-			int space = line.indexOf(' ');
-			if (space < 0)
-				continue;
-			String path = line.substring(0, space);
-			int space2 = line.indexOf(' ', space + 1);
-			if (space2 < 0)
-				continue;
-			String date = line.substring(space + 1, space2);
-			String digest = line.substring(space2 + 1);
-			//Note, you can check date and digest for validity before adding to the treemaps
-			latestDates.put(path, date);
-			latestDigests.put(path, digest);
-		}
-		br.close();
-	}*/
-
 	//Being observed, PluginDataReader notifies LoadStatusDisplay
 	public void notifyObservers() {
 		// Send notify to all Observers
@@ -422,18 +406,12 @@ class LoadStatusDisplay implements Observer {
 		if (subject == pluginDataReader) { //if pluginDataReader is sending data directly
 			if (pluginDataReader.getReaderStatus() == PluginDataReader.STATUS_CALC) {
 				IJ.showStatus("Checksumming " + pluginDataReader.getFilename() + "...");
-				IJ.showProgress(pluginDataReader.getCurrentlyLoaded(), pluginDataReader.getTotalToLoad());
 			} else if (pluginDataReader.getReaderStatus() == PluginDataReader.STATUS_DOWNLOAD) {
 				IJ.showStatus("Downloading " + pluginDataReader.getFilename() + "...");
-				int percentage = 0;
-				if (pluginDataReader.getTotalToLoad() > 0) {
-					percentage = pluginDataReader.getCurrentlyLoaded() * 100 / pluginDataReader.getTotalToLoad();
-				}
-				IJ.showProgress(percentage, 100);
 			} else {
 				IJ.showStatus("");
 			}
+			IJ.showProgress(pluginDataReader.getCurrentlyLoaded(), pluginDataReader.getTotalToLoad());
 		}
 	}
-
 }
