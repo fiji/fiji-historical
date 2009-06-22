@@ -71,86 +71,11 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	public PluginManager() {
 		super("Plugin Manager");
 		try {
-			/*if (isDeveloper) {
-				//pluginRecords simulates the gathering of plugin information
-				pluginRecords = new PluginCollection();
-				Dependency dependencyA1 = new Dependency("PluginD.jar", "20090420190033");
-				ArrayList<Dependency> Adependency = new ArrayList<Dependency>();
-				Adependency.add(dependencyA1);
-				PluginObject pluginA = new PluginObject("PluginA.jar", "65c3ecc1bbd7564f92545ffd2521f9d96509ca64", "20090429190842", null, Adependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-
-				Dependency dependencyB1 = new Dependency("PluginD.jar", "20090420190033");
-				Dependency dependencyB2 = new Dependency("PluginH.jar", "20090524666220");
-				Dependency dependencyB3 = new Dependency("PluginC.jar", "20081011183621");
-				ArrayList<Dependency> Bdependency = new ArrayList<Dependency>();
-				Bdependency.add(dependencyB1);
-				Bdependency.add(dependencyB2);
-				Bdependency.add(dependencyB3);
-				PluginObject pluginB = new PluginObject("PluginB.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20090429190854", null, Bdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-
-				PluginObject pluginC = new PluginObject("PluginC.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d", "20090425190854", null, null, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-
-				Dependency dependencyD1 = new Dependency("PluginF.jar", "20090420191023");
-				Dependency dependencyD3 = new Dependency("PluginE.jar", "20090311213621");
-				ArrayList<Dependency> Ddependency = new ArrayList<Dependency>();
-				Ddependency.add(dependencyD1);
-				Ddependency.add(dependencyD3);
-				PluginObject pluginD = new PluginObject("PluginD.jar", "61c3ecc1add7364f92545ffd2521e9d96508cb62", "20090420190033", null, Ddependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-
-				Dependency dependencyE1 = new Dependency("PluginG.jar", "20090125190842");
-				ArrayList<Dependency> Edependency = new ArrayList<Dependency>();
-				Edependency.add(dependencyE1);
-				PluginObject pluginE = new PluginObject("PluginE.jar", "8114fe93cbf7720c01c7ff97c28b007b79900dc7", "20090311213621", null, Edependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-
-				Dependency dependencyF1 = new Dependency("PluginI.jar", "20090501190854");
-				ArrayList<Dependency> Fdependency = new ArrayList<Dependency>();
-				Fdependency.add(dependencyF1);
-				PluginObject pluginF = new PluginObject("PluginF.jar", "1b992dbca07ef84020d44a980c7902ba6c82dfee", "20090420191023", null, Fdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-				
-				PluginObject pluginG = new PluginObject("PluginG.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d", "20090415160854", null, null, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-
-				Dependency dependencyH1 = new Dependency("PluginD.jar", "20090420190033");
-				ArrayList<Dependency> HnewDependency = new ArrayList<Dependency>();
-				HnewDependency.add(dependencyH1);
-				PluginObject pluginH = new PluginObject("PluginH.jar", "33c88dc1fbd7564f92587ffdc521f9de6507ca65", "20081224666220", null, null, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-
-				Dependency dependencyI1 = new Dependency("PluginF.jar", "20090420191023");
-				Dependency dependencyI2 = new Dependency("PluginK.jar", "20081221866291");
-				ArrayList<Dependency> Idependency = new ArrayList<Dependency>();
-				Idependency.add(dependencyI1);
-				Idependency.add(dependencyI2);
-				PluginObject pluginI = new PluginObject("PluginI.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20090429190854", null, Idependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-
-				Dependency dependencyJ1 = new Dependency("PluginI.jar", "20090404090854");
-				ArrayList<Dependency> Jdependency = new ArrayList<Dependency>();
-				Jdependency.add(dependencyJ1);
-				PluginObject pluginJ = new PluginObject("PluginJ.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20090521181954", null, Jdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-
-				Dependency dependencyK1 = new Dependency("PluginJ.jar", "20090404090854");
-				ArrayList<Dependency> Kdependency = new ArrayList<Dependency>();
-				Kdependency.add(dependencyK1);
-				PluginObject pluginK = new PluginObject("PluginK.jar", "9624fa93cbf7720c01c7ff97c28b00747b700de3", "20081221866291", null, Kdependency, PluginObject.STATUS_UNINSTALLED, PluginObject.ACTION_NONE);
-
-				pluginRecords.add(pluginA);
-				pluginRecords.add(pluginB);
-				pluginRecords.add(pluginC);
-				pluginRecords.add(pluginD);
-				pluginRecords.add(pluginE);
-				pluginRecords.add(pluginF);
-				pluginRecords.add(pluginG);
-				pluginRecords.add(pluginH);
-				pluginRecords.add(pluginI);
-				pluginRecords.add(pluginJ);
-				pluginRecords.add(pluginK);
-				
-				viewList = pluginRecords;
-			} else {*/
-				pluginDataReader = new PluginDataReader(fileURL, saveFile);
-				pluginDataReader.downloadXMLFile(); //should be XML file actually
-				pluginDataReader.buildLocalPluginInformation(); //2nd step
-				pluginDataReader.buildFullPluginList(); //3rd step
-
-				viewList = pluginDataReader.getExistingPluginList(); //initial view: All plugins
+			pluginDataReader = new PluginDataReader(fileURL, saveFile);
+			pluginDataReader.downloadXMLFile(); //should be XML file actually
+			pluginDataReader.buildLocalPluginInformation(); //2nd step
+			pluginDataReader.buildFullPluginList(); //3rd step
+			viewList = pluginDataReader.getExistingPluginList(); //initial view: All plugins
 
 			setUpUserInterface();
 			setVisible(true);
@@ -519,17 +444,6 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	public boolean isDeveloper() {
 		return isDeveloper;
-	}
-
-	/* Returns an ImageIcon, or null if the path was invalid. */
-	protected ImageIcon createImageIcon(String path) {
-		java.net.URL imgURL = PluginManager.class.getResource(path);
-		if (imgURL != null) {
-			return new ImageIcon(imgURL);
-		} else {
-			System.err.println("Couldn't find file: " + path);
-			return null;
-		}
 	}
 
 	@Override
