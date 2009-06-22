@@ -1,5 +1,7 @@
 package fiji.pluginManager;
 
+import ij.IJ;
+
 import java.util.Iterator;
 import java.util.List;
 import java.io.File;
@@ -192,12 +194,8 @@ public class Installer implements Runnable, Observer {
 				String name = plugin.getFilename();
 				String fullPath = pluginDataProcessor.getSavePath(updateDirectory, name);
 				try {
-					System.out.println("Trying to delete " + fullPath + "...");
 					new File(fullPath).delete(); //delete file, if it exists
-					System.out.println("Deletion operation of " + fullPath + " complete.");
-				} catch (Exception e2) {
-					System.out.println("Error occurred while deleting " + fullPath + "...");
-				}
+				} catch (Exception e2) { }
 			}
 		}
 	}

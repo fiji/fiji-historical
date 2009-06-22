@@ -421,9 +421,11 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	public void backToPluginManager() {
-		loadedFrame.setVisible(false);
-		loadedFrame.dispose();
-		loadedFrame = null;
+		if (loadedFrame != null) {
+			loadedFrame.setVisible(false);
+			loadedFrame.dispose();
+			loadedFrame = null;
+		}
 		setEnabled(true);
 	}
 
