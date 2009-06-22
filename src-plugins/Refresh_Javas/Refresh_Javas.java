@@ -1,3 +1,5 @@
+package Refresh_Javas;
+
 import common.RefreshScripts;
 
 import ij.IJ;
@@ -14,6 +16,8 @@ import java.io.PrintWriter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+
 
 /**
  * This plugin looks for Java sources in plugins/ and turns them into
