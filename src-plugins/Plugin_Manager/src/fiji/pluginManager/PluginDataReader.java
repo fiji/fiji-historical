@@ -227,17 +227,15 @@ public class PluginDataReader implements Observable, Observer {
 			}
 
 				//if XML file does not contain plugin filename or digest does not exist
-				if (!xmlFileReader.existsFilename(outputFilename) ||
-					!xmlFileReader.existsDigest(outputFilename, outputDigest)) {
+				if (!xmlFileReader.matchesFilenameAndDigest(outputFilename, outputDigest)) {
 					//use the local plugin's last modified timestamp instead
 					if (!tempDemo) {
 					outputDate = pluginDataProcessor.getTimestampFromFile(filename);
 					} else {
-					outputDate = "20090619999666"; //assume latest... always
+					outputDate = "20090622999666"; //assume latest... always
 					}
 				} else {
 					//if it does exist, then use the associated timestamp as recorded
-					//NOTE: if it is a temporary demo, then it SHOULD always end up here
 					outputDate = xmlFileReader.getTimestamp(outputFilename, outputDigest);
 				}
 				dates.put(outputFilename, outputDate);
@@ -252,8 +250,6 @@ public class PluginDataReader implements Observable, Observer {
 			throw new Error(e2.getLocalizedMessage());
 		} catch (SAXException e3) {
 			throw new Error(e3.getLocalizedMessage());
-		} catch (XPathExpressionException e) {
-			throw new Error(e.getLocalizedMessage());
 		}
 	}
 
@@ -265,7 +261,7 @@ public class PluginDataReader implements Observable, Observer {
 
 	//Called after local plugin files have been processed
 	public void buildFullPluginList() {
-		try {
+		//try {
 			xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
 
 			//Converts data gathered into lists of PluginObject, ready for UI classes usage
@@ -315,7 +311,7 @@ public class PluginDataReader implements Observable, Observer {
 				String pluginDate = myPlugin.getTimestamp();
 				String pluginDigest = myPlugin.getmd5Sum();
 				//if md5 sum exists in XML records, then timestamp exists as well
-				if (xmlFileReader.existsDigest(name, pluginDigest)) {
+				if (xmlFileReader.matchesFilenameAndDigest(name, pluginDigest)) {
 					//Use filename and timestamp to get associated description & dependencies
 					myPlugin.setDescription(xmlFileReader.getDescriptionFrom(name, pluginDate));
 					myPlugin.setDependency(xmlFileReader.getDependenciesFrom(name, pluginDate));
@@ -363,9 +359,7 @@ public class PluginDataReader implements Observable, Observer {
 			}
 			IJ.showMessage("Some" + msg);
 		}*/
-		} catch (XPathExpressionException e) {
-			throw new Error(e.getLocalizedMessage());
-		}
+		//}
 	}
 
 	/*private void readUpdateFile(String fileLocation) throws Exception {
