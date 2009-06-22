@@ -592,3 +592,12 @@ Incremental tasks (In order):
 Note: For developer version, database of plugins at the remote side should be locked when he starts the Plugin Manager, the lock is to be released only after developer stops using.
 
 2nd Note: For the developer version, it appears that implementation is best to calculate the dependencies of "Uploadable Fiji Plugins" (isFijiPlugin() && isUploadable()) after the user clicks to Install/Remove/Upload, and for the case of Install/Remove, that's before Controller gets its hands on these plugins. Just for future note.
+
+
+
+22nd June, Monday
+Tasks Completed:
+- XMLFileBuilder's implementation changed from XPath to that of SAX...
+- Refactored DownloadUI.java - Unnecessary, unreachable blocks of code removed
+
+Next task: Remove global stuff, convert TextPaneFormat into TextPaneDisplay (Extension of JTextPane)
