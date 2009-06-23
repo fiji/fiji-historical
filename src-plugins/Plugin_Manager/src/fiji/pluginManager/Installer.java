@@ -162,15 +162,6 @@ public class Installer implements Runnable, Observer {
 					deleteUnfinished();
 				}
 
-			} catch (MalformedURLException e) {
-				failedDownloadsList.add(currentlyDownloading);
-				currentlyDownloading = null;
-				System.out.println("URL: " + downloadURL + " has unknown protocol.");
-			} catch (IOException e) {
-				System.out.println("stupid and ugly: " + currentlyDownloading.getFilename());
-				failedDownloadsList.add(currentlyDownloading);
-				currentlyDownloading = null;
-				System.out.println("I/O Exception while opening connection to " + downloadURL);
 			} catch(Exception e) {
 				//try to delete the file (probably this be the only catch - DRY)
 				try {
