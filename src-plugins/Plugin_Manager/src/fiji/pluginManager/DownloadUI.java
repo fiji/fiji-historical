@@ -53,8 +53,7 @@ class DownloadUI extends JFrame {
 		progressBar.setMaximum(100);
 
 		/* Create textpane to hold the information */
-		txtProgressDetails = new JTextPane();
-		txtProgressDetails.setEditable(false);
+		txtProgressDetails = new TextPaneDisplay();
 		txtProgressDetails.setPreferredSize(new Dimension(555, 200));
 
 		/* Create scrollpane to hold the textpane */
@@ -145,18 +144,17 @@ class DownloadUI extends JFrame {
 
 	private void backToPluginManager() {
 		//plugin manager will deal with this
-		if (!isProgressing)
-			pluginManager.backToPluginManager();
-		else {
+		if (isProgressing) {
 			if (JOptionPane.showConfirmDialog(this,
 					"Are you sure you want to cancel the ongoing download?",
 					"Stop?",
 					JOptionPane.YES_NO_OPTION,
 					JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
 				installer.stopDownload();
-				pluginManager.backToPluginManager();
-			}
+			} else
+				return;
 		}
+		pluginManager.backToPluginManager();
 	}
 
 	private void showProgressStart() {

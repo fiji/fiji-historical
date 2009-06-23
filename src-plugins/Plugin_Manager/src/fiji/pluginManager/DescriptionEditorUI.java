@@ -31,7 +31,7 @@ public class DescriptionEditorUI extends JFrame {
 		setUpUserInterface();
 		pack();
 	}
-	
+
 	private void setUpUserInterface() {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		txtDescription = new JTextArea();
@@ -109,7 +109,7 @@ public class DescriptionEditorUI extends JFrame {
 		}
 		pluginManager.backToPluginManager();
 	}
-	
+
 	private void saveText() {
 		selectedPlugin.setDescription(txtDescription.getText().trim());
 		textChanged = false;
