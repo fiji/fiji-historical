@@ -224,6 +224,16 @@ public class Controller {
 		} //end of search through pluginList
 	}
 
+	private void addToListWithNoDuplicates(List<PluginObject> existingList, List<PluginObject> additional) {
+		//For every plugin in this list
+		for (PluginObject plugin : additional) {
+			//if existing list does not contain the plugin yet, add it
+			if (!existingList.contains(plugin)) {
+				existingList.add(plugin);
+			}
+		}
+	}
+
 	//combine the mapping of installs into one single list of "to install" plugins
 	//the same goes for the mapping of updates ==> "to update" list
 	private void unifyInstallAndUpdateList(Map<PluginObject,List<PluginObject>> installDependenciesMap,
@@ -232,28 +242,12 @@ public class Controller {
 			List<PluginObject> updateList) {
 
 		Iterator<List<PluginObject>> iterInstallLists = installDependenciesMap.values().iterator();
-		while (iterInstallLists.hasNext()) {
-			List<PluginObject> dependencies = iterInstallLists.next();
-			//For every plugin in each dependency list
-			for (PluginObject pluginDependency : dependencies) {
-				//if install list does not contain the plugin yet, add it
-				if (!installList.contains(pluginDependency)) {
-					installList.add(pluginDependency);
-				}
-			}
-		}
+		while (iterInstallLists.hasNext())
+			addToListWithNoDuplicates(installList, iterInstallLists.next());
 
 		Iterator<List<PluginObject>> iterUpdateLists = updateDependenciesMap.values().iterator();
-		while (iterUpdateLists.hasNext()) {
-			List<PluginObject> dependencies = iterUpdateLists.next();
-			//For every plugin in each dependency list
-			for (PluginObject pluginDependency : dependencies) {
-				//if update list does not contain the plugin yet, add it
-				if (!updateList.contains(pluginDependency)) {
-					updateList.add(pluginDependency);
-				}
-			}
-		}
+		while (iterUpdateLists.hasNext())
+			addToListWithNoDuplicates(updateList, iterUpdateLists.next());
 
 		Iterator<PluginObject> iterInstall = installList.iterator();
 		while (iterInstall.hasNext()) {
