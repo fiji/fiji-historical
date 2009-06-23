@@ -43,26 +43,19 @@ public class TextPaneDisplay extends JTextPane {
 		setEditable(false);
 	}
 
-	public SimpleAttributeSet styleItalicBlack() {
-		return ITALIC_BLACK;
-	}
-
-	public SimpleAttributeSet styleBoldBlack() {
-		return BOLD_BLACK;
-	}
-
-	public SimpleAttributeSet styleBlack() {
-		return BLACK;
-	}
-
-	public SimpleAttributeSet styleBoldTitle() {
-		return BOLD_BLACK_TITLE;
-	}
-
 	public void insertStyledText(String text, AttributeSet set) throws BadLocationException {
 		getDocument().insertString(getDocument().getLength(), text, set);
 	}
 
+	public void insertBoldText(String text) throws BadLocationException {
+		getDocument().insertString(getDocument().getLength(), text, BOLD_BLACK);
+	}
+
+	public void insertText(String text) throws BadLocationException {
+		getDocument().insertString(getDocument().getLength(), text, BLACK);
+	}
+
+	//appends list of dependencies to existing text
 	public void insertDependenciesList(List<Dependency> dependencyList) throws BadLocationException {
 		String strDependencies = "";
 		if (dependencyList != null) {
@@ -80,14 +73,7 @@ public class TextPaneDisplay extends JTextPane {
 		insertText("\n" + strDependencies);
 	}
 
-	public void insertBoldText(String text) throws BadLocationException {
-		getDocument().insertString(getDocument().getLength(), text, BOLD_BLACK);
-	}
-
-	public void insertText(String text) throws BadLocationException {
-		getDocument().insertString(getDocument().getLength(), text, BLACK);
-	}
-
+	//appends plugin description to existing text
 	public void insertDescription(String description)
 	throws BadLocationException {
 		if (description == null || description.trim().equals("")) {
@@ -97,6 +83,7 @@ public class TextPaneDisplay extends JTextPane {
 		}
 	}
 
+	//appends list of plugin names to existing text
 	public void insertPluginNamelist(List<PluginObject> myList)
 	throws BadLocationException {
 		for (int i = 0; i < myList.size(); i++) {
@@ -105,12 +92,70 @@ public class TextPaneDisplay extends JTextPane {
 		}
 	}
 
+	//inserts blank new line
 	public void insertBlankLine() throws BadLocationException {
 		insertText("\n\n");
+	}
+
+	//rewrite the entire textpane with details of a plugin
+	public void showPluginDetails(PluginObject plugin) throws BadLocationException {
+		setText("");
+		//Display plugin data, text with different formatting
+		insertStyledText(plugin.getFilename(), styleBoldTitle());
+		if (plugin.isUpdateable())
+			insertStyledText("\n(Update is available)", styleItalicBlack());
+		insertBlankLine();
+		insertBoldText("Md5 Sum");
+		insertText("\n" + plugin.getmd5Sum());
+		insertBlankLine();
+		insertBoldText("Date: ");
+		insertText(plugin.getTimestamp());
+		insertBlankLine();
+		insertBoldText("Dependency");
+		insertDependenciesList(plugin.getDependencies());
+		insertBlankLine();
+		insertBoldText("Description");
+		insertDescription(plugin.getDescription());
+		if (plugin.isUpdateable()) {
+			insertBlankLine();
+			insertStyledText("Update Details", styleBoldTitle());
+			insertBlankLine();
+			insertBoldText("New Md5 Sum");
+			insertText("\n" + plugin.getNewMd5Sum());
+			insertBlankLine();
+			insertBoldText("Released: ");
+			insertText(plugin.getNewTimestamp());
+			insertBlankLine();
+			insertBoldText("Dependency");
+			insertDependenciesList(plugin.getNewDependencies());
+			insertBlankLine();
+			insertBoldText("Description");
+			insertDescription(plugin.getNewDescription());
+		}
+
+		//ensure first line of text is always shown (i.e.: scrolled to top)
+		scrollToTop();
 	}
 
 	public void scrollToTop() {
 		setSelectionStart(0);
 		setSelectionEnd(0);
 	}
+
+	public SimpleAttributeSet styleItalicBlack() {
+		return ITALIC_BLACK;
+	}
+
+	public SimpleAttributeSet styleBoldBlack() {
+		return BOLD_BLACK;
+	}
+
+	public SimpleAttributeSet styleBlack() {
+		return BLACK;
+	}
+
+	public SimpleAttributeSet styleBoldTitle() {
+		return BOLD_BLACK_TITLE;
+	}
+
 }

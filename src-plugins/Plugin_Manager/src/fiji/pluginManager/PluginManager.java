@@ -351,58 +351,26 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			loadedFrame = null;
 		}
 		setEnabled(true);
+		setVisible(true);
 	}
 
 	public void displayPluginDetails(PluginObject currentPlugin) {
 		this.currentPlugin = currentPlugin;
-		TextPaneDisplay textPane = (TextPaneDisplay)txtPluginDetails;
-		textPane.setText("");
+
 		try {
-			//Display plugin data, text with different formatting
-			textPane.insertStyledText(currentPlugin.getFilename(), textPane.styleBoldTitle());
-			if (currentPlugin.isUpdateable())
-				textPane.insertStyledText("\n(Update is available)", textPane.styleItalicBlack());
-			textPane.insertBlankLine();
-			textPane.insertBoldText("Md5 Sum");
-			textPane.insertText("\n" + currentPlugin.getmd5Sum());
-			textPane.insertBlankLine();
-			textPane.insertBoldText("Date: ");
-			textPane.insertText(currentPlugin.getTimestamp());
-			textPane.insertBlankLine();
-			textPane.insertBoldText("Dependency");
-			textPane.insertDependenciesList(currentPlugin.getDependencies());
-			textPane.insertBlankLine();
-			textPane.insertBoldText("Description");
-			textPane.insertDescription(currentPlugin.getDescription());
-			if (currentPlugin.isUpdateable()) {
-				textPane.insertBlankLine();
-				textPane.insertStyledText("Update Details", textPane.styleBoldTitle());
-				textPane.insertBlankLine();
-				textPane.insertBoldText("New Md5 Sum");
-				textPane.insertText("\n" + currentPlugin.getNewMd5Sum());
-				textPane.insertBlankLine();
-				textPane.insertBoldText("Released: ");
-				textPane.insertText(currentPlugin.getNewTimestamp());
-				textPane.insertBlankLine();
-				textPane.insertBoldText("Dependency");
-				textPane.insertDependenciesList(currentPlugin.getNewDependencies());
-				textPane.insertBlankLine();
-				textPane.insertBoldText("Description");
-				textPane.insertDescription(currentPlugin.getNewDescription());
-			}
-
-			//ensure first line of text is always shown (i.e.: scrolled to top)
-			textPane.scrollToTop();
-
-			//if uploadable, then description is editable too
-			if (isDeveloper) {
-				if (currentPlugin.isUploadable())
-					btnEditDescriptions.setEnabled(true);
-				else
-					btnEditDescriptions.setEnabled(false);
-			}
+			TextPaneDisplay textPane = (TextPaneDisplay)txtPluginDetails;
+			textPane.setText("");
+			textPane.showPluginDetails(currentPlugin);
 		} catch (BadLocationException e) {
 			throw new Error("Problem with printing Plugin information: " + e.getMessage());
+		}
+
+		//if uploadable, then description is editable too
+		if (isDeveloper) {
+			if (currentPlugin.isUploadable())
+				btnEditDescriptions.setEnabled(true);
+			else
+				btnEditDescriptions.setEnabled(false);
 		}
 	}
 
