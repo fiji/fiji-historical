@@ -23,7 +23,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 /*
- * PluginDataReader's overall role is to be in charge of building of a plugin list
+ * PluginListBuilder's overall role is to be in charge of building of a plugin list
  * for interface usage.
  * 
  * 1st step: Download information about Fiji plugins.
@@ -224,7 +224,7 @@ public class PluginListBuilder implements Observable, Observer {
 					outputFilename = outputFilename.replace("\\", "/");
 
 			if (!tempDemo) {
-				outputDigest = pluginDataProcessor.getDigestFromFile(filename);
+				outputDigest = pluginDataProcessor.getDigestFromFile(outputFilename);
 				digests.put(outputFilename, outputDigest);
 			} else {
 				//temporary line of code

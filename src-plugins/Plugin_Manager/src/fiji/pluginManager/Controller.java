@@ -47,7 +47,7 @@ public class Controller {
 		for (PluginObject myPlugin : change_removeList) {
 			//Generate lists of dependents for each plugin
 			List<PluginObject> toRemoveList = new ArrayList<PluginObject>();
-			removeDependent(toRemoveList, myPlugin);
+			addDependent(toRemoveList, myPlugin);
 			uninstallDependentsMap.put(myPlugin, toRemoveList);
 		}
 
@@ -60,41 +60,6 @@ public class Controller {
 				toInstallList,
 				toUpdateList);
 		unifyUninstallList(uninstallDependentsMap, toRemoveList);
-	}
-
-	//returns list of plugins where actions are explicitly set
-	public List<PluginObject> getListOfActionSpecified() {
-		return changeList;
-	}
-
-	//returns mappings of plugins explicitly set "Install" to their corresponding dependencies
-	public Map<PluginObject,List<PluginObject>> getInstallDependenciesMappings() {
-		return installDependenciesMap;
-	}
-
-	//returns mappings of plugins explicitly set "Update" to their corresponding dependencies
-	public Map<PluginObject,List<PluginObject>> getUpdateDependenciesMappings() {
-		return updateDependenciesMap;
-	}
-
-	//returns mappings of plugins explicitly set "Uninstall" to their corresponding dependents
-	public Map<PluginObject,List<PluginObject>> getUninstallDependentsMappings() {
-		return uninstallDependentsMap;
-	}
-
-	//returns the whole list of plugins that need to be installed, including unspecified
-	public List<PluginObject> getEntireInstallList() {
-		return toInstallList;
-	}
-
-	//returns the whole list of plugins that need to be updated, including unspecified
-	public List<PluginObject> getEntireUpdateList() {
-		return toUpdateList;
-	}
-
-	//returns the whole list of plugins that need to be removed, including unspecified
-	public List<PluginObject> getEntireRemoveList() {
-		return toRemoveList;
 	}
 
 	//comes up with a list of plugins needed for download to go with this selected plugin
@@ -183,9 +148,7 @@ public class Controller {
 								changeToUpdateList.add(plugin); //add to update list ("special" case)
 								addDependency(changeToInstallList, changeToUpdateList, plugin);
 							}
-						} else { //if prerequisite does appear in the "change" lists
-							//nothing, assume its dependencies were added already as well
-						}
+						} //else do nothing, prerequisites added already
 						break;
 					}
 				} //end of searching through pluginList
@@ -195,7 +158,7 @@ public class Controller {
 	}
 
 	//comes up with a list of plugins needed to be removed if selected is removed
-	private void removeDependent(List<PluginObject> changeToUninstallList, PluginObject selectedPlugin) {
+	private void addDependent(List<PluginObject> changeToUninstallList, PluginObject selectedPlugin) {
 		if (!changeToUninstallList.contains(selectedPlugin)) {
 			changeToUninstallList.add(selectedPlugin);
 		}
@@ -214,7 +177,7 @@ public class Controller {
 						String dependencyFilename = dependency.getFilename();
 						if (dependencyFilename.equals(selectedPlugin.getFilename())) {
 							changeToUninstallList.add(plugin);
-							removeDependent(changeToUninstallList, plugin);
+							addDependent(changeToUninstallList, plugin);
 							break;
 						}
 					}
@@ -263,16 +226,8 @@ public class Controller {
 			List<PluginObject> uninstallList) {
 
 		Iterator<List<PluginObject>> iterUninstallLists = uninstallDependentsMap.values().iterator();
-		while (iterUninstallLists.hasNext()) {
-			List<PluginObject> dependents = iterUninstallLists.next();
-			//For every plugin in each dependency list
-			for (PluginObject pluginDependent : dependents) {
-				//if install list does not contain the plugin yet, add it
-				if (!uninstallList.contains(pluginDependent)) {
-					uninstallList.add(pluginDependent);
-				}
-			}
-		}
+		while (iterUninstallLists.hasNext())
+			addToListWithNoDuplicates(uninstallList, iterUninstallLists.next());
 	}
 
 	private boolean conflicts(List<PluginObject> list1, List<PluginObject> list2) {
@@ -323,6 +278,41 @@ public class Controller {
 				plugin.setActionToRemove();
 			}
 		}
+	}
+
+	//returns list of plugins where actions are explicitly set
+	public List<PluginObject> getListOfActionSpecified() {
+		return changeList;
+	}
+
+	//returns mappings of plugins explicitly set "Install" to their corresponding dependencies
+	public Map<PluginObject,List<PluginObject>> getInstallDependenciesMappings() {
+		return installDependenciesMap;
+	}
+
+	//returns mappings of plugins explicitly set "Update" to their corresponding dependencies
+	public Map<PluginObject,List<PluginObject>> getUpdateDependenciesMappings() {
+		return updateDependenciesMap;
+	}
+
+	//returns mappings of plugins explicitly set "Uninstall" to their corresponding dependents
+	public Map<PluginObject,List<PluginObject>> getUninstallDependentsMappings() {
+		return uninstallDependentsMap;
+	}
+
+	//returns the whole list of plugins that need to be installed, including unspecified
+	public List<PluginObject> getEntireInstallList() {
+		return toInstallList;
+	}
+
+	//returns the whole list of plugins that need to be updated, including unspecified
+	public List<PluginObject> getEntireUpdateList() {
+		return toUpdateList;
+	}
+
+	//returns the whole list of plugins that need to be removed, including unspecified
+	public List<PluginObject> getEntireRemoveList() {
+		return toRemoveList;
 	}
 
 }
