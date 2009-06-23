@@ -265,40 +265,40 @@ public class PluginListBuilder implements Observable, Observer {
 		//Converts data gathered into lists of PluginObject, ready for UI classes usage
 		Iterator<String> iterLatest = latestDigests.keySet().iterator();
 		while (iterLatest.hasNext()) {
-			String name = iterLatest.next();
+			String pluginName = iterLatest.next();
 
 			// launcher is platform-specific
-			if (name.startsWith("fiji-")) {
+			if (pluginName.startsWith("fiji-")) {
 				String platform = pluginDataProcessor.getPlatform();
-				if (!name.equals("fiji-" + platform) &&
+				if (!pluginName.equals("fiji-" + platform) &&
 						(!platform.equals("macosx") ||
-								!name.startsWith("fiji-tiger")))
+								!pluginName.startsWith("fiji-tiger")))
 					continue;
 			}
 
-			String digest = digests.get(name);
-			String remoteDigest = latestDigests.get(name);
-			String date = dates.get(name);
-			String remoteDate = latestDates.get(name);
+			String digest = digests.get(pluginName);
+			String remoteDigest = latestDigests.get(pluginName);
+			String date = dates.get(pluginName);
+			String remoteDate = latestDates.get(pluginName);
 			PluginObject myPlugin = null;
 
-			System.out.println(name + ", digest: " + digest + ", timestamp: " + date);
+			System.out.println(pluginName + ", digest: " + digest + ", timestamp: " + date);
 
 			//if latest version installed
 			if (digest != null && remoteDigest.equals(digest)) {
-				myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, true);
+				myPlugin = new PluginObject(pluginName, digest, date, PluginObject.STATUS_INSTALLED, true);
 			}
 			//if new file (Not installed yet)
 			else if (digest == null) {
-				myPlugin = new PluginObject(name, remoteDigest, remoteDate, PluginObject.STATUS_UNINSTALLED, true);
+				myPlugin = new PluginObject(pluginName, remoteDigest, remoteDate, PluginObject.STATUS_UNINSTALLED, true);
 			}
 			//if its installed but can be updated
 			else {
-				myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_MAY_UPDATE, true);
+				myPlugin = new PluginObject(pluginName, digest, date, PluginObject.STATUS_MAY_UPDATE, true);
 				//set latest update details
-				String updatedDescription = xmlFileReader.getDescriptionFrom(name, remoteDate);
-				List<Dependency> updatedDependencies = xmlFileReader.getDependenciesFrom(name, remoteDate);
-				int updatedFilesize = xmlFileReader.getFilesizeFrom(name, remoteDate);
+				String updatedDescription = xmlFileReader.getDescriptionFrom(pluginName, remoteDate);
+				List<Dependency> updatedDependencies = xmlFileReader.getDependenciesFrom(pluginName, remoteDate);
+				int updatedFilesize = xmlFileReader.getFilesizeFrom(pluginName, remoteDate);
 				myPlugin.setUpdateDetails(remoteDigest,
 						remoteDate,
 						updatedDescription,
@@ -309,11 +309,11 @@ public class PluginListBuilder implements Observable, Observer {
 			String pluginDate = myPlugin.getTimestamp();
 			String pluginDigest = myPlugin.getmd5Sum();
 			//if md5 sum exists in XML records, then timestamp exists as well
-			if (xmlFileReader.matchesFilenameAndDigest(name, pluginDigest)) {
+			if (xmlFileReader.matchesFilenameAndDigest(pluginName, pluginDigest)) {
 				//Use filename and timestamp to get associated description & dependencies
-				myPlugin.setDescription(xmlFileReader.getDescriptionFrom(name, pluginDate));
-				myPlugin.setDependency(xmlFileReader.getDependenciesFrom(name, pluginDate));
-				myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(name, pluginDate));
+				myPlugin.setDescription(xmlFileReader.getDescriptionFrom(pluginName, pluginDate));
+				myPlugin.setDependency(xmlFileReader.getDependenciesFrom(pluginName, pluginDate));
+				myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(pluginName, pluginDate));
 			} else { //if digest of this plugin does not exist in the records
 				//TODO: Placeholder code for calculating perhaps dependency
 				//(Using DependencyAnalyzer) from file itself
@@ -326,16 +326,16 @@ public class PluginListBuilder implements Observable, Observer {
 			pluginList.add(myPlugin);
 		}
 
+		//To capture non-Fiji plugins
 		Iterator<String> iterCurrent = digests.keySet().iterator();
 		while (iterCurrent.hasNext()) {
 			String name = iterCurrent.next();
 
-			// if it is not a Fiji plugin (Not found in list of up-to-date versions)
+			//If it is not a Fiji plugin (Not found in list of up-to-date versions)
 			if (!latestDigests.containsKey(name)) {
 				String digest = digests.get(name);
 				String date = dates.get(name);
-				//implies third-party plugin
-				//no extra information available (i.e: description & dependencies)
+				//implies third-party plugin, no description nor dependency information available
 				PluginObject myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, false);
 				if (!tempDemo) {
 					myPlugin.setFilesize(pluginDataProcessor.getFilesizeFromFile(myPlugin.getFilename()));
@@ -396,23 +396,23 @@ public class PluginListBuilder implements Observable, Observer {
 }
 
 class LoadStatusDisplay implements Observer {
-	private PluginListBuilder pluginDataReader;
+	private PluginListBuilder pluginListBuilder;
 
-	public LoadStatusDisplay(PluginListBuilder pluginDataReader) {
-		this.pluginDataReader = pluginDataReader;
+	public LoadStatusDisplay(PluginListBuilder pluginListBuilder) {
+		this.pluginListBuilder = pluginListBuilder;
 		IJ.showStatus("Starting up Plugin Manager");
 	}
 
 	public void refreshData(Observable subject) {
-		if (subject == pluginDataReader) { //if pluginDataReader is sending data directly
-			if (pluginDataReader.getReaderStatus() == PluginListBuilder.STATUS_CALC) {
-				IJ.showStatus("Checksumming " + pluginDataReader.getFilename() + "...");
-			} else if (pluginDataReader.getReaderStatus() == PluginListBuilder.STATUS_DOWNLOAD) {
-				IJ.showStatus("Downloading " + pluginDataReader.getFilename() + "...");
+		if (subject == pluginListBuilder) { //if pluginDataReader is sending data directly
+			if (pluginListBuilder.getReaderStatus() == PluginListBuilder.STATUS_CALC) {
+				IJ.showStatus("Checksumming " + pluginListBuilder.getFilename() + "...");
+			} else if (pluginListBuilder.getReaderStatus() == PluginListBuilder.STATUS_DOWNLOAD) {
+				IJ.showStatus("Downloading " + pluginListBuilder.getFilename() + "...");
 			} else {
 				IJ.showStatus("");
 			}
-			IJ.showProgress(pluginDataReader.getCurrentlyLoaded(), pluginDataReader.getTotalToLoad());
+			IJ.showProgress(pluginListBuilder.getCurrentlyLoaded(), pluginListBuilder.getTotalToLoad());
 		}
 	}
 }

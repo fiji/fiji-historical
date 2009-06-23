@@ -136,6 +136,40 @@ public class TextPaneDisplay extends JTextPane {
 		//ensure first line of text is always shown (i.e.: scrolled to top)
 		scrollToTop();
 	}
+	
+	public void showDownloadProgress(Installer installer) {
+		//List<PluginObject> toUninstallList;
+		List<PluginObject> downloadedList = installer.getListOfDownloaded();
+		List<PluginObject> failedList = installer.getListOfFailedDownloads();
+		PluginObject currentlyDownloading = installer.getCurrentDownload();
+		boolean stillDownloading = installer.stillDownloading();
+		String strCurrentStatus = "";
+
+		for (int i=0; i < downloadedList.size(); i++) {
+			PluginObject myPlugin = downloadedList.get(i);
+			if (i != 0) strCurrentStatus += "\n";
+			strCurrentStatus += "Finished downloading " + myPlugin.getFilename();
+		}
+		for (int i=0; i < failedList.size(); i++) {
+			PluginObject myPlugin = failedList.get(i);
+			if (i != 0 && !strCurrentStatus.equals("")) strCurrentStatus += "\n";
+			strCurrentStatus += myPlugin.getFilename() + " failed to download.";
+		}
+		if (currentlyDownloading != null)
+			strCurrentStatus += "\nNow downloading " + currentlyDownloading.getFilename();
+
+		//check if download has finished (Whether 100% success or not)
+		if (stillDownloading == false) {
+			if (downloadedList.size() > 0) {
+				int totalSize = downloadedList.size() + failedList.size();
+				strCurrentStatus += "\n" + downloadedList.size() + " of " + totalSize +
+				" download tasks completed.";
+			} else {
+				strCurrentStatus += "\nDownload(s) failed.";
+			}
+		}
+		setText(strCurrentStatus);
+	}
 
 	public void scrollToTop() {
 		setSelectionStart(0);
