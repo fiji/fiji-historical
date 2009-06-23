@@ -19,9 +19,14 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		//determining whether search text fits description/title
 		public boolean matchesFilter(PluginObject plugin) {
 			String lcFilename = plugin.getFilename().trim().toLowerCase();
-			String lcDescription = plugin.getDescription().trim().toLowerCase();
 			boolean existsInTitle = (lcFilename.indexOf(text) >= 0);
-			boolean existsInDescription = (lcDescription.indexOf(text) >= 0);
+			boolean existsInDescription = false;
+
+			if (plugin.getDescription() != null) {
+				String lcDescription = plugin.getDescription().trim().toLowerCase();
+				existsInDescription = (lcDescription.indexOf(text) >= 0);
+			}
+
 			return (existsInTitle || existsInDescription);
 		}
 	}
@@ -110,7 +115,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 	};
 
-	public PluginCollection() {}
+	public static final Filter FILTER_UPLOADABLE = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return plugin.isUploadable();
+		}
+	};
 
 	public Iterator<PluginObject> getIterator(Filter filter) {
 		return getList(filter).iterator();

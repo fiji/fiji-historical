@@ -45,16 +45,10 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private String fileURL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
 	private String saveFile = "current.txt";//should be XML file actually
 
-	/* User Interface elements */
+	//User Interface elements
 	private boolean isDeveloper = true; //temporarily activated by change of code
 	private JFrame loadedFrame;
-	private String[] arrViewingOptions = {
-			"View all plugins",
-			"View installed plugins only",
-			"View uninstalled plugins only",
-			"View up-to-date plugins only",
-			"View update-able plugins only"
-			};
+	private String[] arrViewingOptions;
 	private JTextField txtSearch;
 	private JComboBox comboBoxViewingOptions;
 	private PluginTable table;
@@ -91,14 +85,14 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private void setUpUserInterface() {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-		/* Create textpane to hold the information and its scrollpane */
+		//Create textpane to hold the information and its scrollpane
 		txtPluginDetails = new TextPaneDisplay();
 		txtPluginDetails.setPreferredSize(new Dimension(335,315));
 		JScrollPane txtScrollpane = new JScrollPane(txtPluginDetails);
 		txtScrollpane.getViewport().setBackground(txtPluginDetails.getBackground());
 		txtScrollpane.setPreferredSize(new Dimension(335,315));
 
-		/* Tabbed pane of plugin details to hold the textpane (w/ scrollpane) */
+		//Tabbed pane of plugin details to hold the textpane (w/ scrollpane)
 		JTabbedPane tabbedPane = new JTabbedPane();
 		JPanel panelPluginDetails = new JPanel();
 		panelPluginDetails.setLayout(new BorderLayout());
@@ -131,7 +125,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
 		}
 
-		/* Create text search */
+		//Create text search
 		JLabel lblSearch1 = new JLabel("Search:", SwingConstants.LEFT);
 		txtSearch = new JTextField();
 		txtSearch.getDocument().addDocumentListener(new DocumentListener() {
@@ -156,8 +150,26 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		searchPanel.add(Box.createRigidArea(new Dimension(10,0)));
 		searchPanel.add(txtSearch);
 
-		/* Create combo box of options */
+		//Create combo box of options
 		JLabel lblSearch2 = new JLabel("View Options:");
+		if (isDeveloper) {
+			arrViewingOptions = new String[] {
+					"View all plugins",
+					"View installed plugins only",
+					"View uninstalled plugins only",
+					"View up-to-date plugins only",
+					"View update-able plugins only",
+					"View upload-able plugins only"
+					};
+		} else {
+			arrViewingOptions = new String[] {
+					"View all plugins",
+					"View installed plugins only",
+					"View uninstalled plugins only",
+					"View up-to-date plugins only",
+					"View update-able plugins only"
+					};
+		}
 		comboBoxViewingOptions = new JComboBox(arrViewingOptions);
 		comboBoxViewingOptions.addActionListener(new ActionListener() {
 
@@ -172,21 +184,21 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		comboBoxPanel.add(Box.createRigidArea(new Dimension(10,0)));
 		comboBoxPanel.add(comboBoxViewingOptions);
 
-		/* Create labels to annotate table */
+		//Create labels to annotate table
 		JLabel lblTable = new JLabel("Please choose what you want to install/uninstall:");
 		JPanel lblTablePanel = new JPanel();
 		lblTablePanel.add(lblTable);
 		lblTablePanel.add(Box.createHorizontalGlue());
 		lblTablePanel.setLayout(new BoxLayout(lblTablePanel, BoxLayout.X_AXIS));
 
-		/* Label text for plugin summaries */
+		//Label text for plugin summaries
 		lblPluginSummary = new JLabel();
 		JPanel lblSummaryPanel = new JPanel();
 		lblSummaryPanel.add(lblPluginSummary);
 		lblSummaryPanel.add(Box.createHorizontalGlue());
 		lblSummaryPanel.setLayout(new BoxLayout(lblSummaryPanel, BoxLayout.X_AXIS));
 
-		/* Create the plugin table and set up its scrollpane */
+		//Create the plugin table and set up its scrollpane
 		table = new PluginTable(viewList, this);
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());
@@ -223,8 +235,8 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		});
 		btnStart.setEnabled(false);
 
+		//includes button to upload to server if is a Developer using
 		if (isDeveloper) {
-			//Button to start uploading to server
 			btnUpload = new JButton();
 			btnUpload.setText("Upload to server");
 			btnUpload.setToolTipText("Upload the selected plugins to server");
@@ -286,6 +298,8 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_INSTALLED);
 		} else if (selectedIndex == 4) { //if "View update-able plugins"
 			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_MAYUPDATE);
+		} else if (isDeveloper && selectedIndex == 5) { //if "View upload-able plugins"
+			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_UPLOADABLE);
 		} else {
 			throw new Error("Viewing option specified does not exist!");
 		}
