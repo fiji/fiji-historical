@@ -93,7 +93,6 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 		/* Create textpane to hold the information and its scrollpane */
 		txtPluginDetails = new TextPaneDisplay();
-		txtPluginDetails.setEditable(false);
 		txtPluginDetails.setPreferredSize(new Dimension(335,315));
 		JScrollPane txtScrollpane = new JScrollPane(txtPluginDetails);
 		txtScrollpane.getViewport().setBackground(txtPluginDetails.getBackground());

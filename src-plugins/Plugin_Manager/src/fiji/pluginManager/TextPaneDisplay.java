@@ -39,6 +39,8 @@ public class TextPaneDisplay extends JTextPane {
 		//StyleConstants.setBold(BOLD_BLACK_TITLE, true);
 		StyleConstants.setFontFamily(BOLD_BLACK_TITLE, "Impact");
 		StyleConstants.setFontSize(BOLD_BLACK_TITLE, 18);
+
+		setEditable(false);
 	}
 
 	public SimpleAttributeSet styleItalicBlack() {

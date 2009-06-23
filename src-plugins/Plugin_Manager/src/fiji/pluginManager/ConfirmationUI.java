@@ -46,7 +46,6 @@ public class ConfirmationUI extends JFrame {
 
 		/* Create textpane to hold the information and its scrollpane */
 		txtPluginList = new TextPaneDisplay();
-		txtPluginList.setEditable(false);
 		txtPluginList.setPreferredSize(new Dimension(400,260));
 		JScrollPane txtScrollpane = new JScrollPane(txtPluginList);
 		txtScrollpane.getViewport().setBackground(txtPluginList.getBackground());
@@ -62,7 +61,6 @@ public class ConfirmationUI extends JFrame {
 
 		/* Create textpane to hold the information and its scrollpane */
 		txtAdditionalList = new TextPaneDisplay();
-		txtAdditionalList.setEditable(false);
 		txtAdditionalList.setPreferredSize(new Dimension(260,260));
 		JScrollPane txtScrollpane2 = new JScrollPane(txtAdditionalList);
 		txtScrollpane.getViewport().setBackground(txtAdditionalList.getBackground());
@@ -85,7 +83,6 @@ public class ConfirmationUI extends JFrame {
 
 		/* Create textpane to hold the information and its scrollpane */
 		txtConflictsList = new TextPaneDisplay();
-		txtConflictsList.setEditable(false);
 		txtConflictsList.setPreferredSize(new Dimension(675,120));
 		JScrollPane txtScrollpane3 = new JScrollPane(txtConflictsList);
 		txtScrollpane.getViewport().setBackground(txtConflictsList.getBackground());
