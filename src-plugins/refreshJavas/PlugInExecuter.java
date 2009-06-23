@@ -1,4 +1,4 @@
-package Refresh_Javas;
+package refreshJavas;
 
 import ij.IJ;
 import ij.ImageJ;
