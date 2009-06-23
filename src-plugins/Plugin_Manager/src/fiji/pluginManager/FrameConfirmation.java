@@ -22,7 +22,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
 
-public class ConfirmationUI extends JFrame {
+public class FrameConfirmation extends JFrame {
 	private PluginManager pluginManager;
 	private JTextPane txtPluginList;
 	private JTextPane txtAdditionalList;
@@ -34,7 +34,7 @@ public class ConfirmationUI extends JFrame {
 	private String msgConflictNone = "No conflicts found. You may proceed.";
 	private Controller controller;
 
-	public ConfirmationUI(PluginManager pluginManager) {
+	public FrameConfirmation(PluginManager pluginManager) {
 		this.pluginManager = pluginManager;
 		setupUserInterface();
 		pack();

@@ -21,21 +21,17 @@ import java.util.List;
 /*
  * Interface of a separate window, when downloading plugins.
  */
-class DownloadUI extends JFrame {
+class FrameInstaller extends JFrame {
 	private PluginManager pluginManager;
 	private Timer timer;
 	private JButton btnClose;
 	private JProgressBar progressBar;
 	private JTextPane txtProgressDetails;
-	private String strCloseWhileDownloading = "Cancel";
-	private String toolTipWhileDownloading = "Stop downloads and return";
-	private String strCloseWhenFinished = "Done";
-	private String toolTipWhenFinished = "Close Window";
 	private Installer installer;
 	private boolean isProgressing;
 
 	//Download Window opened from Plugin Manager UI
-	public DownloadUI(PluginManager pluginManager) {
+	public FrameInstaller(PluginManager pluginManager) {
 		this.pluginManager = pluginManager;
 		setUpUserInterface();
 		pack();
@@ -92,8 +88,8 @@ class DownloadUI extends JFrame {
 			this.installer = installer;
 			installer.startDelete();
 			installer.startDownload();
-			btnClose.setText(strCloseWhileDownloading);
-			btnClose.setToolTipText(toolTipWhileDownloading);
+			btnClose.setText("Cancel");
+			btnClose.setToolTipText("Stop downloads and return");
 			txtProgressDetails.setText("Starting up download now...");
 			isProgressing = true;
 
@@ -111,8 +107,8 @@ class DownloadUI extends JFrame {
 			
 			//check if download has finished (Whether 100% success or not)
 			if (isProgressing == false) {
-				btnClose.setText(strCloseWhenFinished);
-				btnClose.setToolTipText(toolTipWhenFinished);
+				btnClose.setText("Done");
+				btnClose.setToolTipText("Close Window");
 				timer.cancel();
 			}
 			((TextPaneDisplay)txtProgressDetails).showDownloadProgress(installer);

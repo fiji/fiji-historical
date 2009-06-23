@@ -322,15 +322,15 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	private void clickToEditDescriptions() {
-		loadedFrame = new DescriptionEditorUI(this, currentPlugin);
+		loadedFrame = new FrameDescriptionEditor(this, currentPlugin);
 		loadedFrame.setVisible(true);
 		setEnabled(false);
 	}
 
 	private void clickToBeginOperations() {
-		loadedFrame = new ConfirmationUI(this);
-		ConfirmationUI confirmationUI = (ConfirmationUI)loadedFrame;
-		confirmationUI.displayInformation(new Controller(pluginListBuilder.getExistingPluginList()));
+		loadedFrame = new FrameConfirmation(this);
+		FrameConfirmation frameConfirmation = (FrameConfirmation)loadedFrame;
+		frameConfirmation.displayInformation(new Controller(pluginListBuilder.getExistingPluginList()));
 		loadedFrame.setVisible(true);
 		setEnabled(false);
 	}
@@ -342,10 +342,10 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	public void openDownloader() {
 		backToPluginManager();
-		loadedFrame = new DownloadUI(this);
+		loadedFrame = new FrameInstaller(this);
 		loadedFrame.setVisible(true);
-		DownloadUI downloadUI = (DownloadUI)loadedFrame;
-		downloadUI.setInstaller(new Installer(pluginListBuilder, fileURL));
+		FrameInstaller frameInstaller = (FrameInstaller)loadedFrame;
+		frameInstaller.setInstaller(new Installer(pluginListBuilder, fileURL));
 		setEnabled(false);
 	}
 

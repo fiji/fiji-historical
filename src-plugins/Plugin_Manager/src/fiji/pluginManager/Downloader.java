@@ -11,7 +11,8 @@ import java.net.URL;
 import java.util.Vector;
 
 /*
- * Directly responsibility: Download a file given its URL to a given destination
+ * Directly responsibility: Download a file given its URL to a given destination.
+ * Updates its download status to its Observer as well.
  */
 public class Downloader implements Observable {
 	private String strDestination;
@@ -32,22 +33,6 @@ public class Downloader implements Observable {
 
 	public int getSize() {
 		return myConnection.getContentLength();
-	}
-
-	//Todo: Removal of this method anticipated
-	public void startDownload() throws FileNotFoundException, IOException {
-		prepareDownload();
-		copyFile();
-	}
-
-	//Todo: Removal of this method anticipated
-	private void copyFile() throws IOException {
-		byte[] buffer = createNewBuffer();
-		int count;
-		while ((count = getNextPart(buffer)) >= 0) {
-			writePart(buffer, count);
-		}
-		endConnection();
 	}
 
 	public void prepareDownload() throws FileNotFoundException, IOException {

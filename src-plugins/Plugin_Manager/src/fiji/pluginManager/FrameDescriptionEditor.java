@@ -16,7 +16,7 @@ import javax.swing.JButton;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-public class DescriptionEditorUI extends JFrame {
+public class FrameDescriptionEditor extends JFrame {
 	private PluginManager pluginManager;
 	private PluginObject selectedPlugin;
 	private JTextArea txtDescription;
@@ -24,7 +24,7 @@ public class DescriptionEditorUI extends JFrame {
 	private JButton btnCancel;
 	private boolean textChanged;
 
-	public DescriptionEditorUI(PluginManager pluginManager, PluginObject selectedPlugin) {
+	public FrameDescriptionEditor(PluginManager pluginManager, PluginObject selectedPlugin) {
 		super("Description Editor: " + selectedPlugin.getFilename());
 		this.pluginManager = pluginManager;
 		this.selectedPlugin = selectedPlugin;
