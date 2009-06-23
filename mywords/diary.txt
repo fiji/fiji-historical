@@ -601,3 +601,16 @@ Tasks Completed:
 - Refactored DownloadUI.java - Unnecessary, unreachable blocks of code removed
 
 Next task: Remove global stuff, convert TextPaneFormat into TextPaneDisplay (Extension of JTextPane)
+
+
+
+23rd June, Tuesday
+Tasks Completed:
+- Code Refactor: Oh well, did the best I could in attempting to simplify the logic
+   ==> Moved methods to different classes, removed any redundant, unreachable code
+   ==> Renamed methods, classes to more appropriate ones (e.g.: PluginDataReader to PluginListBuilder, since that's what it is about anyway)
+   ==> In particular, reduced repeating code at Controller
+- Developer version is able to select to view "Uploadable plugins only"
+
+Next task:
+- Look into Dependency Analyzer... That's from ByteCodeAnalyzer
