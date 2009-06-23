@@ -276,24 +276,15 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			viewList = ((PluginCollection)pluginListBuilder.getExistingPluginList()).getList(PluginCollection.getFilterForText(txtSearch.getText().trim()));
 		}
 
-		//if "View all plugins"
-		if (selectedIndex == 0) {
+		if (selectedIndex == 0) { //if "View all plugins"
 			//do nothing
-		}
-		//if "View installed plugins"
-		else if (selectedIndex == 1) {
+		} else if (selectedIndex == 1) { //if "View installed plugins"
 			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_ALREADYINSTALLED);
-		}
-		//if "View uninstalled plugins"
-		else if (selectedIndex == 2) {
+		} else if (selectedIndex == 2) { //if "View uninstalled plugins"
 			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_UNINSTALLED);
-		}
-		//if "View up-to-date plugins"
-		else if (selectedIndex == 3) {
+		} else if (selectedIndex == 3) { //if "View up-to-date plugins"
 			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_INSTALLED);
-		}
-		//if "View update-able plugins"
-		else if (selectedIndex == 4) {
+		} else if (selectedIndex == 4) { //if "View update-able plugins"
 			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_MAYUPDATE);
 		} else {
 			throw new Error("Viewing option specified does not exist!");

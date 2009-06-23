@@ -34,12 +34,12 @@ public class PluginTable extends JTable {
 	private PluginManager pluginManager;
 	private boolean isDeveloper;
 
-	static String[] arrUninstalledOptions = { "Not installed", "Install it" };
-	static String[] arrInstalledOptions = { "Installed", "Remove it" };
-	static String[] arrUpdateableOptions = { "Installed", "Remove it", "Update it" };
-	static String[] arrDevelUninstalledOptions = { "Not installed", "Install it" };
-	static String[] arrDevelInstalledOptions = { "Installed", "Remove it", "Upload" };
-	static String[] arrDevelUpdateableOptions = { "Installed", "Remove it", "Update it", "Upload" };
+	private static final String[] arrUninstalledOptions = { "Not installed", "Install it" };
+	private static final String[] arrInstalledOptions = { "Installed", "Remove it" };
+	private static final String[] arrUpdateableOptions = { "Installed", "Remove it", "Update it" };
+	private static final String[] arrDevelUninstalledOptions = { "Not installed", "Install it" };
+	private static final String[] arrDevelInstalledOptions = { "Installed", "Remove it", "Upload" };
+	private static final String[] arrDevelUpdateableOptions = { "Installed", "Remove it", "Update it", "Upload" };
 
 	//NOTE: To be created only after related display components are created
 	//Namely: lblPluginSummary, txtPluginDetails
@@ -64,7 +64,7 @@ public class PluginTable extends JTable {
 				} else {
 					int modelRow = convertRowIndexToModel(viewRow);
 					PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
-					displayPluginDetails(myPlugin);
+					pluginManager.displayPluginDetails(myPlugin);
 				}
 			}
 
@@ -107,15 +107,6 @@ public class PluginTable extends JTable {
 		requestFocusInWindow();
 	}
 
-	//Set up table model, to be called each time display list is to be changed
-	public void setupTableModel(List<PluginObject> myList) {
-		getModel().removeTableModelListener(pluginManager);
-		setModel(pluginTableModel = new PluginTableModel(myList, isDeveloper));
-		getModel().addTableModelListener(pluginManager); //listen for changes (tableChanged(TableModelEvent e))
-		setColumnWidths(250, 120);
-		pluginTableModel.fireTableChanged(new TableModelEvent(pluginTableModel));
-	}
-
 	private void setColumnWidths(int col1Width, int col2Width) {
 		TableColumn col1 = getColumnModel().getColumn(0);
 		TableColumn col2 = getColumnModel().getColumn(1);
@@ -126,6 +117,15 @@ public class PluginTable extends JTable {
 		col2.setPreferredWidth(col2Width);
 		col2.setMinWidth(col2Width);
 		col2.setResizable(true);
+	}
+
+	//Set up table model, to be called each time display list is to be changed
+	public void setupTableModel(List<PluginObject> myList) {
+		getModel().removeTableModelListener(pluginManager);
+		setModel(pluginTableModel = new PluginTableModel(myList, isDeveloper));
+		getModel().addTableModelListener(pluginManager); //listen for changes (tableChanged(TableModelEvent e))
+		setColumnWidths(250, 120);
+		pluginTableModel.fireTableChanged(new TableModelEvent(pluginTableModel));
 	}
 
 	public TableCellEditor getCellEditor(int row, int col) {
@@ -143,29 +143,23 @@ public class PluginTable extends JTable {
 
 	public static String[] getOptionsAccordingToState(PluginObject entry, boolean isDeveloper) {
 		String[] optionsArray = null;
-		if (isDeveloper) {
-			if (entry.isInstallable()) {
+		if (entry.isInstallable()) {
+			if (isDeveloper) {
 				optionsArray = PluginTable.arrDevelUninstalledOptions;
-			} else if (entry.isRemovableOnly()) {
-				if (entry.isUploadable()) {
-					optionsArray = PluginTable.arrDevelInstalledOptions;
-				} else {
-					optionsArray = PluginTable.arrInstalledOptions;
-				}
-			} else if (entry.isUpdateable()) {
-				if (entry.isUploadable()) {
-					//if timestamp is newer than the latest version, indicates local modification
-					optionsArray = PluginTable.arrDevelUpdateableOptions;
-				} else {
-					optionsArray = PluginTable.arrUpdateableOptions;
-				}
-			}
-		} else {
-			if (entry.isInstallable()) {
+			} else {
 				optionsArray = PluginTable.arrUninstalledOptions;
-			} else if (entry.isRemovableOnly()) {
+			}
+		} else if (entry.isRemovableOnly()) {
+			if (isDeveloper && entry.isUploadable()) {
+				optionsArray = PluginTable.arrDevelInstalledOptions;
+			} else {
 				optionsArray = PluginTable.arrInstalledOptions;
-			} else if (entry.isUpdateable()) {
+			}
+		} else if (entry.isUpdateable()) {
+			if (isDeveloper && entry.isUploadable()) {
+				//if timestamp is newer than the latest version, indicates local modification
+				optionsArray = PluginTable.arrDevelUpdateableOptions;
+			} else {
 				optionsArray = PluginTable.arrUpdateableOptions;
 			}
 		}
@@ -178,10 +172,6 @@ public class PluginTable extends JTable {
 	public PluginObject getPluginFromRow(int viewRow) {
 		int modelRow = convertRowIndexToModel(viewRow);
 		return pluginTableModel.getEntry(modelRow);
-	}
-
-	private void displayPluginDetails(PluginObject myPlugin) {
-		pluginManager.displayPluginDetails(myPlugin);
 	}
 
 	class PluginTableModel extends AbstractTableModel {
