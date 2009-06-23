@@ -33,7 +33,7 @@ import org.xml.sax.SAXParseException;
  * 
  * Note that 3rd and 4th step are combined into a single method.
  */
-public class PluginDataReader implements Observable, Observer {
+public class PluginListBuilder implements Observable, Observer {
 	public boolean tempDemo = true; //if true, use artificial database...
 
 	static byte STATUS_INACTIVE = 0; //doing nothing
@@ -60,7 +60,7 @@ public class PluginDataReader implements Observable, Observer {
 	private String saveFile;
 	private String fileURL;
 
-	public PluginDataReader(String fileURL, String saveFile) {
+	public PluginListBuilder(String fileURL, String saveFile) {
 		this.saveFile = saveFile;
 		this.fileURL = fileURL;
 
@@ -81,8 +81,7 @@ public class PluginDataReader implements Observable, Observer {
 				File.separator),
 				"plugins");
 		pluginDataProcessor = new PluginDataProcessor(path);
-		saveFileLocation = pluginDataProcessor.prefix(infoDirectory +
-				File.separator + saveFile);
+		saveFileLocation = pluginDataProcessor.getSaveToLocation(infoDirectory, saveFile);
 	}
 
 	public byte getReaderStatus() {
@@ -125,11 +124,17 @@ public class PluginDataReader implements Observable, Observer {
 					path + File.separator + list[i]);
 	}
 
+	private String stripSuffix(String string, String suffix) {
+		if (!string.endsWith(suffix))
+			return string;
+		return string.substring(0, string.length() - suffix.length());
+	}
+
 	public void downloadXMLFile() {
 		//progress starts out at 0 for download of a single file
 		currentlyLoaded = 0 ;
 		totalToLoad = 0;
-		readerStatus = PluginDataReader.STATUS_DOWNLOAD;
+		readerStatus = PluginListBuilder.STATUS_DOWNLOAD;
 		filename = saveFile;
 		notifyObservers();
 
@@ -204,7 +209,7 @@ public class PluginDataReader implements Observable, Observer {
 
 			//To calculate the Md5 sums on the local side
 			Iterator<String> iter = queue.iterator();
-			readerStatus = PluginDataReader.STATUS_CALC;
+			readerStatus = PluginListBuilder.STATUS_CALC;
 			currentlyLoaded = 0;
 			totalToLoad = queue.size();
 			while (iter.hasNext()) {
@@ -230,7 +235,7 @@ public class PluginDataReader implements Observable, Observer {
 				if (!xmlFileReader.matchesFilenameAndDigest(outputFilename, outputDigest)) {
 					//use the local plugin's last modified timestamp instead
 					if (!tempDemo) {
-					outputDate = pluginDataProcessor.getTimestampFromFile(filename);
+					outputDate = pluginDataProcessor.getTimestampFromFile(outputFilename);
 					} else {
 					outputDate = "20090622999666"; //assume latest... always
 					}
@@ -253,100 +258,97 @@ public class PluginDataReader implements Observable, Observer {
 		}
 	}
 
-	private String stripSuffix(String string, String suffix) {
-		if (!string.endsWith(suffix))
-			return string;
-		return string.substring(0, string.length() - suffix.length());
-	}
-
 	//Called after local plugin files have been processed
 	public void buildFullPluginList() {
-		//try {
-			xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
+		xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
 
-			//Converts data gathered into lists of PluginObject, ready for UI classes usage
-			Iterator<String> iterLatest = latestDigests.keySet().iterator();
-			while (iterLatest.hasNext()) {
-				String name = iterLatest.next();
+		//Converts data gathered into lists of PluginObject, ready for UI classes usage
+		Iterator<String> iterLatest = latestDigests.keySet().iterator();
+		while (iterLatest.hasNext()) {
+			String name = iterLatest.next();
 
-				// launcher is platform-specific
-				if (name.startsWith("fiji-")) {
-					String platform = pluginDataProcessor.getPlatform();
-					if (!name.equals("fiji-" + platform) &&
-							(!platform.equals("macosx") ||
-									!name.startsWith("fiji-tiger")))
-						continue;
-				}
+			// launcher is platform-specific
+			if (name.startsWith("fiji-")) {
+				String platform = pluginDataProcessor.getPlatform();
+				if (!name.equals("fiji-" + platform) &&
+						(!platform.equals("macosx") ||
+								!name.startsWith("fiji-tiger")))
+					continue;
+			}
 
-				String digest = digests.get(name);
-				String remoteDigest = latestDigests.get(name);
-				String date = dates.get(name);
-				String remoteDate = latestDates.get(name);
-				PluginObject myPlugin = null;
+			String digest = digests.get(name);
+			String remoteDigest = latestDigests.get(name);
+			String date = dates.get(name);
+			String remoteDate = latestDates.get(name);
+			PluginObject myPlugin = null;
 
-				System.out.println(name + ", digest: " + digest + ", timestamp: " + date);
+			System.out.println(name + ", digest: " + digest + ", timestamp: " + date);
 
-				//if latest version installed
-				if (digest != null && remoteDigest.equals(digest)) {
-					myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, true);
-				}
-				//if new file (Not installed yet)
-				else if (digest == null) {
-					myPlugin = new PluginObject(name, remoteDigest, remoteDate, PluginObject.STATUS_UNINSTALLED, true);
-				}
-				//if its installed but can be updated
-				else {
-					myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_MAY_UPDATE, true);
-					//set latest update details
-					String updatedDescription = xmlFileReader.getDescriptionFrom(name, remoteDate);
-					List<Dependency> updatedDependencies = xmlFileReader.getDependenciesFrom(name, remoteDate);
-					int updatedFilesize = xmlFileReader.getFilesizeFrom(name, remoteDate);
-					myPlugin.setUpdateDetails(remoteDigest,
-							remoteDate,
-							updatedDescription,
-							updatedDependencies,
-							updatedFilesize);
-				}
+			//if latest version installed
+			if (digest != null && remoteDigest.equals(digest)) {
+				myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, true);
+			}
+			//if new file (Not installed yet)
+			else if (digest == null) {
+				myPlugin = new PluginObject(name, remoteDigest, remoteDate, PluginObject.STATUS_UNINSTALLED, true);
+			}
+			//if its installed but can be updated
+			else {
+				myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_MAY_UPDATE, true);
+				//set latest update details
+				String updatedDescription = xmlFileReader.getDescriptionFrom(name, remoteDate);
+				List<Dependency> updatedDependencies = xmlFileReader.getDependenciesFrom(name, remoteDate);
+				int updatedFilesize = xmlFileReader.getFilesizeFrom(name, remoteDate);
+				myPlugin.setUpdateDetails(remoteDigest,
+						remoteDate,
+						updatedDescription,
+						updatedDependencies,
+						updatedFilesize);
+			}
 
-				String pluginDate = myPlugin.getTimestamp();
-				String pluginDigest = myPlugin.getmd5Sum();
-				//if md5 sum exists in XML records, then timestamp exists as well
-				if (xmlFileReader.matchesFilenameAndDigest(name, pluginDigest)) {
-					//Use filename and timestamp to get associated description & dependencies
-					myPlugin.setDescription(xmlFileReader.getDescriptionFrom(name, pluginDate));
-					myPlugin.setDependency(xmlFileReader.getDependenciesFrom(name, pluginDate));
-					myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(name, pluginDate));
-				} else { //if digest of this plugin does not exist in the records
-					//TODO: Placeholder code for calculating perhaps dependency
-					//(Using DependencyAnalyzer) from file itself
-					if (!tempDemo) {
-					long filesize = new File(myPlugin.getFilename()).length();
-					myPlugin.setFilesize(Integer.parseInt("" + filesize));
-					} else {
+			String pluginDate = myPlugin.getTimestamp();
+			String pluginDigest = myPlugin.getmd5Sum();
+			//if md5 sum exists in XML records, then timestamp exists as well
+			if (xmlFileReader.matchesFilenameAndDigest(name, pluginDigest)) {
+				//Use filename and timestamp to get associated description & dependencies
+				myPlugin.setDescription(xmlFileReader.getDescriptionFrom(name, pluginDate));
+				myPlugin.setDependency(xmlFileReader.getDependenciesFrom(name, pluginDate));
+				myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(name, pluginDate));
+			} else { //if digest of this plugin does not exist in the records
+				//TODO: Placeholder code for calculating perhaps dependency
+				//(Using DependencyAnalyzer) from file itself
+				if (!tempDemo) {
+					myPlugin.setFilesize(pluginDataProcessor.getFilesizeFromFile(myPlugin.getFilename()));
+				} else {
 					myPlugin.setFilesize(4500);
-					}
+				}
+			}
+			pluginList.add(myPlugin);
+		}
+
+		Iterator<String> iterCurrent = digests.keySet().iterator();
+		while (iterCurrent.hasNext()) {
+			String name = iterCurrent.next();
+
+			// if it is not a Fiji plugin (Not found in list of up-to-date versions)
+			if (!latestDigests.containsKey(name)) {
+				String digest = digests.get(name);
+				String date = dates.get(name);
+				//implies third-party plugin
+				//no extra information available (i.e: description & dependencies)
+				PluginObject myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, false);
+				if (!tempDemo) {
+					myPlugin.setFilesize(pluginDataProcessor.getFilesizeFromFile(myPlugin.getFilename()));
+				} else {
+					myPlugin.setFilesize(4500);
 				}
 				pluginList.add(myPlugin);
 			}
+		}
 
-			Iterator<String> iterCurrent = digests.keySet().iterator();
-			while (iterCurrent.hasNext()) {
-				String name = iterCurrent.next();
-
-				// if it is not a Fiji plugin (Not found in list of up-to-date versions)
-				if (!latestDigests.containsKey(name)) {
-					String digest = digests.get(name);
-					String date = dates.get(name);
-					//implies third-party plugin
-					//no extra information available (i.e: description & dependencies)
-					PluginObject myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, false);
-					pluginList.add(myPlugin);
-				}
-			}
-
-			readerStatus = PluginDataReader.STATUS_INACTIVE;
-			notifyObservers();
-			/*
+		readerStatus = PluginListBuilder.STATUS_INACTIVE;
+		notifyObservers();
+		/*
 		boolean someAreNotWritable = false;
 		for (int i = 0; i < list.size(); i++) {
 			File file = new File((String)list.get(i));
@@ -365,7 +367,6 @@ public class PluginDataReader implements Observable, Observer {
 			}
 			IJ.showMessage("Some" + msg);
 		}*/
-		//}
 	}
 
 	//Being observed, PluginDataReader notifies LoadStatusDisplay
@@ -395,18 +396,18 @@ public class PluginDataReader implements Observable, Observer {
 }
 
 class LoadStatusDisplay implements Observer {
-	private PluginDataReader pluginDataReader;
+	private PluginListBuilder pluginDataReader;
 
-	public LoadStatusDisplay(PluginDataReader pluginDataReader) {
+	public LoadStatusDisplay(PluginListBuilder pluginDataReader) {
 		this.pluginDataReader = pluginDataReader;
 		IJ.showStatus("Starting up Plugin Manager");
 	}
 
 	public void refreshData(Observable subject) {
 		if (subject == pluginDataReader) { //if pluginDataReader is sending data directly
-			if (pluginDataReader.getReaderStatus() == PluginDataReader.STATUS_CALC) {
+			if (pluginDataReader.getReaderStatus() == PluginListBuilder.STATUS_CALC) {
 				IJ.showStatus("Checksumming " + pluginDataReader.getFilename() + "...");
-			} else if (pluginDataReader.getReaderStatus() == PluginDataReader.STATUS_DOWNLOAD) {
+			} else if (pluginDataReader.getReaderStatus() == PluginListBuilder.STATUS_DOWNLOAD) {
 				IJ.showStatus("Downloading " + pluginDataReader.getFilename() + "...");
 			} else {
 				IJ.showStatus("");

@@ -31,15 +31,15 @@ public class Installer implements Runnable, Observer {
 	private boolean isDownloading;
 
 	//Assume the list passed to constructor is a list of only plugins that wanted change
-	public Installer(PluginDataReader pluginDataReader, String updateURL) {
+	public Installer(PluginListBuilder pluginListBuilder, String updateURL) {
 		this.updateURL = updateURL;
-		this.pluginDataProcessor = pluginDataReader.getPluginDataProcessor();
+		this.pluginDataProcessor = pluginListBuilder.getPluginDataProcessor();
 
 		downloadedList = new PluginCollection();
 		failedDownloadsList = new PluginCollection();
 
 		//divide into two groups
-		PluginCollection pluginCollection = (PluginCollection)pluginDataReader.getExistingPluginList();
+		PluginCollection pluginCollection = (PluginCollection)pluginListBuilder.getExistingPluginList();
 		iterUninstall = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONS_UNINSTALL);
 		pluginsWaiting = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
 		iterWaiting = pluginsWaiting.iterator();
@@ -120,17 +120,17 @@ public class Installer implements Runnable, Observer {
 				date = myPlugin.getNewTimestamp();
 			}
 
-			String savePath = pluginDataProcessor.getSavePath(updateDirectory, name);
+			String saveToPath = pluginDataProcessor.getSaveToLocation(updateDirectory, name);
 			String downloadURL = "";
 			try {
 				if (name.startsWith("fiji-")) {
-					File orig = new File(savePath);
-					orig.renameTo(new File(savePath + ".old"));
+					File orig = new File(saveToPath);
+					orig.renameTo(new File(saveToPath + ".old"));
 				}
 
 				//Establish connection to file for this iteration
 				downloadURL = new URL(new URL(updateURL), name + "-" + date).toString();
-				Downloader downloader = new Downloader(downloadURL, savePath);
+				Downloader downloader = new Downloader(downloadURL, saveToPath);
 				downloader.register(this);
 
 				//Prepare the necessary download input and output streams
@@ -147,12 +147,12 @@ public class Installer implements Runnable, Observer {
 
 				//if download is not yet cancelled, check if downloaded has valid md5 sum
 				if (thisThread == downloadThread) {
-					String realDigest = pluginDataProcessor.getDigest(name, savePath);
+					String realDigest = pluginDataProcessor.getDigest(name, saveToPath);
 					if (!realDigest.equals(digest))
 						throw new Exception("Wrong checksum: Recorded Md5 sum " + digest + " != Actual Md5 sum " + realDigest);
 					if (name.startsWith("fiji-") && !pluginDataProcessor.getPlatform().startsWith("win"))
 						Runtime.getRuntime().exec(new String[] {
-								"chmod", "0755", savePath});
+								"chmod", "0755", saveToPath});
 					downloadedList.add(currentlyDownloading);
 					System.out.println(currentlyDownloading.getFilename() + " finished download.");
 					System.out.println((thisThread == downloadThread) ? "Thread not stopped" : "Thread stopped, but downloaded????");
@@ -165,7 +165,7 @@ public class Installer implements Runnable, Observer {
 			} catch(Exception e) {
 				//try to delete the file (probably this be the only catch - DRY)
 				try {
-					new File(savePath).delete();
+					new File(saveToPath).delete();
 				} catch (Exception e2) { }
 				failedDownloadsList.add(currentlyDownloading);
 				currentlyDownloading = null;
@@ -183,7 +183,7 @@ public class Installer implements Runnable, Observer {
 			//if this plugin in waiting list is not fully downloaded yet
 			if (!downloadedList.contains(plugin)) {
 				String name = plugin.getFilename();
-				String fullPath = pluginDataProcessor.getSavePath(updateDirectory, name);
+				String fullPath = pluginDataProcessor.getSaveToLocation(updateDirectory, name);
 				try {
 					new File(fullPath).delete(); //delete file, if it exists
 				} catch (Exception e2) { }

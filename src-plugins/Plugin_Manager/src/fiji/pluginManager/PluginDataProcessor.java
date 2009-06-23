@@ -64,10 +64,6 @@ public class PluginDataProcessor {
 			useMacPrefix = true;
 	}
 
-	public String getMacPrefix() {
-		return macPrefix;
-	}
-
 	public String getDefaultFijiPath() {
 		//return fijiPath;
 		String name = "/UpdateFiji.class";
@@ -90,6 +86,10 @@ public class PluginDataProcessor {
 		return path;
 	}
 
+	public String getMacPrefix() {
+		return macPrefix;
+	}
+
 	public String getPlatform() {
 		return platform;
 	}
@@ -98,6 +98,7 @@ public class PluginDataProcessor {
 		return useMacPrefix;
 	}
 
+	//get digest of the file as according to fullPath
 	public String getDigest(String path, String fullPath)
 	throws NoSuchAlgorithmException, FileNotFoundException,
 	IOException, UnsupportedEncodingException {
@@ -109,12 +110,21 @@ public class PluginDataProcessor {
 		return toHex(digest.digest());
 	}
 
-	public MessageDigest getDigest()
+	private String toHex(byte[] bytes) {
+		char[] buffer = new char[bytes.length * 2];
+		for (int i = 0; i < bytes.length; i++) {
+			buffer[i * 2] = hex[(bytes[i] & 0xf0) >> 4];
+			buffer[i * 2 + 1] = hex[bytes[i] & 0xf];
+		}
+		return new String(buffer);
+	}
+
+	private MessageDigest getDigest()
 			throws NoSuchAlgorithmException {
 		return MessageDigest.getInstance("SHA-1");
 	}
 
-	public void updateDigest(InputStream input, MessageDigest digest)
+	private void updateDigest(InputStream input, MessageDigest digest)
 			throws IOException {
 		byte[] buffer = new byte[65536];
 		DigestInputStream digestStream =
@@ -124,7 +134,7 @@ public class PluginDataProcessor {
 		digestStream.close();
 	}
 
-	public String getJarDigest(String path)
+	private String getJarDigest(String path)
 			throws FileNotFoundException, IOException {
 		MessageDigest digest = null;
 		try {
@@ -149,13 +159,13 @@ public class PluginDataProcessor {
 		return toHex(digest.digest());
 	}
 
-	//Gets the absolute save-to directory using specified parameters
-	public String getSavePath(String saveDirectory, String pluginName) {
-		String savePath = prefix(saveDirectory + File.separator + pluginName);
-		if (pluginName.startsWith("fiji-")) {
+	//Gets the location of specified file when inside of saveDirectory
+	public String getSaveToLocation(String saveDirectory, String filename) {
+		String savePath = prefix(saveDirectory + File.separator + filename);
+		if (filename.startsWith("fiji-")) {
 			boolean useMacPrefix = getUseMacPrefix();
 			String macPrefix = getMacPrefix();
-			savePath = prefix((useMacPrefix ? macPrefix : "") + pluginName);
+			savePath = prefix((useMacPrefix ? macPrefix : "") + filename);
 		}
 		return savePath;
 	}
@@ -167,19 +177,16 @@ public class PluginDataProcessor {
 			+ path;
 	}
 
-	public String toHex(byte[] bytes) {
-		char[] buffer = new char[bytes.length * 2];
-		for (int i = 0; i < bytes.length; i++) {
-			buffer[i * 2] = hex[(bytes[i] & 0xf0) >> 4];
-			buffer[i * 2 + 1] = hex[bytes[i] & 0xf];
-		}
-		return new String(buffer);
-	}
-
 	public String getTimestampFromFile(String filename) {
 		String fullPath = prefix(filename);
 		long modified = new File(fullPath).lastModified();
 		return timestamp(modified);
+	}
+
+	public int getFilesizeFromFile(String filename) {
+		long filesize = new File(filename).length();
+		int intValue = new Long(filesize).intValue();
+		return intValue;
 	}
 
 	public String getDigestFromFile(String filename) {
@@ -193,7 +200,7 @@ public class PluginDataProcessor {
 		}
 	}
 
-	public String timestamp(Calendar date) {
+	private String timestamp(Calendar date) {
 		DecimalFormat format = new DecimalFormat("00");
 		int month = date.get(Calendar.MONTH) + 1;
 		int day = date.get(Calendar.DAY_OF_MONTH);
@@ -206,7 +213,7 @@ public class PluginDataProcessor {
 			format.format(second);
 	}
 
-	public String timestamp(long millis) {
+	private String timestamp(long millis) {
 		Calendar date = Calendar.getInstance();
 		date.setTimeInMillis(millis);
 		return timestamp(date);
