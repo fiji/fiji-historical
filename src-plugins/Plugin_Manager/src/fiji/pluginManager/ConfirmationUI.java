@@ -45,7 +45,7 @@ public class ConfirmationUI extends JFrame {
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
 		/* Create textpane to hold the information and its scrollpane */
-		txtPluginList = new JTextPane();
+		txtPluginList = new TextPaneDisplay();
 		txtPluginList.setEditable(false);
 		txtPluginList.setPreferredSize(new Dimension(400,260));
 		JScrollPane txtScrollpane = new JScrollPane(txtPluginList);
@@ -61,7 +61,7 @@ public class ConfirmationUI extends JFrame {
 		tabbedPane.setPreferredSize(new Dimension(400,260));
 
 		/* Create textpane to hold the information and its scrollpane */
-		txtAdditionalList = new JTextPane();
+		txtAdditionalList = new TextPaneDisplay();
 		txtAdditionalList.setEditable(false);
 		txtAdditionalList.setPreferredSize(new Dimension(260,260));
 		JScrollPane txtScrollpane2 = new JScrollPane(txtAdditionalList);
@@ -84,7 +84,7 @@ public class ConfirmationUI extends JFrame {
 		listsPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
 		/* Create textpane to hold the information and its scrollpane */
-		txtConflictsList = new JTextPane();
+		txtConflictsList = new TextPaneDisplay();
 		txtConflictsList.setEditable(false);
 		txtConflictsList.setPreferredSize(new Dimension(675,120));
 		JScrollPane txtScrollpane3 = new JScrollPane(txtConflictsList);
@@ -196,6 +196,7 @@ public class ConfirmationUI extends JFrame {
 		//Actual display of information
 		try {
 			//textpane listing plugins explicitly set by user to take action
+			TextPaneDisplay txtPluginList = (TextPaneDisplay)this.txtPluginList;
 			for (int i = 0; i < changeList.size(); i++) {
 				PluginObject myPlugin = changeList.get(i);
 				String pluginName = myPlugin.getFilename();
@@ -214,54 +215,53 @@ public class ConfirmationUI extends JFrame {
 					strAction = "To Update";
 				}
 
-				TextPaneFormat.insertText(txtPluginList, pluginName, TextPaneFormat.BOLD_BLACK_TITLE);
-				TextPaneFormat.insertDescription(txtPluginList, pluginDescription);
-				TextPaneFormat.insertBlankLine(txtPluginList);
-				TextPaneFormat.insertText(txtPluginList, "Action: ", TextPaneFormat.BOLD_BLACK);
-				TextPaneFormat.insertText(txtPluginList, strAction + "\n\n");
+				txtPluginList.insertStyledText(pluginName, txtPluginList.styleBoldTitle());
+				txtPluginList.insertDescription(pluginDescription);
+				txtPluginList.insertBlankLine();
+				txtPluginList.insertBoldText("Action: ");
+				txtPluginList.insertText(strAction + "\n\n");
 			}
 			//ensure first line of text is always shown (i.e.: scrolled to top)
-			txtPluginList.setSelectionStart(0);
-			txtPluginList.setSelectionEnd(0);
+			txtPluginList.scrollToTop();
 
 			//textpane listing additional plugins to add/remove
+			TextPaneDisplay txtAdditionalList = (TextPaneDisplay)this.txtAdditionalList;
 			if (toInstallList.size() > 0) {
-				TextPaneFormat.insertText(txtAdditionalList, "To Install", TextPaneFormat.BOLD_BLACK_TITLE);
-				TextPaneFormat.insertPluginNamelist(txtAdditionalList, toInstallList);
+				txtAdditionalList.insertStyledText("To Install", txtPluginList.styleBoldTitle());
+				txtAdditionalList.insertPluginNamelist(toInstallList);
 			}
 			if (toUpdateList.size() > 0) {
-				TextPaneFormat.insertBlankLine(txtAdditionalList);
-				TextPaneFormat.insertText(txtAdditionalList, "To Update", TextPaneFormat.BOLD_BLACK_TITLE);
-				TextPaneFormat.insertPluginNamelist(txtAdditionalList, toUpdateList);
+				txtAdditionalList.insertBlankLine();
+				txtAdditionalList.insertStyledText("To Update", txtPluginList.styleBoldTitle());
+				txtAdditionalList.insertPluginNamelist(toUpdateList);
 			}
 			if (toRemoveList.size() > 0) {
-				TextPaneFormat.insertBlankLine(txtAdditionalList);
-				TextPaneFormat.insertText(txtAdditionalList, "To Remove", TextPaneFormat.BOLD_BLACK_TITLE);
-				TextPaneFormat.insertPluginNamelist(txtAdditionalList, toRemoveList);
+				txtAdditionalList.insertBlankLine();
+				txtAdditionalList.insertStyledText("To Remove", txtPluginList.styleBoldTitle());
+				txtAdditionalList.insertPluginNamelist(toRemoveList);
 			}
 			if (toInstallList.size() == 0 && toUpdateList.size() == 0 && toRemoveList.size() == 0) {
-				TextPaneFormat.insertText(txtAdditionalList, "None.");
+				txtAdditionalList.insertText("None.");
 			}
 			//ensure first line of text is always shown (i.e.: scrolled to top)
-			txtAdditionalList.setSelectionStart(0);
-			txtAdditionalList.setSelectionEnd(0);
+			txtAdditionalList.scrollToTop();
 
 			//conflicts list textpane
+			TextPaneDisplay txtConflictsList = (TextPaneDisplay)this.txtConflictsList;
 			for (int i = 0; i < installConflicts.size(); i++) {
 				String[] names = installConflicts.get(i);
-				TextPaneFormat.insertText(txtConflictsList, "Installing " + names[0] + " would conflict with uninstalling " + names[1] + "\n");
+				txtConflictsList.insertText("Installing " + names[0] + " would conflict with uninstalling " + names[1] + "\n");
 			}
 			for (int i = 0; i < updateConflicts.size(); i++) {
 				String[] names = updateConflicts.get(i);
-				TextPaneFormat.insertText(txtConflictsList, "Updating " + names[0] + " would conflict with uninstalling " + names[1] + "\n");
+				txtConflictsList.insertText("Updating " + names[0] + " would conflict with uninstalling " + names[1] + "\n");
 			}
 			//ensure first line of text is always shown (i.e.: scrolled to top)
-			txtConflictsList.setSelectionStart(0);
-			txtConflictsList.setSelectionEnd(0);
+			txtConflictsList.scrollToTop();
 
 			//enable download button if no conflicts recorded
 			if (installConflicts.size() == 0 && updateConflicts.size() == 0) {
-				TextPaneFormat.insertText(txtConflictsList, "None.");
+				txtConflictsList.insertText("None.");
 				btnDownload.setEnabled(true);
 				lblStatus.setText(msgConflictNone);
 				lblStatus.setForeground(Color.GREEN);

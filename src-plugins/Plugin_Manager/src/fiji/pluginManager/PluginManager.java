@@ -92,7 +92,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 		/* Create textpane to hold the information and its scrollpane */
-		txtPluginDetails = new JTextPane();
+		txtPluginDetails = new TextPaneDisplay();
 		txtPluginDetails.setEditable(false);
 		txtPluginDetails.setPreferredSize(new Dimension(335,315));
 		JScrollPane txtScrollpane = new JScrollPane(txtPluginDetails);
@@ -356,44 +356,44 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	public void displayPluginDetails(PluginObject currentPlugin) {
 		this.currentPlugin = currentPlugin;
-		txtPluginDetails.setText("");
+		TextPaneDisplay textPane = (TextPaneDisplay)txtPluginDetails;
+		textPane.setText("");
 		try {
 			//Display plugin data, text with different formatting
-			TextPaneFormat.insertText(txtPluginDetails, currentPlugin.getFilename(), TextPaneFormat.BOLD_BLACK_TITLE);
+			textPane.insertStyledText(currentPlugin.getFilename(), textPane.styleBoldTitle());
 			if (currentPlugin.isUpdateable())
-				TextPaneFormat.insertText(txtPluginDetails, "\n(Update is available)", TextPaneFormat.ITALIC_BLACK);
-			TextPaneFormat.insertBlankLine(txtPluginDetails);
-			TextPaneFormat.insertText(txtPluginDetails, "Md5 Sum", TextPaneFormat.BOLD_BLACK);
-			TextPaneFormat.insertText(txtPluginDetails, "\n" + currentPlugin.getmd5Sum());
-			TextPaneFormat.insertBlankLine(txtPluginDetails);
-			TextPaneFormat.insertText(txtPluginDetails, "Date: ", TextPaneFormat.BOLD_BLACK);
-			TextPaneFormat.insertText(txtPluginDetails, currentPlugin.getTimestamp());
-			TextPaneFormat.insertBlankLine(txtPluginDetails);
-			TextPaneFormat.insertText(txtPluginDetails, "Dependency", TextPaneFormat.BOLD_BLACK);
-			TextPaneFormat.insertDependenciesList(txtPluginDetails, currentPlugin.getDependencies());
-			TextPaneFormat.insertBlankLine(txtPluginDetails);
-			TextPaneFormat.insertText(txtPluginDetails, "Description", TextPaneFormat.BOLD_BLACK);
-			TextPaneFormat.insertDescription(txtPluginDetails, currentPlugin.getDescription());
+				textPane.insertStyledText("\n(Update is available)", textPane.styleItalicBlack());
+			textPane.insertBlankLine();
+			textPane.insertBoldText("Md5 Sum");
+			textPane.insertText("\n" + currentPlugin.getmd5Sum());
+			textPane.insertBlankLine();
+			textPane.insertBoldText("Date: ");
+			textPane.insertText(currentPlugin.getTimestamp());
+			textPane.insertBlankLine();
+			textPane.insertBoldText("Dependency");
+			textPane.insertDependenciesList(currentPlugin.getDependencies());
+			textPane.insertBlankLine();
+			textPane.insertBoldText("Description");
+			textPane.insertDescription(currentPlugin.getDescription());
 			if (currentPlugin.isUpdateable()) {
-				TextPaneFormat.insertBlankLine(txtPluginDetails);
-				TextPaneFormat.insertText(txtPluginDetails, "Update Details", TextPaneFormat.BOLD_BLACK_TITLE);
-				TextPaneFormat.insertBlankLine(txtPluginDetails);
-				TextPaneFormat.insertText(txtPluginDetails, "New Md5 Sum", TextPaneFormat.BOLD_BLACK);
-				TextPaneFormat.insertText(txtPluginDetails, "\n" + currentPlugin.getNewMd5Sum());
-				TextPaneFormat.insertBlankLine(txtPluginDetails);
-				TextPaneFormat.insertText(txtPluginDetails, "Released: ", TextPaneFormat.BOLD_BLACK);
-				TextPaneFormat.insertText(txtPluginDetails, currentPlugin.getNewTimestamp());
-				TextPaneFormat.insertBlankLine(txtPluginDetails);
-				TextPaneFormat.insertText(txtPluginDetails, "Dependency", TextPaneFormat.BOLD_BLACK);
-				TextPaneFormat.insertDependenciesList(txtPluginDetails, currentPlugin.getNewDependencies());
-				TextPaneFormat.insertBlankLine(txtPluginDetails);
-				TextPaneFormat.insertText(txtPluginDetails, "Description", TextPaneFormat.BOLD_BLACK);
-				TextPaneFormat.insertDescription(txtPluginDetails, currentPlugin.getNewDescription());
+				textPane.insertBlankLine();
+				textPane.insertStyledText("Update Details", textPane.styleBoldTitle());
+				textPane.insertBlankLine();
+				textPane.insertBoldText("New Md5 Sum");
+				textPane.insertText("\n" + currentPlugin.getNewMd5Sum());
+				textPane.insertBlankLine();
+				textPane.insertBoldText("Released: ");
+				textPane.insertText(currentPlugin.getNewTimestamp());
+				textPane.insertBlankLine();
+				textPane.insertBoldText("Dependency");
+				textPane.insertDependenciesList(currentPlugin.getNewDependencies());
+				textPane.insertBlankLine();
+				textPane.insertBoldText("Description");
+				textPane.insertDescription(currentPlugin.getNewDescription());
 			}
 
 			//ensure first line of text is always shown (i.e.: scrolled to top)
-			txtPluginDetails.setSelectionStart(0);
-			txtPluginDetails.setSelectionEnd(0);
+			textPane.scrollToTop();
 
 			//if uploadable, then description is editable too
 			if (isDeveloper) {
