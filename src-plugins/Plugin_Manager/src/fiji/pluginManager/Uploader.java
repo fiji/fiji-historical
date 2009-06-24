@@ -6,11 +6,11 @@ public class Uploader {
 	private List<PluginObject> uploadList;
 	private DependencyAnalyzer dependencyAnalyzer;
 
-	public Uploader(PluginListBuilder pluginDataReader) {
+	public Uploader(PluginListBuilder pluginListBuilder) {
 		System.out.println("Uploader CLASS: Started up");
-		PluginCollection pluginList = (PluginCollection)pluginDataReader.getExistingPluginList();
+		PluginCollection pluginList = (PluginCollection)pluginListBuilder.getExistingPluginList();
 		this.uploadList = pluginList.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
-		dependencyAnalyzer = new DependencyAnalyzer();
+		dependencyAnalyzer = new DependencyAnalyzer(pluginListBuilder.getPluginDataProcessor());
 	}
 
 	public void generateDocuments() {
