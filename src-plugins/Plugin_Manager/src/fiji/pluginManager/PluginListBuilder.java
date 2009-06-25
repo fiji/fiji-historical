@@ -34,7 +34,7 @@ import org.xml.sax.SAXParseException;
  * Note that 3rd and 4th step are combined into a single method.
  */
 public class PluginListBuilder implements Observable, Observer {
-	public boolean tempDemo = true; //if true, use artificial database...
+	public boolean tempDemo = false; //if true, use artificial database...
 
 	static byte STATUS_INACTIVE = 0; //doing nothing
 	static byte STATUS_CALC = 1; //calculating Md5 sums
@@ -166,8 +166,12 @@ public class PluginListBuilder implements Observable, Observer {
 
 	public void buildLocalPluginInformation() {
 		try {
-		if (!tempDemo)
-			xmlFileReader = new XMLFileReader(saveFileLocation);
+			System.out.println("You got stuck here? pluginListBuilder1");
+		if (!tempDemo) {
+			//xmlFileReader = new XMLFileReader(saveFileLocation);
+			xmlFileReader = new XMLFileReader(infoDirectory +
+					File.separator + "pluginRecords.xml"); //temporary hardcode
+		}
 		else
 			xmlFileReader = new XMLFileReader(infoDirectory +
 				File.separator + "pluginRecords.xml"); //temporary hardcode
@@ -177,7 +181,7 @@ public class PluginListBuilder implements Observable, Observer {
 			String platform = pluginDataProcessor.getPlatform();
 			String macPrefix = pluginDataProcessor.getMacPrefix();
 			boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
-
+			System.out.println("You got stuck here? pluginListBuilder2");
 		if (!tempDemo) {
 
 			//Gather filenames of all local plugins
@@ -207,6 +211,7 @@ public class PluginListBuilder implements Observable, Observer {
 			digests.put("PluginL.jar", "69ba8dc9fbd8945ec5e43fdfc612f9ec6150e644"); //test non-Fiji plugin
 		}
 
+		System.out.println("You got stuck here? pluginListBuilder3");
 			//To calculate the Md5 sums on the local side
 			Iterator<String> iter = queue.iterator();
 			readerStatus = PluginListBuilder.STATUS_CALC;
@@ -248,7 +253,7 @@ public class PluginListBuilder implements Observable, Observer {
 				++currentlyLoaded;
 				notifyObservers();
 			}
-
+			System.out.println("You got stuck here? pluginListBuilder4");
 		} catch (ParserConfigurationException e1) {
 			throw new Error(e1.getLocalizedMessage());
 		} catch (IOException e2) {
@@ -261,7 +266,7 @@ public class PluginListBuilder implements Observable, Observer {
 	//Called after local plugin files have been processed
 	public void buildFullPluginList() {
 		xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
-
+		System.out.println("You got stuck here? pluginListBuilder5");
 		//Converts data gathered into lists of PluginObject, ready for UI classes usage
 		Iterator<String> iterLatest = latestDigests.keySet().iterator();
 		while (iterLatest.hasNext()) {
@@ -275,7 +280,7 @@ public class PluginListBuilder implements Observable, Observer {
 								!pluginName.startsWith("fiji-tiger")))
 					continue;
 			}
-
+			System.out.println("You got stuck here? pluginListBuilder6 looppppp");
 			String digest = digests.get(pluginName);
 			String remoteDigest = latestDigests.get(pluginName);
 			String date = dates.get(pluginName);

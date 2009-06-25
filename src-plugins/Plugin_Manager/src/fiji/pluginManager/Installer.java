@@ -13,8 +13,7 @@ import java.net.URL;
  * This class' main role is to download selected files, as well as indicate those that
  * are marked for deletion. It is able to track the number of bytes downloaded.
 */
-public class Installer implements Runnable, Observer {
-	private PluginDataProcessor pluginDataProcessor;
+public class Installer extends PluginData implements Runnable, Observer {
 	private String updateURL;
 	private final String updateDirectory = "update";
 	private List<PluginObject> pluginsWaiting;
@@ -31,15 +30,14 @@ public class Installer implements Runnable, Observer {
 	private boolean isDownloading;
 
 	//Assume the list passed to constructor is a list of only plugins that wanted change
-	public Installer(PluginListBuilder pluginListBuilder, String updateURL) {
+	public Installer(List<PluginObject> pluginList, String updateURL) {
+		super();
 		this.updateURL = updateURL;
-		this.pluginDataProcessor = pluginListBuilder.getPluginDataProcessor();
-
 		downloadedList = new PluginCollection();
 		failedDownloadsList = new PluginCollection();
 
 		//divide into two groups
-		PluginCollection pluginCollection = (PluginCollection)pluginListBuilder.getExistingPluginList();
+		PluginCollection pluginCollection = (PluginCollection)pluginList;
 		iterUninstall = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONS_UNINSTALL);
 		pluginsWaiting = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
 		iterWaiting = pluginsWaiting.iterator();
@@ -120,7 +118,7 @@ public class Installer implements Runnable, Observer {
 				date = myPlugin.getNewTimestamp();
 			}
 
-			String saveToPath = pluginDataProcessor.getSaveToLocation(updateDirectory, name);
+			String saveToPath = getSaveToLocation(updateDirectory, name);
 			String downloadURL = "";
 			try {
 				if (name.startsWith("fiji-")) {
@@ -147,10 +145,10 @@ public class Installer implements Runnable, Observer {
 
 				//if download is not yet cancelled, check if downloaded has valid md5 sum
 				if (thisThread == downloadThread) {
-					String realDigest = pluginDataProcessor.getDigest(name, saveToPath);
+					String realDigest = getDigest(name, saveToPath);
 					if (!realDigest.equals(digest))
 						throw new Exception("Wrong checksum: Recorded Md5 sum " + digest + " != Actual Md5 sum " + realDigest);
-					if (name.startsWith("fiji-") && !pluginDataProcessor.getPlatform().startsWith("win"))
+					if (name.startsWith("fiji-") && !getPlatform().startsWith("win"))
 						Runtime.getRuntime().exec(new String[] {
 								"chmod", "0755", saveToPath});
 					downloadedList.add(currentlyDownloading);
@@ -183,7 +181,7 @@ public class Installer implements Runnable, Observer {
 			//if this plugin in waiting list is not fully downloaded yet
 			if (!downloadedList.contains(plugin)) {
 				String name = plugin.getFilename();
-				String fullPath = pluginDataProcessor.getSaveToLocation(updateDirectory, name);
+				String fullPath = getSaveToLocation(updateDirectory, name);
 				try {
 					new File(fullPath).delete(); //delete file, if it exists
 				} catch (Exception e2) { }

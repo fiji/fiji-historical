@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -317,7 +318,11 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		//uploaderFrame.setUploader(new Uploader(pluginDataReader));
 		//inside of .setUploader()... start the actions (generateDocuments(), etc etc)
 		Uploader uploader = new Uploader(pluginListBuilder);
+		try {
 		uploader.generateDocuments();
+		} catch (IOException e) {
+			System.out.println("trouble! " + e.getLocalizedMessage());
+		}
 		uploader.uploadToServer();
 	}
 
@@ -345,7 +350,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		loadedFrame = new FrameInstaller(this);
 		loadedFrame.setVisible(true);
 		FrameInstaller frameInstaller = (FrameInstaller)loadedFrame;
-		frameInstaller.setInstaller(new Installer(pluginListBuilder, fileURL));
+		frameInstaller.setInstaller(new Installer(pluginListBuilder.getExistingPluginList(), fileURL));
 		setEnabled(false);
 	}
 
