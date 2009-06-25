@@ -612,5 +612,10 @@ Tasks Completed:
    ==> In particular, reduced repeating code at Controller
 - Developer version is able to select to view "Uploadable plugins only"
 
-Next task:
-- Look into Dependency Analyzer... That's from ByteCodeAnalyzer
+
+
+24th-25th June, Wednesday-Thursday
+Tasks Completed:
+- Implemented DependencyAnalyzer
+- Refactored code ==> Conversion of PluginDataProcessor into an abstract class where classes in need of its functions will extend from it.
+- 2nd task work still in progress...
