@@ -3,16 +3,11 @@ import ij.IJ;
 import ij.plugin.PlugIn;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -25,26 +20,21 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.ImageIcon;
 import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
 
 /*
  * Main User Interface
  */
 public class PluginManager extends JFrame implements PlugIn, TableModelListener {
 	private List<PluginObject> viewList;
-	private PluginListBuilder pluginListBuilder;
+	private List<PluginObject> pluginCollection;
 	private String fileURL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
-	private String saveFile = "current.txt";//should be XML file actually
 
 	//User Interface elements
 	private boolean isDeveloper = true; //temporarily activated by change of code
@@ -66,11 +56,9 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	public PluginManager() {
 		super("Plugin Manager");
 		try {
-			pluginListBuilder = new PluginListBuilder(fileURL, saveFile);
-			pluginListBuilder.downloadXMLFile(); //should be XML file actually
-			pluginListBuilder.buildLocalPluginInformation(); //2nd step
-			pluginListBuilder.buildFullPluginList(); //3rd step
-			viewList = pluginListBuilder.getExistingPluginList(); //initial view: All plugins
+			LoadStatusDisplay loadStatusDisplay = new LoadStatusDisplay();
+			pluginCollection = loadStatusDisplay.getExistingPluginList();
+			viewList = pluginCollection; //initial view: All plugins
 
 			setUpUserInterface();
 			setVisible(true);
@@ -284,9 +272,9 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		int selectedIndex = comboBoxViewingOptions.getSelectedIndex();
 
 		if (txtSearch.getText().trim().isEmpty()) {
-			viewList = pluginListBuilder.getExistingPluginList();
+			viewList = pluginCollection;
 		} else {
-			viewList = ((PluginCollection)pluginListBuilder.getExistingPluginList()).getList(PluginCollection.getFilterForText(txtSearch.getText().trim()));
+			viewList = ((PluginCollection)pluginCollection).getList(PluginCollection.getFilterForText(txtSearch.getText().trim()));
 		}
 
 		if (selectedIndex == 0) { //if "View all plugins"
@@ -317,7 +305,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		//...
 		//uploaderFrame.setUploader(new Uploader(pluginDataReader));
 		//inside of .setUploader()... start the actions (generateDocuments(), etc etc)
-		Uploader uploader = new Uploader(pluginListBuilder);
+		Uploader uploader = new Uploader(pluginCollection);
 		try {
 		uploader.generateDocuments();
 		} catch (IOException e) {
@@ -335,7 +323,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private void clickToBeginOperations() {
 		loadedFrame = new FrameConfirmation(this);
 		FrameConfirmation frameConfirmation = (FrameConfirmation)loadedFrame;
-		frameConfirmation.displayInformation(new Controller(pluginListBuilder.getExistingPluginList()));
+		frameConfirmation.displayInformation(new Controller(pluginCollection));
 		loadedFrame.setVisible(true);
 		setEnabled(false);
 	}
@@ -350,7 +338,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		loadedFrame = new FrameInstaller(this);
 		loadedFrame.setVisible(true);
 		FrameInstaller frameInstaller = (FrameInstaller)loadedFrame;
-		frameInstaller.setInstaller(new Installer(pluginListBuilder.getExistingPluginList(), fileURL));
+		frameInstaller.setInstaller(new Installer(pluginCollection, fileURL));
 		setEnabled(false);
 	}
 
@@ -409,9 +397,8 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	private void enablingButtonIfAnyActions(JButton button, PluginCollection.Filter filter) {
-		PluginCollection pluginList = (PluginCollection)pluginListBuilder.getExistingPluginList();
 		if (button != null) {
-			List<PluginObject> myList = pluginList.getList(filter);
+			List<PluginObject> myList = ((PluginCollection)pluginCollection).getList(filter);
 			if (myList.size() > 0)
 				button.setEnabled(true);
 			else

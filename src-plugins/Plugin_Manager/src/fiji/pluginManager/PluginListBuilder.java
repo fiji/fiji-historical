@@ -1,24 +1,14 @@
 package fiji.pluginManager;
-import ij.IJ;
-import ij.Menus;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
-
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
-
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
@@ -26,48 +16,33 @@ import org.xml.sax.SAXParseException;
  * PluginListBuilder's overall role is to be in charge of building of a plugin list
  * for interface usage.
  * 
- * 1st step: Download information about Fiji plugins.
- * 2nd step: Get information of local plugins (Md5 sums and version)
- * 3rd step: Get information of latest Fiji plugins (Md5 sums and version)
- * 4th step: Build up list of "PluginObject" using both local and updates
+ * 1st step: Get information of local plugins (Md5 sums and version)
+ * 2nd step: Get information of latest Fiji plugins (Md5 sums and version)
+ * 3rd step: Build up list of "PluginObject" using both local and updates
  * 
- * Note that 3rd and 4th step are combined into a single method.
+ * Note that 2nd and 3rd step are combined into a single method.
  */
-public class PluginListBuilder implements Observable, Observer {
+public class PluginListBuilder extends PluginData implements Observable {
 	public boolean tempDemo = false; //if true, use artificial database...
 
-	static byte STATUS_INACTIVE = 0; //doing nothing
-	static byte STATUS_CALC = 1; //calculating Md5 sums
-	static byte STATUS_DOWNLOAD = 2; //downloading important information
-	private byte readerStatus = STATUS_INACTIVE; //default
 	private String filename;
 	private int currentlyLoaded;
 	private int totalToLoad;
+	private boolean buildComplete;
 
-	private LoadStatusDisplay loadStatusDisplay;
 	private Vector<Observer> observersList;
 	private List<PluginObject> pluginList;
 	private Map<String, String> digests;
 	private Map<String, String> dates;
 	private Map<String, String> latestDates;
 	private Map<String, String> latestDigests;
-
-	private final String infoDirectory = "plugininfo";
-	private String path; //location of local plugins
-	private PluginDataProcessor pluginDataProcessor;
 	private XMLFileReader xmlFileReader;
-	private String saveFileLocation;
-	private String saveFile;
-	private String fileURL;
 
-	public PluginListBuilder(String fileURL, String saveFile) {
-		this.saveFile = saveFile;
-		this.fileURL = fileURL;
-
+	public PluginListBuilder(Observer observer) {
+		super();
 		//set up observers
 		observersList = new Vector<Observer>();
-		loadStatusDisplay = new LoadStatusDisplay(this);
-		register(loadStatusDisplay);
+		register(observer);
 
 		//initialize storage
 		dates = new TreeMap<String, String>();
@@ -75,17 +50,6 @@ public class PluginListBuilder implements Observable, Observer {
 		latestDates = new TreeMap<String, String>();
 		latestDigests = new TreeMap<String, String>();
 		pluginList = new PluginCollection();
-
-		//initialize location of downloads and local plugins
-		path = stripSuffix(stripSuffix(Menus.getPlugInsPath(),
-				File.separator),
-				"plugins");
-		pluginDataProcessor = new PluginDataProcessor(path);
-		saveFileLocation = pluginDataProcessor.getSaveToLocation(infoDirectory, saveFile);
-	}
-
-	public byte getReaderStatus() {
-		return readerStatus;
 	}
 
 	public String getFilename() {
@@ -100,17 +64,17 @@ public class PluginListBuilder implements Observable, Observer {
 		return totalToLoad;
 	}
 
-	public List<PluginObject> getExistingPluginList() {
+	public List<PluginObject> extractFullPluginList() {
 		return pluginList;
 	}
-
-	public PluginDataProcessor getPluginDataProcessor() {
-		return pluginDataProcessor;
+	
+	public boolean buildComplete() {
+		return buildComplete;
 	}
 
 	//recursively looks into a directory and adds the relevant file
 	private void queueDirectory(List<String> queue, String path) {
-		File dir = new File(pluginDataProcessor.prefix(path));
+		File dir = new File(prefix(path));
 		if (!dir.isDirectory())
 			return;
 		String[] list = dir.list();
@@ -124,72 +88,27 @@ public class PluginListBuilder implements Observable, Observer {
 					path + File.separator + list[i]);
 	}
 
-	private String stripSuffix(String string, String suffix) {
-		if (!string.endsWith(suffix))
-			return string;
-		return string.substring(0, string.length() - suffix.length());
-	}
-
-	public void downloadXMLFile() {
-		//progress starts out at 0 for download of a single file
-		currentlyLoaded = 0 ;
-		totalToLoad = 0;
-		readerStatus = PluginListBuilder.STATUS_DOWNLOAD;
-		filename = saveFile;
-		notifyObservers();
-
+	public void buildLocalPluginInformation(String xmlFileLocation) {
 		try {
-
-			//Establishes connection
-			Downloader downloader = new Downloader(fileURL, saveFileLocation);
-			downloader.register(this);
-			totalToLoad += downloader.getSize();
-
-			//Prepare the necessary download input and output streams
-			downloader.prepareDownload();
-			byte[] buffer = downloader.createNewBuffer();
-			int count;
-
-			//Start actual downloading and writing to file
-			while ((count = downloader.getNextPart(buffer)) >= 0) {
-				downloader.writePart(buffer, count);
-			}
-			downloader.endConnection(); //end connection once download done
-
-		} catch (Exception e) {
-			try {
-				new File(saveFileLocation).delete();
-			} catch (Exception e2) { }
-			throw new Error("Could not download " + saveFile + " successfully: " + e.getMessage());
-		}
-	}
-
-	public void buildLocalPluginInformation() {
-		try {
-			System.out.println("You got stuck here? pluginListBuilder1");
 		if (!tempDemo) {
-			//xmlFileReader = new XMLFileReader(saveFileLocation);
-			xmlFileReader = new XMLFileReader(infoDirectory +
+			//xmlFileReader = new XMLFileReader(xmlFileLocation);
+			xmlFileReader = new XMLFileReader("plugininfo" +
 					File.separator + "pluginRecords.xml"); //temporary hardcode
 		}
 		else
-			xmlFileReader = new XMLFileReader(infoDirectory +
+			xmlFileReader = new XMLFileReader("plugininfo" +
 				File.separator + "pluginRecords.xml"); //temporary hardcode
 
 			//To get a list of plugins on the local side
 			List<String> queue = new ArrayList<String>();
-			String platform = pluginDataProcessor.getPlatform();
-			String macPrefix = pluginDataProcessor.getMacPrefix();
-			boolean useMacPrefix = pluginDataProcessor.getUseMacPrefix();
-			System.out.println("You got stuck here? pluginListBuilder2");
 		if (!tempDemo) {
 
 			//Gather filenames of all local plugins
-			if (platform.equals("macosx")) {
-				queue.add((useMacPrefix ? macPrefix : "") + "fiji-macosx");
-				queue.add((useMacPrefix ? macPrefix : "") + "fiji-tiger");
+			if (getPlatform().equals("macosx")) {
+				queue.add((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-macosx");
+				queue.add((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-tiger");
 			} else
-				queue.add("fiji-" + platform);
+				queue.add("fiji-" + getPlatform());
 
 			queue.add("ij.jar");
 			queueDirectory(queue, "plugins");
@@ -211,10 +130,8 @@ public class PluginListBuilder implements Observable, Observer {
 			digests.put("PluginL.jar", "69ba8dc9fbd8945ec5e43fdfc612f9ec6150e644"); //test non-Fiji plugin
 		}
 
-		System.out.println("You got stuck here? pluginListBuilder3");
 			//To calculate the Md5 sums on the local side
 			Iterator<String> iter = queue.iterator();
-			readerStatus = PluginListBuilder.STATUS_CALC;
 			currentlyLoaded = 0;
 			totalToLoad = queue.size();
 			while (iter.hasNext()) {
@@ -223,13 +140,13 @@ public class PluginListBuilder implements Observable, Observer {
 				String outputDigest;
 				String outputDate;
 
-				if (useMacPrefix && outputFilename.startsWith(macPrefix))
-					outputFilename = outputFilename.substring(macPrefix.length());
+				if (getUseMacPrefix() && outputFilename.startsWith(getMacPrefix()))
+					outputFilename = outputFilename.substring(getMacPrefix().length());
 				if (File.separator.equals("\\"))
 					outputFilename = outputFilename.replace("\\", "/");
 
 			if (!tempDemo) {
-				outputDigest = pluginDataProcessor.getDigestFromFile(outputFilename);
+				outputDigest = getDigestFromFile(outputFilename);
 				digests.put(outputFilename, outputDigest);
 			} else {
 				//temporary line of code
@@ -240,7 +157,7 @@ public class PluginListBuilder implements Observable, Observer {
 				if (!xmlFileReader.matchesFilenameAndDigest(outputFilename, outputDigest)) {
 					//use the local plugin's last modified timestamp instead
 					if (!tempDemo) {
-					outputDate = pluginDataProcessor.getTimestampFromFile(outputFilename);
+					outputDate = getTimestampFromFile(outputFilename);
 					} else {
 					outputDate = "20090622999666"; //assume latest... always
 					}
@@ -253,7 +170,7 @@ public class PluginListBuilder implements Observable, Observer {
 				++currentlyLoaded;
 				notifyObservers();
 			}
-			System.out.println("You got stuck here? pluginListBuilder4");
+
 		} catch (ParserConfigurationException e1) {
 			throw new Error(e1.getLocalizedMessage());
 		} catch (IOException e2) {
@@ -266,7 +183,6 @@ public class PluginListBuilder implements Observable, Observer {
 	//Called after local plugin files have been processed
 	public void buildFullPluginList() {
 		xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
-		System.out.println("You got stuck here? pluginListBuilder5");
 		//Converts data gathered into lists of PluginObject, ready for UI classes usage
 		Iterator<String> iterLatest = latestDigests.keySet().iterator();
 		while (iterLatest.hasNext()) {
@@ -274,13 +190,11 @@ public class PluginListBuilder implements Observable, Observer {
 
 			// launcher is platform-specific
 			if (pluginName.startsWith("fiji-")) {
-				String platform = pluginDataProcessor.getPlatform();
-				if (!pluginName.equals("fiji-" + platform) &&
-						(!platform.equals("macosx") ||
+				if (!pluginName.equals("fiji-" + getPlatform()) &&
+						(!getPlatform().equals("macosx") ||
 								!pluginName.startsWith("fiji-tiger")))
 					continue;
 			}
-			System.out.println("You got stuck here? pluginListBuilder6 looppppp");
 			String digest = digests.get(pluginName);
 			String remoteDigest = latestDigests.get(pluginName);
 			String date = dates.get(pluginName);
@@ -323,7 +237,7 @@ public class PluginListBuilder implements Observable, Observer {
 				//TODO: Placeholder code for calculating perhaps dependency
 				//(Using DependencyAnalyzer) from file itself
 				if (!tempDemo) {
-					myPlugin.setFilesize(pluginDataProcessor.getFilesizeFromFile(myPlugin.getFilename()));
+					myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
 				} else {
 					myPlugin.setFilesize(4500);
 				}
@@ -343,7 +257,7 @@ public class PluginListBuilder implements Observable, Observer {
 				//implies third-party plugin, no description nor dependency information available
 				PluginObject myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, false);
 				if (!tempDemo) {
-					myPlugin.setFilesize(pluginDataProcessor.getFilesizeFromFile(myPlugin.getFilename()));
+					myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
 				} else {
 					myPlugin.setFilesize(4500);
 				}
@@ -351,7 +265,8 @@ public class PluginListBuilder implements Observable, Observer {
 			}
 		}
 
-		readerStatus = PluginListBuilder.STATUS_INACTIVE;
+		System.out.println("build complete, size is " + pluginList.size());
+		buildComplete = true;
 		notifyObservers();
 		/*
 		boolean someAreNotWritable = false;
@@ -390,34 +305,4 @@ public class PluginListBuilder implements Observable, Observer {
 
 	public void unRegister(Observer obs) {}
 
-	//As Observer of Downloaders, PluginDataReader gathers download information
-	public void refreshData(Observable subject) {
-		Downloader myDownloader = (Downloader)subject;
-		currentlyLoaded += myDownloader.getNumOfBytes();
-		System.out.println("Downloaded so far: " + currentlyLoaded);
-		notifyObservers(); //Notify since data is observed by LoadStatusDisplay
-	}
-
-}
-
-class LoadStatusDisplay implements Observer {
-	private PluginListBuilder pluginListBuilder;
-
-	public LoadStatusDisplay(PluginListBuilder pluginListBuilder) {
-		this.pluginListBuilder = pluginListBuilder;
-		IJ.showStatus("Starting up Plugin Manager");
-	}
-
-	public void refreshData(Observable subject) {
-		if (subject == pluginListBuilder) { //if pluginDataReader is sending data directly
-			if (pluginListBuilder.getReaderStatus() == PluginListBuilder.STATUS_CALC) {
-				IJ.showStatus("Checksumming " + pluginListBuilder.getFilename() + "...");
-			} else if (pluginListBuilder.getReaderStatus() == PluginListBuilder.STATUS_DOWNLOAD) {
-				IJ.showStatus("Downloading " + pluginListBuilder.getFilename() + "...");
-			} else {
-				IJ.showStatus("");
-			}
-			IJ.showProgress(pluginListBuilder.getCurrentlyLoaded(), pluginListBuilder.getTotalToLoad());
-		}
-	}
 }
