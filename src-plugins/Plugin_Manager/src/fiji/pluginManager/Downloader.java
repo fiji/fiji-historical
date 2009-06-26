@@ -10,10 +10,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Vector;
 
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
-
 /*
  * Directly responsibility: Download a file given its URL to a given destination.
  * Updates its download status to its Observer as well.
@@ -61,6 +57,7 @@ public class Downloader implements Observable {
 	}
 
 	public int getNumOfBytes() {
+		//number of bytes retrieved at THIS interval, NOT "bytes downloaded so far"
 		return downloadedBytes;
 	}
 
@@ -71,7 +68,6 @@ public class Downloader implements Observable {
 	}
 
 	public void notifyObservers() {
-		// Send notify to all Observers
 		for (Observer observer : observersList) {
 			observer.refreshData(this);
 		}
@@ -81,19 +77,6 @@ public class Downloader implements Observable {
 		observersList.addElement(obs);
 	}
 
-	public void unRegister(Observer obs) {
-	}
+	public void unRegister(Observer obs) { }
 
-}
-
-interface Observer {
-	public void refreshData(Observable subject);
-}
-
-interface Observable {
-	public void notifyObservers();
-
-	public void register(Observer obs);
-
-	public void unRegister(Observer obs);
 }

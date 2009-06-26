@@ -1,12 +1,8 @@
 package fiji.pluginManager;
 
-import ij.IJ;
-
 import java.util.Iterator;
 import java.util.List;
 import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 /*
@@ -89,7 +85,7 @@ public class Installer extends PluginData implements Runnable, Observer {
 	public void run() {
 		Thread thisThread = Thread.currentThread();
 		isDownloading = true;
-		//This segment gets the size of the file
+		//This segment gets the size of the download
 		for (PluginObject myPlugin : pluginsWaiting) {
 			if (thisThread == downloadThread) {
 				if (myPlugin.isInstallable()) {
@@ -104,17 +100,16 @@ public class Installer extends PluginData implements Runnable, Observer {
 
 		//Downloads the file(s), one by one
 		while (iterWaiting.hasNext() && thisThread == downloadThread) {
-			PluginObject myPlugin = iterWaiting.next();
-			currentlyDownloading = myPlugin;
-			String name = myPlugin.getFilename();
+			currentlyDownloading = iterWaiting.next();
+			String name = currentlyDownloading.getFilename();
 			String digest = null;
 			String date = null;
-			if (myPlugin.isInstallable()) {
-				digest = myPlugin.getmd5Sum();
-				date = myPlugin.getTimestamp();
-			} else if (myPlugin.isUpdateable()) {
-				digest = myPlugin.getNewMd5Sum();
-				date = myPlugin.getNewTimestamp();
+			if (currentlyDownloading.isInstallable()) {
+				digest = currentlyDownloading.getmd5Sum();
+				date = currentlyDownloading.getTimestamp();
+			} else if (currentlyDownloading.isUpdateable()) {
+				digest = currentlyDownloading.getNewMd5Sum();
+				date = currentlyDownloading.getNewTimestamp();
 			}
 
 			String saveToPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
@@ -129,6 +124,9 @@ public class Installer extends PluginData implements Runnable, Observer {
 				downloadURL = new URL(new URL(updateURL), name + "-" + date).toString();
 				Downloader downloader = new Downloader(downloadURL, saveToPath);
 				downloader.register(this);
+
+				//TODO: Check for filesizes?
+				//(downloader.getSize() == currentlyDownloading.getFilesize())
 
 				//Prepare the necessary download input and output streams
 				downloader.prepareDownload();
@@ -159,7 +157,7 @@ public class Installer extends PluginData implements Runnable, Observer {
 					deleteUnfinished();
 				}
 
-			} catch(Exception e) {
+			} catch (Exception e) {
 				//try to delete the file (probably this be the only catch - DRY)
 				try {
 					new File(saveToPath).delete();

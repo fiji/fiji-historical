@@ -104,7 +104,7 @@ class FrameInstaller extends JFrame {
 			int totalBytes = installer.getBytesTotal();
 			int downloadedBytes = installer.getBytesDownloaded();
 			isProgressing = installer.stillDownloading();
-			
+
 			//check if download has finished (Whether 100% success or not)
 			if (isProgressing == false) {
 				btnClose.setText("Done");
