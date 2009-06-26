@@ -61,14 +61,9 @@ public class PluginListBuilder extends PluginDataObservable {
 
 	public void buildFullPluginList() throws ParserConfigurationException, IOException, SAXException {
 		//Parses XML document; contents is needed for both local and remote plugins
-		if (!tempDemo) {
-			//xmlFileReader = new XMLFileReader(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME));
-			xmlFileReader = new XMLFileReader("plugininfo" +
-					File.separator + "pluginRecords.xml"); //temporary hardcode
-		}
-		else
-			xmlFileReader = new XMLFileReader("plugininfo" +
-					File.separator + "pluginRecords.xml"); //temporary hardcode
+		//xmlFileReader = new XMLFileReader(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME));
+		xmlFileReader = new XMLFileReader("plugininfo" +
+				File.separator + "pluginRecords.xml"); //temporary hardcode
 		//Generates information of plugins on local side
 		buildLocalPluginList();
 		//Generates information of plugins on remote side
@@ -83,6 +78,8 @@ public class PluginListBuilder extends PluginDataObservable {
 		if (!tempDemo) {
 
 			//Gather filenames of all local plugins
+			//TODO: One thing to note here, the below codes appear to assume that the user
+			//has a fixed filename for the Fiji applicaton
 			if (getPlatform().equals("macosx")) {
 				queue.add((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-macosx");
 				queue.add((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-tiger");
@@ -156,7 +153,6 @@ public class PluginListBuilder extends PluginDataObservable {
 		Iterator<String> iterLatest = latestDigests.keySet().iterator();
 		while (iterLatest.hasNext()) {
 			String pluginName = iterLatest.next();
-
 			// launcher is platform-specific
 			if (pluginName.startsWith("fiji-")) {
 				if (!pluginName.equals("fiji-" + getPlatform()) &&
@@ -168,8 +164,6 @@ public class PluginListBuilder extends PluginDataObservable {
 			String date = dates.get(pluginName);
 			String remoteDate = latestDates.get(pluginName);
 			PluginObject myPlugin = null;
-
-			System.out.println(pluginName + ", digest: " + digest + ", timestamp: " + date);
 
 			if (digest != null && remoteDigest.equals(digest)) { //if latest version installed
 				myPlugin = new PluginObject(pluginName, digest, date, PluginObject.STATUS_INSTALLED, true);
@@ -197,8 +191,6 @@ public class PluginListBuilder extends PluginDataObservable {
 				myPlugin.setDependency(xmlFileReader.getDependenciesFrom(pluginName, pluginDate));
 				myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(pluginName, pluginDate));
 			} else { //if digest of this plugin does not exist in the records
-				//TODO: Placeholder code for calculating perhaps dependency
-				//(Using DependencyAnalyzer) from file itself
 				if (!tempDemo) {
 					myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
 				} else {
@@ -212,7 +204,6 @@ public class PluginListBuilder extends PluginDataObservable {
 		Iterator<String> iterCurrent = digests.keySet().iterator();
 		while (iterCurrent.hasNext()) {
 			String name = iterCurrent.next();
-
 			//If it is not a Fiji plugin (Not found in list of up-to-date versions)
 			if (!latestDigests.containsKey(name)) {
 				String digest = digests.get(name);
