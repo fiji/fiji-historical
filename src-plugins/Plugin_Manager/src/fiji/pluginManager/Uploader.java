@@ -15,7 +15,7 @@ public class Uploader {
 		System.out.println("Uploader CLASS: Started up");
 		PluginCollection pluginCollection = (PluginCollection)pluginList;
 		this.uploadList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
-		dependencyAnalyzer = new DependencyAnalyzer();
+		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 	}
 
 	public void generateDocuments() throws IOException {
@@ -25,7 +25,7 @@ public class Uploader {
 		System.out.println("Uploader CLASS: At generateDocuments(), asked dependencyAnalyzer to calculate dependencies for plugins.");
 		//or... dependencyAnalyzer.generateDependencies(uploadList)?
 		for (PluginObject plugin : uploadList) {
-			List<Dependency> dependencies = dependencyAnalyzer.getDependencyListFromFile(plugin);
+			List<Dependency> dependencies = dependencyAnalyzer.getDependencyListFromFile(plugin.getFilename());
 			System.out.println("========Results of dependencyAnalyzer of " + plugin.getFilename() + "========");
 			for (int i = 0; i < dependencies.size(); i++) {
 				Dependency dependency = dependencies.get(i);

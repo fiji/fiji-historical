@@ -131,4 +131,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			if (filter.matchesFilter(plugin)) myList.add(plugin);
 		return myList;
 	}
+
+	public PluginObject getPlugin(String filename) { //filename is unique identifier
+		for (PluginObject plugin : this) {
+			if (plugin.getFilename().equals(filename)) return plugin;
+		}
+		return null;
+	}
 }

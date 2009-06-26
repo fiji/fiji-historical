@@ -160,8 +160,7 @@ public class PluginListBuilder extends PluginDataObservable {
 			// launcher is platform-specific
 			if (pluginName.startsWith("fiji-")) {
 				if (!pluginName.equals("fiji-" + getPlatform()) &&
-						(!getPlatform().equals("macosx") ||
-								!pluginName.startsWith("fiji-tiger")))
+					(!getPlatform().equals("macosx") || !pluginName.startsWith("fiji-tiger")))
 					continue;
 			}
 			String digest = digests.get(pluginName);
@@ -172,16 +171,11 @@ public class PluginListBuilder extends PluginDataObservable {
 
 			System.out.println(pluginName + ", digest: " + digest + ", timestamp: " + date);
 
-			//if latest version installed
-			if (digest != null && remoteDigest.equals(digest)) {
+			if (digest != null && remoteDigest.equals(digest)) { //if latest version installed
 				myPlugin = new PluginObject(pluginName, digest, date, PluginObject.STATUS_INSTALLED, true);
-			}
-			//if new file (Not installed yet)
-			else if (digest == null) {
+			} else if (digest == null) { //if new file (Not installed yet)
 				myPlugin = new PluginObject(pluginName, remoteDigest, remoteDate, PluginObject.STATUS_UNINSTALLED, true);
-			}
-			//if its installed but can be updated
-			else {
+			} else { //if its installed but can be updated
 				myPlugin = new PluginObject(pluginName, digest, date, PluginObject.STATUS_MAY_UPDATE, true);
 				//set latest update details
 				String updatedDescription = xmlFileReader.getDescriptionFrom(pluginName, remoteDate);

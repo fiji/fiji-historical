@@ -1,6 +1,5 @@
 package fiji.pluginManager;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -9,27 +8,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-
 import javax.xml.parsers.ParserConfigurationException;
-
 import org.xml.sax.SAXException;
 
 public class DependencyAnalyzer extends PluginData {
 	private Class2JarFileMap map;
-	private XMLFileReader xmlFileReader;
+	private List<PluginObject> pluginList;
 
-	public DependencyAnalyzer() throws ParserConfigurationException, IOException, SAXException {
-		super();
+	public DependencyAnalyzer(List<PluginObject> pluginList) throws ParserConfigurationException, IOException, SAXException {
+		this.pluginList = pluginList;
 		map = new Class2JarFileMap();
-		//xmlFileReader = new XMLFileReader(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME));
-		xmlFileReader = new XMLFileReader("plugininfo" +
-				File.separator + "pluginRecords.xml"); //temporary hardcode
 	}
 
-	public List<Dependency> getDependencyListFromFile(PluginObject plugin) throws IOException {
+	public List<Dependency> getDependencyListFromFile(String pluginFilename) throws IOException {
 		List<Dependency> result = new ArrayList<Dependency>();
 		List<String> filenameList = new ArrayList<String>();
-		String pluginFilename = plugin.getFilename();
 		JarFile jarfile = new JarFile(prefix(pluginFilename));
 		Enumeration<JarEntry> fileEnum = jarfile.entries();
 		//For each file in the selected jar file
@@ -49,9 +42,15 @@ public class DependencyAnalyzer extends PluginData {
 						!pluginFilename.equals(strJarDependency) &&
 						!filenameList.contains(strJarDependency)) {
 						//Only require direct dependencies, need not go recursive...
-						String timestamp = getTimestampFromFile(strJarDependency);
-						result.add(new Dependency(strJarDependency, timestamp));
-						filenameList.add(strJarDependency);
+						PluginObject plugin = ((PluginCollection)pluginList).getPlugin(strJarDependency);
+						if (plugin != null) {
+							//if plugin exists (It should, as pluginList is prebuilt)
+							String timestamp = plugin.getTimestamp();
+							result.add(new Dependency(strJarDependency, timestamp));
+							filenameList.add(strJarDependency);
+						} else {
+							System.out.println("Dependency Analyzer Question: Is it possible to reach here? Apparently so.");
+						}
 					}
 				}
 			}
