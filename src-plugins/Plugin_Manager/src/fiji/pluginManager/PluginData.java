@@ -44,9 +44,10 @@ public abstract class PluginData {
 
 	private void initialize(boolean forServer) {
 		this.forServer = forServer;
-		fijiPath = stripSuffix(stripSuffix(Menus.getPlugInsPath(), File.separator),
-				"plugins");
-		fijiPath = (fijiPath == null ? getDefaultFijiPath() : fijiPath);
+		fijiPath = (forServer ? getDefaultFijiPath() :
+			stripSuffix(stripSuffix(Menus.getPlugInsPath(), File.separator),
+		"plugins"));
+		//fijiPath = (fijiPath == null ? getDefaultFijiPath() : fijiPath);
 
 		//gets the platform string value
 		boolean is64bit = System.getProperty("os.arch", "").indexOf("64") >= 0;

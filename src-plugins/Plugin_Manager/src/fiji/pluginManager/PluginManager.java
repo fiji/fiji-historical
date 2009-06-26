@@ -273,6 +273,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		viewList = (txtSearch.getText().trim().isEmpty() ?  pluginCollection :
 			((PluginCollection)pluginCollection).getList(PluginCollection.getFilterForText(txtSearch.getText().trim())));
 
+		//TODO: Candidate for "change"?
 		if (selectedIndex == 0) { //if "View all plugins"
 			//do nothing
 		} else if (selectedIndex == 1) { //if "View installed plugins"
