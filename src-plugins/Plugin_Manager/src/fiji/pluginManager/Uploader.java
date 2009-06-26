@@ -3,11 +3,15 @@ package fiji.pluginManager;
 import java.io.IOException;
 import java.util.List;
 
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
 public class Uploader {
 	private List<PluginObject> uploadList;
 	private DependencyAnalyzer dependencyAnalyzer;
 
-	public Uploader(List<PluginObject> pluginList) {
+	public Uploader(List<PluginObject> pluginList) throws ParserConfigurationException, IOException, SAXException {
 		System.out.println("Uploader CLASS: Started up");
 		PluginCollection pluginCollection = (PluginCollection)pluginList;
 		this.uploadList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
@@ -21,7 +25,7 @@ public class Uploader {
 		System.out.println("Uploader CLASS: At generateDocuments(), asked dependencyAnalyzer to calculate dependencies for plugins.");
 		//or... dependencyAnalyzer.generateDependencies(uploadList)?
 		for (PluginObject plugin : uploadList) {
-			List<Dependency> dependencies = dependencyAnalyzer.getDependencyListFromFile(plugin.getFilename());
+			List<Dependency> dependencies = dependencyAnalyzer.getDependencyListFromFile(plugin);
 			System.out.println("========Results of dependencyAnalyzer of " + plugin.getFilename() + "========");
 			for (int i = 0; i < dependencies.size(); i++) {
 				Dependency dependency = dependencies.get(i);

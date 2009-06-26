@@ -59,30 +59,22 @@ public class PluginListBuilder extends PluginDataObservable {
 					path + File.separator + list[i]);
 	}
 
-	public void buildFullPluginList(String xmlFileLocation) {
-		try {
-			//Parses XML document; contents is needed for both local and remote plugins
-			if (!tempDemo) {
-				//xmlFileReader = new XMLFileReader(xmlFileLocation);
-				xmlFileReader = new XMLFileReader("plugininfo" +
-						File.separator + "pluginRecords.xml"); //temporary hardcode
-			}
-			else
-				xmlFileReader = new XMLFileReader("plugininfo" +
+	public void buildFullPluginList() throws ParserConfigurationException, IOException, SAXException {
+		//Parses XML document; contents is needed for both local and remote plugins
+		if (!tempDemo) {
+			//xmlFileReader = new XMLFileReader(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME));
+			xmlFileReader = new XMLFileReader("plugininfo" +
 					File.separator + "pluginRecords.xml"); //temporary hardcode
-			//Generates information of plugins on local side
-			buildLocalPluginList();
-			//Generates information of plugins on remote side
-			xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
-			//Builds up a list of PluginObjects, of both local and remote
-			generatePluginList();
-		} catch (ParserConfigurationException e1) {
-			throw new Error(e1.getLocalizedMessage());
-		} catch (IOException e2) {
-			throw new Error(e2.getLocalizedMessage());
-		} catch (SAXException e3) {
-			throw new Error(e3.getLocalizedMessage());
 		}
+		else
+			xmlFileReader = new XMLFileReader("plugininfo" +
+					File.separator + "pluginRecords.xml"); //temporary hardcode
+		//Generates information of plugins on local side
+		buildLocalPluginList();
+		//Generates information of plugins on remote side
+		xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
+		//Builds up a list of PluginObjects, of both local and remote
+		generatePluginList();
 	}
 
 	private void buildLocalPluginList() throws ParserConfigurationException, SAXException, IOException {

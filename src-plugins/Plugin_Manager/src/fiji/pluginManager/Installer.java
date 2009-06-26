@@ -15,7 +15,6 @@ import java.net.URL;
 */
 public class Installer extends PluginData implements Runnable, Observer {
 	private String updateURL;
-	private final String updateDirectory = "update";
 	private List<PluginObject> pluginsWaiting;
 	private volatile Thread downloadThread;
 
@@ -118,7 +117,7 @@ public class Installer extends PluginData implements Runnable, Observer {
 				date = myPlugin.getNewTimestamp();
 			}
 
-			String saveToPath = getSaveToLocation(updateDirectory, name);
+			String saveToPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
 			String downloadURL = "";
 			try {
 				if (name.startsWith("fiji-")) {
@@ -181,7 +180,7 @@ public class Installer extends PluginData implements Runnable, Observer {
 			//if this plugin in waiting list is not fully downloaded yet
 			if (!downloadedList.contains(plugin)) {
 				String name = plugin.getFilename();
-				String fullPath = getSaveToLocation(updateDirectory, name);
+				String fullPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
 				try {
 					new File(fullPath).delete(); //delete file, if it exists
 				} catch (Exception e2) { }

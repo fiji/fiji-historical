@@ -10,6 +10,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Vector;
 
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
 /*
  * Directly responsibility: Download a file given its URL to a given destination.
  * Updates its download status to its Observer as well.

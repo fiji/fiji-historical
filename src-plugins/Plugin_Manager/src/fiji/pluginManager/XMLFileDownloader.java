@@ -2,25 +2,24 @@ package fiji.pluginManager;
 import java.io.File;
 
 public class XMLFileDownloader extends PluginDataObservable implements Observer {
-	private final String infoDirectory = "plugininfo";
 	private String saveFileLocation;
 
 	public XMLFileDownloader(Observer observer) {
 		super(observer);
 	}
 
-	public void startDownload(String fileURL, String saveFile) {
-		saveFileLocation = getSaveToLocation(infoDirectory, saveFile);
+	public void startDownload() {
+		saveFileLocation = getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME);
 
 		//progress starts out at 0 for download of a single file
-		taskname = saveFile;
+		taskname = PluginManager.XML_FILENAME;
 		currentlyLoaded = 0 ;
 		totalToLoad = 0;
 		notifyObservers();
 
 		try {
 			//Establishes connection
-			Downloader downloader = new Downloader(fileURL, saveFileLocation);
+			Downloader downloader = new Downloader(PluginManager.XML_FILE_URL, saveFileLocation);
 			downloader.register(this);
 			totalToLoad += downloader.getSize();
 
@@ -46,15 +45,11 @@ public class XMLFileDownloader extends PluginDataObservable implements Observer 
 		}
 	}
 
-	public String getSaveFileLocation() {
-		return saveFileLocation;
-	}
-
-	//As Observer of Downloaders, PluginDataReader gathers download information
+	//As Observer of Downloaders, XMLFileDownloader gathers how much downloaded so far
 	public void refreshData(Observable subject) {
 		Downloader myDownloader = (Downloader)subject;
 		currentlyLoaded += myDownloader.getNumOfBytes();
 		System.out.println("Downloaded so far: " + currentlyLoaded);
-		notifyObservers(); //Notify since data is observed by LoadStatusDisplay
+		notifyObservers();
 	}
 }

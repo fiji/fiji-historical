@@ -1,5 +1,6 @@
 package fiji.pluginManager;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -9,17 +10,26 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
 public class DependencyAnalyzer extends PluginData {
 	private Class2JarFileMap map;
+	private XMLFileReader xmlFileReader;
 
-	public DependencyAnalyzer() {
-		System.out.println("DependencyAnalyzer CLASS: Started up");
+	public DependencyAnalyzer() throws ParserConfigurationException, IOException, SAXException {
+		super();
 		map = new Class2JarFileMap();
+		//xmlFileReader = new XMLFileReader(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME));
+		xmlFileReader = new XMLFileReader("plugininfo" +
+				File.separator + "pluginRecords.xml"); //temporary hardcode
 	}
 
-	public List<Dependency> getDependencyListFromFile(String pluginFilename) throws IOException {
+	public List<Dependency> getDependencyListFromFile(PluginObject plugin) throws IOException {
 		List<Dependency> result = new ArrayList<Dependency>();
 		List<String> filenameList = new ArrayList<String>();
+		String pluginFilename = plugin.getFilename();
 		JarFile jarfile = new JarFile(prefix(pluginFilename));
 		Enumeration<JarEntry> fileEnum = jarfile.entries();
 		//For each file in the selected jar file
@@ -33,7 +43,6 @@ public class DependencyAnalyzer extends PluginData {
 
 				//For each dependent class
 				Iterator<String> iter = analyzer.getClassNames();
-				
 				while (iter.hasNext()) {
 					String strJarDependency = map.get(iter.next().replace('/', '.'));
 					if (strJarDependency != null &&

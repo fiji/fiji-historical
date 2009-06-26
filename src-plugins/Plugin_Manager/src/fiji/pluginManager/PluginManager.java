@@ -27,14 +27,20 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.text.BadLocationException;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
 
 /*
  * Main User Interface
  */
 public class PluginManager extends JFrame implements PlugIn, TableModelListener {
+	public static final String XML_FILE_URL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
+	public static final String XML_FILENAME = "current.txt";//should be XML file actually
+	public static final String XML_DIRECTORY = "plugininfo";
+	public static final String UPDATE_DIRECTORY = "update";
 	private List<PluginObject> viewList;
 	private List<PluginObject> pluginCollection;
-	private String fileURL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
 
 	//User Interface elements
 	private boolean isDeveloper = true; //temporarily activated by change of code
@@ -303,13 +309,17 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		//...
 		//uploaderFrame.setUploader(new Uploader(pluginDataReader));
 		//inside of .setUploader()... start the actions (generateDocuments(), etc etc)
-		Uploader uploader = new Uploader(pluginCollection);
 		try {
-		uploader.generateDocuments();
-		} catch (IOException e) {
-			System.out.println("trouble! " + e.getLocalizedMessage());
+			Uploader uploader = new Uploader(pluginCollection);
+			uploader.generateDocuments();
+			uploader.uploadToServer();
+		} catch (ParserConfigurationException e1) {
+			throw new Error(e1.getLocalizedMessage());
+		} catch (IOException e2) {
+			throw new Error(e2.getLocalizedMessage());
+		} catch (SAXException e3) {
+			throw new Error(e3.getLocalizedMessage());
 		}
-		uploader.uploadToServer();
 	}
 
 	private void clickToEditDescriptions() {
@@ -336,7 +346,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		loadedFrame = new FrameInstaller(this);
 		loadedFrame.setVisible(true);
 		FrameInstaller frameInstaller = (FrameInstaller)loadedFrame;
-		frameInstaller.setInstaller(new Installer(pluginCollection, fileURL));
+		frameInstaller.setInstaller(new Installer(pluginCollection, PluginManager.XML_FILE_URL));
 		setEnabled(false);
 	}
 
