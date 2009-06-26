@@ -17,17 +17,16 @@ public class LoadStatusDisplay implements Observer {
 
 	public void refreshData(Observable subject) {
 		if (subject == xmlFileDownloader) {
-			IJ.showStatus("Downloading " + xmlFileDownloader.getFilename() + "...");
+			IJ.showStatus("Downloading " + xmlFileDownloader.getTaskname() + "...");
 			IJ.showProgress(xmlFileDownloader.getCurrentlyLoaded(), xmlFileDownloader.getTotalToLoad());
-			if (xmlFileDownloader.downloadComplete()) {
+			if (xmlFileDownloader.allTasksComplete()) {
 				pluginListBuilder = new PluginListBuilder(this);
-				//start rolling again
-				pluginListBuilder.buildLocalPluginInformation(xmlFileDownloader.getSaveFileLocation());
+				pluginListBuilder.buildFullPluginList(xmlFileDownloader.getSaveFileLocation());
 			}
 		} else if (subject == pluginListBuilder) {
-			IJ.showStatus("Downloading " + pluginListBuilder.getFilename() + "...");
+			IJ.showStatus("Downloading " + pluginListBuilder.getTaskname() + "...");
 			IJ.showProgress(pluginListBuilder.getCurrentlyLoaded(), pluginListBuilder.getTotalToLoad());
-			if (pluginListBuilder.buildComplete()) {
+			if (pluginListBuilder.allTasksComplete()) {
 				IJ.showStatus("");
 			}
 		}

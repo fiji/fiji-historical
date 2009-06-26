@@ -57,15 +57,13 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		super("Plugin Manager");
 		try {
 			LoadStatusDisplay loadStatusDisplay = new LoadStatusDisplay();
-			pluginCollection = loadStatusDisplay.getExistingPluginList();
-			viewList = pluginCollection; //initial view: All plugins
+			viewList = pluginCollection = loadStatusDisplay.getExistingPluginList();
 
 			setUpUserInterface();
 			setVisible(true);
 			pack();
 		} catch (Error e) {
 			//Interface side: This should handle presentation side of exceptions
-			//i.e.: pluginDataReader should throw _Error_ objects to here.
 			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getLocalizedMessage());
 			dispose();
 		}

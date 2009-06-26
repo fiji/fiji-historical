@@ -7,30 +7,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.Vector;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 /*
  * PluginListBuilder's overall role is to be in charge of building of a plugin list
  * for interface usage.
  * 
- * 1st step: Get information of local plugins (Md5 sums and version)
- * 2nd step: Get information of latest Fiji plugins (Md5 sums and version)
- * 3rd step: Build up list of "PluginObject" using both local and updates
+ * 1st step: Parses an XML file, thus readying it for local/remote information retrieval
+ * 2nd step: Get information of local plugins (Md5 sums and version)
+ * 3rd step: Get information of latest Fiji plugins (Md5 sums and version)
+ * 4th step: Build up list of "PluginObject" using both local and updates
  * 
- * Note that 2nd and 3rd step are combined into a single method.
  */
-public class PluginListBuilder extends PluginData implements Observable {
+public class PluginListBuilder extends PluginDataObservable {
 	public boolean tempDemo = false; //if true, use artificial database...
-
-	private String filename;
-	private int currentlyLoaded;
-	private int totalToLoad;
-	private boolean buildComplete;
-
-	private Vector<Observer> observersList;
 	private List<PluginObject> pluginList;
 	private Map<String, String> digests;
 	private Map<String, String> dates;
@@ -39,11 +30,7 @@ public class PluginListBuilder extends PluginData implements Observable {
 	private XMLFileReader xmlFileReader;
 
 	public PluginListBuilder(Observer observer) {
-		super();
-		//set up observers
-		observersList = new Vector<Observer>();
-		register(observer);
-
+		super(observer);
 		//initialize storage
 		dates = new TreeMap<String, String>();
 		digests = new TreeMap<String, String>();
@@ -52,24 +39,8 @@ public class PluginListBuilder extends PluginData implements Observable {
 		pluginList = new PluginCollection();
 	}
 
-	public String getFilename() {
-		return filename;
-	}
-
-	public int getCurrentlyLoaded() {
-		return currentlyLoaded;
-	}
-
-	public int getTotalToLoad() {
-		return totalToLoad;
-	}
-
 	public List<PluginObject> extractFullPluginList() {
 		return pluginList;
-	}
-	
-	public boolean buildComplete() {
-		return buildComplete;
 	}
 
 	//recursively looks into a directory and adds the relevant file
@@ -88,17 +59,33 @@ public class PluginListBuilder extends PluginData implements Observable {
 					path + File.separator + list[i]);
 	}
 
-	public void buildLocalPluginInformation(String xmlFileLocation) {
+	public void buildFullPluginList(String xmlFileLocation) {
 		try {
-		if (!tempDemo) {
-			//xmlFileReader = new XMLFileReader(xmlFileLocation);
-			xmlFileReader = new XMLFileReader("plugininfo" +
+			//Parses XML document; contents is needed for both local and remote plugins
+			if (!tempDemo) {
+				//xmlFileReader = new XMLFileReader(xmlFileLocation);
+				xmlFileReader = new XMLFileReader("plugininfo" +
+						File.separator + "pluginRecords.xml"); //temporary hardcode
+			}
+			else
+				xmlFileReader = new XMLFileReader("plugininfo" +
 					File.separator + "pluginRecords.xml"); //temporary hardcode
+			//Generates information of plugins on local side
+			buildLocalPluginList();
+			//Generates information of plugins on remote side
+			xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
+			//Builds up a list of PluginObjects, of both local and remote
+			generatePluginList();
+		} catch (ParserConfigurationException e1) {
+			throw new Error(e1.getLocalizedMessage());
+		} catch (IOException e2) {
+			throw new Error(e2.getLocalizedMessage());
+		} catch (SAXException e3) {
+			throw new Error(e3.getLocalizedMessage());
 		}
-		else
-			xmlFileReader = new XMLFileReader("plugininfo" +
-				File.separator + "pluginRecords.xml"); //temporary hardcode
+	}
 
+	private void buildLocalPluginList() throws ParserConfigurationException, SAXException, IOException {
 			//To get a list of plugins on the local side
 			List<String> queue = new ArrayList<String>();
 		if (!tempDemo) {
@@ -135,8 +122,8 @@ public class PluginListBuilder extends PluginData implements Observable {
 			currentlyLoaded = 0;
 			totalToLoad = queue.size();
 			while (iter.hasNext()) {
-				filename = (String)iter.next();
-				String outputFilename = filename;
+				taskname = (String)iter.next();
+				String outputFilename = taskname;
 				String outputDigest;
 				String outputDate;
 
@@ -170,19 +157,9 @@ public class PluginListBuilder extends PluginData implements Observable {
 				++currentlyLoaded;
 				notifyObservers();
 			}
-
-		} catch (ParserConfigurationException e1) {
-			throw new Error(e1.getLocalizedMessage());
-		} catch (IOException e2) {
-			throw new Error(e2.getLocalizedMessage());
-		} catch (SAXException e3) {
-			throw new Error(e3.getLocalizedMessage());
-		}
 	}
 
-	//Called after local plugin files have been processed
-	public void buildFullPluginList() {
-		xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
+	private void generatePluginList() {
 		//Converts data gathered into lists of PluginObject, ready for UI classes usage
 		Iterator<String> iterLatest = latestDigests.keySet().iterator();
 		while (iterLatest.hasNext()) {
@@ -265,8 +242,7 @@ public class PluginListBuilder extends PluginData implements Observable {
 			}
 		}
 
-		System.out.println("build complete, size is " + pluginList.size());
-		buildComplete = true;
+		allTasksComplete = true;
 		notifyObservers();
 		/*
 		boolean someAreNotWritable = false;
@@ -288,21 +264,4 @@ public class PluginListBuilder extends PluginData implements Observable {
 			IJ.showMessage("Some" + msg);
 		}*/
 	}
-
-	//Being observed, PluginDataReader notifies LoadStatusDisplay
-	public void notifyObservers() {
-		// Send notify to all Observers
-		for (int i = 0; i < observersList.size(); i++) {
-			Observer observer = (Observer) observersList.elementAt(i);
-			observer.refreshData(this);
-		}
-	}
-
-	//Being observed, PluginDataReader adds observers
-	public void register(Observer obs) {
-		observersList.addElement(obs);
-	}
-
-	public void unRegister(Observer obs) {}
-
 }
