@@ -8,11 +8,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.List;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -28,7 +28,6 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.text.BadLocationException;
 import javax.xml.parsers.ParserConfigurationException;
-
 import org.xml.sax.SAXException;
 
 /*
@@ -216,8 +215,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		topPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 5, 15));
 
 		//Button to start actions
-		btnStart = new JButton();
-		btnStart.setText("Apply changes");
+		btnStart = new JButton("Apply changes");
 		btnStart.setToolTipText("Start installing/uninstalling specified plugins");
 		btnStart.addActionListener(new ActionListener() {
 
@@ -230,8 +228,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 		//includes button to upload to server if is a Developer using
 		if (isDeveloper) {
-			btnUpload = new JButton();
-			btnUpload.setText("Upload to server");
+			btnUpload = new JButton("Upload to server");
 			btnUpload.setToolTipText("Upload the selected plugins to server");
 			btnUpload.addActionListener(new ActionListener() {
 
@@ -244,8 +241,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		}
 
 		//Button to quit Plugin Manager
-		btnOK = new JButton();
-		btnOK.setText("Cancel");
+		btnOK = new JButton("Cancel");
 		btnOK.setToolTipText("Exit Plugin Manager without applying changes");
 		btnOK.addActionListener(new ActionListener() {
 
@@ -274,12 +270,8 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	//Whenever search text or ComboBox has been changed
 	private void changeListingListener() {
 		int selectedIndex = comboBoxViewingOptions.getSelectedIndex();
-
-		if (txtSearch.getText().trim().isEmpty()) {
-			viewList = pluginCollection;
-		} else {
-			viewList = ((PluginCollection)pluginCollection).getList(PluginCollection.getFilterForText(txtSearch.getText().trim()));
-		}
+		viewList = (txtSearch.getText().trim().isEmpty() ?  pluginCollection :
+			((PluginCollection)pluginCollection).getList(PluginCollection.getFilterForText(txtSearch.getText().trim())));
 
 		if (selectedIndex == 0) { //if "View all plugins"
 			//do nothing
@@ -337,7 +329,15 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	private void clickToQuitPluginManager() {
-		//in later implementations, this should have some notifications
+		//if there exists plugins where actions have been specified by user
+		if (((PluginCollection)pluginCollection).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED).size() > 0) {
+			if (JOptionPane.showConfirmDialog(this,
+					"You have specified changes. Are you sure you want to quit?",
+					"Quit?", JOptionPane.YES_NO_OPTION,
+					JOptionPane.WARNING_MESSAGE) == JOptionPane.NO_OPTION) {
+				return;
+			}
+		}
 		dispose();
 	}
 
@@ -362,11 +362,8 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	public void displayPluginDetails(PluginObject currentPlugin) {
 		this.currentPlugin = currentPlugin;
-
 		try {
-			TextPaneDisplay textPane = (TextPaneDisplay)txtPluginDetails;
-			textPane.setText("");
-			textPane.showPluginDetails(currentPlugin);
+			((TextPaneDisplay)txtPluginDetails).showPluginDetails(currentPlugin);
 		} catch (BadLocationException e) {
 			throw new Error("Problem with printing Plugin information: " + e.getMessage());
 		}
@@ -381,13 +378,13 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	public void tableChanged(TableModelEvent e) {
-		//QUESTION: should we count objects in the view-table or objects in the entire list?
-		int size = 0;
+		//TODO: should we count objects in the view-table or objects in the entire list?
+		int size = viewList.size();
 		int installCount = 0;
 		int removeCount = 0;
 		int updateCount = 0;
+		int uploadCount = 0;
 
-		size = viewList.size();
 		for (PluginObject myPlugin : viewList) {
 			if (myPlugin.toInstall()) {
 				installCount += 1;
@@ -395,16 +392,20 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 				removeCount += 1;
 			} else if (myPlugin.toUpdate()) {
 				updateCount += 1;
+			} else if (isDeveloper && myPlugin.toUpload()) {
+				uploadCount += 1;
 			}
 		}
+		String txtAction = "Total: " + size + ", To install: " + installCount +
+		", To remove: " + removeCount + ", To update: " + updateCount;
+		if (isDeveloper) txtAction += ", To upload: " + uploadCount;
 
-		lblPluginSummary.setText("Total: " + size + ", To install: " + installCount +
-				", To remove: " + removeCount + ", To update: " + updateCount);
-		enablingButtonIfAnyActions(btnStart, PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
-		enablingButtonIfAnyActions(btnUpload, PluginCollection.FILTER_ACTIONS_UPLOAD);
+		lblPluginSummary.setText(txtAction);
+		enableButtonIfAnyActions(btnStart, PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
+		enableButtonIfAnyActions(btnUpload, PluginCollection.FILTER_ACTIONS_UPLOAD);
 	}
 
-	private void enablingButtonIfAnyActions(JButton button, PluginCollection.Filter filter) {
+	private void enableButtonIfAnyActions(JButton button, PluginCollection.Filter filter) {
 		if (button != null) {
 			List<PluginObject> myList = ((PluginCollection)pluginCollection).getList(filter);
 			if (myList.size() > 0)
