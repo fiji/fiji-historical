@@ -619,3 +619,22 @@ Tasks Completed:
 - Implemented DependencyAnalyzer
 - Refactored code ==> Conversion of PluginDataProcessor into an abstract class where classes in need of its functions will extend from it.
 - 2nd task work still in progress...
+
+
+
+26th June, Friday
+Tasks Completed:
+- Conversion of PluginDataProcessor into PluginData abstract class complete.
+- PluginDataObservable is extended from PluginData and is slightly more specialized towards task status displays
+   ==> Since LoadStatusDisplay observes PluginListBuilder & XMLFileDownloader, these two latter classes can extend from PluginDataObservable instead
+- DependencyAnalyzer now able to track timestamps of dependencies by refering to the prebuilt pluginList
+   ==> Does NOT require XMLFileReader at all!
+- More restructuring of code, added TODO notices for the possible future.
+- PluginManager minor enhancements
+
+Next week's tasks to focus on:
+- Building of XML file
+- Building of current.txt
+- Uploading plugin updates, XML file, current.txt to server
+
+Think small... hmmm.
