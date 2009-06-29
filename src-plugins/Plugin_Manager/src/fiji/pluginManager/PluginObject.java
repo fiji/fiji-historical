@@ -88,11 +88,14 @@ public class PluginObject {
 			throw new Error("Plugin " + strFilename + " cannot update as its current state is not UPDATEABLE.");
 	}
 
-	public void setActionToUpload() {
+	/*public void setActionToUpload() {
 		if (isUploadable()) {
 			setAction(PluginObject.ACTION_UPLOAD);
 		} else
 			throw new Error("Plugin " + strFilename + " is not defined to be uploaded.");
+	}*/
+	public void setActionToUpload() {
+		setAction(PluginObject.ACTION_UPLOAD);
 	}
 
 	public void setActionNone() {
@@ -163,10 +166,10 @@ public class PluginObject {
 		return action;
 	}
 
-	public boolean isUploadable() {
+	/*public boolean isUploadable() {
 		return ((isUpdateable() && getTimestamp().compareTo(getNewTimestamp()) > 0)
 				|| (isRemovableOnly() && !isFijiPlugin()));
-	}
+	}*/
 
 	public boolean isInstallable() {
 		return (status == PluginObject.STATUS_UNINSTALLED);
@@ -201,8 +204,11 @@ public class PluginObject {
 		return (isInstallable() && action == PluginObject.ACTION_REVERSE);
 	}
 
-	public boolean toUpload() {
+	/*public boolean toUpload() {
 		return (isUploadable() && action == PluginObject.ACTION_UPLOAD);
+	}*/
+	public boolean toUpload() {
+		return (action == PluginObject.ACTION_UPLOAD);
 	}
 
 	public boolean isFijiPlugin() {

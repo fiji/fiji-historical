@@ -28,6 +28,8 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.text.BadLocationException;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerConfigurationException;
+
 import org.xml.sax.SAXException;
 
 /*
@@ -35,6 +37,7 @@ import org.xml.sax.SAXException;
  */
 public class PluginManager extends JFrame implements PlugIn, TableModelListener {
 	public static final String XML_FILE_URL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
+	public static final String DTD_FILENAME = "plugins.dtd";
 	public static final String XML_FILENAME = "current.txt";//should be XML file actually
 	public static final String XML_DIRECTORY = "plugininfo";
 	public static final String UPDATE_DIRECTORY = "update";
@@ -285,7 +288,8 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		} else if (selectedIndex == 4) { //if "View update-able plugins"
 			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_MAYUPDATE);
 		} else if (isDeveloper && selectedIndex == 5) { //if "View upload-able plugins"
-			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_UPLOADABLE);
+			//TODO: did nothing, redundant, will view all anyway
+			//viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_UPLOADABLE);
 		} else {
 			throw new Error("Viewing option specified does not exist!");
 		}
@@ -312,6 +316,8 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			throw new Error(e2.getLocalizedMessage());
 		} catch (SAXException e3) {
 			throw new Error(e3.getLocalizedMessage());
+		} catch (TransformerConfigurationException e4) {
+			throw new Error(e4.getLocalizedMessage());
 		}
 	}
 
@@ -370,12 +376,13 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		}
 
 		//if uploadable, then description is editable too
-		if (isDeveloper) {
+		/*if (isDeveloper) {
 			if (currentPlugin.isUploadable())
 				btnEditDescriptions.setEnabled(true);
 			else
 				btnEditDescriptions.setEnabled(false);
-		}
+		}*/
+		btnEditDescriptions.setEnabled(isDeveloper);
 	}
 
 	public void tableChanged(TableModelEvent e) {

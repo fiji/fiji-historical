@@ -2,8 +2,11 @@ package fiji.pluginManager;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -35,11 +38,13 @@ public class XMLFileReader extends DefaultHandler {
 	private String dependencyRelation;
 	private String currentTag;
 
-	private List<PluginObject> pluginRecordsList;
+	//private List<PluginObject> pluginRecordsList;
+	private Map<String, List<PluginObject>> pluginRecordsList;
 
 	public XMLFileReader(String fileLocation) throws ParserConfigurationException, IOException, SAXException {
-		pluginRecordsList = new PluginCollection();
+		pluginRecordsList = new TreeMap<String, List<PluginObject>>();
 		XMLReader xr = XMLReaderFactory.createXMLReader();
+
 		xr.setContentHandler(this);
 		xr.setFeature("http://xml.org/sax/features/validation", true);
 		xr.setErrorHandler(new XMLFileErrorHandler());
@@ -49,31 +54,42 @@ public class XMLFileReader extends DefaultHandler {
 	}
 
 	public void getLatestDigestsAndDates(Map<String, String> latestDigests, Map<String, String> latestDates) {
-		for (PluginObject plugin : pluginRecordsList) {
-			String filename = plugin.getFilename();
-			String newMd5Sum = plugin.getmd5Sum();
-			String newDate = plugin.getTimestamp();
-			//if already exists in the lists
-			if (latestDigests.containsKey(filename)) {
-				String prevDate = latestDates.get(filename);
-				if (newDate.compareTo(prevDate) <= 0) {
-					continue;
-				} else {
-					//Replace with timestamp if it is newer
-					latestDigests.remove(filename);
-					latestDates.remove(filename);
+		Iterator<String> pluginNamelist = pluginRecordsList.keySet().iterator();
+		while (pluginNamelist.hasNext()) {
+			String name = pluginNamelist.next();
+			List<PluginObject> versionList = pluginRecordsList.get(name);
+			for (PluginObject plugin : versionList) {
+				String filename = plugin.getFilename();
+				String newMd5Sum = plugin.getmd5Sum();
+				String newDate = plugin.getTimestamp();
+				//if already exists in the lists
+				if (latestDigests.containsKey(filename)) {
+					String prevDate = latestDates.get(filename);
+					if (newDate.compareTo(prevDate) <= 0) {
+						continue;
+					} else {
+						//Replace with timestamp if it is newer
+						latestDigests.remove(filename);
+						latestDates.remove(filename);
+					}
 				}
+				latestDigests.put(filename, newMd5Sum);
+				latestDates.put(filename, newDate);
 			}
-			latestDigests.put(filename, newMd5Sum);
-			latestDates.put(filename, newDate);
 		}
 	}
 
+	public Map<String,List<PluginObject>> getXMLRecords() {
+		return pluginRecordsList;
+	}
+
 	private PluginObject getPluginMatching(String filename, String timestamp) {
-		for (PluginObject plugin : pluginRecordsList) {
-			if (plugin.getFilename().equals(filename) &&
-					plugin.getTimestamp().equals(timestamp)) {
-				return plugin;
+		List<PluginObject> versionList = pluginRecordsList.get(filename);
+		if (versionList != null) {
+			for (PluginObject plugin : versionList) {
+				if (plugin.getTimestamp().equals(timestamp)) {
+					return plugin;
+				}
 			}
 		}
 		throw new Error("Plugin " + filename + ", " + timestamp + " does not exist");
@@ -104,13 +120,14 @@ public class XMLFileReader extends DefaultHandler {
 
 	//Get timestamp associated with specified version, assumed filename & digest are correct
 	public String getTimestamp(String outputFilename, String outputDigest) {
-		for (PluginObject plugin : pluginRecordsList) {
-			if (plugin.getFilename().equals(outputFilename) &&
-					plugin.getmd5Sum().equals(outputDigest)) {
-				return plugin.getTimestamp();
+		List<PluginObject> versionList = pluginRecordsList.get(outputFilename);
+		if (versionList != null) {
+			for (PluginObject plugin : versionList) {
+				if (plugin.getmd5Sum().equals(outputDigest))
+					return plugin.getTimestamp();
 			}
 		}
-		return null; //either plugin filename not found, or digest does not exist
+		return null; //digest does not exist
 	}
 
 	public void startDocument () { }
@@ -163,7 +180,15 @@ public class XMLFileReader extends DefaultHandler {
 			plugin.setFilesize(Integer.parseInt(filesize));
 			if (dependencyList.size() > 0)
 				plugin.setDependency(dependencyList);
-			pluginRecordsList.add(plugin);
+
+			List<PluginObject> versionList;
+			if (pluginRecordsList.containsKey(plugin.getFilename())) {
+				versionList = pluginRecordsList.get(plugin.getFilename());
+			} else {
+				versionList = new PluginCollection();
+				pluginRecordsList.put(plugin.getFilename(), versionList);
+			}
+			versionList.add(plugin);
 		} else if (tagName.equals("dependency")) {
 			//TODO: dependencyRelation string would be involved too...
 			Dependency dependency = new Dependency(dependencyFilename, dependencyTimestamp);

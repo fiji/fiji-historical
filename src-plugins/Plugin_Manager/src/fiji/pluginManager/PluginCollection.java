@@ -115,11 +115,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 	};
 
-	public static final Filter FILTER_UPLOADABLE = new Filter() {
+	/*public static final Filter FILTER_UPLOADABLE = new Filter() {
 		public boolean matchesFilter(PluginObject plugin) {
 			return plugin.isUploadable();
 		}
-	};
+	};*/
 
 	public Iterator<PluginObject> getIterator(Filter filter) {
 		return getList(filter).iterator();

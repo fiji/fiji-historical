@@ -37,7 +37,7 @@ public class PluginTable extends JTable {
 	private static final String[] arrUninstalledOptions = { "Not installed", "Install it" };
 	private static final String[] arrInstalledOptions = { "Installed", "Remove it" };
 	private static final String[] arrUpdateableOptions = { "Installed", "Remove it", "Update it" };
-	private static final String[] arrDevelUninstalledOptions = { "Not installed", "Install it" };
+	private static final String[] arrDevelUninstalledOptions = { "Not installed", "Install it", "Upload" };
 	private static final String[] arrDevelInstalledOptions = { "Installed", "Remove it", "Upload" };
 	private static final String[] arrDevelUpdateableOptions = { "Installed", "Remove it", "Update it", "Upload" };
 
@@ -150,13 +150,13 @@ public class PluginTable extends JTable {
 				optionsArray = PluginTable.arrUninstalledOptions;
 			}
 		} else if (entry.isRemovableOnly()) {
-			if (isDeveloper && entry.isUploadable()) {
+			if (isDeveloper) {// && entry.isUploadable()) {
 				optionsArray = PluginTable.arrDevelInstalledOptions;
 			} else {
 				optionsArray = PluginTable.arrInstalledOptions;
 			}
 		} else if (entry.isUpdateable()) {
-			if (isDeveloper && entry.isUploadable()) {
+			if (isDeveloper) {// && entry.isUploadable()) {
 				//if timestamp is newer than the latest version, indicates local modification
 				optionsArray = PluginTable.arrDevelUpdateableOptions;
 			} else {
@@ -241,6 +241,8 @@ public class PluginTable extends JTable {
 					return optionsArray[0]; //"Not installed"
 				} else if (entry.toInstall()) {
 					return optionsArray[1]; //"Install"
+				} else if (entry.toUpload()) {
+					return optionsArray[2]; //"Upload"
 				} else {
 					throw new Error("INVALID action value for Uninstalled Plugin");
 				}
@@ -295,6 +297,10 @@ public class PluginTable extends JTable {
 				//if option chosen is "Install"
 				else if (newValue.equals(optionsArray[1])) {
 					entry.setActionToInstall();
+				}
+				//if option chosen is "Upload"
+				else if (isDeveloper && newValue.equals(optionsArray[2])) {
+					entry.setActionToUpload();
 				}
 				//otherwise...
 				else {

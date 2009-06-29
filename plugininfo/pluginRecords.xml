@@ -1,223 +1,259 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pluginRecords [
-<!ELEMENT pluginRecords (plugin+)>
-<!ELEMENT plugin (version+)>
-<!ELEMENT version (checksum, timestamp, description, filesize, dependency*)>
-<!ELEMENT checksum (#PCDATA)>
-<!ELEMENT timestamp (#PCDATA)>
-<!ELEMENT description (#PCDATA)>
-<!ELEMENT filesize (#PCDATA)>
-<!ELEMENT dependency (filename, date, relation)>
-<!ELEMENT filename (#PCDATA)>
-<!ELEMENT date (#PCDATA)>
-<!ELEMENT relation (#PCDATA)>
-<!ATTLIST plugin filename CDATA #REQUIRED>
-]>
-
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no" ?>
+<!DOCTYPE pluginRecords SYSTEM "plugininfo/plugins.dtd">
 <pluginRecords>
-
 <plugin filename="PluginA.jar">
-	<version>
-		<checksum>75a2edd1bef7364f92545ffa2521f95578ca0962</checksum>
-		<timestamp>20090310102296</timestamp>
-		<description>This is a short description of PluginA.jar</description>
-		<filesize>4096</filesize>
-	</version>
-	<version>
-		<checksum>65c3ecc1bbd7564f92545ffd2521f9d96509ca64</checksum>
-		<timestamp>20090429190842</timestamp>
-		<description>This is a short description of PluginA.jar. A for Apple, no circular dependencies, but its dependencies does.</description>
-		<filesize>5123</filesize>
-		<dependency>
-			<filename>PluginD.jar</filename>
-			<date>20090420190033</date>
-			<relation>at-least</relation>
-		</dependency>
-	</version>
+<version>
+<checksum>75a2edd1bef7364f92545ffa2521f95578ca0962</checksum>
+<timestamp>20090310102296</timestamp>
+<description>This is a short description of PluginA.jar</description>
+<filesize>4096</filesize>
+</version>
+<version>
+<checksum>65c3ecc1bbd7564f92545ffd2521f9d96509ca64</checksum>
+<timestamp>20090429190842</timestamp>
+<description>This is a short description of PluginA.jar. A for Apple, no circular dependencies, but its dependencies does.</description>
+<filesize>5123</filesize>
+<dependency>
+<filename>PluginD.jar</filename>
+<date>20090420190033</date>
+<relation>at-least</relation>
+</dependency>
+</version>
 </plugin>
-
 <plugin filename="PluginB.jar">
-	<version>
-		<checksum>a32cfa95caf7720c02d7fee8908b02347b780def</checksum>
-		<timestamp>20090221162294</timestamp>
-		<description>This is a short description of PluginB.jar</description>
-		<filesize>5456</filesize>
-		<dependency>
-			<filename>PluginD.jar</filename>
-			<date>20090420190033</date>
-			<relation>at-least</relation>
-		</dependency>
-		<dependency>
-			<filename>PluginC.jar</filename>
-			<date>20081011183621</date>
-			<relation>at-least</relation>
-		</dependency>
-	</version>
-	<version>
-		<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
-		<timestamp>20090429190854</timestamp>
-		<description>This is a short description of PluginB.jar. A new version of pluginB.jar as of late April 2009.</description>
-		<filesize>5456</filesize>
-		<dependency>
-			<filename>PluginD.jar</filename>
-			<date>20090420190033</date>
-			<relation>at-least</relation>
-		</dependency>
-		<dependency>
-			<filename>PluginH.jar</filename>
-			<date>20090524666220</date>
-			<relation>at-least</relation>
-		</dependency>
-		<dependency>
-			<filename>PluginC.jar</filename>
-			<date>20081011183621</date>
-			<relation>at-least</relation>
-		</dependency>
-	</version>
+<version>
+<checksum>a32cfa95caf7720c02d7fee8908b02347b780def</checksum>
+<timestamp>20090221162294</timestamp>
+<description>This is a short description of PluginB.jar</description>
+<filesize>5456</filesize>
+<dependency>
+<filename>PluginD.jar</filename>
+<date>20090420190033</date>
+<relation>at-least</relation>
+</dependency>
+<dependency>
+<filename>PluginC.jar</filename>
+<date>20081011183621</date>
+<relation>at-least</relation>
+</dependency>
+</version>
+<version>
+<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
+<timestamp>20090429190854</timestamp>
+<description>This is a short description of PluginB.jar. A new version of pluginB.jar as of late April 2009.</description>
+<filesize>5456</filesize>
+<dependency>
+<filename>PluginD.jar</filename>
+<date>20090420190033</date>
+<relation>at-least</relation>
+</dependency>
+<dependency>
+<filename>PluginH.jar</filename>
+<date>20090524666220</date>
+<relation>at-least</relation>
+</dependency>
+<dependency>
+<filename>PluginC.jar</filename>
+<date>20081011183621</date>
+<relation>at-least</relation>
+</dependency>
+</version>
 </plugin>
-
 <plugin filename="PluginC.jar">
-	<version>
-		<checksum>1a992dbc077ef84020d44a980c7992ba6c8edf3d</checksum>
-		<timestamp>20090425190854</timestamp>
-		<description>This is a short description of PluginC.jar.</description>
-		<filesize>5789</filesize>
-	</version>
+<version>
+<checksum>1a992dbc077ef84020d44a980c7992ba6c8edf3d</checksum>
+<timestamp>20090425190854</timestamp>
+<description>This is a short description of PluginC.jar.</description>
+<filesize>5789</filesize>
+</version>
 </plugin>
-
 <plugin filename="PluginD.jar">
-	<version>
-		<checksum>61c3ecc1add7364f92545ffd2521e9d96508cb62</checksum>
-		<timestamp>20090420190033</timestamp>
-		<description>This is a short description of PluginD.jar. Let one hope he won't get the same letter for exams.</description>
-		<filesize>8350</filesize>
-		<dependency>
-			<filename>PluginF.jar</filename>
-			<date>20090420191023</date>
-			<relation>at-least</relation>
-		</dependency>
-		<dependency>
-			<filename>PluginE.jar</filename>
-			<date>20090311213621</date>
-			<relation>at-least</relation>
-		</dependency>
-	</version>
+<version>
+<checksum>61c3ecc1add7364f92545ffd2521e9d96508cb62</checksum>
+<timestamp>20090420190033</timestamp>
+<description>This is a short description of PluginD.jar. Let one hope he won't get the same letter for exams.</description>
+<filesize>8350</filesize>
+<dependency>
+<filename>PluginF.jar</filename>
+<date>20090420191023</date>
+<relation>at-least</relation>
+</dependency>
+<dependency>
+<filename>PluginE.jar</filename>
+<date>20090311213621</date>
+<relation>at-least</relation>
+</dependency>
+</version>
 </plugin>
-
 <plugin filename="PluginE.jar">
-	<version>
-		<checksum>8114fe93cbf7720c01c7ff97c28b007b79900dc7</checksum>
-		<timestamp>20090311213621</timestamp>
-		<description>This is a short summary of PluginE.jar. E for Elementary.</description>
-		<filesize>17749</filesize>
-		<dependency>
-			<filename>PluginG.jar</filename>
-			<date>20090125190842</date>
-			<relation>at-least</relation>
-		</dependency>
-	</version>
+<version>
+<checksum>8114fe93cbf7720c01c7ff97c28b007b79900dc7</checksum>
+<timestamp>20090311213621</timestamp>
+<description>This is a short summary of PluginE.jar. E for Elementary.</description>
+<filesize>17749</filesize>
+<dependency>
+<filename>PluginG.jar</filename>
+<date>20090125190842</date>
+<relation>at-least</relation>
+</dependency>
+</version>
 </plugin>
-
 <plugin filename="PluginF.jar">
-	<version>
-		<checksum>1b992dbca07ef84020d44a980c7902ba6c82dfee</checksum>
-		<timestamp>20090420191023</timestamp>
-		<description>This is a short summary of PluginF.jar... Nothing else...</description>
-		<filesize>18012</filesize>
-		<dependency>
-			<filename>PluginI.jar</filename>
-			<date>20090501190854</date>
-			<relation>at-least</relation>
-		</dependency>
-	</version>
+<version>
+<checksum>1b992dbca07ef84020d44a980c7902ba6c82dfee</checksum>
+<timestamp>20090420191023</timestamp>
+<description>This is a short summary of PluginF.jar... Nothing else...</description>
+<filesize>18012</filesize>
+<dependency>
+<filename>PluginI.jar</filename>
+<date>20090501190854</date>
+<relation>at-least</relation>
+</dependency>
+</version>
 </plugin>
-
 <plugin filename="PluginG.jar">
-	<version>
-		<checksum>1a992dbc077ef84020d44a980c7992ba6c8edf3d</checksum>
-		<timestamp>20090415160854</timestamp>
-		<description>This is a short summary of PluginG.jar. G for great.</description>
-		<filesize>20300</filesize>
-	</version>
-	<version>
-		<checksum>2c992db3327ef8402bd44b980c7992da6c8eefd9</checksum>
-		<timestamp>20090502130854</timestamp>
-		<description>This is a short summary of PluginG.jar. G for great. The second time.</description>
-		<filesize>22350</filesize>
-	</version>
+<version>
+<checksum>1a992dbc077ef84020d44a980c7992ba6c8edf3d</checksum>
+<timestamp>20090415160854</timestamp>
+<description>This is a short summary of PluginG.jar. G for great.</description>
+<filesize>20300</filesize>
+</version>
+<version>
+<checksum>2c992db3327ef8402bd44b980c7992da6c8eefd9</checksum>
+<timestamp>20090502130854</timestamp>
+<description>This is a short summary of PluginG.jar. G for great. The second time.</description>
+<filesize>22350</filesize>
+</version>
 </plugin>
-
 <plugin filename="PluginH.jar">
-	<version>
-		<checksum>33c88dc1fbd7564f92587ffdc521f9de6507ca65</checksum>
-		<timestamp>20081224666220</timestamp>
-		<description>This is a short summary of PluginH.jar. The first version of this plugin that does nothing.</description>
-		<filesize>6123</filesize>
-	</version>
-	<version>
-		<checksum>72bce89afef7564f464872fdc521f9de65133a64</checksum>
-		<timestamp>20090217335128</timestamp>
-		<description>This is a short summary of PluginH.jar.</description>
-		<filesize>6423</filesize>
-	</version>
-	<version>
-		<checksum>23d88dc1fbd7564f92087ffdc529acce6500ef60</checksum>
-		<timestamp>20090524666220</timestamp>
-		<description>This is a short description of PluginH.jar. Thanks to some upgrade, it needs PluginD.jar (Dependency).</description>
-		<filesize>8621</filesize>
-		<dependency>
-			<filename>PluginD.jar</filename>
-			<date>20090420190033</date>
-			<relation>at-least</relation>
-		</dependency>
-	</version>
+<version>
+<checksum>33c88dc1fbd7564f92587ffdc521f9de6507ca65</checksum>
+<timestamp>20081224666220</timestamp>
+<description>This is a short summary of PluginH.jar. The first version of this plugin that does nothing.</description>
+<filesize>6123</filesize>
+</version>
+<version>
+<checksum>72bce89afef7564f464872fdc521f9de65133a64</checksum>
+<timestamp>20090217335128</timestamp>
+<description>This is a short summary of PluginH.jar.</description>
+<filesize>6423</filesize>
+</version>
+<version>
+<checksum>23d88dc1fbd7564f92087ffdc529acce6500ef60</checksum>
+<timestamp>20090524666220</timestamp>
+<description>This is a short description of PluginH.jar. Thanks to some upgrade, it needs PluginD.jar (Dependency).</description>
+<filesize>8621</filesize>
+<dependency>
+<filename>PluginD.jar</filename>
+<date>20090420190033</date>
+<relation>at-least</relation>
+</dependency>
+</version>
 </plugin>
-
 <plugin filename="PluginI.jar">
-	<version>
-		<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
-		<timestamp>20090429190854</timestamp>
-		<description>This is a short summary of PluginI.jar. The letter I, referring to the first person.</description>
-		<filesize>9310</filesize>
-		<dependency>
-			<filename>PluginF.jar</filename>
-			<date>20090420191023</date>
-			<relation>at-least</relation>
-		</dependency>
-		<dependency>
-			<filename>PluginK.jar</filename>
-			<date>20081221866291</date>
-			<relation>at-least</relation>
-		</dependency>
-	</version>
+<version>
+<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
+<timestamp>20090429190854</timestamp>
+<description>This is a short summary of PluginI.jar. The letter I, referring to the first person.</description>
+<filesize>9310</filesize>
+<dependency>
+<filename>PluginF.jar</filename>
+<date>20090420191023</date>
+<relation>at-least</relation>
+</dependency>
+<dependency>
+<filename>PluginK.jar</filename>
+<date>20081221866291</date>
+<relation>at-least</relation>
+</dependency>
+</version>
 </plugin>
-
 <plugin filename="PluginJ.jar">
-	<version>
-		<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
-		<timestamp>20090521181954</timestamp>
-		<description>This is a short summary of PluginJ.jar. J for Junior. Junior plugin that relies on PluginI.jar.</description>
-		<filesize>5588</filesize>
-		<dependency>
-			<filename>PluginI.jar</filename>
-			<date>20090404090854</date>
-			<relation>at-least</relation>
-		</dependency>
-	</version>
+<version>
+<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
+<timestamp>20090521181954</timestamp>
+<description>This is a short summary of PluginJ.jar. J for Junior. Junior plugin that relies on PluginI.jar.</description>
+<filesize>5588</filesize>
+<dependency>
+<filename>PluginI.jar</filename>
+<date>20090404090854</date>
+<relation>at-least</relation>
+</dependency>
+</version>
 </plugin>
-
 <plugin filename="PluginK.jar">
-	<version>
-		<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
-		<timestamp>20081221866291</timestamp>
-		<description>This is a short description or summary of PluginK.jar. Circular dependencies, vicious circle...</description>
-		<filesize>35060</filesize>
-		<dependency>
-			<filename>PluginJ.jar</filename>
-			<date>20090404090854</date>
-			<relation>at-least</relation>
-		</dependency>
-	</version>
+<version>
+<checksum>9624fa93cbf7720c01c7ff97c28b00747b700de3</checksum>
+<timestamp>20081221866291</timestamp>
+<description>This is a short description or summary of PluginK.jar. Circular dependencies, vicious circle...</description>
+<filesize>35060</filesize>
+<dependency>
+<filename>PluginJ.jar</filename>
+<date>20090404090854</date>
+<relation>at-least</relation>
+</dependency>
+</version>
 </plugin>
-
+<plugin filename="ij.jar">
+<version>
+<checksum>43c58c86c2d90a6fea7400f5d1829beae1b93476</checksum>
+<timestamp>20090608135916</timestamp>
+<description/>
+<filesize>1193440</filesize>
+<dependency>
+<filename>jars/javac.jar</filename>
+<date>20090516012642</date>
+<relation>at-least</relation>
+</dependency>
+</version>
+</plugin>
+<plugin filename="jars/ant-launcher.jar">
+<version>
+<checksum>4199e18036ba2020bdcbc733f603564f41cf9009</checksum>
+<timestamp>20090504010022</timestamp>
+<description>ant-launcher summary from ant-launcher.jar</description>
+<filesize>11814</filesize>
+</version>
+</plugin>
+<plugin filename="jars/ant-nodeps.jar">
+<version>
+<checksum>92b2335d3a97549b633dbcc3c41381a90f2b924b</checksum>
+<timestamp>20090504010022</timestamp>
+<description>This is description for ant-nodeps.jar</description>
+<filesize>436656</filesize>
+<dependency>
+<filename>jars/ant.jar</filename>
+<date>20090504010023</date>
+<relation>at-least</relation>
+</dependency>
+<dependency>
+<filename>jars/batik.jar</filename>
+<date>20090506010300</date>
+<relation>at-least</relation>
+</dependency>
+<dependency>
+<filename>jars/ant-launcher.jar</filename>
+<date>20090504010022</date>
+<relation>at-least</relation>
+</dependency>
+</version>
+</plugin>
+<plugin filename="jars/batik.jar">
+<version>
+<checksum>dbab80ab5e11fb33328c7da88a849d0a19793ff5</checksum>
+<timestamp>20090506010300</timestamp>
+<description>batik.jar summary</description>
+<filesize>8004326</filesize>
+<dependency>
+<filename>jars/jacl.jar</filename>
+<date>20090506010254</date>
+<relation>at-least</relation>
+</dependency>
+<dependency>
+<filename>jars/jython2.2.1/jython.jar</filename>
+<date>20090504010029</date>
+<relation>at-least</relation>
+</dependency>
+</version>
+</plugin>
 </pluginRecords>
