@@ -638,3 +638,19 @@ Next week's tasks to focus on:
 - Uploading plugin updates, XML file, current.txt to server
 
 Think small... hmmm.
+
+
+
+29-30th June, Monday-Tuesday
+Tasks Completed:
+- Able to read XML files and able to write updates/changes to descriptions to XML files
+- Consistency of read/write established, i.e.: UpdatesWriter writes to an XML file that XMLFileReader can read
+- Bug fixed. It was a mistake in the DTD file actually!!!
+- User interface of PluginManager.java able to choose to view "Fiji/Non-Fiji plugins only"
+- Able to generate current.txt from plugin information
+
+Constraints I can see so far:
+- Plugin Manager should be closed and restart after the developer uploads his/her plugins
+- Fiji application should close (restart) after updates/removal of plugins have been made
+
+Next tasks for the week: To attend to the "forServer" boolean flag issue (Probably re-structuring code again), "upload XML and text files to server"
