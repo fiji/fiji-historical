@@ -212,6 +212,14 @@ public abstract class PluginData {
 			+ path;
 	}
 
+	protected String initializeFilename(String filename) {
+		if (getUseMacPrefix() && filename.startsWith(getMacPrefix()))
+			filename = filename.substring(getMacPrefix().length());
+		if (File.separator.equals("\\"))
+			filename = filename.replace("\\", "/");
+		return filename;
+	}
+
 	private String timestamp(long millis) {
 		Calendar date = Calendar.getInstance();
 		date.setTimeInMillis(millis);

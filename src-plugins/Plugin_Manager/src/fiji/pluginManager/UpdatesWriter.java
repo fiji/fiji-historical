@@ -22,11 +22,13 @@ import org.xml.sax.helpers.AttributesImpl;
 
 public class UpdatesWriter extends PluginData {
 	PrintWriter xmlPrintWriter;
+	PrintWriter txtPrintWriter;
 	StreamResult streamResult;
 	SAXTransformerFactory tf;
 	TransformerHandler handler;
 
 	public UpdatesWriter() throws IOException, TransformerConfigurationException {
+		//XML file writer (pluginRecords.xml)
 		xmlPrintWriter = new PrintWriter(new FileWriter(getSaveToLocation(PluginManager.XML_DIRECTORY, "pluginRecords.xml")));
 		streamResult = new StreamResult(xmlPrintWriter);
 		tf = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
@@ -37,12 +39,42 @@ public class UpdatesWriter extends PluginData {
 		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.XML_DIRECTORY + "/" + PluginManager.DTD_FILENAME);
 		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
 		handler.setResult(streamResult);
+
+		//Text file writer (current.txt)
+		txtPrintWriter = new PrintWriter(new FileWriter(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.TXT_FILENAME)));
 	}
 
-	public void writeXMLFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
+	public void writeFilesForUploading(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
+		writeXMLFile(pluginRecords);
+		xmlPrintWriter.close();
+		System.out.println("XML file written");
+		writeTxtFile(pluginRecords);
+		txtPrintWriter.close();
+		System.out.println("Text file written");
+	}
+
+	private void writeTxtFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
+		Iterator<String> pluginNamelist = pluginRecords.keySet().iterator();
+		while (pluginNamelist.hasNext()) {
+			String filename = pluginNamelist.next();
+			List<PluginObject> versionList = pluginRecords.get(filename);
+			PluginObject latestPlugin = null;
+			for (PluginObject plugin : versionList) {
+				if (latestPlugin == null ||
+					(latestPlugin != null &&
+					latestPlugin.getTimestamp().compareTo(plugin.getTimestamp()) < 0)) {
+					latestPlugin = plugin;
+				}
+			}
+			txtPrintWriter.println(latestPlugin.getFilename() + " " +
+					latestPlugin.getTimestamp() + " " + latestPlugin.getmd5Sum());
+		}
+	}
+
+	private void writeXMLFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
 		handler.startDocument();
 		AttributesImpl attrib = new AttributesImpl();
-		
+
 		handler.startElement("", "", "pluginRecords", attrib);
 		Iterator<String> pluginNamelist = pluginRecords.keySet().iterator();
 		while (pluginNamelist.hasNext()) {
@@ -72,7 +104,7 @@ public class UpdatesWriter extends PluginData {
 							handler.endElement("", "", "dependency");
 						}
 					}
-					handler.endElement("", "", "version");
+				handler.endElement("", "", "version");
 			}
 			handler.endElement("", "", "plugin");
 		}

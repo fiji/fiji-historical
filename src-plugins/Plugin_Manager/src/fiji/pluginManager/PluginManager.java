@@ -36,6 +36,7 @@ import org.xml.sax.SAXException;
  * Main User Interface
  */
 public class PluginManager extends JFrame implements PlugIn, TableModelListener {
+	public static final String TXT_FILENAME = "current.txt";//should be XML file actually
 	public static final String XML_FILE_URL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
 	public static final String XML_FILENAME = "current.txt";//should be XML file actually
 	public static final String DTD_FILE_URL = "http://pacific.mpi-cbg.de/update/plugins.dtd";

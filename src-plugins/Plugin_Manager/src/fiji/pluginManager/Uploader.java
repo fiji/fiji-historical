@@ -93,8 +93,7 @@ public class Uploader {
 
 		//UpdatesWriter updatesWriter = new UpdatesWriter(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME), null);
 		UpdatesWriter updatesWriter = new UpdatesWriter();
-		updatesWriter.writeXMLFile(newPluginRecords);
-		System.out.println("XML file written.");
+		updatesWriter.writeFilesForUploading(newPluginRecords);
 	}
 
 	private PluginObject getPluginMatchingDigest(String digest, List<PluginObject> pluginList) {

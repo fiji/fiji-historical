@@ -111,15 +111,9 @@ public class PluginListBuilder extends PluginDataObservable {
 			currentlyLoaded = 0;
 			totalToLoad = queue.size();
 			while (iter.hasNext()) {
-				taskname = (String)iter.next();
-				String outputFilename = taskname;
+				String outputFilename = taskname = initializeFilename(iter.next());
 				String outputDigest;
 				String outputDate;
-
-				if (getUseMacPrefix() && outputFilename.startsWith(getMacPrefix()))
-					outputFilename = outputFilename.substring(getMacPrefix().length());
-				if (File.separator.equals("\\"))
-					outputFilename = outputFilename.replace("\\", "/");
 
 			if (!tempDemo) {
 				outputDigest = getDigestFromFile(outputFilename);
