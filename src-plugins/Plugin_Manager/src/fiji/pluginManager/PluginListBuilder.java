@@ -21,7 +21,6 @@ import org.xml.sax.SAXException;
  * 
  */
 public class PluginListBuilder extends PluginDataObservable {
-	public boolean tempDemo = false; //if true, use artificial database...
 	private List<PluginObject> pluginList;
 	private Map<String, String> digests;
 	private Map<String, String> dates;
@@ -75,7 +74,6 @@ public class PluginListBuilder extends PluginDataObservable {
 	private void buildLocalPluginList() throws ParserConfigurationException, SAXException, IOException {
 			//To get a list of plugins on the local side
 			List<String> queue = new ArrayList<String>();
-		if (!tempDemo) {
 
 			//Gather filenames of all local plugins
 			//TODO: One thing to note here, the below codes appear to assume that the user
@@ -92,20 +90,6 @@ public class PluginListBuilder extends PluginDataObservable {
 			queueDirectory(queue, "retro");
 			queueDirectory(queue, "misc");
 
-		} else {
-
-			queue.add("PluginE.jar");
-			queue.add("PluginG.jar");
-			queue.add("PluginH.jar");
-			queue.add("PluginL.jar");
-			digests.put("PluginE.jar", "8114fe93cbf7720c01c7ff97c28b007b79900dc7");
-			//digests.put("PluginE.jar", "cb19fe73cbf562c011e7fa87c28b007b7c990dc3"); //test non-existent digest
-			digests.put("PluginG.jar", "1a992dbc077ef84020d44a980c7992ba6c8edf3d");
-			//digests.put("PluginH.jar", "33c88dc1fbd7564f92587ffdc521f9de6507ca65");
-			digests.put("PluginH.jar", "43e68dc9fbd7964ecd587ffdc621f9de6050ba69"); //test non-existent digest
-			digests.put("PluginL.jar", "69ba8dc9fbd8945ec5e43fdfc612f9ec6150e644"); //test non-Fiji plugin
-		}
-
 			//To calculate the Md5 sums on the local side
 			Iterator<String> iter = queue.iterator();
 			currentlyLoaded = 0;
@@ -115,22 +99,13 @@ public class PluginListBuilder extends PluginDataObservable {
 				String outputDigest;
 				String outputDate;
 
-			if (!tempDemo) {
 				outputDigest = getDigestFromFile(outputFilename);
 				digests.put(outputFilename, outputDigest);
-			} else {
-				//temporary line of code
-				outputDigest = digests.get(outputFilename);
-			}
 
 				//if XML file does not contain plugin filename or digest does not exist
 				if (!xmlFileReader.matchesFilenameAndDigest(outputFilename, outputDigest)) {
 					//use the local plugin's last modified timestamp instead
-					if (!tempDemo) {
 					outputDate = getTimestampFromFile(outputFilename);
-					} else {
-					outputDate = "20090622999666"; //assume latest... always
-					}
 				} else {
 					//if it does exist, then use the associated timestamp as recorded
 					outputDate = xmlFileReader.getTimestamp(outputFilename, outputDigest);
@@ -185,11 +160,7 @@ public class PluginListBuilder extends PluginDataObservable {
 				myPlugin.setDependency(xmlFileReader.getDependenciesFrom(pluginName, pluginDate));
 				myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(pluginName, pluginDate));
 			} else { //if digest of this plugin does not exist in the records
-				if (!tempDemo) {
-					myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
-				} else {
-					myPlugin.setFilesize(4500);
-				}
+				myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
 			}
 			pluginList.add(myPlugin);
 		}
@@ -204,11 +175,7 @@ public class PluginListBuilder extends PluginDataObservable {
 				String date = dates.get(name);
 				//implies third-party plugin, no description nor dependency information available
 				PluginObject myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, false);
-				if (!tempDemo) {
-					myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
-				} else {
-					myPlugin.setFilesize(4500);
-				}
+				myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
 				pluginList.add(myPlugin);
 			}
 		}
