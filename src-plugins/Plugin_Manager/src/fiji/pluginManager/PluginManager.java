@@ -356,7 +356,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		loadedFrame = new FrameInstaller(this);
 		loadedFrame.setVisible(true);
 		FrameInstaller frameInstaller = (FrameInstaller)loadedFrame;
-		frameInstaller.setInstaller(new Installer(pluginCollection, PluginManager.XML_FILE_URL));
+		frameInstaller.setInstaller(new Installer(pluginCollection));
 		setEnabled(false);
 	}
 
@@ -378,13 +378,6 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			throw new Error("Problem with printing Plugin information: " + e.getMessage());
 		}
 
-		//if uploadable, then description is editable too
-		/*if (isDeveloper) {
-			if (currentPlugin.isUploadable())
-				btnEditDescriptions.setEnabled(true);
-			else
-				btnEditDescriptions.setEnabled(false);
-		}*/
 		btnEditDescriptions.setEnabled(isDeveloper);
 	}
 

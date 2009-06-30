@@ -72,49 +72,50 @@ public class PluginListBuilder extends PluginDataObservable {
 	}
 
 	private void buildLocalPluginList() throws ParserConfigurationException, SAXException, IOException {
-			//To get a list of plugins on the local side
-			List<String> queue = new ArrayList<String>();
+		//To get a list of plugins on the local side
+		List<String> queue = new ArrayList<String>();
 
-			//Gather filenames of all local plugins
-			//TODO: One thing to note here, the below codes appear to assume that the user
-			//has a fixed filename for the Fiji applicaton
-			if (getPlatform().equals("macosx")) {
-				queue.add((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-macosx");
-				queue.add((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-tiger");
-			} else
-				queue.add("fiji-" + getPlatform());
+		//Gather filenames of all local plugins
+		//TODO: One thing to note here, the below codes appear to assume that the user
+		//has a fixed filename for the Fiji applicaton
+		if (getPlatform().equals("macosx")) {
+			queue.add((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-macosx");
+			queue.add((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-tiger");
+		} else
+			queue.add("fiji-" + getPlatform());
+		queue.add("ij.jar");
 
-			queue.add("ij.jar");
-			queueDirectory(queue, "plugins");
-			queueDirectory(queue, "jars");
-			queueDirectory(queue, "retro");
-			queueDirectory(queue, "misc");
+		//Directories assumed to exist
+		queueDirectory(queue, "plugins");
+		queueDirectory(queue, "jars");
+		queueDirectory(queue, "retro");
+		queueDirectory(queue, "misc");
 
-			//To calculate the Md5 sums on the local side
-			Iterator<String> iter = queue.iterator();
-			currentlyLoaded = 0;
-			totalToLoad = queue.size();
-			while (iter.hasNext()) {
-				String outputFilename = taskname = initializeFilename(iter.next());
-				String outputDigest;
-				String outputDate;
+		//To calculate the Md5 sums on the local side
+		Iterator<String> iter = queue.iterator();
+		currentlyLoaded = 0;
+		totalToLoad = queue.size();
+		while (iter.hasNext()) {
+			String outputFilename = taskname = initializeFilename(iter.next());
+			String outputDigest;
+			String outputDate;
 
-				outputDigest = getDigestFromFile(outputFilename);
-				digests.put(outputFilename, outputDigest);
+			outputDigest = getDigestFromFile(outputFilename);
+			digests.put(outputFilename, outputDigest);
 
-				//if XML file does not contain plugin filename or digest does not exist
-				if (!xmlFileReader.matchesFilenameAndDigest(outputFilename, outputDigest)) {
-					//use the local plugin's last modified timestamp instead
-					outputDate = getTimestampFromFile(outputFilename);
-				} else {
-					//if it does exist, then use the associated timestamp as recorded
-					outputDate = xmlFileReader.getTimestamp(outputFilename, outputDigest);
-				}
-				dates.put(outputFilename, outputDate);
-
-				++currentlyLoaded;
-				notifyObservers();
+			//if XML file does not contain plugin filename or digest does not exist
+			if (!xmlFileReader.matchesFilenameAndDigest(outputFilename, outputDigest)) {
+				//use the local plugin's last modified timestamp instead
+				outputDate = getTimestampFromFile(outputFilename);
+			} else {
+				//if it does exist, then use the associated timestamp as recorded
+				outputDate = xmlFileReader.getTimestamp(outputFilename, outputDigest);
 			}
+			dates.put(outputFilename, outputDate);
+
+			++currentlyLoaded;
+			notifyObservers();
+		}
 	}
 
 	private void generatePluginList() {
@@ -125,7 +126,7 @@ public class PluginListBuilder extends PluginDataObservable {
 			// launcher is platform-specific
 			if (pluginName.startsWith("fiji-")) {
 				if (!pluginName.equals("fiji-" + getPlatform()) &&
-					(!getPlatform().equals("macosx") || !pluginName.startsWith("fiji-tiger")))
+						(!getPlatform().equals("macosx") || !pluginName.startsWith("fiji-tiger")))
 					continue;
 			}
 			String digest = digests.get(pluginName);

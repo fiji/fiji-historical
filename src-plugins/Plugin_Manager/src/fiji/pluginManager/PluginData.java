@@ -77,8 +77,7 @@ public abstract class PluginData {
 	}
 
 	protected String getDefaultFijiPath() {
-		//return fijiPath;
-		String name = "/UpdateFiji.class";
+		String name = "/PluginManager.class";
 		URL url = getClass().getResource(name);
 		String path = URLDecoder.decode(url.toString());
 		path = path.substring(0, path.length() - name.length());

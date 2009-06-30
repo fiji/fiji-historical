@@ -10,7 +10,6 @@ import java.net.URL;
  * are marked for deletion. It is able to track the number of bytes downloaded.
 */
 public class Installer extends PluginData implements Runnable, Observer {
-	private String updateURL;
 	private List<PluginObject> pluginsWaiting;
 	private volatile Thread downloadThread;
 
@@ -25,9 +24,8 @@ public class Installer extends PluginData implements Runnable, Observer {
 	private boolean isDownloading;
 
 	//Assume the list passed to constructor is a list of only plugins that wanted change
-	public Installer(List<PluginObject> pluginList, String updateURL) {
+	public Installer(List<PluginObject> pluginList) {
 		super();
-		this.updateURL = updateURL;
 		downloadedList = new PluginCollection();
 		failedDownloadsList = new PluginCollection();
 
@@ -121,7 +119,7 @@ public class Installer extends PluginData implements Runnable, Observer {
 				}
 
 				//Establish connection to file for this iteration
-				downloadURL = new URL(new URL(updateURL), name + "-" + date).toString();
+				downloadURL = new URL(new URL(PluginManager.XML_FILE_URL), name + "-" + date).toString();
 				Downloader downloader = new Downloader(downloadURL, saveToPath);
 				downloader.register(this);
 
