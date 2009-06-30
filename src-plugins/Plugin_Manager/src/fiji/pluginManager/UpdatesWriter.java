@@ -24,81 +24,66 @@ public class UpdatesWriter extends PluginData {
 	PrintWriter xmlPrintWriter;
 	StreamResult streamResult;
 	SAXTransformerFactory tf;
-	TransformerHandler hd;
+	TransformerHandler handler;
 
 	public UpdatesWriter() throws IOException, TransformerConfigurationException {
 		xmlPrintWriter = new PrintWriter(new FileWriter(getSaveToLocation(PluginManager.XML_DIRECTORY, "pluginRecords.xml")));
 		streamResult = new StreamResult(xmlPrintWriter);
 		tf = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
 
-		hd = tf.newTransformerHandler();
-		Transformer serializer = hd.getTransformer();
+		handler = tf.newTransformerHandler();
+		Transformer serializer = handler.getTransformer();
 		serializer.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-1");
 		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.XML_DIRECTORY + "/" + PluginManager.DTD_FILENAME);
 		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
-		hd.setResult(streamResult);
+		handler.setResult(streamResult);
 	}
 
 	public void writeXMLFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
-		hd.startDocument();
+		handler.startDocument();
 		AttributesImpl attrib = new AttributesImpl();
 		
-		hd.startElement("", "", "pluginRecords", attrib);
+		handler.startElement("", "", "pluginRecords", attrib);
 		Iterator<String> pluginNamelist = pluginRecords.keySet().iterator();
 		while (pluginNamelist.hasNext()) {
 			String filenameAttribute = pluginNamelist.next();
 			attrib.clear();
 			attrib.addAttribute("", "", "filename", "CDATA", filenameAttribute);
-			hd.startElement("", "", "plugin", attrib);
+			handler.startElement("", "", "plugin", attrib);
 			List<PluginObject> versionList = pluginRecords.get(filenameAttribute);
 			for (PluginObject plugin : versionList) {
 				attrib.clear();
-				hd.startElement("", "", "version", attrib);
-					attrib.clear();
-					hd.startElement("", "", "checksum", attrib);
-					hd.characters(plugin.getmd5Sum().toCharArray(), 0, plugin.getmd5Sum().length());
-					hd.endElement("", "", "checksum");
-					attrib.clear();
-					hd.startElement("", "", "timestamp", attrib);
-					hd.characters(plugin.getTimestamp().toCharArray(), 0, plugin.getTimestamp().length());
-					hd.endElement("", "", "timestamp");
-					attrib.clear();
-					hd.startElement("", "", "description", attrib);
+				handler.startElement("", "", "version", attrib);
+					writeSimpleTag("checksum", attrib, plugin.getmd5Sum());
+					writeSimpleTag("timestamp", attrib, plugin.getTimestamp());
 					String description = (plugin.getDescription() == null ? "" : plugin.getDescription());
-					hd.characters(description.toCharArray(), 0, description.length());
-					hd.endElement("", "", "description");
-					attrib.clear();
-					hd.startElement("", "", "filesize", attrib);
+					writeSimpleTag("description", attrib, description);
 					String strFilesize = "" + plugin.getFilesize();
-					hd.characters(strFilesize.toCharArray(), 0, strFilesize.length());
-					hd.endElement("", "", "filesize");
+					writeSimpleTag("filesize", attrib, strFilesize);
 					if (plugin.getDependencies() != null && plugin.getDependencies().size() > 0) {
 						List<Dependency> dependencies = plugin.getDependencies();
 						for (Dependency dependency : dependencies) {
 							attrib.clear();
-							hd.startElement("", "", "dependency", attrib);
-								attrib.clear();
-								hd.startElement("", "", "filename", attrib);
-								hd.characters(dependency.getFilename().toCharArray(), 0, dependency.getFilename().length());
-								hd.endElement("", "", "filename");
-								attrib.clear();
-								hd.startElement("", "", "date", attrib);
-								hd.characters(dependency.getTimestamp().toCharArray(), 0, dependency.getTimestamp().length());
-								hd.endElement("", "", "date");
-								attrib.clear();
-								hd.startElement("", "", "relation", attrib);
+							handler.startElement("", "", "dependency", attrib);
+								writeSimpleTag("filename", attrib, dependency.getFilename());
+								writeSimpleTag("date", attrib, dependency.getTimestamp());
 								//hd.characters(dependency.getRelation().toCharArray(), 0, dependency.getRelation().length());
-								hd.characters("at-least".toCharArray(), 0, "at-least".length());
-								hd.endElement("", "", "relation");
-							hd.endElement("", "", "dependency");
+								writeSimpleTag("relation", attrib, "at-least");
+							handler.endElement("", "", "dependency");
 						}
 					}
-				hd.endElement("", "", "version");
+					handler.endElement("", "", "version");
 			}
-			hd.endElement("", "", "plugin");
+			handler.endElement("", "", "plugin");
 		}
-		hd.endElement("", "", "pluginRecords");
-		hd.endDocument();
+		handler.endElement("", "", "pluginRecords");
+		handler.endDocument();
 	}
 
+	private void writeSimpleTag(String tagName, AttributesImpl attrib, String value) throws SAXException {
+		attrib.clear();
+		handler.startElement("", "", tagName, attrib);
+		handler.characters(value.toCharArray(), 0, value.length());
+		handler.endElement("", "", tagName);
+	}
 }

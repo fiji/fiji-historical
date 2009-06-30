@@ -49,7 +49,11 @@
 <version>
 <checksum>b1492f77c5c13e4f9dc05fe0ba9f95d6ec826660</checksum>
 <timestamp>20090504010023</timestamp>
-<description>ant-nodeps.jar needs this ant.jar!</description>
+<description>ant-nodeps.jar needs this ant.jar!
+
+And this ant.jar requires ant-launcher.jar and batik.jar apparently!
+
+Test characters: !@#$%^&amp;*()&lt;&gt;</description>
 <filesize>1327716</filesize>
 <dependency>
 <filename>jars/ant-launcher.jar</filename>
