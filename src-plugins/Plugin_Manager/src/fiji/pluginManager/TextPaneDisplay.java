@@ -114,6 +114,9 @@ public class TextPaneDisplay extends JTextPane {
 		insertBoldText("Dependency");
 		insertDependenciesList(plugin.getDependencies());
 		insertBlankLine();
+		insertBoldText("Is Fiji Plugin: ");
+		insertText(plugin.isFijiPlugin() ? "Yes" : "No");
+		insertBlankLine();
 		insertBoldText("Description");
 		insertDescription(plugin.getDescription());
 		if (plugin.isUpdateable()) {

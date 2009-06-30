@@ -37,8 +37,9 @@ import org.xml.sax.SAXException;
  */
 public class PluginManager extends JFrame implements PlugIn, TableModelListener {
 	public static final String XML_FILE_URL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
-	public static final String DTD_FILENAME = "plugins.dtd";
 	public static final String XML_FILENAME = "current.txt";//should be XML file actually
+	public static final String DTD_FILE_URL = "http://pacific.mpi-cbg.de/update/plugins.dtd";
+	public static final String DTD_FILENAME = "plugins.dtd";
 	public static final String XML_DIRECTORY = "plugininfo";
 	public static final String UPDATE_DIRECTORY = "update";
 	private List<PluginObject> viewList;
@@ -147,24 +148,15 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 		//Create combo box of options
 		JLabel lblSearch2 = new JLabel("View Options:");
-		if (isDeveloper) {
-			arrViewingOptions = new String[] {
-					"View all plugins",
-					"View installed plugins only",
-					"View uninstalled plugins only",
-					"View up-to-date plugins only",
-					"View update-able plugins only",
-					"View upload-able plugins only"
-					};
-		} else {
-			arrViewingOptions = new String[] {
-					"View all plugins",
-					"View installed plugins only",
-					"View uninstalled plugins only",
-					"View up-to-date plugins only",
-					"View update-able plugins only"
-					};
-		}
+		arrViewingOptions = new String[] {
+				"View all plugins",
+				"View installed plugins only",
+				"View uninstalled plugins only",
+				"View up-to-date plugins only",
+				"View update-able plugins only",
+				"View Fiji plugins only",
+				"View Non-Fiji plugins only"
+		};
 		comboBoxViewingOptions = new JComboBox(arrViewingOptions);
 		comboBoxViewingOptions.addActionListener(new ActionListener() {
 
@@ -272,30 +264,36 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	//Whenever search text or ComboBox has been changed
 	private void changeListingListener() {
-		int selectedIndex = comboBoxViewingOptions.getSelectedIndex();
-		viewList = (txtSearch.getText().trim().isEmpty() ?  pluginCollection :
-			((PluginCollection)pluginCollection).getList(PluginCollection.getFilterForText(txtSearch.getText().trim())));
+		viewList = pluginCollection;
+		if (!txtSearch.getText().trim().isEmpty())
+			viewList = ((PluginCollection)pluginCollection).getList(PluginCollection.getFilterForText(txtSearch.getText().trim()));
 
-		//TODO: Candidate for "change"?
-		if (selectedIndex == 0) { //if "View all plugins"
-			//do nothing
-		} else if (selectedIndex == 1) { //if "View installed plugins"
-			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_ALREADYINSTALLED);
-		} else if (selectedIndex == 2) { //if "View uninstalled plugins"
-			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_UNINSTALLED);
-		} else if (selectedIndex == 3) { //if "View up-to-date plugins"
-			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_INSTALLED);
-		} else if (selectedIndex == 4) { //if "View update-able plugins"
-			viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_STATUS_MAYUPDATE);
-		} else if (isDeveloper && selectedIndex == 5) { //if "View upload-able plugins"
-			//TODO: did nothing, redundant, will view all anyway
-			//viewList = ((PluginCollection)viewList).getList(PluginCollection.FILTER_UPLOADABLE);
-		} else {
-			throw new Error("Viewing option specified does not exist!");
+		PluginCollection.Filter viewFilter = getCorrespondingFilter(comboBoxViewingOptions.getSelectedIndex());
+		if (viewFilter != null) {
+			viewList = ((PluginCollection)pluginCollection).getList(viewFilter);
 		}
-
 		//Directly update the table for display
 		table.setupTableModel(viewList);
+	}
+
+	private PluginCollection.Filter getCorrespondingFilter(int selectedIndex) {
+		switch (selectedIndex) {
+		case 0:
+			return null; //no filter needed
+		case 1:
+			return PluginCollection.FILTER_STATUS_ALREADYINSTALLED;
+		case 2:
+			return PluginCollection.FILTER_STATUS_UNINSTALLED;
+		case 3:
+			return PluginCollection.FILTER_STATUS_INSTALLED;
+		case 4:
+			return PluginCollection.FILTER_STATUS_MAYUPDATE;
+		case 5:
+			return PluginCollection.FILTER_FIJI;
+		case 6:
+			return PluginCollection.FILTER_NOT_FIJI;
+		}
+		throw new Error("Viewing Option specified does not exist!");
 	}
 
 	private void clickToUploadRecords() {

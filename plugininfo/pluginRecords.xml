@@ -132,5 +132,16 @@ All right then.</description>
 <relation>at-least</relation>
 </dependency>
 </version>
+<version>
+<checksum>a89490bead7766fd8ad72aa5826d20762984f328</checksum>
+<timestamp>20090630154940</timestamp>
+<description/>
+<filesize>93222</filesize>
+<dependency>
+<filename>jars/batik.jar</filename>
+<date>20090506010300</date>
+<relation>at-least</relation>
+</dependency>
+</version>
 </plugin>
 </pluginRecords>

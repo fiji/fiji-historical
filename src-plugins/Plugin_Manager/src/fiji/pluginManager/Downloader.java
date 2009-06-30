@@ -22,7 +22,7 @@ public class Downloader implements Observable {
 	private InputStream in;
 	private OutputStream out;
 
-	public Downloader(String strURL, String strDestination) throws Exception {
+	public Downloader(String strURL, String strDestination) throws IOException {
 		if (strURL == null || strDestination == null)
 			throw new Error("Downloader constructor parameters cannot be null");
 		this.strDestination = strDestination;

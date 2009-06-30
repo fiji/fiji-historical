@@ -115,11 +115,17 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 	};
 
-	/*public static final Filter FILTER_UPLOADABLE = new Filter() {
+	public static final Filter FILTER_FIJI = new Filter() {
 		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.isUploadable();
+			return plugin.isFijiPlugin();
 		}
-	};*/
+	};
+
+	public static final Filter FILTER_NOT_FIJI = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return !plugin.isFijiPlugin();
+		}
+	};
 
 	public Iterator<PluginObject> getIterator(Filter filter) {
 		return getList(filter).iterator();
