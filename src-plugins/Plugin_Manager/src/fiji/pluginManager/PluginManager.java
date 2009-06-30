@@ -310,7 +310,11 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			Uploader uploader = new Uploader(pluginCollection);
 			uploader.generateDocuments();
 			uploader.uploadToServer();
-		} catch (ParserConfigurationException e1) {
+		} catch (Exception e) {
+			//Interface side: This should handle presentation side of exceptions
+			IJ.showMessage("Error", "Failed to upload changes to server:\n" + e.getLocalizedMessage());
+		}
+		/*} catch (ParserConfigurationException e1) {
 			throw new Error(e1.getLocalizedMessage());
 		} catch (IOException e2) {
 			throw new Error(e2.getLocalizedMessage());
@@ -318,7 +322,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			throw new Error(e3.getLocalizedMessage());
 		} catch (TransformerConfigurationException e4) {
 			throw new Error(e4.getLocalizedMessage());
-		}
+		}*/
 	}
 
 	private void clickToEditDescriptions() {

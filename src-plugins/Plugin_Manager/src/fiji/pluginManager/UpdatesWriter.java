@@ -34,7 +34,7 @@ public class UpdatesWriter extends PluginData {
 		hd = tf.newTransformerHandler();
 		Transformer serializer = hd.getTransformer();
 		serializer.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-1");
-		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.XML_DIRECTORY + File.separator + PluginManager.DTD_FILENAME);
+		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.XML_DIRECTORY + "/" + PluginManager.DTD_FILENAME);
 		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
 		hd.setResult(streamResult);
 	}
@@ -50,7 +50,6 @@ public class UpdatesWriter extends PluginData {
 			attrib.clear();
 			attrib.addAttribute("", "", "filename", "CDATA", filenameAttribute);
 			hd.startElement("", "", "plugin", attrib);
-			System.out.println("attribute: "+filenameAttribute);
 			List<PluginObject> versionList = pluginRecords.get(filenameAttribute);
 			for (PluginObject plugin : versionList) {
 				attrib.clear();
@@ -59,7 +58,6 @@ public class UpdatesWriter extends PluginData {
 					hd.startElement("", "", "checksum", attrib);
 					hd.characters(plugin.getmd5Sum().toCharArray(), 0, plugin.getmd5Sum().length());
 					hd.endElement("", "", "checksum");
-					System.out.println("for " + filenameAttribute + ", checksum: " + plugin.getmd5Sum());
 					attrib.clear();
 					hd.startElement("", "", "timestamp", attrib);
 					hd.characters(plugin.getTimestamp().toCharArray(), 0, plugin.getTimestamp().length());

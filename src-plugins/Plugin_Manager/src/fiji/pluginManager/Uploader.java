@@ -29,9 +29,6 @@ public class Uploader {
 	public void generateDocuments() throws IOException, TransformerConfigurationException, SAXException {
 		//Generate dependencies using DependencyAnalyzer
 		//Build new version of XML document (and/or current.txt)
-		System.out.println("Uploader CLASS: At generateDocuments()");
-		System.out.println("Uploader CLASS: At generateDocuments(), asked dependencyAnalyzer to calculate dependencies for plugins.");
-		//or... dependencyAnalyzer.generateDependencies(uploadList)?
 
 		for (PluginObject plugin : uploadList) {
 			boolean calcDependencies = false;
@@ -97,6 +94,7 @@ public class Uploader {
 		//UpdatesWriter updatesWriter = new UpdatesWriter(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME), null);
 		UpdatesWriter updatesWriter = new UpdatesWriter();
 		updatesWriter.writeXMLFile(newPluginRecords);
+		System.out.println("XML file written.");
 	}
 
 	private PluginObject getPluginMatchingDigest(String digest, List<PluginObject> pluginList) {

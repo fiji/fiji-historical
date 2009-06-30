@@ -1,0 +1,12 @@
+<!ELEMENT pluginRecords (plugin+)>
+<!ELEMENT plugin (version+)>
+<!ELEMENT version (checksum, timestamp, description, filesize, dependency*)>
+<!ELEMENT checksum (#PCDATA)>
+<!ELEMENT timestamp (#PCDATA)>
+<!ELEMENT description (#PCDATA)>
+<!ELEMENT filesize (#PCDATA)>
+<!ELEMENT dependency (filename, date, relation)>
+<!ELEMENT filename (#PCDATA)>
+<!ELEMENT date (#PCDATA)>
+<!ELEMENT relation (#PCDATA)>
+<!ATTLIST plugin filename CDATA #REQUIRED>
