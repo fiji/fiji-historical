@@ -112,6 +112,7 @@ public class FrameDescriptionEditor extends JFrame {
 
 	private void saveText() {
 		selectedPlugin.setDescription(txtDescription.getText().trim());
+		pluginManager.displayPluginDetails(selectedPlugin);
 		textChanged = false;
 	}
 }
