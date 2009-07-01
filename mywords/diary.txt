@@ -654,3 +654,13 @@ Constraints I can see so far:
 - Fiji application should close (restart) after updates/removal of plugins have been made
 
 Next tasks for the week: To attend to the "forServer" boolean flag issue (Probably re-structuring code again), "upload XML and text files to server"
+
+
+
+1st July, Wednesday
+Tasks Completed:
+- Able to upload plugin files, current.txt and XML database onto "server"
+   ==> Problems: Right now it can only use "var/www/update/" when the one at UpdateFiji.java uses "/var/www/update/"
+   ==> Perhaps the server works differently from my Operating System?
+- Redefined XML structure: pluginRecords.xml may start out empty.
+- Application now exits after plugins are uploaded. Will refine the process.
