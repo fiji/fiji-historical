@@ -1,4 +1,4 @@
-<!ELEMENT pluginRecords (plugin+)>
+<!ELEMENT pluginRecords (plugin*)>
 <!ELEMENT plugin (version+)>
 <!ELEMENT version (checksum, timestamp, description, filesize, dependency*)>
 <!ELEMENT checksum (#PCDATA)>

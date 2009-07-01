@@ -212,6 +212,10 @@ public abstract class PluginData {
 		out.close();
 	}
 
+	protected boolean fileExists(String filename) {
+		return new File(prefix(filename)).exists();
+	}
+
 	private String timestamp(long millis) {
 		Calendar date = Calendar.getInstance();
 		date.setTimeInMillis(millis);
