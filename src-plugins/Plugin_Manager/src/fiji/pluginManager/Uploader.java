@@ -99,4 +99,9 @@ public class Uploader {
 		UpdatesWriter updatesWriter = new UpdatesWriter();
 		updatesWriter.uploadFilesToServer(newPluginRecords);
 	}
+
+	public void resetUploadListActions() {
+		for (PluginObject plugin : uploadList)
+			plugin.setActionNone();
+	}
 }

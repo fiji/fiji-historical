@@ -65,6 +65,15 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			LoadStatusDisplay loadStatusDisplay = new LoadStatusDisplay();
 			viewList = pluginCollection = loadStatusDisplay.getExistingPluginList();
 
+			//Inform user of read-only plugins if any
+			List<PluginObject> readOnlyList = loadStatusDisplay.getReadOnlyPluginList();
+			if (readOnlyList.size() > 0) {
+				String namelist = "";
+				for (PluginObject plugin : readOnlyList)
+					namelist += plugin.getFilename() + "\n";
+				IJ.showMessage("Read-Only Plugins", "The following plugin files are set to read-only and thus cannot be changed:\n" + namelist);
+			}
+
 			setUpUserInterface();
 			setVisible(true);
 			pack();

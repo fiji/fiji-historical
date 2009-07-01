@@ -47,4 +47,8 @@ public class LoadStatusDisplay implements Observer {
 	public List<PluginObject> getExistingPluginList() {
 		return pluginListBuilder.extractFullPluginList();
 	}
+
+	public List<PluginObject> getReadOnlyPluginList() {
+		return pluginListBuilder.getReadOnlyPlugins();
+	}
 }

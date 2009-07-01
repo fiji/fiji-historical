@@ -1,5 +1,7 @@
 package fiji.pluginManager;
 
+import ij.IJ;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,6 +24,7 @@ import org.xml.sax.SAXException;
  */
 public class PluginListBuilder extends PluginDataObservable {
 	private List<PluginObject> pluginList;
+	private List<PluginObject> readOnlyList;
 	private Map<String, String> digests;
 	private Map<String, String> dates;
 	private Map<String, String> latestDates;
@@ -36,10 +39,15 @@ public class PluginListBuilder extends PluginDataObservable {
 		latestDates = new TreeMap<String, String>();
 		latestDigests = new TreeMap<String, String>();
 		pluginList = new PluginCollection();
+		readOnlyList = new PluginCollection();
 	}
 
 	public List<PluginObject> extractFullPluginList() {
 		return pluginList;
+	}
+
+	public List<PluginObject> getReadOnlyPlugins() {
+		return readOnlyList; //for error notification purposes
 	}
 
 	//recursively looks into a directory and adds the relevant file
@@ -124,10 +132,8 @@ public class PluginListBuilder extends PluginDataObservable {
 			String pluginName = iterLatest.next();
 			// launcher is platform-specific
 			if (pluginName.startsWith("fiji-")) {
-				System.out.println("starts with fiji- : " + pluginName);
 				if (!pluginName.equals("fiji-" + getPlatform()) &&
 						(!getPlatform().equals("macosx") || !pluginName.startsWith("fiji-tiger"))) {
-					System.out.println("fulfills that weird condition to avoid calc : " + pluginName);
 					continue;
 				}
 			}
@@ -183,26 +189,16 @@ public class PluginListBuilder extends PluginDataObservable {
 			}
 		}
 
-		allTasksComplete = true;
-		notifyObservers();
-		/*
-		boolean someAreNotWritable = false;
-		for (int i = 0; i < list.size(); i++) {
-			File file = new File((String)list.get(i));
+		for (PluginObject plugin : pluginList) {
+			File file = new File(plugin.getFilename());
 			if (!file.exists() || file.canWrite())
 				continue;
-			IJ.log("Read-only file: " + list.get(i));
-			someAreNotWritable = true;
-			list.remove(i--);
+			readOnlyList.add(plugin);
+			IJ.log(plugin.getFilename() + " is read-only file.");
 		}
+		//for (PluginObject plugin : readOnlyList) pluginList.remove(plugin); //cannot view
 
-		if (someAreNotWritable) {
-			String msg = " of the updateable files are writable.";
-			if (list.size() == 0) {
-				IJ.error("None" + msg);
-				return;
-			}
-			IJ.showMessage("Some" + msg);
-		}*/
+		allTasksComplete = true;
+		notifyObservers();
 	}
 }
