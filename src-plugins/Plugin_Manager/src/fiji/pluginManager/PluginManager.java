@@ -6,6 +6,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Iterator;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -303,21 +304,27 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	private void clickToUploadRecords() {
-		//After uploading, you might need to restart Fiji (?)
-		System.out.println("TODO: Select plugins that are indicated to action UPLOAD. Then get their information... connect to server... Not sure how to implement yet.");
 		//TODO: In the future, a UI might hold the below code in the form of
 		//loadedFrame = new UploaderFrame(this);
 		//...
 		//uploaderFrame.setUploader(new Uploader(pluginDataReader));
 		//inside of .setUploader()... start the actions (generateDocuments(), etc etc)
+		String namelist = "";
 		try {
 			Uploader uploader = new Uploader(pluginCollection);
 			uploader.generateNewPluginRecords();
 			uploader.uploadToServer();
+			Iterator<PluginObject> iteratorUploads = uploader.iteratorUploads();
+			while (iteratorUploads.hasNext()) {
+				namelist += iteratorUploads.next().getFilename() + "\n";
+			}
 		} catch (Exception e) {
 			//Interface side: This should handle presentation side of exceptions
 			IJ.showMessage("Error", "Failed to upload changes to server:\n" + e.getLocalizedMessage());
 		}
+		IJ.showMessage("Updated", "The following plugins had their information uploaded:\n" +
+				namelist + "\nPlease restart Plugin Manager for changes to take effect.");
+		dispose();
 		/*} catch (ParserConfigurationException e1) {
 			throw new Error(e1.getLocalizedMessage());
 		} catch (IOException e2) {
@@ -327,6 +334,11 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		} catch (TransformerConfigurationException e4) {
 			throw new Error(e4.getLocalizedMessage());
 		}*/
+	}
+
+	public void exitWithRestartFijiMessage() {
+		IJ.showMessage("Restart Fiji", "You have to restart Fiji application for the Plugin status changes to take effect.");
+		dispose();
 	}
 
 	private void clickToEditDescriptions() {

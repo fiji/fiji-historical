@@ -27,30 +27,11 @@ public class Uploader {
 				File.separator + PluginManager.XML_FILENAME);
 	}
 
+	public Iterator<PluginObject> iteratorUploads() {
+		return uploadList.iterator();
+	}
+
 	public void generateNewPluginRecords() throws IOException {
-		for (PluginObject plugin : uploadList) {
-			boolean calcDependencies = false;
-			if (plugin.isFijiPlugin()) {
-				if (plugin.isRemovableOnly() || plugin.isInstallable()) {
-					calcDependencies = false;
-				} else if (plugin.isUpdateable()) {
-					//update-able being defined having different digest from latest records
-					if (!xmlFileReader.matchesFilenameAndDigest(plugin.getFilename(), plugin.getmd5Sum())) {
-						calcDependencies = true; //does not exist in records
-					} else {
-						calcDependencies = false;
-					}
-				}
-			} else {
-				calcDependencies = true; //not fiji plugin ==> does not exist in records
-			}
-
-			//only calculate dependencies if digest does not exist in records
-			if (calcDependencies) {
-				plugin.setDependency(dependencyAnalyzer.getDependencyListFromFile(plugin.getFilename()));
-			}
-		}
-
 		//Checking list for Fiji plugins - Either new versions or changes to existing ones
 		newPluginRecords = xmlFileReader.getXMLRecords();
 		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
@@ -65,6 +46,7 @@ public class Uploader {
 						version.setDescription(pluginToUpload.getDescription());
 					} else {
 						//this version does not appear in existing records, therefore add it
+						pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
 						versionList.add(pluginToUpload);
 					}
 					break;
@@ -77,6 +59,7 @@ public class Uploader {
 			String name = pluginToUpload.getFilename();
 			List<PluginObject> versionList = newPluginRecords.get(name);
 			if (versionList == null) { //non-Fiji plugin, therefore add it
+				pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
 				versionList = new PluginCollection();
 				versionList.add(pluginToUpload);
 				newPluginRecords.put(name, versionList);
@@ -100,8 +83,4 @@ public class Uploader {
 		updatesWriter.uploadFilesToServer(newPluginRecords);
 	}
 
-	public void resetUploadListActions() {
-		for (PluginObject plugin : uploadList)
-			plugin.setActionNone();
-	}
 }

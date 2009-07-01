@@ -101,6 +101,14 @@ So what does "nodeps" mean?</description>
 </dependency>
 </version>
 </plugin>
+<plugin filename="jars/javac.jar">
+<version>
+<checksum>0528f1cd0125627b24c300472230b63ffde47607</checksum>
+<timestamp>20090516012642</timestamp>
+<description>javac.jar summary.</description>
+<filesize>1041423</filesize>
+</version>
+</plugin>
 <plugin filename="jars/jython2.2.1/jython.jar">
 <version>
 <checksum>98e816fe8a5136547342df672bf6ff47cfd045d9</checksum>
@@ -153,11 +161,76 @@ So what does "nodeps" mean?</description>
 </dependency>
 </version>
 </plugin>
+<plugin filename="plugins/Auto_Threshold.jar">
+<version>
+<checksum>ec023810a0347a308b18129ea5ec5ca32dcc2f80</checksum>
+<timestamp>20090516012721</timestamp>
+<description>Auto threshold summary, and what is Auto Threshold?</description>
+<filesize>13745</filesize>
+</version>
+</plugin>
+<plugin filename="plugins/BeanShell_Interpreter.jar">
+<version>
+<checksum>8b9f1a12898d620f71cf3eac3785e9d88e4c1a06</checksum>
+<timestamp>20090516012656</timestamp>
+<description>Beanshell Interpreter summary.</description>
+<filesize>1894</filesize>
+<dependency>
+<filename>jars/bsh-2.0b4.jar</filename>
+<date>20090504010023</date>
+<relation>at-least</relation>
+</dependency>
+<dependency>
+<filename>jars/fiji-scripting.jar</filename>
+<date>20090516012655</date>
+<relation>at-least</relation>
+</dependency>
+</version>
+</plugin>
+<plugin filename="plugins/Bug_Submitter.jar">
+<version>
+<checksum>9232fc98290b909d73b4ae115680d7aaf9040bbd</checksum>
+<timestamp>20090516012720</timestamp>
+<description>Bug submitter summary.</description>
+<filesize>8610</filesize>
+</version>
+</plugin>
+<plugin filename="plugins/CLI_.jar">
+<version>
+<checksum>14d9740305a0cf671aa8e9b6fa01efd4a3c16285</checksum>
+<timestamp>20090516012704</timestamp>
+<description>CLI description. It has an underscore in the name.</description>
+<filesize>33703</filesize>
+<dependency>
+<filename>jars/fiji-scripting.jar</filename>
+<date>20090516012655</date>
+<relation>at-least</relation>
+</dependency>
+</version>
+</plugin>
+<plugin filename="plugins/Clojure_Interpreter.jar">
+<version>
+<checksum>024e88a5fe7264f2ef15faef3883cdea444435cc</checksum>
+<timestamp>20090516012655</timestamp>
+<description>Clojure Interpreter.jar</description>
+<filesize>7845</filesize>
+<dependency>
+<filename>jars/clojure.jar</filename>
+<date>20090506010254</date>
+<relation>at-least</relation>
+</dependency>
+<dependency>
+<filename>jars/fiji-scripting.jar</filename>
+<date>20090516012655</date>
+<relation>at-least</relation>
+</dependency>
+</version>
+</plugin>
 <plugin filename="plugins/Jython_Interpreter.jar">
 <version>
 <checksum>5ac08be89addf25522fb2cd9c4d2c409ab8ac75f</checksum>
 <timestamp>20090516012655</timestamp>
-<description>Jython Interpreter summary.</description>
+<description>Jython Interpreter summary. Updated one time.</description>
 <filesize>3944</filesize>
 <dependency>
 <filename>jars/jython2.2.1/jython.jar</filename>
@@ -177,6 +250,19 @@ So what does "nodeps" mean?</description>
 <timestamp>20090701184908</timestamp>
 <description>On my repository, I believe this will be updated quite a number of times...</description>
 <filesize>94313</filesize>
+<dependency>
+<filename>jars/batik.jar</filename>
+<date>20090506010300</date>
+<relation>at-least</relation>
+</dependency>
+</version>
+<version>
+<checksum>a19ea4d6a9dec04083fc699964e3762ee9f23a7f</checksum>
+<timestamp>20090701192731</timestamp>
+<description>This version of Plugin Manager allows to refresh displays after editing descriptions.
+
+See?</description>
+<filesize>94350</filesize>
 <dependency>
 <filename>jars/batik.jar</filename>
 <date>20090506010300</date>
