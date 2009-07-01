@@ -4,8 +4,10 @@ import ij.Menus;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -44,10 +46,7 @@ public abstract class PluginData {
 
 	private void initialize(boolean forServer) {
 		this.forServer = forServer;
-		fijiPath = (forServer ? getDefaultFijiPath() :
-			stripSuffix(stripSuffix(Menus.getPlugInsPath(), File.separator),
-		"plugins"));
-		//fijiPath = (fijiPath == null ? getDefaultFijiPath() : fijiPath);
+		fijiPath = stripSuffix(stripSuffix(Menus.getPlugInsPath(), File.separator), "plugins");
 
 		//gets the platform string value
 		boolean is64bit = System.getProperty("os.arch", "").indexOf("64") >= 0;
@@ -74,27 +73,6 @@ public abstract class PluginData {
 		if (!string.endsWith(suffix))
 			return string;
 		return string.substring(0, string.length() - suffix.length());
-	}
-
-	protected String getDefaultFijiPath() {
-		String name = "/PluginManager.class";
-		URL url = getClass().getResource(name);
-		String path = URLDecoder.decode(url.toString());
-		path = path.substring(0, path.length() - name.length());
-		if (path.startsWith("jar:") && path.endsWith("!"))
-			path = path.substring(4, path.length() - 5);
-		if (path.startsWith("file:")) {
-			path = path.substring(5);
-			if (File.separator.equals("\\") && path.startsWith("/"))
-				path = path.substring(1);
-		}
-		int slash = path.lastIndexOf('/');
-		if (slash > 0) {
-			slash = path.lastIndexOf('/', slash - 1);
-			if (slash > 0)
-				path = path.substring(0, slash);
-		}
-		return path;
 	}
 
 	protected String getMacPrefix() {
@@ -217,6 +195,21 @@ public abstract class PluginData {
 		if (File.separator.equals("\\"))
 			filename = filename.replace("\\", "/");
 		return filename;
+	}
+
+	protected void copyFile(String sourcePath, String targetPath) throws IOException {
+		new File(targetPath).getParentFile().mkdirs();
+		copyFile(new FileInputStream(sourcePath),
+			new FileOutputStream(targetPath));
+	}
+
+	private void copyFile(InputStream in, OutputStream out) throws IOException {
+		byte[] buffer = new byte[65536];
+		int count;
+		while ((count = in.read(buffer)) >= 0)
+			out.write(buffer, 0, count);
+		in.close();
+		out.close();
 	}
 
 	private String timestamp(long millis) {

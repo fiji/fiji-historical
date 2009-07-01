@@ -22,19 +22,24 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 public class UpdatesWriter extends PluginData {
-	PrintWriter xmlPrintWriter;
+	String xmlSavepath;
+	String txtSavepath;
+	PrintStream xmlPrintStream;
 	PrintStream txtPrintStream;
 	StreamResult streamResult;
 	SAXTransformerFactory tf;
 	TransformerHandler handler;
 
 	public UpdatesWriter() throws IOException, TransformerConfigurationException {
-		String xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
-		String txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
+		super(true); //For purposes of uploading to server
+		xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
+		System.out.println("UpdatesWriter: " + xmlSavepath);
+		txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
+		System.out.println("UpdatesWriter: " + txtSavepath);
 
 		//XML file writer (pluginRecords.xml)
-		xmlPrintWriter = new PrintWriter(new FileWriter(xmlSavepath));
-		streamResult = new StreamResult(xmlPrintWriter);
+		xmlPrintStream = new PrintStream(xmlSavepath);
+		streamResult = new StreamResult(xmlPrintStream);
 		tf = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
 
 		handler = tf.newTransformerHandler();
@@ -48,13 +53,40 @@ public class UpdatesWriter extends PluginData {
 		txtPrintStream = new PrintStream(txtSavepath);
 	}
 
-	public void writeFilesForUploading(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
+	public void uploadFilesToServer(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
+		writePlugins(pluginRecords);
 		writeXMLFile(pluginRecords);
-		xmlPrintWriter.close();
+		xmlPrintStream.close();
 		System.out.println("XML file written to server");
 		writeTxtFile(pluginRecords);
 		txtPrintStream.close();
 		System.out.println("Text file written to server");
+	}
+
+	private void writePlugins(Map<String, List<PluginObject>> pluginRecords) {
+		String remotePrefix = new File(xmlSavepath).getParent();
+		Iterator<String> pluginNamelist = pluginRecords.keySet().iterator();
+		while (pluginNamelist.hasNext()) {
+			String filename = pluginNamelist.next();
+			List<PluginObject> versionList = pluginRecords.get(filename);
+			for (PluginObject plugin : versionList) {
+				//plugin's digest does not exist in records, thus branded new
+				if (plugin.toUpload()) {
+					String sourcePath = prefix(plugin.getFilename());
+					String targetPath = remotePrefix + File.separator
+						+ plugin.getFilename() + "-" + plugin.getTimestamp();
+					try {
+						copyFile(sourcePath, targetPath);
+						System.out.println(sourcePath + " copied over to " + targetPath + " successfully.");
+					} catch (IOException e) {
+						e.printStackTrace();
+						System.err.println("Could not copy "
+							+ sourcePath + " to " + targetPath);
+						System.exit(1);
+					}
+				}
+			}
+		}
 	}
 
 	private void writeTxtFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {

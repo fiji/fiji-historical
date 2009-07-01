@@ -61,7 +61,7 @@ public class Uploader {
 				if (pluginToUpload.getFilename().equals(name)) {
 					PluginObject version = getPluginMatchingDigest(pluginToUpload.getmd5Sum(), versionList);
 					if (version != null) {
-						//update the existing version
+						//edit the existing version's details, but no new version uploaded
 						version.setDescription(pluginToUpload.getDescription());
 					} else {
 						//this version does not appear in existing records, therefore add it
@@ -97,6 +97,6 @@ public class Uploader {
 		//upload XML document (and/or current.txt) to server
 		System.out.println("Uploader CLASS: At uploadToServer()");
 		UpdatesWriter updatesWriter = new UpdatesWriter();
-		updatesWriter.writeFilesForUploading(newPluginRecords);
+		updatesWriter.uploadFilesToServer(newPluginRecords);
 	}
 }

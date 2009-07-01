@@ -60,9 +60,7 @@ public class PluginListBuilder extends PluginDataObservable {
 
 	public void buildFullPluginList() throws ParserConfigurationException, IOException, SAXException {
 		//Parses XML document; contents is needed for both local and remote plugins
-		//xmlFileReader = new XMLFileReader(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME));
-		xmlFileReader = new XMLFileReader("plugininfo" +
-				File.separator + "pluginRecords.xml"); //temporary hardcode
+		xmlFileReader = new XMLFileReader(PluginManager.XML_DIRECTORY + File.separator + PluginManager.XML_FILENAME);
 		//Generates information of plugins on local side
 		buildLocalPluginList();
 		//Generates information of plugins on remote side
@@ -97,10 +95,8 @@ public class PluginListBuilder extends PluginDataObservable {
 		totalToLoad = queue.size();
 		while (iter.hasNext()) {
 			String outputFilename = taskname = initializeFilename(iter.next());
-			String outputDigest;
+			String outputDigest = getDigestFromFile(outputFilename); //TODO: forServer flag
 			String outputDate;
-
-			outputDigest = getDigestFromFile(outputFilename);
 			digests.put(outputFilename, outputDigest);
 
 			//if XML file does not contain plugin filename or digest does not exist

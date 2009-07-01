@@ -2,15 +2,15 @@ package fiji.pluginManager;
 import java.util.List;
 
 public class PluginObject {
-	private String strFilename; //Identifier
+	private String strFilename; //Main identifier
 	private String md5Sum; //Used for comparison: Determine if update needed
-	private String timestamp; //Version of plugin file ("Co-Identifier")
+	private String timestamp; //Version of plugin file ("Unique within each filename")
 	private String newMd5Sum; //if any
 	private String newTimestamp; //if any
 	private String description;
-	private String newDescription;
+	private String newDescription; //if any
 	private int filesize;
-	private int newFilesize;
+	private int newFilesize; //if any
 	private boolean isFiji;
 	public static final byte STATUS_UNINSTALLED = 0; //Meaning current status is not installed
 	public static final byte STATUS_INSTALLED = 1; //Meaning current status is installed
