@@ -119,7 +119,7 @@ public class Installer extends PluginData implements Runnable, Observer {
 				}
 
 				//Establish connection to file for this iteration
-				downloadURL = new URL(new URL(PluginManager.XML_FILE_URL), name + "-" + date).toString();
+				downloadURL = PluginManager.MAIN_URL + name + "-" + date;
 				Downloader downloader = new Downloader(downloadURL, saveToPath);
 				downloader.register(this);
 

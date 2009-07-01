@@ -15,6 +15,7 @@ public class Uploader {
 	private List<PluginObject> uploadList;
 	private DependencyAnalyzer dependencyAnalyzer;
 	private XMLFileReader xmlFileReader;
+	private Map<String, List<PluginObject>> newPluginRecords;
 
 	public Uploader(List<PluginObject> pluginList) throws ParserConfigurationException, IOException, SAXException {
 		System.out.println("Uploader CLASS: Started up");
@@ -22,14 +23,11 @@ public class Uploader {
 		this.uploadList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 		//xmlFileReader = new XMLFileReader(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME));
-		xmlFileReader = new XMLFileReader("plugininfo" +
-				File.separator + "pluginRecords.xml"); //temporary hardcode
+		xmlFileReader = new XMLFileReader(PluginManager.XML_DIRECTORY +
+				File.separator + PluginManager.XML_FILENAME);
 	}
 
-	public void generateDocuments() throws IOException, TransformerConfigurationException, SAXException {
-		//Generate dependencies using DependencyAnalyzer
-		//Build new version of XML document (and/or current.txt)
-
+	public void generateNewPluginRecords() throws IOException {
 		for (PluginObject plugin : uploadList) {
 			boolean calcDependencies = false;
 			if (plugin.isFijiPlugin()) {
@@ -49,18 +47,12 @@ public class Uploader {
 
 			//only calculate dependencies if digest does not exist in records
 			if (calcDependencies) {
-				/*System.out.println("========Results of dependencyAnalyzer of " + plugin.getFilename() + "========");
-				for (int i = 0; i < dependencies.size(); i++) {
-					Dependency dependency = dependencies.get(i);
-					System.out.println((i+1) + ".) " + dependency.getFilename() + ", " + dependency.getTimestamp());
-				}
-				System.out.println("========End of results of " + plugin.getFilename() + "========");*/
 				plugin.setDependency(dependencyAnalyzer.getDependencyListFromFile(plugin.getFilename()));
 			}
 		}
 
 		//Checking list for Fiji plugins - Either new versions or changes to existing ones
-		Map<String, List<PluginObject>> newPluginRecords = xmlFileReader.getXMLRecords();
+		newPluginRecords = xmlFileReader.getXMLRecords();
 		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
 		while (pluginNamelist.hasNext()) {
 			String name = pluginNamelist.next();
@@ -90,10 +82,6 @@ public class Uploader {
 				newPluginRecords.put(name, versionList);
 			}
 		}
-
-		//UpdatesWriter updatesWriter = new UpdatesWriter(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME), null);
-		UpdatesWriter updatesWriter = new UpdatesWriter();
-		updatesWriter.writeFilesForUploading(newPluginRecords);
 	}
 
 	private PluginObject getPluginMatchingDigest(String digest, List<PluginObject> pluginList) {
@@ -105,9 +93,10 @@ public class Uploader {
 		return null;
 	}
 
-	public void uploadToServer() {
-		//upload plugins in uploadList to server
+	public void uploadToServer() throws IOException, TransformerConfigurationException, SAXException {
 		//upload XML document (and/or current.txt) to server
 		System.out.println("Uploader CLASS: At uploadToServer()");
+		UpdatesWriter updatesWriter = new UpdatesWriter();
+		updatesWriter.writeFilesForUploading(newPluginRecords);
 	}
 }

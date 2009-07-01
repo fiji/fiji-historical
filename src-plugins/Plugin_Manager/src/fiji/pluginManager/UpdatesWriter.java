@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.List;
@@ -22,14 +23,17 @@ import org.xml.sax.helpers.AttributesImpl;
 
 public class UpdatesWriter extends PluginData {
 	PrintWriter xmlPrintWriter;
-	PrintWriter txtPrintWriter;
+	PrintStream txtPrintStream;
 	StreamResult streamResult;
 	SAXTransformerFactory tf;
 	TransformerHandler handler;
 
 	public UpdatesWriter() throws IOException, TransformerConfigurationException {
+		String xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
+		String txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
+
 		//XML file writer (pluginRecords.xml)
-		xmlPrintWriter = new PrintWriter(new FileWriter(getSaveToLocation(PluginManager.XML_DIRECTORY, "pluginRecords.xml")));
+		xmlPrintWriter = new PrintWriter(new FileWriter(xmlSavepath));
 		streamResult = new StreamResult(xmlPrintWriter);
 		tf = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
 
@@ -41,16 +45,16 @@ public class UpdatesWriter extends PluginData {
 		handler.setResult(streamResult);
 
 		//Text file writer (current.txt)
-		txtPrintWriter = new PrintWriter(new FileWriter(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.TXT_FILENAME)));
+		txtPrintStream = new PrintStream(txtSavepath);
 	}
 
 	public void writeFilesForUploading(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
 		writeXMLFile(pluginRecords);
 		xmlPrintWriter.close();
-		System.out.println("XML file written");
+		System.out.println("XML file written to server");
 		writeTxtFile(pluginRecords);
-		txtPrintWriter.close();
-		System.out.println("Text file written");
+		txtPrintStream.close();
+		System.out.println("Text file written to server");
 	}
 
 	private void writeTxtFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
@@ -66,7 +70,7 @@ public class UpdatesWriter extends PluginData {
 					latestPlugin = plugin;
 				}
 			}
-			txtPrintWriter.println(latestPlugin.getFilename() + " " +
+			txtPrintStream.println(latestPlugin.getFilename() + " " +
 					latestPlugin.getTimestamp() + " " + latestPlugin.getmd5Sum());
 		}
 	}

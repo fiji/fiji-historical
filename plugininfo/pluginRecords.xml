@@ -5,7 +5,9 @@
 <version>
 <checksum>43c58c86c2d90a6fea7400f5d1829beae1b93476</checksum>
 <timestamp>20090608135916</timestamp>
-<description>ij.jar ==&gt; ImageJ itself!</description>
+<description>ij.jar ==&gt; ImageJ itself!
+
+This is a description of ImageJ plugin. Without this, I think nothing will work.</description>
 <filesize>1193440</filesize>
 <dependency>
 <filename>jars/javac.jar</filename>
@@ -67,6 +69,24 @@ Test characters: !@#$%^&amp;*()&lt;&gt;</description>
 </dependency>
 </version>
 </plugin>
+<plugin filename="jars/autocomplete.jar">
+<version>
+<checksum>5bab776822719667a604b8fb2eafc679161aeb0f</checksum>
+<timestamp>20090516012653</timestamp>
+<description>Autocompete.jar is not a Fiji plugin until I added it in.</description>
+<filesize>69414</filesize>
+<dependency>
+<filename>jars/rsyntaxtextarea.jar</filename>
+<date>20090516012653</date>
+<relation>at-least</relation>
+</dependency>
+<dependency>
+<filename>jars/batik.jar</filename>
+<date>20090506010300</date>
+<relation>at-least</relation>
+</dependency>
+</version>
+</plugin>
 <plugin filename="jars/batik.jar">
 <version>
 <checksum>dbab80ab5e11fb33328c7da88a849d0a19793ff5</checksum>
@@ -111,6 +131,15 @@ Test characters: !@#$%^&amp;*()&lt;&gt;</description>
 </dependency>
 </version>
 </plugin>
+<plugin filename="plugins/Image_5D.jar">
+<version>
+<checksum>f108d740bd2a49a2b12e61c3149056ea16bf7119</checksum>
+<timestamp>20090528103639</timestamp>
+<description>Image5D is a Fiji Plugin. End of description.
+Oh yeah, Image5D has no dependencies, apparently.</description>
+<filesize>100614</filesize>
+</version>
+</plugin>
 <plugin filename="plugins/Plugin_Manager.jar">
 <version>
 <checksum>795c8bcc0fa5206f33bf96e51441b275981c7602</checksum>
@@ -146,6 +175,25 @@ All right then.</description>
 <date>20090506010300</date>
 <relation>at-least</relation>
 </dependency>
+</version>
+<version>
+<checksum>2cde7c1ae9b9bdd96c9206cb2260179cc7f95282</checksum>
+<timestamp>20090630193639</timestamp>
+<description>Yes, it is another update for Plugin Manager. Surprising, no?</description>
+<filesize>93861</filesize>
+<dependency>
+<filename>jars/batik.jar</filename>
+<date>20090506010300</date>
+<relation>at-least</relation>
+</dependency>
+</version>
+</plugin>
+<plugin filename="plugins/View5D_.jar">
+<version>
+<checksum>793c9e02bac38d5eb6647f1d85bc37ae9a86e8fa</checksum>
+<timestamp>20090528103639</timestamp>
+<description>This is a description of View5D.jar. I wonder what is the relation between it and Image5D.jar</description>
+<filesize>117712</filesize>
 </version>
 </plugin>
 </pluginRecords>

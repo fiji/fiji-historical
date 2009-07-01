@@ -96,3 +96,4 @@
 /jars/rsyntaxtextarea.jar
 /jars/autocomplete.jar
 /plugins/Plugin_Manager.jar
+/var/www/update/*.*

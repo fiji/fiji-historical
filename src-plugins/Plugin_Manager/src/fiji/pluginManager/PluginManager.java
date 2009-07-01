@@ -36,10 +36,11 @@ import org.xml.sax.SAXException;
  * Main User Interface
  */
 public class PluginManager extends JFrame implements PlugIn, TableModelListener {
-	public static final String TXT_FILENAME = "current.txt";//should be XML file actually
-	public static final String XML_FILE_URL = "http://pacific.mpi-cbg.de/update/current.txt";//should be XML file actually
-	public static final String XML_FILENAME = "current.txt";//should be XML file actually
-	public static final String DTD_FILE_URL = "http://pacific.mpi-cbg.de/update/plugins.dtd";
+	public static final String defaultServerPath =
+		"var/www/update/"; //TODO: strange, why not the original "/var/www/update/"?
+	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
+	public static final String TXT_FILENAME = "current.txt";
+	public static final String XML_FILENAME = "pluginRecords.xml";
 	public static final String DTD_FILENAME = "plugins.dtd";
 	public static final String XML_DIRECTORY = "plugininfo";
 	public static final String UPDATE_DIRECTORY = "update";
@@ -307,7 +308,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		//inside of .setUploader()... start the actions (generateDocuments(), etc etc)
 		try {
 			Uploader uploader = new Uploader(pluginCollection);
-			uploader.generateDocuments();
+			uploader.generateNewPluginRecords();
 			uploader.uploadToServer();
 		} catch (Exception e) {
 			//Interface side: This should handle presentation side of exceptions

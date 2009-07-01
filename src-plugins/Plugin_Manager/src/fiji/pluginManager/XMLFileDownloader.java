@@ -11,9 +11,10 @@ public class XMLFileDownloader extends PluginDataObservable implements Observer 
 
 	public void startDownload() {
 		try {
-			downloadAndSave(PluginManager.XML_FILE_URL, PluginManager.XML_FILENAME);
-			downloadAndSave(PluginManager.XML_FILE_URL, PluginManager.XML_FILENAME); //temp
-			//downloadAndSave(PluginManager.DTD_FILE_URL, PluginManager.DTD_FILENAME);
+			downloadAndSave(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME, PluginManager.TXT_FILENAME);
+			downloadAndSave(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME, PluginManager.TXT_FILENAME);
+			//downloadAndSave(PluginManager.MAIN_URL + PluginManager.XML_FILENAME, PluginManager.XML_FILENAME);
+			//downloadAndSave(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME, PluginManager.DTD_FILENAME);
 		} catch (Exception e) {
 			try {
 				new File(saveFileLocation).delete();
