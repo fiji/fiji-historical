@@ -39,7 +39,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		"var/www/update/"; //TODO: strange, why not the original "/var/www/update/"?
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
 	public static final String TXT_FILENAME = "current.txt";
-	public static final String XML_FILENAME = "pluginRecords.xml";
+	public static final String XML_FILENAME = "db.xml";
 	public static final String DTD_FILENAME = "plugins.dtd";
 	public static final String XML_DIRECTORY = "plugininfo";
 	public static final String UPDATE_DIRECTORY = "update";
