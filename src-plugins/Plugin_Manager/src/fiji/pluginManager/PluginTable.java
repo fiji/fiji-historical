@@ -41,8 +41,6 @@ public class PluginTable extends JTable {
 	private static final String[] arrDevelInstalledOptions = { "Installed", "Remove it", "Upload" };
 	private static final String[] arrDevelUpdateableOptions = { "Installed", "Remove it", "Update it", "Upload" };
 
-	//NOTE: To be created only after related display components are created
-	//Namely: lblPluginSummary, txtPluginDetails
 	public PluginTable(List<PluginObject> pluginList, PluginManager pluginManager) {
 		this.pluginManager = pluginManager;
 		isDeveloper = pluginManager.isDeveloper();
@@ -52,7 +50,6 @@ public class PluginTable extends JTable {
 	public void setupTable(List<PluginObject> pluginList) {
 		//default display: All plugins shown
 		setupTableModel(pluginList);
-		
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
@@ -103,7 +100,6 @@ public class PluginTable extends JTable {
 		setCellSelectionEnabled(true);
 		setColumnSelectionAllowed(false);
 		setRowSelectionAllowed(true);
-		changeSelection(0, 0, false, false);
 		requestFocusInWindow();
 	}
 
@@ -144,24 +140,20 @@ public class PluginTable extends JTable {
 	public static String[] getOptionsAccordingToState(PluginObject entry, boolean isDeveloper) {
 		String[] optionsArray = null;
 		if (entry.isInstallable()) {
-			if (isDeveloper) {
+			if (isDeveloper)
 				optionsArray = PluginTable.arrDevelUninstalledOptions;
-			} else {
+			else
 				optionsArray = PluginTable.arrUninstalledOptions;
-			}
 		} else if (entry.isRemovableOnly()) {
-			if (isDeveloper) {// && entry.isUploadable()) {
+			if (isDeveloper)
 				optionsArray = PluginTable.arrDevelInstalledOptions;
-			} else {
+			else
 				optionsArray = PluginTable.arrInstalledOptions;
-			}
 		} else if (entry.isUpdateable()) {
-			if (isDeveloper) {// && entry.isUploadable()) {
-				//if timestamp is newer than the latest version, indicates local modification
+			if (isDeveloper)
 				optionsArray = PluginTable.arrDevelUpdateableOptions;
-			} else {
+			else
 				optionsArray = PluginTable.arrUpdateableOptions;
-			}
 		}
 		if (optionsArray == null)
 			throw new Error("Failed to get available display options for Plugin's ComboBoxes.");
@@ -178,10 +170,9 @@ public class PluginTable extends JTable {
 		private List<PluginObject> entries;
 		private boolean isDeveloper;
 
-		public PluginTableModel(List<PluginObject> myList, boolean isDeveloper) {
-			super();
+		public PluginTableModel(List<PluginObject> entries, boolean isDeveloper) {
 			this.isDeveloper = isDeveloper;
-			entries = myList;
+			this.entries = entries;
 		}
 
 		public int getColumnCount() {
@@ -208,11 +199,6 @@ public class PluginTable extends JTable {
 			return entries.iterator();
 		}
 
-		/*public boolean isMarked(int rowIndex) {
-			PluginObject plugin = entries.get(rowIndex);
-			return false;
-		}*/
-
 		public PluginObject getEntry(int rowIndex) {
 			return entries.get(rowIndex);
 		}
@@ -232,10 +218,10 @@ public class PluginTable extends JTable {
 					throw new Error("Column out of range");
 			}
 		}
-		
+
 		private String getValue(PluginObject entry) {
 			String[] optionsArray = PluginTable.getOptionsAccordingToState(entry, isDeveloper);
-			
+
 			if (entry.isInstallable()) { //if not installed
 				if (!entry.actionSpecified()) {
 					return optionsArray[0]; //"Not installed"
@@ -244,7 +230,7 @@ public class PluginTable extends JTable {
 				} else if (entry.toUpload()) {
 					return optionsArray[2]; //"Upload"
 				} else {
-					throw new Error("INVALID action value for Uninstalled Plugin");
+					throw new Error("Invalid action value for Uninstalled Plugin");
 				}
 			} else if (entry.isRemovableOnly()) { //if installed and no updates
 				if (!entry.actionSpecified()) {
@@ -254,7 +240,7 @@ public class PluginTable extends JTable {
 				} else if (entry.toUpload()) {
 					return optionsArray[2]; //"Upload"
 				} else {
-					throw new Error("INVALID action value for Installed Plugin");
+					throw new Error("Invalid action value for Installed Plugin");
 				}
 			} else if (entry.isUpdateable()) { //if installed and update-able
 				if (!entry.actionSpecified()) {
@@ -266,10 +252,10 @@ public class PluginTable extends JTable {
 				} else if (entry.toUpload()) {
 					return optionsArray[3]; //"Upload"
 				} else {
-					throw new Error("INVALID action value for Update-able Plugin");
+					throw new Error("Invalid action value for Update-able Plugin");
 				}
 			} else {
-				throw new Error("...");
+				throw new Error("Invalid state for " + entry.getFilename());
 			}
 		}
 
@@ -288,62 +274,35 @@ public class PluginTable extends JTable {
 
 		private void setValue(String newValue, PluginObject entry) {
 			String[] optionsArray = PluginTable.getOptionsAccordingToState(entry, isDeveloper);
-			//if current status of selected plugin is "not installed"
 			if (entry.isInstallable()) {
-				//if option chosen is "Not installed"
-				if (newValue.equals(optionsArray[0])) {
+				if (newValue.equals(optionsArray[0])) //status "Not installed"
 					entry.setActionNone();
-				}
-				//if option chosen is "Install"
-				else if (newValue.equals(optionsArray[1])) {
+				else if (newValue.equals(optionsArray[1])) //option "Install"
 					entry.setActionToInstall();
-				}
-				//if option chosen is "Upload"
-				else if (isDeveloper && newValue.equals(optionsArray[2])) {
+				else if (isDeveloper && newValue.equals(optionsArray[2])) //option "Upload"
 					entry.setActionToUpload();
-				}
-				//otherwise...
-				else {
+				else //otherwise...
 					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isInstallable() ? "Installable" : "NOT Installable"));
-				}
 			} else if (entry.isRemovableOnly()) {
-				//if option chosen is "Installed"
-				if (newValue.equals(optionsArray[0])) {
+				if (newValue.equals(optionsArray[0])) //status "Installed"
 					entry.setActionNone();
-				}
-				//if option chosen is "Remove" (Or uninstall it)
-				else if (newValue.equals(optionsArray[1])) {
+				else if (newValue.equals(optionsArray[1])) //option "Remove/Uninstall"
 					entry.setActionToRemove();
-				}
-				//if option chosen is "Upload"
-				else if (isDeveloper && newValue.equals(optionsArray[2])) {
+				else if (isDeveloper && newValue.equals(optionsArray[2])) //option "Upload"
 					entry.setActionToUpload();
-				}
-				//otherwise...
-				else {
+				else //otherwise...
 					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isRemovableOnly() ? "Uninstallable" : "NOT Uninstallable"));
-				}
 			} else if (entry.isUpdateable()) {
-				//if option chosen is "Installed"
-				if (newValue.equals(optionsArray[0])) {
+				if (newValue.equals(optionsArray[0])) //status "Installed"
 					entry.setActionNone();
-				}
-				//if option chosen is "Remove" (Or uninstall it)
-				else if (newValue.equals(optionsArray[1])) {
+				else if (newValue.equals(optionsArray[1])) //option "Remove/Uninstall"
 					entry.setActionToRemove();
-				}
-				//if option chosen is "Update"
-				else if (newValue.equals(optionsArray[2])) {
+				else if (newValue.equals(optionsArray[2])) //option "To Update"
 					entry.setActionToUpdate();
-				}
-				//if option chosen is "Upload"
-				else if (isDeveloper && newValue.equals(optionsArray[3])) {
+				else if (isDeveloper && newValue.equals(optionsArray[3])) //option "Upload"
 					entry.setActionToUpload();
-				}
-				//otherwise...
-				else {
+				else //otherwise
 					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isUpdateable() ? "Updateable" : "NOT Updateable"));
-				}
 			} else {
 				throw new Error("Invalid status specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
 			}

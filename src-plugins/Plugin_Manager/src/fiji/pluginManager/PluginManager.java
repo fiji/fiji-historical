@@ -90,47 +90,8 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	private void setUpUserInterface() {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
-		//Create textpane to hold the information and its scrollpane
-		txtPluginDetails = new TextPaneDisplay();
-		txtPluginDetails.setPreferredSize(new Dimension(335,315));
-		JScrollPane txtScrollpane = new JScrollPane(txtPluginDetails);
-		txtScrollpane.getViewport().setBackground(txtPluginDetails.getBackground());
-		txtScrollpane.setPreferredSize(new Dimension(335,315));
-
-		//Tabbed pane of plugin details to hold the textpane (w/ scrollpane)
-		JTabbedPane tabbedPane = new JTabbedPane();
-		JPanel panelPluginDetails = new JPanel();
-		panelPluginDetails.setLayout(new BorderLayout());
-		panelPluginDetails.add(txtScrollpane, BorderLayout.CENTER);
-		tabbedPane.addTab("Details", null, panelPluginDetails, "Individual Plugin information");
-		tabbedPane.setPreferredSize(new Dimension(335,315));
-
-		JPanel rightPanel = new JPanel();
-		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-		rightPanel.add(Box.createVerticalGlue());
-		rightPanel.add(tabbedPane);
-
-		if (isDeveloper) {
-			JPanel editButtonPanel = new JPanel();
-			editButtonPanel.setLayout(new BoxLayout(editButtonPanel, BoxLayout.X_AXIS));
-			btnEditDescriptions = new JButton("Edit Descriptions");
-			btnEditDescriptions.setToolTipText("Edit the descriptions of selected plugin");
-			btnEditDescriptions.addActionListener(new ActionListener() {
-
-				public void actionPerformed(ActionEvent e) {
-					clickToEditDescriptions();
-				}
-
-			});
-			btnEditDescriptions.setEnabled(false);
-			editButtonPanel.add(btnEditDescriptions);
-			editButtonPanel.add(Box.createHorizontalGlue());
-			rightPanel.add(editButtonPanel);
-		} else {
-			rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
-		}
-
+		
+		//======== LEFT PANEL ========
 		//Create text search
 		JLabel lblSearch1 = new JLabel("Search:", SwingConstants.LEFT);
 		txtSearch = new JTextField();
@@ -211,7 +172,51 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		leftPanel.add(pluginListScrollpane);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,5)));
 		leftPanel.add(lblSummaryPanel);
+		//======== LEFT PANEL ========
 
+		//======== RIGHT PANEL ========
+		//Create textpane to hold the information and its scrollpane
+		txtPluginDetails = new TextPaneDisplay();
+		txtPluginDetails.setPreferredSize(new Dimension(335,315));
+		JScrollPane txtScrollpane = new JScrollPane(txtPluginDetails);
+		txtScrollpane.getViewport().setBackground(txtPluginDetails.getBackground());
+		txtScrollpane.setPreferredSize(new Dimension(335,315));
+
+		//Tabbed pane of plugin details to hold the textpane (w/ scrollpane)
+		JTabbedPane tabbedPane = new JTabbedPane();
+		JPanel panelPluginDetails = new JPanel();
+		panelPluginDetails.setLayout(new BorderLayout());
+		panelPluginDetails.add(txtScrollpane, BorderLayout.CENTER);
+		tabbedPane.addTab("Details", null, panelPluginDetails, "Individual Plugin information");
+		tabbedPane.setPreferredSize(new Dimension(335,315));
+
+		JPanel rightPanel = new JPanel();
+		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+		rightPanel.add(Box.createVerticalGlue());
+		rightPanel.add(tabbedPane);
+
+		if (isDeveloper) {
+			JPanel editButtonPanel = new JPanel();
+			editButtonPanel.setLayout(new BoxLayout(editButtonPanel, BoxLayout.X_AXIS));
+			btnEditDescriptions = new JButton("Edit Descriptions");
+			btnEditDescriptions.setToolTipText("Edit the descriptions of selected plugin");
+			btnEditDescriptions.addActionListener(new ActionListener() {
+
+				public void actionPerformed(ActionEvent e) {
+					clickToEditDescriptions();
+				}
+
+			});
+			btnEditDescriptions.setEnabled(true);
+			editButtonPanel.add(btnEditDescriptions);
+			editButtonPanel.add(Box.createHorizontalGlue());
+			rightPanel.add(editButtonPanel);
+		} else {
+			rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
+		}
+		//======== RIGHT PANEL ========
+
+		//======== TOP PANEL (LEFT + RIGHT) ========
 		JPanel topPanel = new JPanel();
 		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
 		topPanel.add(leftPanel);
@@ -255,7 +260,9 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			}
 
 		});
+		//======== TOP PANEL (LEFT + RIGHT) ========
 
+		//======== BOTTOM PANEL ========
 		JPanel bottomPanel = new JPanel();
 		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
 		bottomPanel.add(btnStart);
@@ -266,10 +273,14 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		bottomPanel.add(Box.createHorizontalGlue());
 		bottomPanel.add(btnOK);
 		bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
+		//======== BOTTOM PANEL ========
 
 		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 		getContentPane().add(topPanel);
 		getContentPane().add(bottomPanel);
+
+		//initial selection
+		table.changeSelection(0, 0, false, false);
 	}
 
 	//Whenever search text or ComboBox has been changed
@@ -343,7 +354,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 				if (successfulListSize > 0) {
 					int totalSize = failedListSize + successfulListSize;
 					IJ.showMessage("Updated", successfulListSize + " out of " + totalSize + " plugin files uploaded successfully\n\n"
-							+ "Please restart Plugin Manager for changes to take effect.");
+							+ "You need to restart Plugin Manager for changes to take effect.");
 					dispose();
 				} //if there are zero successful uploads, don't need to auto-close Plugin Manager
 			}
@@ -394,7 +405,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	public void exitWithRestartFijiMessage() {
 		removeLoadedFrameIfExists();
-		IJ.showMessage("Restart Fiji", "You have to restart Fiji application for the Plugin status changes to take effect.");
+		IJ.showMessage("Restart Fiji", "You need to restart Fiji application for the Plugin status changes to take effect.");
 		dispose();
 	}
 
@@ -409,12 +420,11 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	public void displayPluginDetails(PluginObject currentPlugin) {
 		this.currentPlugin = currentPlugin;
 		try {
-			((TextPaneDisplay)txtPluginDetails).showPluginDetails(currentPlugin);
+			if (txtPluginDetails != null)
+				((TextPaneDisplay)txtPluginDetails).showPluginDetails(currentPlugin);
 		} catch (BadLocationException e) {
 			throw new Error("Problem with printing Plugin information: " + e.getMessage());
 		}
-
-		btnEditDescriptions.setEnabled(isDeveloper);
 	}
 
 	public void tableChanged(TableModelEvent e) {
