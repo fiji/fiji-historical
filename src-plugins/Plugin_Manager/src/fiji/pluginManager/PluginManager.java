@@ -326,25 +326,28 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 		if (message != null) {
 			IJ.showMessage("Error", "Failed to upload changes to server:\n" + message);
 		} else {
-			if (uploader.getFailedUploads().size() > 0) {
-				String namelist = "";
-				for (PluginObject plugin : uploader.getFailedUploads())
-					namelist += "\n" + plugin.getFilename();
-				IJ.showMessage("Failed Uploads", "The following files failed to upload:" + namelist);
+			int failedListSize = uploader.getFailedUploads().size();
+			int successfulListSize = uploader.getSuccessfulUploads().size();
+			if (failedListSize == 0 && successfulListSize == 0) { //no plugin files to upload
+				//Here, need not restart as local information (i.e.: descriptions) has
+				//been updated too.
+				IJ.showMessage("Success", "Updated existing plugin records successfully.");
+				uploader.resetActionsOfChangeList(); //remove user-specified actions
+			} else {
+				if (failedListSize > 0) {
+					String namelist = "";
+					for (PluginObject plugin : uploader.getFailedUploads())
+						namelist += "\n" + plugin.getFilename();
+					IJ.showMessage("Failed Uploads", "The following files failed to upload:" + namelist);
+				}
+				if (successfulListSize > 0) {
+					int totalSize = failedListSize + successfulListSize;
+					IJ.showMessage("Updated", successfulListSize + " out of " + totalSize + " plugin files uploaded successfully\n\n"
+							+ "Please restart Plugin Manager for changes to take effect.");
+					dispose();
+				} //if there are zero successful uploads, don't need to auto-close Plugin Manager
 			}
-			if (uploader.getSuccessfulUploads().size() > 0) {
-				int completed = uploader.getSuccessfulUploads().size();
-				int totalSize = uploader.getFailedUploads().size() + completed;
-				IJ.showMessage("Updated", completed + " out of " + totalSize + " plugin files uploaded successfully\n\n"
-					+ "Please restart Plugin Manager for changes to take effect.");
-				dispose();
-			} //if there are zero successful uploads, don't need to auto-close Plugin Manager
 		}
-	}
-
-	public void exitWithRestartFijiMessage() {
-		IJ.showMessage("Restart Fiji", "You have to restart Fiji application for the Plugin status changes to take effect.");
-		dispose();
 	}
 
 	private void clickToEditDescriptions() {
@@ -384,13 +387,23 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	public void backToPluginManager() {
+		removeLoadedFrameIfExists();
+		setEnabled(true);
+		setVisible(true);
+	}
+
+	public void exitWithRestartFijiMessage() {
+		removeLoadedFrameIfExists();
+		IJ.showMessage("Restart Fiji", "You have to restart Fiji application for the Plugin status changes to take effect.");
+		dispose();
+	}
+
+	private void removeLoadedFrameIfExists() {
 		if (loadedFrame != null) {
 			loadedFrame.setVisible(false);
 			loadedFrame.dispose();
 			loadedFrame = null;
 		}
-		setEnabled(true);
-		setVisible(true);
 	}
 
 	public void displayPluginDetails(PluginObject currentPlugin) {

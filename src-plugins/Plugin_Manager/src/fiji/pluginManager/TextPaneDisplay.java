@@ -10,10 +10,10 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 public class TextPaneDisplay extends JTextPane {
-	private SimpleAttributeSet ITALIC_BLACK;
-	private SimpleAttributeSet BOLD_BLACK;
-	private SimpleAttributeSet BLACK;
-	private SimpleAttributeSet BOLD_BLACK_TITLE;
+	public SimpleAttributeSet ITALIC_BLACK;
+	public SimpleAttributeSet BOLD_BLACK;
+	public SimpleAttributeSet BLACK;
+	public SimpleAttributeSet BOLD_BLACK_TITLE;
 
 	public TextPaneDisplay() {
 		ITALIC_BLACK = new SimpleAttributeSet();
@@ -101,9 +101,9 @@ public class TextPaneDisplay extends JTextPane {
 	public void showPluginDetails(PluginObject plugin) throws BadLocationException {
 		setText("");
 		//Display plugin data, text with different formatting
-		insertStyledText(plugin.getFilename(), styleBoldTitle());
+		insertStyledText(plugin.getFilename(), BOLD_BLACK_TITLE);
 		if (plugin.isUpdateable())
-			insertStyledText("\n(Update is available)", styleItalicBlack());
+			insertStyledText("\n(Update is available)", ITALIC_BLACK);
 		insertBlankLine();
 		insertBoldText("Md5 Sum");
 		insertText("\n" + plugin.getmd5Sum());
@@ -121,7 +121,7 @@ public class TextPaneDisplay extends JTextPane {
 		insertDescription(plugin.getDescription());
 		if (plugin.isUpdateable()) {
 			insertBlankLine();
-			insertStyledText("Update Details", styleBoldTitle());
+			insertStyledText("Update Details", BOLD_BLACK_TITLE);
 			insertBlankLine();
 			insertBoldText("New Md5 Sum");
 			insertText("\n" + plugin.getNewMd5Sum());
@@ -178,21 +178,4 @@ public class TextPaneDisplay extends JTextPane {
 		setSelectionStart(0);
 		setSelectionEnd(0);
 	}
-
-	public SimpleAttributeSet styleItalicBlack() {
-		return ITALIC_BLACK;
-	}
-
-	public SimpleAttributeSet styleBoldBlack() {
-		return BOLD_BLACK;
-	}
-
-	public SimpleAttributeSet styleBlack() {
-		return BLACK;
-	}
-
-	public SimpleAttributeSet styleBoldTitle() {
-		return BOLD_BLACK_TITLE;
-	}
-
 }

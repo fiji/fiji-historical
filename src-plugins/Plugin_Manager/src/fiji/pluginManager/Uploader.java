@@ -12,7 +12,7 @@ import org.xml.sax.SAXException;
 
 public class Uploader implements Observer {
 	private UpdatesWriter updatesWriter;
-	private List<PluginObject> uploadList;
+	private List<PluginObject> uploadChangesList;
 	private DependencyAnalyzer dependencyAnalyzer;
 	private XMLFileReader xmlFileReader;
 	private Map<String, List<PluginObject>> newPluginRecords;
@@ -21,7 +21,7 @@ public class Uploader implements Observer {
 	public Uploader(List<PluginObject> pluginList) throws ParserConfigurationException, IOException, SAXException {
 		System.out.println("Uploader CLASS: Started up");
 		PluginCollection pluginCollection = (PluginCollection)pluginList;
-		this.uploadList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
+		uploadChangesList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 		xmlFileReader = new XMLFileReader(PluginManager.XML_DIRECTORY +
 				File.separator + PluginManager.XML_FILENAME); //generates XML records from file
@@ -35,7 +35,7 @@ public class Uploader implements Observer {
 		while (pluginNamelist.hasNext()) {
 			String name = pluginNamelist.next();
 			List<PluginObject> versionList = newPluginRecords.get(name);
-			for (PluginObject pluginToUpload : uploadList) {
+			for (PluginObject pluginToUpload : uploadChangesList) {
 				if (pluginToUpload.getFilename().equals(name)) {
 					PluginObject version = getPluginMatchingDigest(pluginToUpload.getmd5Sum(), versionList);
 					if (version != null) {
@@ -51,7 +51,7 @@ public class Uploader implements Observer {
 		}
 
 		//Checking list for non-Fiji plugins to add to new records
-		for (PluginObject pluginToUpload : uploadList) {
+		for (PluginObject pluginToUpload : uploadChangesList) {
 			String name = pluginToUpload.getFilename();
 			List<PluginObject> versionList = newPluginRecords.get(name);
 			if (versionList == null) { //non-Fiji plugin, therefore add it
@@ -92,6 +92,12 @@ public class Uploader implements Observer {
 		return updatesWriter.failList;
 	}
 
+	public void resetActionsOfChangeList() {
+		for (PluginObject plugin : uploadChangesList)
+			plugin.setActionNone();
+	}
+
+	//Updating the interface
 	public void refreshData(Observable subject) {
 		if (subject == updatesWriter) {
 			if (updatesWriter.allTasksComplete()) {

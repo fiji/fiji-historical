@@ -212,7 +212,7 @@ public class FrameConfirmation extends JFrame {
 					strAction = "To Update";
 				}
 
-				txtPluginList.insertStyledText(pluginName, txtPluginList.styleBoldTitle());
+				txtPluginList.insertStyledText(pluginName, txtPluginList.BOLD_BLACK_TITLE);
 				txtPluginList.insertDescription(pluginDescription);
 				txtPluginList.insertBlankLine();
 				txtPluginList.insertBoldText("Action: ");
@@ -224,17 +224,17 @@ public class FrameConfirmation extends JFrame {
 			//textpane listing additional plugins to add/remove
 			TextPaneDisplay txtAdditionalList = (TextPaneDisplay)this.txtAdditionalList;
 			if (toInstallList.size() > 0) {
-				txtAdditionalList.insertStyledText("To Install", txtPluginList.styleBoldTitle());
+				txtAdditionalList.insertStyledText("To Install", txtPluginList.BOLD_BLACK_TITLE);
 				txtAdditionalList.insertPluginNamelist(toInstallList);
 			}
 			if (toUpdateList.size() > 0) {
 				txtAdditionalList.insertBlankLine();
-				txtAdditionalList.insertStyledText("To Update", txtPluginList.styleBoldTitle());
+				txtAdditionalList.insertStyledText("To Update", txtPluginList.BOLD_BLACK_TITLE);
 				txtAdditionalList.insertPluginNamelist(toUpdateList);
 			}
 			if (toRemoveList.size() > 0) {
 				txtAdditionalList.insertBlankLine();
-				txtAdditionalList.insertStyledText("To Remove", txtPluginList.styleBoldTitle());
+				txtAdditionalList.insertStyledText("To Remove", txtPluginList.BOLD_BLACK_TITLE);
 				txtAdditionalList.insertPluginNamelist(toRemoveList);
 			}
 			if (toInstallList.size() == 0 && toUpdateList.size() == 0 && toRemoveList.size() == 0) {

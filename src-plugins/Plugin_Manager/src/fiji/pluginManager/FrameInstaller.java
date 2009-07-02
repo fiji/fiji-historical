@@ -61,7 +61,7 @@ class FrameInstaller extends JFrame {
 		btnClose = new JButton();
 		btnClose.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-            	backToPluginManager();
+            	closeFrameInstaller();
             }
         });
 
@@ -116,7 +116,7 @@ class FrameInstaller extends JFrame {
 		}
 	}
 
-	private void backToPluginManager() {
+	private void closeFrameInstaller() {
 		//plugin manager will deal with this
 		if (isProgressing) {
 			if (JOptionPane.showConfirmDialog(this,
@@ -128,7 +128,10 @@ class FrameInstaller extends JFrame {
 			} else
 				return;
 		}
-		pluginManager.backToPluginManager();
+		if (installer != null && installer.getListOfDownloaded().size() > 0)
+			pluginManager.exitWithRestartFijiMessage();
+		else
+			pluginManager.backToPluginManager();
 	}
 
 	private void setPercentageComplete(int downloaded, int total) {

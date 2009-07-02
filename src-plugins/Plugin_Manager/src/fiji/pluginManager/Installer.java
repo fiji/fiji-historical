@@ -3,7 +3,6 @@ package fiji.pluginManager;
 import java.util.Iterator;
 import java.util.List;
 import java.io.File;
-import java.net.URL;
 
 /*
  * This class' main role is to download selected files, as well as indicate those that
