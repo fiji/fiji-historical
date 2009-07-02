@@ -21,18 +21,14 @@ public class XMLFileDownloader extends PluginDataObservable implements Observer 
 			} catch (Exception e2) { }
 			throw new Error("Could not download " + taskname + " successfully: " + e.getMessage());
 		}
-		allTasksComplete = true;
-		notifyObservers();
+		setStatusComplete(); //indicate to observer there's no more tasks
 	}
 
 	private void downloadAndSave(String url, String filename) throws IOException {
 		saveFileLocation = getSaveToLocation(PluginManager.XML_DIRECTORY, filename);
 
 		//progress starts out at 0 for download of a single file
-		taskname = filename;
-		currentlyLoaded = 0 ;
-		totalToLoad = 0;
-		notifyObservers();
+		changeStatus(filename, 0, 0);
 		
 		//Establishes connection
 		Downloader downloader = new Downloader(url, saveFileLocation);
@@ -56,6 +52,6 @@ public class XMLFileDownloader extends PluginDataObservable implements Observer 
 		Downloader myDownloader = (Downloader)subject;
 		currentlyLoaded += myDownloader.getNumOfBytes();
 		System.out.println("Downloaded so far: " + currentlyLoaded);
-		notifyObservers();
+		changeStatus(taskname, currentlyLoaded, totalToLoad);
 	}
 }

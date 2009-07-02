@@ -105,11 +105,11 @@ public class PluginListBuilder extends PluginDataObservable {
 		currentlyLoaded = 0;
 		totalToLoad = queue.size();
 		while (iter.hasNext()) {
-			String outputFilename = taskname = initializeFilename(iter.next());
+			String outputFilename = initializeFilename(iter.next());
 			String outputDigest = getDigestFromFile(outputFilename); //TODO: forServer flag
-			String outputDate;
 			digests.put(outputFilename, outputDigest);
 
+			String outputDate;
 			//if XML file does not contain plugin filename or digest does not exist
 			if (!xmlFileReader.matchesFilenameAndDigest(outputFilename, outputDigest)) {
 				//use the local plugin's last modified timestamp instead
@@ -120,8 +120,7 @@ public class PluginListBuilder extends PluginDataObservable {
 			}
 			dates.put(outputFilename, outputDate);
 
-			++currentlyLoaded;
-			notifyObservers();
+			changeStatus(outputFilename, ++currentlyLoaded, totalToLoad);
 		}
 	}
 
@@ -198,7 +197,6 @@ public class PluginListBuilder extends PluginDataObservable {
 		}
 		//for (PluginObject plugin : readOnlyList) pluginList.remove(plugin); //cannot view
 
-		allTasksComplete = true;
-		notifyObservers();
+		setStatusComplete(); //indicate to observer there's no more tasks
 	}
 }

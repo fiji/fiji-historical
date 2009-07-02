@@ -21,7 +21,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-public class UpdatesWriter extends PluginData {
+public class UpdatesWriter extends PluginDataObservable {
 	String xmlSavepath;
 	String txtSavepath;
 	PrintStream xmlPrintStream;
@@ -30,8 +30,8 @@ public class UpdatesWriter extends PluginData {
 	SAXTransformerFactory tf;
 	TransformerHandler handler;
 
-	public UpdatesWriter() throws IOException, TransformerConfigurationException {
-		super(true); //For purposes of uploading to server
+	public UpdatesWriter(Observer observer) throws IOException, TransformerConfigurationException {
+		super(observer, true); //For purposes of uploading to server
 		xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
 		System.out.println("UpdatesWriter: " + xmlSavepath);
 		txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
@@ -53,43 +53,40 @@ public class UpdatesWriter extends PluginData {
 		txtPrintStream = new PrintStream(txtSavepath);
 	}
 
-	public void uploadFilesToServer(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
-		writePlugins(pluginRecords);
+	public void uploadFilesToServer(Map<String, List<PluginObject>> pluginRecords, List<PluginObject> filesUploadList) throws SAXException {
+		writePlugins(filesUploadList);
 		writeXMLFile(pluginRecords);
 		xmlPrintStream.close();
 		System.out.println("XML file written to server");
 		writeTxtFile(pluginRecords);
 		txtPrintStream.close();
 		System.out.println("Text file written to server");
+		setStatusComplete(); //indicate to observer there's no more tasks
 	}
 
-	private void writePlugins(Map<String, List<PluginObject>> pluginRecords) {
+	private void writePlugins(List<PluginObject> filesUploadList) {
+		currentlyLoaded = 0;
+		totalToLoad = filesUploadList.size();
 		String remotePrefix = new File(xmlSavepath).getParent();
-		Iterator<String> pluginNamelist = pluginRecords.keySet().iterator();
-		while (pluginNamelist.hasNext()) {
-			String filename = pluginNamelist.next();
-			List<PluginObject> versionList = pluginRecords.get(filename);
-			for (PluginObject plugin : versionList) {
-				//plugin's digest does not exist in records, thus branded new
-				if (plugin.toUpload()) {
-					String sourcePath = prefix(plugin.getFilename());
-					String targetPath = remotePrefix + File.separator
-						+ plugin.getFilename() + "-" + plugin.getTimestamp();
-					try {
-						copyFile(sourcePath, targetPath);
-						System.out.println(sourcePath + " copied over to " + targetPath + " successfully.");
-					} catch (IOException e) {
-						e.printStackTrace();
-						System.err.println("Could not copy "
-							+ sourcePath + " to " + targetPath);
-						System.exit(1);
-					}
-				}
+		for (PluginObject plugin : filesUploadList) {
+			taskname = plugin.getFilename();
+			String sourcePath = prefix(taskname);
+			String targetPath = remotePrefix + File.separator + taskname + "-" + plugin.getTimestamp();
+			try {
+				copyFile(sourcePath, targetPath);
+				System.out.println(sourcePath + " copied over to " + targetPath + " successfully.");
+				changeStatus(taskname, ++currentlyLoaded, totalToLoad);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.out.println("Could not copy " + sourcePath + " to " + targetPath);
 			}
 		}
 	}
 
 	private void writeTxtFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
+		changeStatus(PluginManager.TXT_FILENAME, 0, 1);
+
+		//start writing
 		Iterator<String> pluginNamelist = pluginRecords.keySet().iterator();
 		while (pluginNamelist.hasNext()) {
 			String filename = pluginNamelist.next();
@@ -105,9 +102,14 @@ public class UpdatesWriter extends PluginData {
 			txtPrintStream.println(latestPlugin.getFilename() + " " +
 					latestPlugin.getTimestamp() + " " + latestPlugin.getmd5Sum());
 		}
+
+		changeStatus(PluginManager.TXT_FILENAME, 1, 1);
 	}
 
 	private void writeXMLFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
+		changeStatus(PluginManager.XML_FILENAME, 0, 1);
+
+		//Start writing
 		handler.startDocument();
 		AttributesImpl attrib = new AttributesImpl();
 
@@ -146,6 +148,8 @@ public class UpdatesWriter extends PluginData {
 		}
 		handler.endElement("", "", "pluginRecords");
 		handler.endDocument();
+
+		changeStatus(PluginManager.XML_FILENAME, 1, 1);
 	}
 
 	private void writeSimpleTag(String tagName, AttributesImpl attrib, String value) throws SAXException {

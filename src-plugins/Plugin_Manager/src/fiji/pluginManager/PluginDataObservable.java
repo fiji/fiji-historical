@@ -9,7 +9,16 @@ public class PluginDataObservable extends PluginData implements Observable {
 	protected int totalToLoad;
 	protected boolean allTasksComplete;
 
+	public PluginDataObservable(Observer observer, boolean forServer) {
+		super(forServer);
+		initializePluginDataObservable(observer);
+	}
+
 	public PluginDataObservable(Observer observer) {
+		initializePluginDataObservable(observer);
+	}
+
+	private void initializePluginDataObservable(Observer observer) {
 		observersList = new Vector<Observer>();
 		register(observer);
 	}
@@ -45,5 +54,17 @@ public class PluginDataObservable extends PluginData implements Observable {
 	}
 
 	public void unRegister(Observer obs) {}
+
+	protected void changeStatus(String taskname, int currentlyLoaded, int totalToLoad) {
+		this.taskname = taskname;
+		this.currentlyLoaded = currentlyLoaded;
+		this.totalToLoad = totalToLoad;
+		notifyObservers();
+	}
+
+	protected void setStatusComplete() {
+		allTasksComplete = true;
+		notifyObservers();
+	}
 
 }

@@ -1,5 +1,7 @@
 package fiji.pluginManager;
 
+import ij.IJ;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
@@ -11,11 +13,13 @@ import javax.xml.transform.TransformerConfigurationException;
 
 import org.xml.sax.SAXException;
 
-public class Uploader {
+public class Uploader implements Observer {
+	private UpdatesWriter updatesWriter;
 	private List<PluginObject> uploadList;
 	private DependencyAnalyzer dependencyAnalyzer;
 	private XMLFileReader xmlFileReader;
 	private Map<String, List<PluginObject>> newPluginRecords;
+	private List<PluginObject> filesUploadList; //list of plugins whose files has to be uploaded
 
 	public Uploader(List<PluginObject> pluginList) throws ParserConfigurationException, IOException, SAXException {
 		System.out.println("Uploader CLASS: Started up");
@@ -33,6 +37,7 @@ public class Uploader {
 
 	public void generateNewPluginRecords() throws IOException {
 		//Checking list for Fiji plugins - Either new versions or changes to existing ones
+		filesUploadList = new PluginCollection();
 		newPluginRecords = xmlFileReader.getXMLRecords();
 		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
 		while (pluginNamelist.hasNext()) {
@@ -42,12 +47,11 @@ public class Uploader {
 				if (pluginToUpload.getFilename().equals(name)) {
 					PluginObject version = getPluginMatchingDigest(pluginToUpload.getmd5Sum(), versionList);
 					if (version != null) {
-						//edit the existing version's details, but no new version uploaded
+						//edit the existing version's details, but no new file uploaded
 						version.setDescription(pluginToUpload.getDescription());
 					} else {
 						//this version does not appear in existing records, therefore add it
-						pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
-						versionList.add(pluginToUpload);
+						addPluginToVersionList(pluginToUpload, versionList);
 					}
 					break;
 				}
@@ -59,12 +63,17 @@ public class Uploader {
 			String name = pluginToUpload.getFilename();
 			List<PluginObject> versionList = newPluginRecords.get(name);
 			if (versionList == null) { //non-Fiji plugin, therefore add it
-				pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
 				versionList = new PluginCollection();
-				versionList.add(pluginToUpload);
+				addPluginToVersionList(pluginToUpload, versionList);
 				newPluginRecords.put(name, versionList);
 			}
 		}
+	}
+
+	private void addPluginToVersionList(PluginObject pluginToUpload, List<PluginObject> versionList) throws IOException {
+		pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
+		versionList.add(pluginToUpload);
+		filesUploadList.add(pluginToUpload); //indicates plugin file itself has to be uploaded
 	}
 
 	private PluginObject getPluginMatchingDigest(String digest, List<PluginObject> pluginList) {
@@ -79,8 +88,20 @@ public class Uploader {
 	public void uploadToServer() throws IOException, TransformerConfigurationException, SAXException {
 		//upload XML document (and/or current.txt) to server
 		System.out.println("Uploader CLASS: At uploadToServer()");
-		UpdatesWriter updatesWriter = new UpdatesWriter();
-		updatesWriter.uploadFilesToServer(newPluginRecords);
+		updatesWriter = new UpdatesWriter(this);
+		updatesWriter.uploadFilesToServer(newPluginRecords, filesUploadList);
+	}
+
+	public void refreshData(Observable subject) {
+		if (subject == updatesWriter) {
+			if (updatesWriter.allTasksComplete()) {
+				IJ.showStatus("");
+			} else {
+				//continue displaying statuses
+				IJ.showStatus("Uploading " + updatesWriter.getTaskname() + "...");
+				IJ.showProgress(updatesWriter.getCurrentlyLoaded(), updatesWriter.getTotalToLoad());
+			}
+		}
 	}
 
 }
