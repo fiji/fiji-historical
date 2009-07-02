@@ -6,7 +6,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Iterator;
+import java.io.IOException;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -27,6 +27,9 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.text.BadLocationException;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerConfigurationException;
+import org.xml.sax.SAXException;
 
 /*
  * Main User Interface
@@ -304,36 +307,39 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	}
 
 	private void clickToUploadRecords() {
-		//TODO: In the future, a UI might hold the below code in the form of
-		//loadedFrame = new UploaderFrame(this);
-		//...
-		//uploaderFrame.setUploader(new Uploader(pluginDataReader));
-		//inside of .setUploader()... start the actions (generateDocuments(), etc etc)
-		String namelist = "";
+		Uploader uploader = null;
+		String message = null;
 		try {
-			Uploader uploader = new Uploader(pluginCollection);
+			uploader = new Uploader(pluginCollection);
 			uploader.generateNewPluginRecords();
 			uploader.uploadToServer();
-			Iterator<PluginObject> iteratorUploads = uploader.iteratorUploads();
-			while (iteratorUploads.hasNext()) {
-				namelist += iteratorUploads.next().getFilename() + "\n";
-			}
-		} catch (Exception e) {
-			//Interface side: This should handle presentation side of exceptions
-			IJ.showMessage("Error", "Failed to upload changes to server:\n" + e.getLocalizedMessage());
-		}
-		IJ.showMessage("Updated", "The following plugins had their information uploaded:\n" +
-				namelist + "\nPlease restart Plugin Manager for changes to take effect.");
-		dispose();
-		/*} catch (ParserConfigurationException e1) {
-			throw new Error(e1.getLocalizedMessage());
-		} catch (IOException e2) {
-			throw new Error(e2.getLocalizedMessage());
-		} catch (SAXException e3) {
-			throw new Error(e3.getLocalizedMessage());
+		} catch (IOException e1) {
+			message = e1.getLocalizedMessage();
+		} catch (SAXException e2) {
+			message = e2.getLocalizedMessage();
+		} catch (ParserConfigurationException e3) {
+			message = e3.getLocalizedMessage();
 		} catch (TransformerConfigurationException e4) {
-			throw new Error(e4.getLocalizedMessage());
-		}*/
+			message = e4.getLocalizedMessage();
+		}
+
+		if (message != null) {
+			IJ.showMessage("Error", "Failed to upload changes to server:\n" + message);
+		} else {
+			if (uploader.getFailedUploads().size() > 0) {
+				String namelist = "";
+				for (PluginObject plugin : uploader.getFailedUploads())
+					namelist += "\n" + plugin.getFilename();
+				IJ.showMessage("Failed Uploads", "The following files failed to upload:" + namelist);
+			}
+			if (uploader.getSuccessfulUploads().size() > 0) {
+				int completed = uploader.getSuccessfulUploads().size();
+				int totalSize = uploader.getFailedUploads().size() + completed;
+				IJ.showMessage("Updated", completed + " out of " + totalSize + " plugin files uploaded successfully\n\n"
+					+ "Please restart Plugin Manager for changes to take effect.");
+				dispose();
+			} //if there are zero successful uploads, don't need to auto-close Plugin Manager
+		}
 	}
 
 	public void exitWithRestartFijiMessage() {
@@ -443,6 +449,5 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	@Override
 	public void run(String arg0) {
 		// TODO Auto-generated method stub
-		
 	}
 }

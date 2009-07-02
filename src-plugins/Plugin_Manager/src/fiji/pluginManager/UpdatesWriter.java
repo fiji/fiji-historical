@@ -22,23 +22,25 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 public class UpdatesWriter extends PluginDataObservable {
-	String xmlSavepath;
-	String txtSavepath;
-	PrintStream xmlPrintStream;
-	PrintStream txtPrintStream;
-	StreamResult streamResult;
-	SAXTransformerFactory tf;
-	TransformerHandler handler;
+	private String xmlSavepath;
+	private String txtSavepath;
+	private PrintStream xmlPrintStream;
+	private PrintStream txtPrintStream;
+	private StreamResult streamResult;
+	private SAXTransformerFactory tf;
+	private TransformerHandler handler;
+
+	//accessible information after uploading tasks are done
+	public List<PluginObject> successList;
+	public List<PluginObject> failList;
 
 	public UpdatesWriter(Observer observer) throws IOException, TransformerConfigurationException {
 		super(observer, true); //For purposes of uploading to server
 		xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
-		System.out.println("UpdatesWriter: " + xmlSavepath);
 		txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
-		System.out.println("UpdatesWriter: " + txtSavepath);
 
-		//XML file writer (pluginRecords.xml)
-		xmlPrintStream = new PrintStream(xmlSavepath);
+		txtPrintStream = new PrintStream(txtSavepath); //current.txt
+		xmlPrintStream = new PrintStream(xmlSavepath); //pluginRecords.xml
 		streamResult = new StreamResult(xmlPrintStream);
 		tf = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
 
@@ -48,9 +50,9 @@ public class UpdatesWriter extends PluginDataObservable {
 		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.XML_DIRECTORY + "/" + PluginManager.DTD_FILENAME);
 		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
 		handler.setResult(streamResult);
-
-		//Text file writer (current.txt)
-		txtPrintStream = new PrintStream(txtSavepath);
+		
+		successList = new PluginCollection();
+		failList = new PluginCollection();
 	}
 
 	public void uploadFilesToServer(Map<String, List<PluginObject>> pluginRecords, List<PluginObject> filesUploadList) throws SAXException {
@@ -74,11 +76,10 @@ public class UpdatesWriter extends PluginDataObservable {
 			String targetPath = remotePrefix + File.separator + taskname + "-" + plugin.getTimestamp();
 			try {
 				copyFile(sourcePath, targetPath);
-				System.out.println(sourcePath + " copied over to " + targetPath + " successfully.");
+				successList.add(plugin);
 				changeStatus(taskname, ++currentlyLoaded, totalToLoad);
 			} catch (IOException e) {
-				e.printStackTrace();
-				System.out.println("Could not copy " + sourcePath + " to " + targetPath);
+				failList.add(plugin);
 			}
 		}
 	}

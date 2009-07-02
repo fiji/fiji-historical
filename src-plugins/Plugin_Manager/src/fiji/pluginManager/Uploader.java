@@ -1,16 +1,13 @@
 package fiji.pluginManager;
 
 import ij.IJ;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
-
 import org.xml.sax.SAXException;
 
 public class Uploader implements Observer {
@@ -26,13 +23,8 @@ public class Uploader implements Observer {
 		PluginCollection pluginCollection = (PluginCollection)pluginList;
 		this.uploadList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
-		//xmlFileReader = new XMLFileReader(getSaveToLocation(PluginManager.XML_DIRECTORY, PluginManager.XML_FILENAME));
 		xmlFileReader = new XMLFileReader(PluginManager.XML_DIRECTORY +
-				File.separator + PluginManager.XML_FILENAME);
-	}
-
-	public Iterator<PluginObject> iteratorUploads() {
-		return uploadList.iterator();
+				File.separator + PluginManager.XML_FILENAME); //generates XML records from file
 	}
 
 	public void generateNewPluginRecords() throws IOException {
@@ -90,6 +82,14 @@ public class Uploader implements Observer {
 		System.out.println("Uploader CLASS: At uploadToServer()");
 		updatesWriter = new UpdatesWriter(this);
 		updatesWriter.uploadFilesToServer(newPluginRecords, filesUploadList);
+	}
+
+	public List<PluginObject> getSuccessfulUploads() {
+		return updatesWriter.successList;
+	}
+
+	public List<PluginObject> getFailedUploads() {
+		return updatesWriter.failList;
 	}
 
 	public void refreshData(Observable subject) {
