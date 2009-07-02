@@ -3,11 +3,14 @@ package fiji.pluginManager;
 import java.util.Iterator;
 import java.util.List;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintStream;
 
 /*
  * This class' main role is to download selected files, as well as indicate those that
  * are marked for deletion. It is able to track the number of bytes downloaded.
-*/
+ */
 public class Installer extends PluginData implements Runnable, Observer {
 	private List<PluginObject> pluginsWaiting;
 	private volatile Thread downloadThread;
@@ -35,14 +38,6 @@ public class Installer extends PluginData implements Runnable, Observer {
 		iterWaiting = pluginsWaiting.iterator();
 	}
 
-	//start processing on contents of deletionList
-	public void startDelete() {
-		while (iterUninstall.hasNext()) {
-			//PluginObject plugin = iterUninstall.next();
-			//do deleting
-		}
-	}
-
 	public int getBytesDownloaded() {
 		return downloadedBytes;
 	}
@@ -65,6 +60,33 @@ public class Installer extends PluginData implements Runnable, Observer {
 
 	public PluginObject getCurrentDownload() {
 		return currentlyDownloading;
+	}
+
+	//start processing on contents of deletionList
+	private final String DELETE_FILE = "delete.txt";
+	public void startDelete() {
+		//TODO: Implementation of uninstallation of plugins
+		try {
+			String saveTxtLocation = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, DELETE_FILE);
+			new File(saveTxtLocation).getParentFile().mkdirs();
+			PrintStream txtPrintStream = new PrintStream(saveTxtLocation);
+			while (iterUninstall.hasNext()) {
+				String filename = iterUninstall.next().getFilename();
+				//save line to delete.txt
+				txtPrintStream.println(filename);
+				//write a 0-byte file
+				String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);;
+				new File(pluginPath).getParentFile().mkdirs();
+				new File(pluginPath).createNewFile();
+			}
+			txtPrintStream.close();
+		} catch (FileNotFoundException e1) {
+			System.out.println("Uninstall process cannot start, failed to write to delete.txt");
+			System.out.println("TODO: If this happens, inform user, and either quit installing entirely, or continue...");
+		} catch (IOException e2) {
+			System.out.println("Cannot create empty file");
+			System.out.println("TODO: If this happens, inform user, and either quit installing entirely, or continue...");
+		}
 	}
 
 	//start processing on contents of updateList
