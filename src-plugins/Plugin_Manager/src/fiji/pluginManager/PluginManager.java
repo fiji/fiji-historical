@@ -340,10 +340,9 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 			int failedListSize = uploader.getFailedUploads().size();
 			int successfulListSize = uploader.getSuccessfulUploads().size();
 			if (failedListSize == 0 && successfulListSize == 0) { //no plugin files to upload
-				//Here, need not restart as local information (i.e.: descriptions) has
-				//been updated too.
-				IJ.showMessage("Success", "Updated existing plugin records successfully.");
-				uploader.resetActionsOfChangeList(); //remove user-specified actions
+				IJ.showMessage("Success", "Updated existing plugin records successfully.\n" +
+						"You need to restart Plugin Manager for changes to take effect.");
+				dispose();
 			} else {
 				if (failedListSize > 0) {
 					String namelist = "";
