@@ -664,3 +664,13 @@ Tasks Completed:
    ==> Perhaps the server works differently from my Operating System?
 - Redefined XML structure: pluginRecords.xml may start out empty.
 - Application now exits after plugins are uploaded. Will refine the process.
+
+
+
+2nd July, Thursday
+Tasks Completed:
+- Implemented the different scenarios for error, success of uploading/downloading plugins
+   ==> Currently displaying of a MessageBox is sufficient
+- Mainly refactoring by removing redundant code (accessor methods), renaming files
+- Removal of plugins implemented
+   ==> To implement its visibility in the interface later...
