@@ -90,7 +90,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 
 	private void setUpUserInterface() {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		
+
 		//======== LEFT PANEL ========
 		//Create text search
 		JLabel lblSearch1 = new JLabel("Search:", SwingConstants.LEFT);
@@ -370,7 +370,7 @@ public class PluginManager extends JFrame implements PlugIn, TableModelListener 
 	private void clickToBeginOperations() {
 		loadedFrame = new FrameConfirmation(this);
 		FrameConfirmation frameConfirmation = (FrameConfirmation)loadedFrame;
-		frameConfirmation.displayInformation(new Controller(pluginCollection));
+		frameConfirmation.displayInformation(new DependencyCompiler(pluginCollection));
 		loadedFrame.setVisible(true);
 		setEnabled(false);
 	}

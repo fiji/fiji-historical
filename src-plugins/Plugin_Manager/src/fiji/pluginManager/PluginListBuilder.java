@@ -23,8 +23,8 @@ import org.xml.sax.SAXException;
  * 
  */
 public class PluginListBuilder extends PluginDataObservable {
-	private List<PluginObject> pluginList;
-	private List<PluginObject> readOnlyList;
+	public List<PluginObject> pluginCollection; //info available after list is built
+	public List<PluginObject> readOnlyList; //info available after list is built
 	private Map<String, String> digests;
 	private Map<String, String> dates;
 	private Map<String, String> latestDates;
@@ -38,16 +38,8 @@ public class PluginListBuilder extends PluginDataObservable {
 		digests = new TreeMap<String, String>();
 		latestDates = new TreeMap<String, String>();
 		latestDigests = new TreeMap<String, String>();
-		pluginList = new PluginCollection();
+		pluginCollection = new PluginCollection();
 		readOnlyList = new PluginCollection();
-	}
-
-	public List<PluginObject> extractFullPluginList() {
-		return pluginList;
-	}
-
-	public List<PluginObject> getReadOnlyPlugins() {
-		return readOnlyList; //for error notification purposes
 	}
 
 	//recursively looks into a directory and adds the relevant file
@@ -170,7 +162,7 @@ public class PluginListBuilder extends PluginDataObservable {
 			} else { //if digest of this plugin does not exist in the records
 				myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
 			}
-			pluginList.add(myPlugin);
+			pluginCollection.add(myPlugin);
 		}
 
 		//To capture non-Fiji plugins
@@ -184,11 +176,11 @@ public class PluginListBuilder extends PluginDataObservable {
 				//implies third-party plugin, no description nor dependency information available
 				PluginObject myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, false);
 				myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
-				pluginList.add(myPlugin);
+				pluginCollection.add(myPlugin);
 			}
 		}
 
-		for (PluginObject plugin : pluginList) {
+		for (PluginObject plugin : pluginCollection) {
 			File file = new File(plugin.getFilename());
 			if (!file.exists() || file.canWrite())
 				continue;

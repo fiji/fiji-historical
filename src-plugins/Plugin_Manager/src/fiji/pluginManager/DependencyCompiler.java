@@ -10,19 +10,19 @@ import java.util.Map;
  * The dependencies are determined based on the assumption that the user has already
  * selected the plugins he/she wanted to add or remove and indicated to take action.
  */
-public class Controller {
+public class DependencyCompiler {
 	private List<PluginObject> pluginList; //current states of all plugins
 
 	//The different structures of the same information that the user can retrieve
-	private List<PluginObject> changeList;
-	private Map<PluginObject,List<PluginObject>> installDependenciesMap;
-	private Map<PluginObject,List<PluginObject>> updateDependenciesMap;
-	private Map<PluginObject,List<PluginObject>> uninstallDependentsMap;
-	private List<PluginObject> toInstallList;
-	private List<PluginObject> toUpdateList;
-	private List<PluginObject> toRemoveList;
+	public List<PluginObject> changeList;
+	public Map<PluginObject,List<PluginObject>> installDependenciesMap;
+	public Map<PluginObject,List<PluginObject>> updateDependenciesMap;
+	public Map<PluginObject,List<PluginObject>> uninstallDependentsMap;
+	public List<PluginObject> toInstallList;
+	public List<PluginObject> toUpdateList;
+	public List<PluginObject> toRemoveList;
 
-	public Controller(List<PluginObject> pluginList) {
+	public DependencyCompiler(List<PluginObject> pluginList) {
 		this.pluginList = pluginList;
 		changeList = ((PluginCollection)pluginList).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
 		List<PluginObject> change_addOrUpdateList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
@@ -240,80 +240,38 @@ public class Controller {
 	}
 
 	public boolean conflicts(List<PluginObject> installList, List<PluginObject> updateList, List<PluginObject> uninstallList) {
-		if (!conflicts(installList, uninstallList) && !conflicts(updateList, uninstallList)) {
+		if (!conflicts(installList, uninstallList) && !conflicts(updateList, uninstallList))
 			return false;
-		} else {
+		else
 			return true;
-		}
 	}
 
 	//forces action for every plugin in the list to "install"
 	public void setToInstall(List<PluginObject> selectedList) {
 		for (PluginObject plugin : selectedList) {
-			if (plugin.isRemovableOnly() || plugin.isUpdateable()) {
+			if (plugin.isRemovableOnly() || plugin.isUpdateable())
 				plugin.setActionNone();
-			} else if (plugin.isInstallable()) {
+			else if (plugin.isInstallable())
 				plugin.setActionToInstall();
-			}
 		}
 	}
 
 	//forces action for every update-able plugin in the list to be "update"
 	public void setToUpdate(List<PluginObject> selectedList) {
-		for (PluginObject plugin : selectedList) {
-			if (plugin.isUpdateable()) {
+		for (PluginObject plugin : selectedList)
+			if (plugin.isUpdateable())
 				plugin.setActionToUpdate();
-			}
-		}
 	}
 
 	//forces action for every plugin in the list to be "uninstall"
 	public void setToRemove(List<PluginObject> selectedList) {
 		for (PluginObject plugin : selectedList) {
-			if (plugin.isRemovableOnly()) {
+			if (plugin.isRemovableOnly())
 				plugin.setActionToRemove();
-			} else if (plugin.isInstallable()) {
+			else if (plugin.isInstallable())
 				plugin.setActionNone();
-			} else if (plugin.isUpdateable()) {
+			else if (plugin.isUpdateable())
 				plugin.setActionToRemove();
-			}
 		}
 	}
-
-	//returns list of plugins where actions are explicitly set
-	public List<PluginObject> getListOfActionSpecified() {
-		return changeList;
-	}
-
-	//returns mappings of plugins explicitly set "Install" to their corresponding dependencies
-	public Map<PluginObject,List<PluginObject>> getInstallDependenciesMappings() {
-		return installDependenciesMap;
-	}
-
-	//returns mappings of plugins explicitly set "Update" to their corresponding dependencies
-	public Map<PluginObject,List<PluginObject>> getUpdateDependenciesMappings() {
-		return updateDependenciesMap;
-	}
-
-	//returns mappings of plugins explicitly set "Uninstall" to their corresponding dependents
-	public Map<PluginObject,List<PluginObject>> getUninstallDependentsMappings() {
-		return uninstallDependentsMap;
-	}
-
-	//returns the whole list of plugins that need to be installed, including unspecified
-	public List<PluginObject> getEntireInstallList() {
-		return toInstallList;
-	}
-
-	//returns the whole list of plugins that need to be updated, including unspecified
-	public List<PluginObject> getEntireUpdateList() {
-		return toUpdateList;
-	}
-
-	//returns the whole list of plugins that need to be removed, including unspecified
-	public List<PluginObject> getEntireRemoveList() {
-		return toRemoveList;
-	}
-
 }
-

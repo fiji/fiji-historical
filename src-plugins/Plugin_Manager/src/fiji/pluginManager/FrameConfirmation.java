@@ -32,7 +32,7 @@ public class FrameConfirmation extends JFrame {
 	private JButton btnCancel;
 	private String msgConflictExists = "Conflicts exist. Please return to resolve them.";
 	private String msgConflictNone = "No conflicts found. You may proceed.";
-	private Controller controller;
+	private DependencyCompiler dependencyCompiler;
 
 	public FrameConfirmation(PluginManager pluginManager) {
 		this.pluginManager = pluginManager;
@@ -136,10 +136,10 @@ public class FrameConfirmation extends JFrame {
 
 	private void startActualChanges() {
 		//indicate the actions as reference for Downloader (Installer) to refer to
-		controller.setToInstall(controller.getEntireInstallList());
-		controller.setToUpdate(controller.getEntireUpdateList());
-		controller.setToRemove(controller.getEntireRemoveList());
-		controller = null;
+		dependencyCompiler.setToInstall(dependencyCompiler.toInstallList);
+		dependencyCompiler.setToUpdate(dependencyCompiler.toUpdateList);
+		dependencyCompiler.setToRemove(dependencyCompiler.toRemoveList);
+		dependencyCompiler = null;
 		pluginManager.openDownloader();
 	}
 
@@ -147,17 +147,17 @@ public class FrameConfirmation extends JFrame {
 		pluginManager.backToPluginManager();
 	}
 
-	public void displayInformation(Controller controller) {
-		this.controller = controller;
+	public void displayInformation(DependencyCompiler dependencyCompiler) {
+		this.dependencyCompiler = dependencyCompiler;
 
 		//Gets the necessary information
-		List<PluginObject> changeList = controller.getListOfActionSpecified();
-		Map<PluginObject,List<PluginObject>> installDependenciesMap = controller.getInstallDependenciesMappings();
-		Map<PluginObject,List<PluginObject>> updateDependenciesMap = controller.getUpdateDependenciesMappings();
-		Map<PluginObject,List<PluginObject>> uninstallDependentsMap = controller.getUninstallDependentsMappings();
-		List<PluginObject> toInstallList = controller.getEntireInstallList();
-		List<PluginObject> toUpdateList = controller.getEntireUpdateList();
-		List<PluginObject> toRemoveList = controller.getEntireRemoveList();
+		List<PluginObject> changeList = dependencyCompiler.changeList;
+		Map<PluginObject,List<PluginObject>> installDependenciesMap = dependencyCompiler.installDependenciesMap;
+		Map<PluginObject,List<PluginObject>> updateDependenciesMap = dependencyCompiler.updateDependenciesMap;
+		Map<PluginObject,List<PluginObject>> uninstallDependentsMap = dependencyCompiler.uninstallDependentsMap;
+		List<PluginObject> toInstallList = dependencyCompiler.toInstallList;
+		List<PluginObject> toUpdateList = dependencyCompiler.toUpdateList;
+		List<PluginObject> toRemoveList = dependencyCompiler.toRemoveList;
 
 		//Compile a list of plugin names that conflicts with uninstalling (if any)
 		List<String[]> installConflicts = new ArrayList<String[]>();
@@ -172,7 +172,7 @@ public class FrameConfirmation extends JFrame {
 				PluginObject pluginUninstall = iterUninstall.next();
 				List<PluginObject> pluginUninstallList = uninstallDependentsMap.get(pluginUninstall);
 
-				if (controller.conflicts(pluginInstallList, pluginUpdateList, pluginUninstallList)) {
+				if (dependencyCompiler.conflicts(pluginInstallList, pluginUpdateList, pluginUninstallList)) {
 					String installName = pluginAdd.getFilename();
 					String uninstallName = pluginUninstall.getFilename();
 					String[] arrNames = {installName, uninstallName};
