@@ -61,46 +61,29 @@ public class Installer extends PluginData implements Runnable, Observer {
 		startDownload();
 	}
 
-	//start processing on contents of deletionList
-	private final String DELETE_FILE = "delete.txt";
+	//start processing on contents of Delete List (Mark them for deletion)
 	private void startDelete() {
 		//TODO: Implementation of uninstallation of plugins
-		//TODO: TO eliminate one of the two methods shown here once method is confirmed...
 		if (iterUninstall.hasNext()) {
-			String saveTxtLocation = prefix(DELETE_FILE);
-			PrintStream txtPrintStream = null;
-			try {
-				new File(saveTxtLocation).getParentFile().mkdirs();
-				txtPrintStream = new PrintStream(saveTxtLocation);
-				while (iterUninstall.hasNext()) {
-					PluginObject plugin = iterUninstall.next();
-					String filename = plugin.getFilename();
-					try {
-						//checking status of existing file
-						File file = new File(prefix(filename));
-						if (!file.canWrite()) //if unable to override existing file
-							failedUninstallList.add(plugin);
-						else {
-							//save line to delete.txt
-							txtPrintStream.println(filename);
-
-							//write a 0-byte file
-							String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);
-							new File(pluginPath).getParentFile().mkdirs();
-							new File(pluginPath).createNewFile();
-
-							markedUninstallList.add(plugin);
-						}
-					} catch (IOException e) {
-						//this is for 0-byte file implementation
+			while (iterUninstall.hasNext()) {
+				PluginObject plugin = iterUninstall.next();
+				String filename = plugin.getFilename();
+				try {
+					//checking status of existing file
+					File file = new File(prefix(filename));
+					if (!file.canWrite()) //if unable to override existing file
 						failedUninstallList.add(plugin);
+					else {
+						//write a 0-byte file
+						String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);
+						new File(pluginPath).getParentFile().mkdirs();
+						new File(pluginPath).createNewFile();
+						markedUninstallList.add(plugin);
 					}
+				} catch (IOException e) {
+					//this is for 0-byte file implementation
+					failedUninstallList.add(plugin);
 				}
-				txtPrintStream.close();
-			} catch (IOException e) {
-				//this is for delete.txt implementation
-				while (iterUninstall.hasNext())
-					failedUninstallList.add(iterUninstall.next());
 			}
 		}
 	}
