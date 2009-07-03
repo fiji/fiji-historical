@@ -86,9 +86,10 @@ public class TextPaneDisplay extends JTextPane {
 	//appends list of plugin names to existing text
 	public void insertPluginNamelist(List<PluginObject> myList)
 	throws BadLocationException {
+		insertText("\n");
 		for (int i = 0; i < myList.size(); i++) {
 			PluginObject myPlugin = myList.get(i);
-			insertText("\n" + myPlugin.getFilename());
+			insertText(myPlugin.getFilename() + "\n");
 		}
 	}
 
@@ -139,9 +140,8 @@ public class TextPaneDisplay extends JTextPane {
 		//ensure first line of text is always shown (i.e.: scrolled to top)
 		scrollToTop();
 	}
-	
+
 	public void showDownloadProgress(Installer installer) {
-		//List<PluginObject> toUninstallList;
 		List<PluginObject> downloadedList = installer.downloadedList;
 		List<PluginObject> failedList = installer.failedDownloadsList;
 		List<PluginObject> markedUninstallList = installer.markedUninstallList;
@@ -150,22 +150,14 @@ public class TextPaneDisplay extends JTextPane {
 		boolean stillDownloading = installer.isDownloading();
 		String strCurrentStatus = "";
 
-		for (int i=0; i < failedUninstallList.size(); i++) {
-			PluginObject myPlugin = failedUninstallList.get(i);
+		for (PluginObject myPlugin : failedUninstallList)
 			strCurrentStatus += "Failed to mark " + myPlugin.getFilename() + " for uninstalling.\n";
-		}
-		for (int i=0; i < markedUninstallList.size(); i++) {
-			PluginObject myPlugin = markedUninstallList.get(i);
+		for (PluginObject myPlugin : markedUninstallList)
 			strCurrentStatus += "Marked " + myPlugin.getFilename() + " for uninstalling.\n";
-		}
-		for (int i=0; i < downloadedList.size(); i++) {
-			PluginObject myPlugin = downloadedList.get(i);
+		for (PluginObject myPlugin : downloadedList)
 			strCurrentStatus += "Finished downloading " + myPlugin.getFilename() + "\n";
-		}
-		for (int i=0; i < failedList.size(); i++) {
-			PluginObject myPlugin = failedList.get(i);
+		for (PluginObject myPlugin : failedList)
 			strCurrentStatus += myPlugin.getFilename() + " failed to download.\n";
-		}
 		if (currentlyDownloading != null)
 			strCurrentStatus += "Now downloading " + currentlyDownloading.getFilename() + "\n";
 
@@ -173,18 +165,18 @@ public class TextPaneDisplay extends JTextPane {
 		if (stillDownloading == false) {
 			if (markedUninstallList.size() > 0) {
 				int totalSize = markedUninstallList.size() + failedUninstallList.size();
-				strCurrentStatus += "\n" + markedUninstallList.size() + " of " + totalSize +
-				" plugins successfully marked for removal.";
+				strCurrentStatus += markedUninstallList.size() + " of " + totalSize +
+				" plugins successfully marked for removal.\n";
 			} else if (failedUninstallList.size() > 0) {
 				strCurrentStatus += "Marking for deletion(s) failed.\n";
 			} //else if uninstall lists' sizes are 0, ignore
 
 			if (downloadedList.size() > 0) {
 				int totalSize = downloadedList.size() + failedList.size();
-				strCurrentStatus += "\n" + downloadedList.size() + " of " + totalSize +
-				" download tasks completed.";
+				strCurrentStatus += downloadedList.size() + " of " + totalSize +
+				" download tasks completed.\n";
 			} else if (failedList.size() > 0) {
-				strCurrentStatus += "\nDownload(s) failed.";
+				strCurrentStatus += "Download(s) failed.\n";
 			} //else if download lists' sizes are 0, ignore
 		}
 		setText(strCurrentStatus);

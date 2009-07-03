@@ -228,31 +228,30 @@ public class FrameConfirmation extends JFrame {
 				txtAdditionalList.insertPluginNamelist(toInstallList);
 			}
 			if (toUpdateList.size() > 0) {
-				txtAdditionalList.insertBlankLine();
+				if (toInstallList.size() > 0)
+					txtAdditionalList.insertBlankLine();
 				txtAdditionalList.insertStyledText("To Update", txtPluginList.BOLD_BLACK_TITLE);
 				txtAdditionalList.insertPluginNamelist(toUpdateList);
 			}
 			if (toRemoveList.size() > 0) {
-				txtAdditionalList.insertBlankLine();
+				if (toInstallList.size() > 0 || toUpdateList.size() > 0)
+					txtAdditionalList.insertBlankLine();
 				txtAdditionalList.insertStyledText("To Remove", txtPluginList.BOLD_BLACK_TITLE);
 				txtAdditionalList.insertPluginNamelist(toRemoveList);
 			}
 			if (toInstallList.size() == 0 && toUpdateList.size() == 0 && toRemoveList.size() == 0) {
-				txtAdditionalList.insertText("None.");
+				txtAdditionalList.setText("None.");
 			}
 			//ensure first line of text is always shown (i.e.: scrolled to top)
 			txtAdditionalList.scrollToTop();
 
 			//conflicts list textpane
 			TextPaneDisplay txtConflictsList = (TextPaneDisplay)this.txtConflictsList;
-			for (int i = 0; i < installConflicts.size(); i++) {
-				String[] names = installConflicts.get(i);
+			for (String[] names : installConflicts)
 				txtConflictsList.insertText("Installing " + names[0] + " would conflict with uninstalling " + names[1] + "\n");
-			}
-			for (int i = 0; i < updateConflicts.size(); i++) {
-				String[] names = updateConflicts.get(i);
+			for (String[] names : updateConflicts)
 				txtConflictsList.insertText("Updating " + names[0] + " would conflict with uninstalling " + names[1] + "\n");
-			}
+
 			//ensure first line of text is always shown (i.e.: scrolled to top)
 			txtConflictsList.scrollToTop();
 

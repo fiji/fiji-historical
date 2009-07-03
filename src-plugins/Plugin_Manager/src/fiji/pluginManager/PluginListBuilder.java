@@ -186,8 +186,7 @@ public class PluginListBuilder extends PluginDataObservable {
 				continue;
 			readOnlyList.add(plugin);
 			IJ.log(plugin.getFilename() + " is read-only file.");
-		}
-		//for (PluginObject plugin : readOnlyList) pluginList.remove(plugin); //cannot view
+		} //Still remains in pluginCollection for dependency reference purposes
 
 		setStatusComplete(); //indicate to observer there's no more tasks
 	}
