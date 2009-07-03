@@ -181,7 +181,7 @@ public class PluginListBuilder extends PluginDataObservable {
 		}
 
 		for (PluginObject plugin : pluginCollection) {
-			File file = new File(plugin.getFilename());
+			File file = new File(prefix(plugin.getFilename()));
 			if (!file.exists() || file.canWrite())
 				continue;
 			readOnlyList.add(plugin);

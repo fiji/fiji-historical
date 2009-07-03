@@ -28,7 +28,6 @@ class FrameInstaller extends JFrame {
 	private JProgressBar progressBar;
 	private JTextPane txtProgressDetails;
 	private Installer installer;
-	private boolean isDownloading;
 
 	//Download Window opened from Plugin Manager UI
 	public FrameInstaller(PluginManager pluginManager) {
@@ -87,8 +86,7 @@ class FrameInstaller extends JFrame {
 		else {
 			this.installer = installer;
 			installer.beginOperations();
-			isDownloading = installer.isDownloading();
-			if (isDownloading) {
+			if (installer.isDownloading()) {
 				//Timer to check for download
 				timer = new Timer();
 				timer.schedule(new DownloadStatus(), 0, 100); //status refreshes every 100 ms
@@ -100,10 +98,9 @@ class FrameInstaller extends JFrame {
 	}
 
 	private void setFrameDisplay() {
-		isDownloading = installer.isDownloading();
 		int totalBytes = installer.getBytesTotal();
 		int downloadedBytes = installer.getBytesDownloaded();
-		if (isDownloading) {
+		if (installer.isDownloading()) {
 			btnClose.setText("Cancel");
 			btnClose.setToolTipText("Stop downloads and return");
 		} else {
@@ -116,16 +113,15 @@ class FrameInstaller extends JFrame {
 
 	private class DownloadStatus extends TimerTask {
 		public void run() {
-			isDownloading = installer.isDownloading();
 			setFrameDisplay();
-			if (isDownloading == false)
+			if (installer.isDownloading() == false)
 				timer.cancel(); //Not downloading anything, no progress to refresh
 		}
 	}
 
 	private void closeFrameInstaller() {
 		//plugin manager will deal with this
-		if (isDownloading) {
+		if (installer.isDownloading()) {
 			if (JOptionPane.showConfirmDialog(this,
 					"Are you sure you want to cancel the ongoing download?",
 					"Stop?",

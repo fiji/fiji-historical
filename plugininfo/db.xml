@@ -103,10 +103,19 @@ So what does "nodeps" mean?</description>
 </plugin>
 <plugin filename="jars/javac.jar">
 <version>
-<checksum>0528f1cd0125627b24c300472230b63ffde47607</checksum>
-<timestamp>20090516012642</timestamp>
-<description>javac.jar summary.</description>
-<filesize>1041423</filesize>
+<checksum>d626e750c0076f3240b2675348efb6d633355b38</checksum>
+<timestamp>20090429190849</timestamp>
+<description>T
+E
+S
+T
+I
+N
+G
+.
+
+This is latest version. Testing purposes, it is to be left uninstalled so as to be updated by user.</description>
+<filesize>1041077</filesize>
 </version>
 </plugin>
 <plugin filename="jars/jython2.2.1/jython.jar">
@@ -163,10 +172,19 @@ So what does "nodeps" mean?</description>
 </plugin>
 <plugin filename="plugins/Auto_Threshold.jar">
 <version>
-<checksum>ec023810a0347a308b18129ea5ec5ca32dcc2f80</checksum>
-<timestamp>20090516012721</timestamp>
-<description>Auto threshold summary, and what is Auto Threshold?</description>
-<filesize>13745</filesize>
+<checksum>7e7a3543252f5916e5e70ea48916eec3082251f5</checksum>
+<timestamp>20090429190901</timestamp>
+<description>T
+E
+S
+T
+I
+N
+G
+.
+
+This is only one version. Testing purposes, it is to be left uninstalled so as to be installed by user.</description>
+<filesize>13744</filesize>
 </version>
 </plugin>
 <plugin filename="plugins/BeanShell_Interpreter.jar">
