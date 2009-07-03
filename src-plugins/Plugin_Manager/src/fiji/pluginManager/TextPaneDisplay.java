@@ -142,34 +142,50 @@ public class TextPaneDisplay extends JTextPane {
 	
 	public void showDownloadProgress(Installer installer) {
 		//List<PluginObject> toUninstallList;
-		List<PluginObject> downloadedList = installer.getListOfDownloaded();
-		List<PluginObject> failedList = installer.getListOfFailedDownloads();
-		PluginObject currentlyDownloading = installer.getCurrentDownload();
-		boolean stillDownloading = installer.stillDownloading();
+		List<PluginObject> downloadedList = installer.downloadedList;
+		List<PluginObject> failedList = installer.failedDownloadsList;
+		List<PluginObject> markedUninstallList = installer.markedUninstallList;
+		List<PluginObject> failedUninstallList = installer.failedUninstallList;
+		PluginObject currentlyDownloading = installer.currentlyDownloading;
+		boolean stillDownloading = installer.isDownloading();
 		String strCurrentStatus = "";
 
+		for (int i=0; i < failedUninstallList.size(); i++) {
+			PluginObject myPlugin = failedUninstallList.get(i);
+			strCurrentStatus += "Failed to mark " + myPlugin.getFilename() + " for uninstalling.\n";
+		}
+		for (int i=0; i < markedUninstallList.size(); i++) {
+			PluginObject myPlugin = markedUninstallList.get(i);
+			strCurrentStatus += "Marked " + myPlugin.getFilename() + " for uninstalling.\n";
+		}
 		for (int i=0; i < downloadedList.size(); i++) {
 			PluginObject myPlugin = downloadedList.get(i);
-			if (i != 0) strCurrentStatus += "\n";
-			strCurrentStatus += "Finished downloading " + myPlugin.getFilename();
+			strCurrentStatus += "Finished downloading " + myPlugin.getFilename() + "\n";
 		}
 		for (int i=0; i < failedList.size(); i++) {
 			PluginObject myPlugin = failedList.get(i);
-			if (i != 0 && !strCurrentStatus.equals("")) strCurrentStatus += "\n";
-			strCurrentStatus += myPlugin.getFilename() + " failed to download.";
+			strCurrentStatus += myPlugin.getFilename() + " failed to download.\n";
 		}
 		if (currentlyDownloading != null)
-			strCurrentStatus += "\nNow downloading " + currentlyDownloading.getFilename();
+			strCurrentStatus += "Now downloading " + currentlyDownloading.getFilename() + "\n";
 
-		//check if download has finished (Whether 100% success or not)
+		//if no more download tasks, results can be displayed
 		if (stillDownloading == false) {
+			if (markedUninstallList.size() > 0) {
+				int totalSize = markedUninstallList.size() + failedUninstallList.size();
+				strCurrentStatus += "\n" + markedUninstallList.size() + " of " + totalSize +
+				" plugins successfully marked for removal.";
+			} else if (failedUninstallList.size() > 0) {
+				strCurrentStatus += "Marking for deletion(s) failed.\n";
+			} //else if uninstall lists' sizes are 0, ignore
+
 			if (downloadedList.size() > 0) {
 				int totalSize = downloadedList.size() + failedList.size();
 				strCurrentStatus += "\n" + downloadedList.size() + " of " + totalSize +
 				" download tasks completed.";
-			} else {
+			} else if (failedList.size() > 0) {
 				strCurrentStatus += "\nDownload(s) failed.";
-			}
+			} //else if download lists' sizes are 0, ignore
 		}
 		setText(strCurrentStatus);
 	}

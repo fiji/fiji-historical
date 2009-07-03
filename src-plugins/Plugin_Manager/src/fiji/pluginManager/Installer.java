@@ -15,12 +15,16 @@ public class Installer extends PluginData implements Runnable, Observer {
 	private List<PluginObject> pluginsWaiting;
 	private volatile Thread downloadThread;
 
-	//Keeping track of status
+	//Each file has one try to uninstall/download
 	private Iterator<PluginObject> iterUninstall;
-	private List<PluginObject> downloadedList;
 	private Iterator<PluginObject> iterWaiting;
-	private List<PluginObject> failedDownloadsList;
-	private PluginObject currentlyDownloading;
+
+	//Keeping track of status
+	public List<PluginObject> markedUninstallList;
+	public List<PluginObject> failedUninstallList;
+	public List<PluginObject> downloadedList;
+	public List<PluginObject> failedDownloadsList;
+	public PluginObject currentlyDownloading;
 	private int totalBytes;
 	private int downloadedBytes;
 	private boolean isDownloading;
@@ -30,6 +34,8 @@ public class Installer extends PluginData implements Runnable, Observer {
 		super();
 		downloadedList = new PluginCollection();
 		failedDownloadsList = new PluginCollection();
+		markedUninstallList = new PluginCollection();
+		failedUninstallList = new PluginCollection();
 
 		//divide into two groups
 		PluginCollection pluginCollection = (PluginCollection)pluginList;
@@ -46,53 +52,56 @@ public class Installer extends PluginData implements Runnable, Observer {
 		return totalBytes;
 	}
 
-	public List<PluginObject> getListOfDownloaded() {
-		return downloadedList;
-	}
-
-	public boolean stillDownloading() {
+	public boolean isDownloading() {
 		return isDownloading;
 	}
 
-	public List<PluginObject> getListOfFailedDownloads() {
-		return failedDownloadsList;
-	}
-
-	public PluginObject getCurrentDownload() {
-		return currentlyDownloading;
+	public void beginOperations() {
+		startDelete();
+		startDownload();
 	}
 
 	//start processing on contents of deletionList
 	private final String DELETE_FILE = "delete.txt";
-	public void startDelete() {
+	private void startDelete() {
 		//TODO: Implementation of uninstallation of plugins
-		try {
-			String saveTxtLocation = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, DELETE_FILE);
-			new File(saveTxtLocation).getParentFile().mkdirs();
-			PrintStream txtPrintStream = new PrintStream(saveTxtLocation);
+		//TODO: To implement checking of plugin's read-only status, might need to group that
+		//      into PluginData class.
+		if (iterUninstall.hasNext()) {
+			String saveTxtLocation = prefix(DELETE_FILE);
+			PrintStream txtPrintStream = null;
+			try {
+				new File(saveTxtLocation).getParentFile().mkdirs();
+				txtPrintStream = new PrintStream(saveTxtLocation);
+			} catch (IOException e) {
+				System.out.println("Failed to uninstall at all.");
+			}
 			while (iterUninstall.hasNext()) {
-				String filename = iterUninstall.next().getFilename();
+				PluginObject plugin = iterUninstall.next();
+				String filename = plugin.getFilename();
 				//save line to delete.txt
 				txtPrintStream.println(filename);
 				//write a 0-byte file
-				String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);;
-				new File(pluginPath).getParentFile().mkdirs();
-				new File(pluginPath).createNewFile();
+				String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);
+				try {
+					new File(pluginPath).getParentFile().mkdirs();
+					new File(pluginPath).createNewFile();
+					markedUninstallList.add(plugin);
+				} catch (IOException e) {
+					failedUninstallList.add(plugin);
+				}
 			}
 			txtPrintStream.close();
-		} catch (FileNotFoundException e1) {
-			System.out.println("Uninstall process cannot start, failed to write to delete.txt");
-			System.out.println("TODO: If this happens, inform user, and either quit installing entirely, or continue...");
-		} catch (IOException e2) {
-			System.out.println("Cannot create empty file");
-			System.out.println("TODO: If this happens, inform user, and either quit installing entirely, or continue...");
 		}
 	}
 
 	//start processing on contents of updateList
-	public void startDownload() {
-		downloadThread = new Thread(this);
-		downloadThread.start();
+	private void startDownload() {
+		if (iterWaiting.hasNext()) {
+			isDownloading = true;
+			downloadThread = new Thread(this);
+			downloadThread.start();
+		}
 	}
 
 	//stop download
@@ -101,9 +110,9 @@ public class Installer extends PluginData implements Runnable, Observer {
 		downloadThread = null;
 	}
 
+	//Marking files for removal assumed finished here, thus begin download tasks
 	public void run() {
 		Thread thisThread = Thread.currentThread();
-		isDownloading = true;
 		//This segment gets the size of the download
 		for (PluginObject myPlugin : pluginsWaiting) {
 			if (thisThread == downloadThread) {

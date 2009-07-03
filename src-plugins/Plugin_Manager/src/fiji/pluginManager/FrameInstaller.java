@@ -28,7 +28,7 @@ class FrameInstaller extends JFrame {
 	private JProgressBar progressBar;
 	private JTextPane txtProgressDetails;
 	private Installer installer;
-	private boolean isProgressing;
+	private boolean isDownloading;
 
 	//Download Window opened from Plugin Manager UI
 	public FrameInstaller(PluginManager pluginManager) {
@@ -86,39 +86,46 @@ class FrameInstaller extends JFrame {
 		if (this.installer != null) throw new Error("Installer object already exists.");
 		else {
 			this.installer = installer;
-			installer.startDelete();
-			installer.startDownload();
+			installer.beginOperations();
+			isDownloading = installer.isDownloading();
+			if (isDownloading) {
+				//Timer to check for download
+				timer = new Timer();
+				timer.schedule(new DownloadStatus(), 0, 100); //status refreshes every 100 ms
+			} else {
+				//no progressing tasks, then just display one-time
+				setFrameDisplay();
+			}
+		}
+	}
+
+	private void setFrameDisplay() {
+		isDownloading = installer.isDownloading();
+		int totalBytes = installer.getBytesTotal();
+		int downloadedBytes = installer.getBytesDownloaded();
+		if (isDownloading) {
 			btnClose.setText("Cancel");
 			btnClose.setToolTipText("Stop downloads and return");
-			txtProgressDetails.setText("Starting up download now...");
-			isProgressing = true;
-
-			//Timer to check for download
-			timer = new Timer();
-			timer.schedule(new DownloadStatus(), 0, 100); //status refreshes every 100 ms
+		} else {
+			btnClose.setText("Done");
+			btnClose.setToolTipText("Close Window");
 		}
+		((TextPaneDisplay)txtProgressDetails).showDownloadProgress(installer);
+		setPercentageComplete(downloadedBytes, totalBytes);
 	}
 
 	private class DownloadStatus extends TimerTask {
 		public void run() {
-			int totalBytes = installer.getBytesTotal();
-			int downloadedBytes = installer.getBytesDownloaded();
-			isProgressing = installer.stillDownloading();
-
-			//check if download has finished (Whether 100% success or not)
-			if (isProgressing == false) {
-				btnClose.setText("Done");
-				btnClose.setToolTipText("Close Window");
-				timer.cancel();
-			}
-			((TextPaneDisplay)txtProgressDetails).showDownloadProgress(installer);
-			setPercentageComplete(downloadedBytes, totalBytes);
+			isDownloading = installer.isDownloading();
+			setFrameDisplay();
+			if (isDownloading == false)
+				timer.cancel(); //Not downloading anything, no progress to refresh
 		}
 	}
 
 	private void closeFrameInstaller() {
 		//plugin manager will deal with this
-		if (isProgressing) {
+		if (isDownloading) {
 			if (JOptionPane.showConfirmDialog(this,
 					"Are you sure you want to cancel the ongoing download?",
 					"Stop?",
@@ -128,7 +135,8 @@ class FrameInstaller extends JFrame {
 			} else
 				return;
 		}
-		if (installer != null && installer.getListOfDownloaded().size() > 0)
+		if (installer != null &&
+			(installer.downloadedList.size() > 0 || installer.markedUninstallList.size() > 0))
 			pluginManager.exitWithRestartFijiMessage();
 		else
 			pluginManager.backToPluginManager();
