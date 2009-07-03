@@ -674,3 +674,19 @@ Tasks Completed:
 - Mainly refactoring by removing redundant code (accessor methods), renaming files
 - Removal of plugins implemented
    ==> To implement its visibility in the interface later...
+
+
+
+3rd July, Friday
+Tasks Completed:
+- Implement visibility of interface for removal of plugins
+- Confirmation: Use 0-byte file creation method, although Fiji launcher will not copy, but treat it as a command to delete Plugin.
+- Cleaned up the remainder of the code wherever I can...
+
+Uhhh... Let's see about building Fiji again...
+- So basically there's some problem with ./Build.sh trying to compile to replace older plugins...
+   ==> e.g.: javac.jar, can't move out of the way, so I had to do it manually
+- Finally I get to learn how to do it at Git:
+   ==> fiji --build plugins/Plugin_Manager.jar
+
+Grrr... That's all for the week.
