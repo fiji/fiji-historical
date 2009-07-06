@@ -1,7 +1,5 @@
 package fiji.pluginManager;
-
 import ij.IJ;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,6 +21,7 @@ import org.xml.sax.SAXException;
  * 
  */
 public class PluginListBuilder extends PluginDataObservable {
+	private String[] pluginDirectories = {"plugins", "jars", "retro", "misc"};
 	public List<PluginObject> pluginCollection; //info available after list is built
 	public List<PluginObject> readOnlyList; //info available after list is built
 	private Map<String, String> digests;
@@ -57,6 +56,16 @@ public class PluginListBuilder extends PluginDataObservable {
 					path + File.separator + list[i]);
 	}
 
+	private void queueDirectory(List<String> queue, String[] pluginDirectories) {
+		for (String directory : pluginDirectories) {
+			File dir = new File(prefix(directory));
+			if (!dir.isDirectory())
+				throw new Error("Plugin Directory " + directory + " does not exist!");
+			else
+				queueDirectory(queue, directory);
+		}
+	}
+
 	public void buildFullPluginList() throws ParserConfigurationException, IOException, SAXException {
 		//Parses XML document; contents is needed for both local and remote plugins
 		xmlFileReader = new XMLFileReader(PluginManager.XML_DIRECTORY + File.separator + PluginManager.XML_FILENAME);
@@ -85,11 +94,7 @@ public class PluginListBuilder extends PluginDataObservable {
 		}
 		if (fileExists("ij.jar")) queue.add("ij.jar");
 
-		//Directories assumed to exist
-		queueDirectory(queue, "plugins");
-		queueDirectory(queue, "jars");
-		queueDirectory(queue, "retro");
-		queueDirectory(queue, "misc");
+		queueDirectory(queue, pluginDirectories); //directories assumed to exist
 
 		//To calculate the Md5 sums on the local side
 		Iterator<String> iter = queue.iterator();
