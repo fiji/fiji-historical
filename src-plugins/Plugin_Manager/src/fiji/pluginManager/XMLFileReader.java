@@ -191,8 +191,16 @@ public class XMLFileReader extends DefaultHandler {
 			}
 			versionList.add(plugin);
 		} else if (tagName.equals("dependency")) {
-			//TODO: dependencyRelation string would be involved too...
-			Dependency dependency = new Dependency(dependencyFilename, dependencyTimestamp);
+			if (dependencyRelation.toLowerCase().equals(Dependency.RELATION_AT_LEAST)) {
+				dependencyRelation = Dependency.RELATION_AT_LEAST;
+			} else if (dependencyRelation.toLowerCase().equals(Dependency.RELATION_AT_MOST)) {
+				dependencyRelation = Dependency.RELATION_AT_MOST;
+			} else if (dependencyRelation.toLowerCase().equals(Dependency.RELATION_EXACT)) {
+				dependencyRelation = Dependency.RELATION_EXACT;
+			} else {
+				throw new Error("Dependency Relation " + dependencyRelation + " does not exist for " + dependencyFilename);
+			}
+			Dependency dependency = new Dependency(dependencyFilename, dependencyTimestamp, dependencyRelation);
 			dependencyList.add(dependency);
 		}
 	}
