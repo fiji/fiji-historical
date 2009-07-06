@@ -166,11 +166,6 @@ public class PluginObject {
 		return action;
 	}
 
-	/*public boolean isUploadable() {
-		return ((isUpdateable() && getTimestamp().compareTo(getNewTimestamp()) > 0)
-				|| (isRemovableOnly() && !isFijiPlugin()));
-	}*/
-
 	public boolean isInstallable() {
 		return (status == PluginObject.STATUS_UNINSTALLED);
 	}
@@ -204,9 +199,6 @@ public class PluginObject {
 		return (isInstallable() && action == PluginObject.ACTION_REVERSE);
 	}
 
-	/*public boolean toUpload() {
-		return (isUploadable() && action == PluginObject.ACTION_UPLOAD);
-	}*/
 	public boolean toUpload() {
 		return (action == PluginObject.ACTION_UPLOAD);
 	}

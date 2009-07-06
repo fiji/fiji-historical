@@ -22,8 +22,7 @@ public class PluginDataObservable extends PluginData implements Observable {
 	}
 
 	public PluginDataObservable() {
-		super(false);
-		observersList = new Vector<Observer>();
+		this(false);
 	}
 
 	public String getTaskname() {
@@ -56,8 +55,6 @@ public class PluginDataObservable extends PluginData implements Observable {
 		if (obs != null)
 			observersList.addElement(obs);
 	}
-
-	public void unRegister(Observer obs) {}
 
 	protected void changeStatus(String taskname, int currentlyLoaded, int totalToLoad) {
 		this.taskname = taskname;

@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.net.URLDecoder;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -33,7 +31,6 @@ import java.util.jar.JarFile;
  * - Get the absolute path (prefix()) of Fiji main directory
  * - Copy a file over to a particular location
  * - Get details of the Operating System Fiji application is on
- * 
  */
 public abstract class PluginData {
 	private final String macPrefix = "Contents/MacOS/";
@@ -47,14 +44,10 @@ public abstract class PluginData {
 	};
 
 	public PluginData() {
-		initialize(false);
+		this(false);
 	}
 
 	public PluginData(boolean forServer) {
-		initialize(forServer);
-	}
-
-	private void initialize(boolean forServer) {
 		this.forServer = forServer;
 		fijiPath = stripSuffix(stripSuffix(Menus.getPlugInsPath(), File.separator), "plugins");
 

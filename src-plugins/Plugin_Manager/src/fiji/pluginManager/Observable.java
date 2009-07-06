@@ -5,5 +5,4 @@ public interface Observable {
 
 	public void register(Observer obs);
 
-	public void unRegister(Observer obs);
 }

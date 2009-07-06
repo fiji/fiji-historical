@@ -7,6 +7,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Observer 
 
 	public void startDownload() {
 		try {
+			//TODO: Replace it with XML and DTD files
 			downloadAndSave(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME, PluginManager.TXT_FILENAME);
 			//downloadAndSave(PluginManager.MAIN_URL + PluginManager.XML_FILENAME, PluginManager.XML_FILENAME);
 			//downloadAndSave(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME, PluginManager.DTD_FILENAME);

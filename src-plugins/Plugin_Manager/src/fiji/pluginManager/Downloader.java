@@ -106,6 +106,4 @@ public class Downloader implements Observable {
 		observersList.addElement(obs);
 	}
 
-	public void unRegister(Observer obs) { }
-
 }
