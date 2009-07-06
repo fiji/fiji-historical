@@ -11,13 +11,15 @@ import java.net.URL;
 import java.util.Vector;
 
 /*
- * Directly responsibility: Download a file given its URL to a given destination.
+ * Direct responsibility: Download a file given its URL to a given destination.
  * Updates its download status to its Observer as well.
  */
 public class Downloader implements Observable {
+	private volatile Thread downloadThread;
 	private String strDestination;
 	private int downloadedBytes;
-	private HttpURLConnection myConnection;
+	private int downloadSize;
+	private HttpURLConnection connection;
 	private Vector<Observer> observersList;
 	private InputStream in;
 	private OutputStream out;
@@ -26,19 +28,22 @@ public class Downloader implements Observable {
 		if (strURL == null || strDestination == null)
 			throw new Error("Downloader constructor parameters cannot be null");
 		this.strDestination = strDestination;
-		downloadedBytes = 0; //start with nothing downloaded
 		observersList = new Vector<Observer>();
-		myConnection = (HttpURLConnection)(new URL(strURL)).openConnection();
+		connection = (HttpURLConnection)(new URL(strURL)).openConnection();
+		downloadedBytes = 0; //start with nothing downloaded
+		downloadSize = connection.getContentLength();
+		if (downloadSize < 0)
+			throw new Error("Content Length is not known");
 	}
 
 	public int getSize() {
-		return myConnection.getContentLength();
+		return downloadSize;
 	}
 
 	public void prepareDownload() throws FileNotFoundException, IOException {
-		System.out.println("Trying to connect to " + myConnection.getURL().toString() + "...");
+		System.out.println("Trying to connect to " + connection.getURL().toString() + "...");
 		new File(strDestination).getParentFile().mkdirs();
-		in = myConnection.getInputStream();
+		in = connection.getInputStream();
 		out = new FileOutputStream(strDestination);
 	}
 
@@ -52,19 +57,43 @@ public class Downloader implements Observable {
 
 	public void writePart(byte[] buffer, int count) throws IOException {
 		out.write(buffer, 0, count);
-		downloadedBytes = count;
+		downloadedBytes += count;
 		notifyObservers();
 	}
 
-	public int getNumOfBytes() {
-		//number of bytes retrieved at THIS interval, NOT "bytes downloaded so far"
+	public int getBytesSoFar() {
 		return downloadedBytes;
 	}
 
 	public void endConnection() throws IOException {
 		in.close();
 		out.close();
-		myConnection.disconnect();
+		connection.disconnect();
+	}
+
+	//convenience method
+	public void startDownloadAndObserve(Observer observer) throws IOException {
+		//if cancelling downloads are needed, use threads to track
+		boolean useThread = (downloadThread == null ? false : true);
+		if (observer != null)
+			register(observer);
+		Thread thisThread = Thread.currentThread();
+
+		//Prepare the necessary download input and output streams
+		prepareDownload();
+		byte[] buffer = createNewBuffer();
+		int count;
+
+		//Start actual downloading and writing to file
+		while ((count = getNextPart(buffer)) >= 0 &&
+				(!useThread || (useThread && thisThread == downloadThread))) {
+			writePart(buffer, count);
+		}
+		endConnection(); //end connection once download done
+	}
+
+	public void setDownloadThread(Thread downloadThread) {
+		this.downloadThread = downloadThread;
 	}
 
 	public void notifyObservers() {

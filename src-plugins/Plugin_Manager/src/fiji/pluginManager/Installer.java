@@ -14,6 +14,7 @@ import java.io.PrintStream;
 public class Installer extends PluginData implements Runnable, Observer {
 	private List<PluginObject> pluginsWaiting;
 	private volatile Thread downloadThread;
+	private volatile Downloader downloader;
 
 	//Each file has one try to uninstall/download
 	private Iterator<PluginObject> iterUninstall;
@@ -26,7 +27,8 @@ public class Installer extends PluginData implements Runnable, Observer {
 	public List<PluginObject> failedDownloadsList;
 	public PluginObject currentlyDownloading;
 	private int totalBytes;
-	private int downloadedBytes;
+	private int completedBytesTotal; //bytes downloaded so far of all completed files
+	private int currentBytesSoFar; //bytes downloaded so far of current file
 	private boolean isDownloading;
 
 	//Assume the list passed to constructor is a list of only plugins that wanted change
@@ -45,7 +47,7 @@ public class Installer extends PluginData implements Runnable, Observer {
 	}
 
 	public int getBytesDownloaded() {
-		return downloadedBytes;
+		return (completedBytesTotal + currentBytesSoFar); //return progress
 	}
 
 	public int getBytesTotal() {
@@ -101,6 +103,7 @@ public class Installer extends PluginData implements Runnable, Observer {
 	public void stopDownload() {
 		//thread will check if downloadThread is null, and stop action where necessary
 		downloadThread = null;
+		downloader.setDownloadThread(downloadThread);
 	}
 
 	//Marking files for removal assumed finished here, thus begin download tasks
@@ -143,23 +146,16 @@ public class Installer extends PluginData implements Runnable, Observer {
 
 				//Establish connection to file for this iteration
 				downloadURL = PluginManager.MAIN_URL + name + "-" + date;
-				Downloader downloader = new Downloader(downloadURL, saveToPath);
-				downloader.register(this);
-
-				//TODO: Check for filesizes?
-				//(downloader.getSize() == currentlyDownloading.getFilesize())
-
-				//Prepare the necessary download input and output streams
-				downloader.prepareDownload();
-				byte[] buffer = downloader.createNewBuffer();
-				int count;
-
-				//while file is writing and download is NOT cancelled yet
-				while ((count = downloader.getNextPart(buffer)) >= 0 &&
-						thisThread == downloadThread) {
-					downloader.writePart(buffer, count);
+				if (thisThread == downloadThread) {
+					downloader = new Downloader(downloadURL, saveToPath);
+					downloader.setDownloadThread(downloadThread);
+					downloader.startDownloadAndObserve(this);
 				}
-				downloader.endConnection(); //end connection once download done
+				//TODO: Check for filesizes?
+				//check if isUpdateable or isInstallable
+				//(downloader.getSize() == currentlyDownloading.getFilesize())
+				completedBytesTotal += currentBytesSoFar;
+				currentBytesSoFar = 0;
 
 				//if download is not yet cancelled, check if downloaded has valid md5 sum
 				if (thisThread == downloadThread) {
@@ -179,7 +175,7 @@ public class Installer extends PluginData implements Runnable, Observer {
 				}
 
 			} catch (Exception e) {
-				//try to delete the file (probably this be the only catch - DRY)
+				//try to delete the file
 				try {
 					new File(saveToPath).delete();
 				} catch (Exception e2) { }
@@ -209,8 +205,8 @@ public class Installer extends PluginData implements Runnable, Observer {
 
 	public void refreshData(Observable subject) {
 		Downloader myDownloader = (Downloader)subject;
-		downloadedBytes += myDownloader.getNumOfBytes();
-		System.out.println("Downloaded so far: " + downloadedBytes);
+		currentBytesSoFar = myDownloader.getBytesSoFar();
+		System.out.println("Downloaded so far: " + (completedBytesTotal + currentBytesSoFar));
 	}
 
 }
