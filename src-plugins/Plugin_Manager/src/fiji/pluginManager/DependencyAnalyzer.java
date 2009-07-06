@@ -11,6 +11,14 @@ import java.util.jar.JarFile;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
+/*
+ * This class generates a list of dependencies for a given plugin. The dependencies are
+ * based on the existing plugins in the user's Fiji directories.
+ * 
+ * It uses the static class ByteCodeAnalyzer to analyze every single class file in the given
+ * JAR file, which will determine the classes relied on ==> And in turn their JAR files,
+ * i.e.: The dependencies themselves
+ */
 public class DependencyAnalyzer extends PluginData {
 	private Class2JarFileMap map;
 	private List<PluginObject> pluginList;
