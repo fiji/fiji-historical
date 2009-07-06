@@ -690,3 +690,18 @@ Uhhh... Let's see about building Fiji again...
    ==> fiji --build plugins/Plugin_Manager.jar
 
 Grrr... That's all for the week.
+
+
+
+6th July, Monday
+Tasks Completed:
+- Cleaned up code somewhat...
+- Still figuring out how to make the interface separate from logic w/o using patterns...
+
+In general, list of known tasks left:
+- Unimplemented scenarios:
+   ==> E.g.: User selects plugins to upload, selects plugins to download/remove, and then clicks to "update changes." How?
+- A more sophisticated implementation of uploading plugins?
+   ==> Server-side. Also involves which files to copy (precompiled folder)?
+- 3rd Party Plugin support
+- Touch-up interface, code, etc
