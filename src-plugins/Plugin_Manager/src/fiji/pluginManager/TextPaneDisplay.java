@@ -146,6 +146,7 @@ public class TextPaneDisplay extends JTextPane {
 		List<PluginObject> failedList = installer.failedDownloadsList;
 		List<PluginObject> markedUninstallList = installer.markedUninstallList;
 		List<PluginObject> failedUninstallList = installer.failedUninstallList;
+		List<PluginObject> contentLengthErrList = installer.contentLengthErrList;
 		PluginObject currentlyDownloading = installer.currentlyDownloading;
 		boolean stillDownloading = installer.isDownloading();
 		String strCurrentStatus = "";
@@ -163,6 +164,10 @@ public class TextPaneDisplay extends JTextPane {
 
 		//if no more download tasks, results can be displayed
 		if (stillDownloading == false) {
+			//For inconsistent filesizes, just display a warning
+			for (PluginObject myPlugin : contentLengthErrList)
+				strCurrentStatus += "Warning: " + myPlugin.getFilename() + " actual filesize does not fit records.\n";
+			//Display overall results
 			if (markedUninstallList.size() > 0) {
 				int totalSize = markedUninstallList.size() + failedUninstallList.size();
 				strCurrentStatus += markedUninstallList.size() + " of " + totalSize +

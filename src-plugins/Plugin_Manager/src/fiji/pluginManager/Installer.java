@@ -3,9 +3,7 @@ package fiji.pluginManager;
 import java.util.Iterator;
 import java.util.List;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
 
 /*
  * This class' main role is to download selected files, as well as indicate those that
@@ -13,11 +11,11 @@ import java.io.PrintStream;
  */
 public class Installer extends PluginData implements Runnable, Observer {
 	private List<PluginObject> pluginsWaiting;
+	private List<PluginObject> pluginsToUninstall;
 	private volatile Thread downloadThread;
 	private volatile Downloader downloader;
 
-	//Each file has one try to uninstall/download
-	private Iterator<PluginObject> iterUninstall;
+	//Each file has one try to download
 	private Iterator<PluginObject> iterWaiting;
 
 	//Keeping track of status
@@ -25,6 +23,7 @@ public class Installer extends PluginData implements Runnable, Observer {
 	public List<PluginObject> failedUninstallList;
 	public List<PluginObject> downloadedList;
 	public List<PluginObject> failedDownloadsList;
+	public List<PluginObject> contentLengthErrList;
 	public PluginObject currentlyDownloading;
 	private int totalBytes;
 	private int completedBytesTotal; //bytes downloaded so far of all completed files
@@ -38,10 +37,11 @@ public class Installer extends PluginData implements Runnable, Observer {
 		failedDownloadsList = new PluginCollection();
 		markedUninstallList = new PluginCollection();
 		failedUninstallList = new PluginCollection();
+		contentLengthErrList = new PluginCollection();
 
 		//divide into two groups
 		PluginCollection pluginCollection = (PluginCollection)pluginList;
-		iterUninstall = pluginCollection.getIterator(PluginCollection.FILTER_ACTIONS_UNINSTALL);
+		pluginsToUninstall = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UNINSTALL);
 		pluginsWaiting = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
 		iterWaiting = pluginsWaiting.iterator();
 	}
@@ -65,27 +65,23 @@ public class Installer extends PluginData implements Runnable, Observer {
 
 	//start processing on contents of Delete List (Mark them for deletion)
 	private void startDelete() {
-		//TODO: Implementation of uninstallation of plugins
-		if (iterUninstall.hasNext()) {
-			while (iterUninstall.hasNext()) {
-				PluginObject plugin = iterUninstall.next();
-				String filename = plugin.getFilename();
-				try {
-					//checking status of existing file
-					File file = new File(prefix(filename));
-					if (!file.canWrite()) //if unable to override existing file
-						failedUninstallList.add(plugin);
-					else {
-						//write a 0-byte file
-						String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);
-						new File(pluginPath).getParentFile().mkdirs();
-						new File(pluginPath).createNewFile();
-						markedUninstallList.add(plugin);
-					}
-				} catch (IOException e) {
-					//this is for 0-byte file implementation
+		for (PluginObject plugin : pluginsToUninstall) {
+			String filename = plugin.getFilename();
+			try {
+				//checking status of existing file
+				File file = new File(prefix(filename));
+				if (!file.canWrite()) //if unable to override existing file
 					failedUninstallList.add(plugin);
+				else {
+					//write a 0-byte file
+					String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);
+					new File(pluginPath).getParentFile().mkdirs();
+					new File(pluginPath).createNewFile();
+					markedUninstallList.add(plugin);
 				}
+			} catch (IOException e) {
+				//this is for 0-byte file implementation
+				failedUninstallList.add(plugin);
 			}
 		}
 	}
@@ -148,12 +144,18 @@ public class Installer extends PluginData implements Runnable, Observer {
 				downloadURL = PluginManager.MAIN_URL + name + "-" + date;
 				if (thisThread == downloadThread) {
 					downloader = new Downloader(downloadURL, saveToPath);
+					//Checking if actual filesize consistent with records
+					int recordedSize = 0;
+					if (currentlyDownloading.isInstallable())
+						recordedSize = currentlyDownloading.getFilesize();
+					else if (currentlyDownloading.isUpdateable())
+						recordedSize = currentlyDownloading.getNewFilesize();
+					if (recordedSize != downloader.getSize())
+						contentLengthErrList.add(currentlyDownloading);
+					//Configure settings and begin download
 					downloader.setDownloadThread(downloadThread);
 					downloader.startDownloadAndObserve(this);
 				}
-				//TODO: Check for filesizes?
-				//check if isUpdateable or isInstallable
-				//(downloader.getSize() == currentlyDownloading.getFilesize())
 				completedBytesTotal += currentBytesSoFar;
 				currentBytesSoFar = 0;
 
