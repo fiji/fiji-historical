@@ -5,13 +5,8 @@ import java.io.IOException;
 public class XMLFileDownloader extends PluginDataObservable implements Observer {
 	private String saveFileLocation;
 
-	public XMLFileDownloader(Observer observer) {
-		super(observer);
-	}
-
 	public void startDownload() {
 		try {
-			downloadAndSave(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME, PluginManager.TXT_FILENAME);
 			downloadAndSave(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME, PluginManager.TXT_FILENAME);
 			//downloadAndSave(PluginManager.MAIN_URL + PluginManager.XML_FILENAME, PluginManager.XML_FILENAME);
 			//downloadAndSave(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME, PluginManager.DTD_FILENAME);

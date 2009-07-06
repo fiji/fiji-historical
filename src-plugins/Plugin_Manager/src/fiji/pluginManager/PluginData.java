@@ -25,6 +25,16 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+/*
+ * Class functionality:
+ * Extend from it if you need to
+ * - Calculate timestamps of files
+ * - Calculate the Md5 sums of files
+ * - Get the absolute path (prefix()) of Fiji main directory
+ * - Copy a file over to a particular location
+ * - Get details of the Operating System Fiji application is on
+ * 
+ */
 public abstract class PluginData {
 	private final String macPrefix = "Contents/MacOS/";
 	private boolean useMacPrefix;

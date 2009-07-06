@@ -15,7 +15,16 @@ import javax.xml.transform.stream.StreamResult;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-public class UpdatesWriter extends PluginDataObservable {
+/*
+ * This class is responsible for writing updates to server, upon given the updated
+ * plugin records (Map of plugins to all versions).
+ * 
+ * 1st Step: At constructor, prepare print streams for writing XML and text files.
+ * 2nd Step: Upload plugin file(s) to server
+ * 3rd Step: Write XML file using pluginRecords, save to server
+ * 4th Step: Write text file using pluginRecords, save to server
+ */
+public class Updater extends PluginDataObservable {
 	private String xmlSavepath;
 	private String txtSavepath;
 	private PrintStream xmlPrintStream;
@@ -28,8 +37,8 @@ public class UpdatesWriter extends PluginDataObservable {
 	public List<PluginObject> successList;
 	public List<PluginObject> failList;
 
-	public UpdatesWriter(Observer observer) throws IOException, TransformerConfigurationException {
-		super(observer, true); //For purposes of uploading to server
+	public Updater() throws IOException, TransformerConfigurationException {
+		super(true); //For purposes of uploading to server
 		xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
 		txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
 
@@ -52,10 +61,8 @@ public class UpdatesWriter extends PluginDataObservable {
 	public void uploadFilesToServer(Map<String, List<PluginObject>> pluginRecords, List<PluginObject> filesUploadList) throws SAXException {
 		writePlugins(filesUploadList);
 		writeXMLFile(pluginRecords);
-		xmlPrintStream.close();
 		System.out.println("XML file written to server");
 		writeTxtFile(pluginRecords);
-		txtPrintStream.close();
 		System.out.println("Text file written to server");
 		setStatusComplete(); //indicate to observer there's no more tasks
 	}
@@ -99,6 +106,7 @@ public class UpdatesWriter extends PluginDataObservable {
 		}
 
 		changeStatus(PluginManager.TXT_FILENAME, 1, 1);
+		txtPrintStream.close();
 	}
 
 	private void writeXMLFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
@@ -145,6 +153,7 @@ public class UpdatesWriter extends PluginDataObservable {
 		handler.endDocument();
 
 		changeStatus(PluginManager.XML_FILENAME, 1, 1);
+		xmlPrintStream.close();
 	}
 
 	private void writeSimpleTag(String tagName, AttributesImpl attrib, String value) throws SAXException {

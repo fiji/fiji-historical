@@ -2,25 +2,27 @@ package fiji.pluginManager;
 
 import java.util.Vector;
 
+/*
+ * Class functionality:
+ * A specialized version of PluginData.
+ * 
+ * Allows a user interface to observe it. Class is designed for performing multiple
+ * tasks, allowing the user to decide when to inform the interface of its status.
+ */
 public class PluginDataObservable extends PluginData implements Observable {
 	private Vector<Observer> observersList;
-	protected String taskname;
+	protected String taskname; //Generic title of the current task, namely a filename
 	protected int currentlyLoaded;
 	protected int totalToLoad;
 	protected boolean allTasksComplete;
 
-	public PluginDataObservable(Observer observer, boolean forServer) {
+	public PluginDataObservable(boolean forServer) {
 		super(forServer);
-		initializePluginDataObservable(observer);
-	}
-
-	public PluginDataObservable(Observer observer) {
-		initializePluginDataObservable(observer);
-	}
-
-	private void initializePluginDataObservable(Observer observer) {
 		observersList = new Vector<Observer>();
-		register(observer);
+	}
+
+	public PluginDataObservable() {
+		super(false);
 	}
 
 	public String getTaskname() {
@@ -50,7 +52,8 @@ public class PluginDataObservable extends PluginData implements Observable {
 
 	//PluginDataObservable adds observers to inform them of any changes
 	public void register(Observer obs) {
-		observersList.addElement(obs);
+		if (obs != null)
+			observersList.addElement(obs);
 	}
 
 	public void unRegister(Observer obs) {}

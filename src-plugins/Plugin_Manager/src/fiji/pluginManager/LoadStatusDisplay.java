@@ -15,7 +15,8 @@ public class LoadStatusDisplay implements Observer {
 
 	public LoadStatusDisplay() {
 		IJ.showStatus("Starting up Plugin Manager");
-		xmlFileDownloader = new XMLFileDownloader(this);
+		xmlFileDownloader = new XMLFileDownloader();
+		xmlFileDownloader.register(this);
 		xmlFileDownloader.startDownload();
 	}
 
@@ -25,7 +26,8 @@ public class LoadStatusDisplay implements Observer {
 				IJ.showStatus("Downloading " + xmlFileDownloader.getTaskname() + "...");
 				IJ.showProgress(xmlFileDownloader.getCurrentlyLoaded(), xmlFileDownloader.getTotalToLoad());
 				if (xmlFileDownloader.allTasksComplete()) {
-					pluginListBuilder = new PluginListBuilder(this);
+					pluginListBuilder = new PluginListBuilder();
+					pluginListBuilder.register(this);
 					pluginListBuilder.buildFullPluginList();
 				}
 			} else if (subject == pluginListBuilder) {

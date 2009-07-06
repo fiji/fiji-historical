@@ -31,8 +31,7 @@ public class PluginListBuilder extends PluginDataObservable {
 	private Map<String, String> latestDigests;
 	private XMLFileReader xmlFileReader;
 
-	public PluginListBuilder(Observer observer) {
-		super(observer);
+	public PluginListBuilder() {
 		//initialize storage
 		dates = new TreeMap<String, String>();
 		digests = new TreeMap<String, String>();

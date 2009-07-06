@@ -11,7 +11,7 @@ import javax.xml.transform.TransformerConfigurationException;
 import org.xml.sax.SAXException;
 
 public class Uploader implements Observer {
-	private UpdatesWriter updatesWriter;
+	private Updater updater;
 	private List<PluginObject> uploadChangesList;
 	private DependencyAnalyzer dependencyAnalyzer;
 	private XMLFileReader xmlFileReader;
@@ -80,16 +80,17 @@ public class Uploader implements Observer {
 	public void uploadToServer() throws IOException, TransformerConfigurationException, SAXException {
 		//upload XML document (and/or current.txt) to server
 		System.out.println("Uploader CLASS: At uploadToServer()");
-		updatesWriter = new UpdatesWriter(this);
-		updatesWriter.uploadFilesToServer(newPluginRecords, filesUploadList);
+		updater = new Updater();
+		updater.register(this);
+		updater.uploadFilesToServer(newPluginRecords, filesUploadList);
 	}
 
 	public List<PluginObject> getSuccessfulUploads() {
-		return updatesWriter.successList;
+		return updater.successList;
 	}
 
 	public List<PluginObject> getFailedUploads() {
-		return updatesWriter.failList;
+		return updater.failList;
 	}
 
 	public void resetActionsOfChangeList() {
@@ -99,13 +100,13 @@ public class Uploader implements Observer {
 
 	//Updating the interface
 	public void refreshData(Observable subject) {
-		if (subject == updatesWriter) {
-			if (updatesWriter.allTasksComplete()) {
+		if (subject == updater) {
+			if (updater.allTasksComplete()) {
 				IJ.showStatus("");
 			} else {
 				//continue displaying statuses
-				IJ.showStatus("Uploading " + updatesWriter.getTaskname() + "...");
-				IJ.showProgress(updatesWriter.getCurrentlyLoaded(), updatesWriter.getTotalToLoad());
+				IJ.showStatus("Uploading " + updater.getTaskname() + "...");
+				IJ.showProgress(updater.getCurrentlyLoaded(), updater.getTotalToLoad());
 			}
 		}
 	}
