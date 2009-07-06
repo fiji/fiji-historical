@@ -23,6 +23,7 @@ public class PluginDataObservable extends PluginData implements Observable {
 
 	public PluginDataObservable() {
 		super(false);
+		observersList = new Vector<Observer>();
 	}
 
 	public String getTaskname() {

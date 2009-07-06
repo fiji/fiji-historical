@@ -1,111 +1,111 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pluginRecords SYSTEM "plugininfo/plugins.dtd">
 <pluginRecords>
-<plugin filename="ij.jar">
-<version>
-<checksum>43c58c86c2d90a6fea7400f5d1829beae1b93476</checksum>
-<timestamp>20090608135916</timestamp>
-<description>This is ImageJ itself! The foundation, the important one.</description>
-<filesize>1193440</filesize>
-<dependency>
-<filename>jars/javac.jar</filename>
-<date>20090516012642</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="jars/ant-launcher.jar">
-<version>
-<checksum>4199e18036ba2020bdcbc733f603564f41cf9009</checksum>
-<timestamp>20090504010022</timestamp>
-<description/>
-<filesize>11814</filesize>
-</version>
-</plugin>
-<plugin filename="jars/ant-nodeps.jar">
-<version>
-<checksum>92b2335d3a97549b633dbcc3c41381a90f2b924b</checksum>
-<timestamp>20090504010022</timestamp>
-<description>This plugin relies on ant.jar, batik.jar, ant-launcher.jar
+    <plugin filename="ij.jar">
+        <version>
+            <checksum>43c58c86c2d90a6fea7400f5d1829beae1b93476</checksum>
+            <timestamp>20090608135916</timestamp>
+            <description>This is ImageJ itself! The foundation, the important one.</description>
+            <filesize>1193440</filesize>
+            <dependency>
+                <filename>jars/javac.jar</filename>
+                <date>20090516012642</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="jars/ant-launcher.jar">
+        <version>
+            <checksum>4199e18036ba2020bdcbc733f603564f41cf9009</checksum>
+            <timestamp>20090504010022</timestamp>
+            <description/>
+            <filesize>11814</filesize>
+        </version>
+    </plugin>
+    <plugin filename="jars/ant-nodeps.jar">
+        <version>
+            <checksum>92b2335d3a97549b633dbcc3c41381a90f2b924b</checksum>
+            <timestamp>20090504010022</timestamp>
+            <description>This plugin relies on ant.jar, batik.jar, ant-launcher.jar
 
 So what does "nodeps" mean?</description>
-<filesize>436656</filesize>
-<dependency>
-<filename>jars/ant.jar</filename>
-<date>20090504010023</date>
-<relation>at-least</relation>
-</dependency>
-<dependency>
-<filename>jars/batik.jar</filename>
-<date>20090506010300</date>
-<relation>at-least</relation>
-</dependency>
-<dependency>
-<filename>jars/ant-launcher.jar</filename>
-<date>20090504010022</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="jars/ant.jar">
-<version>
-<checksum>b1492f77c5c13e4f9dc05fe0ba9f95d6ec826660</checksum>
-<timestamp>20090504010023</timestamp>
-<description>!@#$%^&amp;*(){}[]-=+;:'",./?~`&lt;&gt;\| Testing...</description>
-<filesize>1327716</filesize>
-<dependency>
-<filename>jars/ant-launcher.jar</filename>
-<date>20090504010022</date>
-<relation>at-least</relation>
-</dependency>
-<dependency>
-<filename>jars/batik.jar</filename>
-<date>20090506010300</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="jars/autocomplete.jar">
-<version>
-<checksum>5bab776822719667a604b8fb2eafc679161aeb0f</checksum>
-<timestamp>20090516012653</timestamp>
-<description>This is the description of autocomplete.jar. It requires rsyntaxtextarea.jar and batik.jar</description>
-<filesize>69414</filesize>
-<dependency>
-<filename>jars/rsyntaxtextarea.jar</filename>
-<date>20090516012653</date>
-<relation>at-least</relation>
-</dependency>
-<dependency>
-<filename>jars/batik.jar</filename>
-<date>20090506010300</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="jars/batik.jar">
-<version>
-<checksum>dbab80ab5e11fb33328c7da88a849d0a19793ff5</checksum>
-<timestamp>20090506010300</timestamp>
-<description>PluginManager.jar requires this. And I'm sure others do need this as well.</description>
-<filesize>8004326</filesize>
-<dependency>
-<filename>jars/jacl.jar</filename>
-<date>20090506010254</date>
-<relation>at-least</relation>
-</dependency>
-<dependency>
-<filename>jars/jython2.2.1/jython.jar</filename>
-<date>20090504010029</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="jars/javac.jar">
-<version>
-<checksum>d626e750c0076f3240b2675348efb6d633355b38</checksum>
-<timestamp>20090429190849</timestamp>
-<description>T
+            <filesize>436656</filesize>
+            <dependency>
+                <filename>jars/ant.jar</filename>
+                <date>20090504010023</date>
+                <relation>at-least</relation>
+            </dependency>
+            <dependency>
+                <filename>jars/batik.jar</filename>
+                <date>20090506010300</date>
+                <relation>at-least</relation>
+            </dependency>
+            <dependency>
+                <filename>jars/ant-launcher.jar</filename>
+                <date>20090504010022</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="jars/ant.jar">
+        <version>
+            <checksum>b1492f77c5c13e4f9dc05fe0ba9f95d6ec826660</checksum>
+            <timestamp>20090504010023</timestamp>
+            <description>!@#$%^&amp;*(){}[]-=+;:'",./?~`&lt;&gt;\| Testing...</description>
+            <filesize>1327716</filesize>
+            <dependency>
+                <filename>jars/ant-launcher.jar</filename>
+                <date>20090504010022</date>
+                <relation>at-least</relation>
+            </dependency>
+            <dependency>
+                <filename>jars/batik.jar</filename>
+                <date>20090506010300</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="jars/autocomplete.jar">
+        <version>
+            <checksum>5bab776822719667a604b8fb2eafc679161aeb0f</checksum>
+            <timestamp>20090516012653</timestamp>
+            <description>This is the description of autocomplete.jar. It requires rsyntaxtextarea.jar and batik.jar</description>
+            <filesize>69414</filesize>
+            <dependency>
+                <filename>jars/rsyntaxtextarea.jar</filename>
+                <date>20090516012653</date>
+                <relation>at-least</relation>
+            </dependency>
+            <dependency>
+                <filename>jars/batik.jar</filename>
+                <date>20090506010300</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="jars/batik.jar">
+        <version>
+            <checksum>dbab80ab5e11fb33328c7da88a849d0a19793ff5</checksum>
+            <timestamp>20090506010300</timestamp>
+            <description>PluginManager.jar requires this. And I'm sure others do need this as well.</description>
+            <filesize>8004326</filesize>
+            <dependency>
+                <filename>jars/jacl.jar</filename>
+                <date>20090506010254</date>
+                <relation>at-least</relation>
+            </dependency>
+            <dependency>
+                <filename>jars/jython2.2.1/jython.jar</filename>
+                <date>20090504010029</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="jars/javac.jar">
+        <version>
+            <checksum>d626e750c0076f3240b2675348efb6d633355b38</checksum>
+            <timestamp>20090429190849</timestamp>
+            <description>T
 E
 S
 T
@@ -115,66 +115,66 @@ G
 .
 
 This is latest version. Testing purposes, it is to be left uninstalled so as to be updated by user.</description>
-<filesize>1041077</filesize>
-</version>
-</plugin>
-<plugin filename="jars/jython2.2.1/jython.jar">
-<version>
-<checksum>98e816fe8a5136547342df672bf6ff47cfd045d9</checksum>
-<timestamp>20090504010029</timestamp>
-<description>jython.jar summary.</description>
-<filesize>1941071</filesize>
-<dependency>
-<filename>jars/jruby.jar</filename>
-<date>20090504010028</date>
-<relation>at-least</relation>
-</dependency>
-<dependency>
-<filename>jars/ant.jar</filename>
-<date>20090504010023</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="jars/postgresql-8.2-506.jdbc3.jar">
-<version>
-<checksum>5cc5e4e537c2c5824beadcb03b7a1d6805e3a42f</checksum>
-<timestamp>20090504010029</timestamp>
-<description>I wonder if this requires dependencies...</description>
-<filesize>431283</filesize>
-</version>
-</plugin>
-<plugin filename="jars/rsyntaxtextarea.jar">
-<version>
-<checksum>dfd7d553ef2cfd9487cc21493d1ca6a62de3b6b1</checksum>
-<timestamp>20090516012653</timestamp>
-<description>By right... This should be uploaded before autocomplete.jar is uploaded?</description>
-<filesize>468067</filesize>
-<dependency>
-<filename>jars/batik.jar</filename>
-<date>20090506010300</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="misc/Fiji.jar">
-<version>
-<checksum>d2f6076c9bc8afa6f2d529828a6949340ae09e88</checksum>
-<timestamp>20090506223600</timestamp>
-<description>Now, I have little idea what is this for...</description>
-<filesize>9789</filesize>
-<dependency>
-<filename>jars/jzlib-1.0.7.jar</filename>
-<date>20090504010029</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="plugins/Auto_Threshold.jar">
-<version>
-<checksum>7e7a3543252f5916e5e70ea48916eec3082251f5</checksum>
-<timestamp>20090429190901</timestamp>
-<description>T
+            <filesize>1041077</filesize>
+        </version>
+    </plugin>
+    <plugin filename="jars/jython2.2.1/jython.jar">
+        <version>
+            <checksum>98e816fe8a5136547342df672bf6ff47cfd045d9</checksum>
+            <timestamp>20090504010029</timestamp>
+            <description>jython.jar summary.</description>
+            <filesize>1941071</filesize>
+            <dependency>
+                <filename>jars/jruby.jar</filename>
+                <date>20090504010028</date>
+                <relation>at-least</relation>
+            </dependency>
+            <dependency>
+                <filename>jars/ant.jar</filename>
+                <date>20090504010023</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="jars/postgresql-8.2-506.jdbc3.jar">
+        <version>
+            <checksum>5cc5e4e537c2c5824beadcb03b7a1d6805e3a42f</checksum>
+            <timestamp>20090504010029</timestamp>
+            <description>I wonder if this requires dependencies...</description>
+            <filesize>431283</filesize>
+        </version>
+    </plugin>
+    <plugin filename="jars/rsyntaxtextarea.jar">
+        <version>
+            <checksum>dfd7d553ef2cfd9487cc21493d1ca6a62de3b6b1</checksum>
+            <timestamp>20090516012653</timestamp>
+            <description>By right... This should be uploaded before autocomplete.jar is uploaded?</description>
+            <filesize>468067</filesize>
+            <dependency>
+                <filename>jars/batik.jar</filename>
+                <date>20090506010300</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="misc/Fiji.jar">
+        <version>
+            <checksum>d2f6076c9bc8afa6f2d529828a6949340ae09e88</checksum>
+            <timestamp>20090506223600</timestamp>
+            <description>Now, I have little idea what is this for...</description>
+            <filesize>9789</filesize>
+            <dependency>
+                <filename>jars/jzlib-1.0.7.jar</filename>
+                <date>20090504010029</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="plugins/Auto_Threshold.jar">
+        <version>
+            <checksum>7e7a3543252f5916e5e70ea48916eec3082251f5</checksum>
+            <timestamp>20090429190901</timestamp>
+            <description>T
 E
 S
 T
@@ -183,109 +183,109 @@ N
 G
 .
 
-This is only one version. Testing purposes, it is to be left uninstalled so as to be installed by user.</description>
-<filesize>13744</filesize>
-</version>
-</plugin>
-<plugin filename="plugins/BeanShell_Interpreter.jar">
-<version>
-<checksum>8b9f1a12898d620f71cf3eac3785e9d88e4c1a06</checksum>
-<timestamp>20090516012656</timestamp>
-<description>Beanshell Interpreter summary.</description>
-<filesize>1894</filesize>
-<dependency>
-<filename>jars/bsh-2.0b4.jar</filename>
-<date>20090504010023</date>
-<relation>at-least</relation>
-</dependency>
-<dependency>
-<filename>jars/fiji-scripting.jar</filename>
-<date>20090516012655</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="plugins/Bug_Submitter.jar">
-<version>
-<checksum>9232fc98290b909d73b4ae115680d7aaf9040bbd</checksum>
-<timestamp>20090516012720</timestamp>
-<description>Bug submitter summary.</description>
-<filesize>8610</filesize>
-</version>
-</plugin>
-<plugin filename="plugins/CLI_.jar">
-<version>
-<checksum>14d9740305a0cf671aa8e9b6fa01efd4a3c16285</checksum>
-<timestamp>20090516012704</timestamp>
-<description>CLI description. It has an underscore in the name.</description>
-<filesize>33703</filesize>
-<dependency>
-<filename>jars/fiji-scripting.jar</filename>
-<date>20090516012655</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="plugins/Clojure_Interpreter.jar">
-<version>
-<checksum>024e88a5fe7264f2ef15faef3883cdea444435cc</checksum>
-<timestamp>20090516012655</timestamp>
-<description>Clojure Interpreter.jar</description>
-<filesize>7845</filesize>
-<dependency>
-<filename>jars/clojure.jar</filename>
-<date>20090506010254</date>
-<relation>at-least</relation>
-</dependency>
-<dependency>
-<filename>jars/fiji-scripting.jar</filename>
-<date>20090516012655</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="plugins/Jython_Interpreter.jar">
-<version>
-<checksum>5ac08be89addf25522fb2cd9c4d2c409ab8ac75f</checksum>
-<timestamp>20090516012655</timestamp>
-<description>Jython Interpreter summary. Updated one time.</description>
-<filesize>3944</filesize>
-<dependency>
-<filename>jars/jython2.2.1/jython.jar</filename>
-<date>20090504010029</date>
-<relation>at-least</relation>
-</dependency>
-<dependency>
-<filename>jars/fiji-scripting.jar</filename>
-<date>20090516012655</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
-<plugin filename="plugins/Plugin_Manager.jar">
-<version>
-<checksum>927ec0e1e8d2f72a71aafcebb0052edfb02ddb56</checksum>
-<timestamp>20090701184908</timestamp>
-<description>On my repository, I believe this will be updated quite a number of times...</description>
-<filesize>94313</filesize>
-<dependency>
-<filename>jars/batik.jar</filename>
-<date>20090506010300</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-<version>
-<checksum>a19ea4d6a9dec04083fc699964e3762ee9f23a7f</checksum>
-<timestamp>20090701192731</timestamp>
-<description>This version of Plugin Manager allows to refresh displays after editing descriptions.
+This is the one and only version. Testing purposes, it is to be left uninstalled so as to be installed by user.</description>
+            <filesize>13744</filesize>
+        </version>
+    </plugin>
+    <plugin filename="plugins/BeanShell_Interpreter.jar">
+        <version>
+            <checksum>8b9f1a12898d620f71cf3eac3785e9d88e4c1a06</checksum>
+            <timestamp>20090516012656</timestamp>
+            <description>Beanshell Interpreter summary.</description>
+            <filesize>1894</filesize>
+            <dependency>
+                <filename>jars/bsh-2.0b4.jar</filename>
+                <date>20090504010023</date>
+                <relation>at-least</relation>
+            </dependency>
+            <dependency>
+                <filename>jars/fiji-scripting.jar</filename>
+                <date>20090516012655</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="plugins/Bug_Submitter.jar">
+        <version>
+            <checksum>9232fc98290b909d73b4ae115680d7aaf9040bbd</checksum>
+            <timestamp>20090516012720</timestamp>
+            <description>Bug submitter summary.</description>
+            <filesize>8610</filesize>
+        </version>
+    </plugin>
+    <plugin filename="plugins/CLI_.jar">
+        <version>
+            <checksum>14d9740305a0cf671aa8e9b6fa01efd4a3c16285</checksum>
+            <timestamp>20090516012704</timestamp>
+            <description>CLI description. It has an underscore in the name.</description>
+            <filesize>33703</filesize>
+            <dependency>
+                <filename>jars/fiji-scripting.jar</filename>
+                <date>20090516012655</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="plugins/Clojure_Interpreter.jar">
+        <version>
+            <checksum>024e88a5fe7264f2ef15faef3883cdea444435cc</checksum>
+            <timestamp>20090516012655</timestamp>
+            <description>Clojure Interpreter.jar</description>
+            <filesize>7845</filesize>
+            <dependency>
+                <filename>jars/clojure.jar</filename>
+                <date>20090506010254</date>
+                <relation>at-least</relation>
+            </dependency>
+            <dependency>
+                <filename>jars/fiji-scripting.jar</filename>
+                <date>20090516012655</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="plugins/Jython_Interpreter.jar">
+        <version>
+            <checksum>5ac08be89addf25522fb2cd9c4d2c409ab8ac75f</checksum>
+            <timestamp>20090516012655</timestamp>
+            <description>Jython Interpreter summary. Updated one time.</description>
+            <filesize>3944</filesize>
+            <dependency>
+                <filename>jars/jython2.2.1/jython.jar</filename>
+                <date>20090504010029</date>
+                <relation>at-least</relation>
+            </dependency>
+            <dependency>
+                <filename>jars/fiji-scripting.jar</filename>
+                <date>20090516012655</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
+    <plugin filename="plugins/Plugin_Manager.jar">
+        <version>
+            <checksum>927ec0e1e8d2f72a71aafcebb0052edfb02ddb56</checksum>
+            <timestamp>20090701184908</timestamp>
+            <description>On my repository, I believe this will be updated quite a number of times...</description>
+            <filesize>94313</filesize>
+            <dependency>
+                <filename>jars/batik.jar</filename>
+                <date>20090506010300</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+        <version>
+            <checksum>a19ea4d6a9dec04083fc699964e3762ee9f23a7f</checksum>
+            <timestamp>20090701192731</timestamp>
+            <description>This version of Plugin Manager allows to refresh displays after editing descriptions.
 
 See?</description>
-<filesize>94350</filesize>
-<dependency>
-<filename>jars/batik.jar</filename>
-<date>20090506010300</date>
-<relation>at-least</relation>
-</dependency>
-</version>
-</plugin>
+            <filesize>94350</filesize>
+            <dependency>
+                <filename>jars/batik.jar</filename>
+                <date>20090506010300</date>
+                <relation>at-least</relation>
+            </dependency>
+        </version>
+    </plugin>
 </pluginRecords>

@@ -32,6 +32,8 @@ public class Updater extends PluginDataObservable {
 	private StreamResult streamResult;
 	private SAXTransformerFactory tf;
 	private TransformerHandler handler;
+	private final String XALAN_INDENT_AMOUNT =
+		"{http://xml.apache.org/xslt}" + "indent-amount";
 
 	//accessible information after uploading tasks are done
 	public List<PluginObject> successList;
@@ -49,9 +51,10 @@ public class Updater extends PluginDataObservable {
 
 		handler = tf.newTransformerHandler();
 		Transformer serializer = handler.getTransformer();
-		serializer.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-1");
+		serializer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
 		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.XML_DIRECTORY + "/" + PluginManager.DTD_FILENAME);
 		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
+		serializer.setOutputProperty(XALAN_INDENT_AMOUNT, "4");
 		handler.setResult(streamResult);
 
 		successList = new PluginCollection();
@@ -85,6 +88,7 @@ public class Updater extends PluginDataObservable {
 		}
 	}
 
+	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
 	private void writeTxtFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
 		changeStatus(PluginManager.TXT_FILENAME, 0, 1);
 
@@ -109,6 +113,7 @@ public class Updater extends PluginDataObservable {
 		txtPrintStream.close();
 	}
 
+	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
 	private void writeXMLFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
 		changeStatus(PluginManager.XML_FILENAME, 0, 1);
 
