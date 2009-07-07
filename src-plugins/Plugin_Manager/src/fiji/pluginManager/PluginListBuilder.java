@@ -14,11 +14,12 @@ import org.xml.sax.SAXException;
  * PluginListBuilder's overall role is to be in charge of building of a plugin list
  * for interface usage.
  * 
- * 1st step: Parses an XML file, thus readying it for local/remote information retrieval
- * 2nd step: Get information of local plugins (Md5 sums and version)
- * 3rd step: Get information of latest Fiji plugins (Md5 sums and version)
- * 4th step: Build up list of "PluginObject" using both local and updates
+ * 1st step: Get information of local plugins (Md5 sums and version)
+ * 2nd step: Given XML file, get information of latest Fiji plugins (Md5 sums and version)
+ * 3rd step: Build up list of "PluginObject" using both local and updates
  * 
+ * digests and dates hold Md5 sums and versions of local plugins respectively
+ * latestDigests and latestDates hold Md5 sums and versions of latest Fiji plugins
  */
 public class PluginListBuilder extends PluginDataObservable {
 	private String[] pluginDirectories = {"plugins", "jars", "retro", "misc"};
@@ -30,7 +31,10 @@ public class PluginListBuilder extends PluginDataObservable {
 	private Map<String, String> latestDigests;
 	private XMLFileReader xmlFileReader;
 
-	public PluginListBuilder() {
+	public PluginListBuilder(XMLFileReader xmlFileReader) {
+		if (xmlFileReader == null) throw new Error("XMLFileReader object is null");
+		this.xmlFileReader = xmlFileReader;
+
 		//initialize storage
 		dates = new TreeMap<String, String>();
 		digests = new TreeMap<String, String>();
@@ -67,11 +71,9 @@ public class PluginListBuilder extends PluginDataObservable {
 	}
 
 	public void buildFullPluginList() throws ParserConfigurationException, IOException, SAXException {
-		//Parses XML document; contents is needed for both local and remote plugins
-		xmlFileReader = new XMLFileReader(PluginManager.XML_DIRECTORY + File.separator + PluginManager.XML_FILENAME);
-		//Generates information of plugins on local side
+		//Generates information of plugins on local side (digests, dates)
 		buildLocalPluginList();
-		//Generates information of plugins on remote side
+		//Generates information of latest plugins on remote side
 		xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
 		//Builds up a list of PluginObjects, of both local and remote
 		generatePluginList();

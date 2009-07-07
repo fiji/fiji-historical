@@ -19,10 +19,11 @@ import org.xml.sax.helpers.AttributesImpl;
  * This class is responsible for writing updates to server, upon given the updated
  * plugin records (Map of plugins to all versions).
  * 
- * 1st Step: At constructor, prepare print streams for writing XML and text files.
- * 2nd Step: Upload plugin file(s) to server
- * 3rd Step: Write XML file using pluginRecords, save to server
- * 4th Step: Write text file using pluginRecords, save to server
+ * 1st Step: Generates the updated records (newPluginRecords & filesToUpload)
+ * 2nd Step: Prepare print streams for writing XML and text files.
+ * 3rd Step: Upload plugin file(s) to server
+ * 4th Step: Write XML file using pluginRecords, save to server
+ * 5th Step: Write text file using pluginRecords, save to server
  */
 public class Updater extends PluginDataObservable {
 	private String xmlSavepath;
@@ -39,11 +40,89 @@ public class Updater extends PluginDataObservable {
 	public List<PluginObject> successList;
 	public List<PluginObject> failList;
 
-	public Updater() throws IOException, TransformerConfigurationException {
-		super(true); //For purposes of uploading to server
+	private Map<String, List<PluginObject>> newPluginRecords;
+	private List<PluginObject> filesToUpload; //list of plugins whose files has to be uploaded
+	private List<PluginObject> changesList;
+	private DependencyAnalyzer dependencyAnalyzer;
+	private XMLFileReader xmlFileReader;
+
+	public Updater(PluginManager pluginManager) {
+		//For purposes of uploading to server
+		super(true);
+
+		PluginCollection pluginCollection = (PluginCollection)pluginManager.pluginCollection;
+		changesList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
+		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
+		xmlFileReader = pluginManager.xmlFileReader;
+
 		xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
 		txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
+		successList = new PluginCollection();
+		failList = new PluginCollection();
+	}
 
+	public void generateNewPluginRecords() throws IOException {
+		//Checking list for Fiji plugins - Either new versions or changes to existing ones
+		filesToUpload = new PluginCollection();
+		newPluginRecords = xmlFileReader.getXMLRecords();
+		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
+		while (pluginNamelist.hasNext()) {
+			String name = pluginNamelist.next();
+			List<PluginObject> versionList = newPluginRecords.get(name);
+			for (PluginObject pluginToUpload : changesList) {
+				if (pluginToUpload.getFilename().equals(name)) {
+					PluginObject version = getPluginMatchingDigest(pluginToUpload.getmd5Sum(), versionList);
+					if (version != null) {
+						//edit the existing version's details, but no new file uploaded
+						version.setDescription(pluginToUpload.getDescription());
+					} else {
+						//this version does not appear in existing records, therefore add it
+						addPluginToVersionList(pluginToUpload, versionList);
+					}
+					break;
+				}
+			}
+		}
+
+		//Checking list for non-Fiji plugins to add to new records
+		for (PluginObject pluginToUpload : changesList) {
+			String name = pluginToUpload.getFilename();
+			List<PluginObject> versionList = newPluginRecords.get(name);
+			if (versionList == null) { //non-Fiji plugin, therefore add it
+				versionList = new PluginCollection();
+				addPluginToVersionList(pluginToUpload, versionList);
+				newPluginRecords.put(name, versionList);
+			}
+		}
+	}
+
+	private void addPluginToVersionList(PluginObject pluginToUpload, List<PluginObject> versionList) throws IOException {
+		pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
+		versionList.add(pluginToUpload);
+		filesToUpload.add(pluginToUpload); //indicates plugin file itself has to be uploaded
+	}
+
+	private PluginObject getPluginMatchingDigest(String digest, List<PluginObject> pluginList) {
+		for (PluginObject plugin : pluginList) {
+			if (digest.equals(plugin.getmd5Sum())) {
+				return plugin;
+			}
+		}
+		return null;
+	}
+
+	public void uploadFilesToServer() throws SAXException, TransformerConfigurationException, IOException  {
+		prepareFilesForWriting();
+		writePlugins();
+		writeXMLFile();
+		System.out.println("XML file written to server");
+		writeTxtFile();
+		System.out.println("Text file written to server");
+		setStatusComplete(); //indicate to observer there's no more tasks
+	}
+
+	//Prepare the print streams to write plugin indexes to (XML file and current.txt)
+	private void prepareFilesForWriting() throws TransformerConfigurationException, IOException {
 		txtPrintStream = new PrintStream(txtSavepath); //current.txt
 		xmlPrintStream = new PrintStream(xmlSavepath); //pluginRecords.xml
 		streamResult = new StreamResult(xmlPrintStream);
@@ -56,25 +135,14 @@ public class Updater extends PluginDataObservable {
 		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
 		serializer.setOutputProperty(XALAN_INDENT_AMOUNT, "4");
 		handler.setResult(streamResult);
-
-		successList = new PluginCollection();
-		failList = new PluginCollection();
 	}
 
-	public void uploadFilesToServer(Map<String, List<PluginObject>> pluginRecords, List<PluginObject> filesUploadList) throws SAXException {
-		writePlugins(filesUploadList);
-		writeXMLFile(pluginRecords);
-		System.out.println("XML file written to server");
-		writeTxtFile(pluginRecords);
-		System.out.println("Text file written to server");
-		setStatusComplete(); //indicate to observer there's no more tasks
-	}
-
-	private void writePlugins(List<PluginObject> filesUploadList) {
+	//Write plugin files (JAR) to the server
+	private void writePlugins() {
 		currentlyLoaded = 0;
-		totalToLoad = filesUploadList.size();
+		totalToLoad = filesToUpload.size();
 		String remotePrefix = new File(xmlSavepath).getParent();
-		for (PluginObject plugin : filesUploadList) {
+		for (PluginObject plugin : filesToUpload) {
 			taskname = plugin.getFilename();
 			String sourcePath = prefix(taskname);
 			String targetPath = remotePrefix + File.separator + taskname + "-" + plugin.getTimestamp();
@@ -89,14 +157,14 @@ public class Updater extends PluginDataObservable {
 	}
 
 	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
-	private void writeTxtFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
+	private void writeTxtFile() {
 		changeStatus(PluginManager.TXT_FILENAME, 0, 1);
 
 		//start writing
-		Iterator<String> pluginNamelist = pluginRecords.keySet().iterator();
+		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
 		while (pluginNamelist.hasNext()) {
 			String filename = pluginNamelist.next();
-			List<PluginObject> versionList = pluginRecords.get(filename);
+			List<PluginObject> versionList = newPluginRecords.get(filename);
 			PluginObject latestPlugin = null;
 			for (PluginObject plugin : versionList) {
 				if (latestPlugin == null ||
@@ -114,7 +182,7 @@ public class Updater extends PluginDataObservable {
 	}
 
 	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
-	private void writeXMLFile(Map<String, List<PluginObject>> pluginRecords) throws SAXException {
+	private void writeXMLFile() throws SAXException {
 		changeStatus(PluginManager.XML_FILENAME, 0, 1);
 
 		//Start writing
@@ -122,13 +190,13 @@ public class Updater extends PluginDataObservable {
 		AttributesImpl attrib = new AttributesImpl();
 
 		handler.startElement("", "", "pluginRecords", attrib);
-		Iterator<String> pluginNamelist = pluginRecords.keySet().iterator();
+		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
 		while (pluginNamelist.hasNext()) {
 			String filenameAttribute = pluginNamelist.next();
 			attrib.clear();
 			attrib.addAttribute("", "", "filename", "CDATA", filenameAttribute);
 			handler.startElement("", "", "plugin", attrib);
-			List<PluginObject> versionList = pluginRecords.get(filenameAttribute);
+			List<PluginObject> versionList = newPluginRecords.get(filenameAttribute);
 			for (PluginObject plugin : versionList) {
 				attrib.clear();
 				handler.startElement("", "", "version", attrib);

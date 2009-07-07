@@ -1,49 +1,47 @@
 package fiji.pluginManager;
+
 import ij.IJ;
 import ij.plugin.PlugIn;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
+/*
+ * Start up class of Plugin Manager Application:
+ * Facade, Business logic, and overall-in-charge of providing the main user interface the
+ * required list of PluginObjects that interface will use for display.
+ */
 public class PluginManager implements PlugIn, Observer {
-	public static final String defaultServerPath =
-		"var/www/update/"; //TODO: strange, why not the original "/var/www/update/"?
+	//TODO: strange, why not the original "/var/www/update/"?
+	public static final String defaultServerPath = "var/www/update/";
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
 	public static final String TXT_FILENAME = "current.txt";
 	public static final String XML_FILENAME = "db.xml";
 	public static final String DTD_FILENAME = "plugins.dtd";
 	public static final String XML_DIRECTORY = "plugininfo";
 	public static final String UPDATE_DIRECTORY = "update";
+
+	//PluginObjects for output at User Interface
 	public List<PluginObject> pluginCollection;
 	public List<PluginObject> readOnlyList;
+
+	//Used for generating Plugin information
 	private XMLFileDownloader xmlFileDownloader;
 	private PluginListBuilder pluginListBuilder;
-
-	public PluginManager() {
-		System.out.println("How many times is this run?");
-	}
+	public XMLFileReader xmlFileReader;
 
 	public void run(String arg) {
 		try {
-			//Downloads files, convert information into PluginObjects useful for interface usage
-			startup();
+			//Downloads files, convert info into PluginObjects useful for interface usage
+			xmlFileDownloader = new XMLFileDownloader();
+			xmlFileDownloader.register(this);
+			xmlFileDownloader.startDownload();
+
+			//Gets the PluginObject information
 			pluginCollection = pluginListBuilder.pluginCollection;
-
-			//Inform user of read-only plugins if any
 			readOnlyList = pluginListBuilder.readOnlyList;
-			if (readOnlyList.size() > 0) {
-				String namelist = "";
-				for (int i = 0; i < readOnlyList.size(); i++) {
-					if (i != 0 && i % 3 == 0)
-						namelist += "\n";
-					namelist += readOnlyList.get(i).getFilename();
-					if (i < readOnlyList.size() -1)
-						namelist += ", ";
-				}
-				IJ.showMessage("Read-Only Plugins", "WARNING: The following plugin files are set to read-only, you are advised to quit Fiji and set to writable:\n" + namelist);
-			}
-
 		} catch (Error e) {
 			//Interface side: This should handle presentation side of exceptions
 			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getLocalizedMessage());
@@ -52,27 +50,26 @@ public class PluginManager implements PlugIn, Observer {
 		frameManager.setVisible(true);
 	}
 
-	//"Start the start-up" (Download file, convert information into useful format)
-	private void startup() {
-		xmlFileDownloader = new XMLFileDownloader();
-		xmlFileDownloader.register(this);
-		xmlFileDownloader.startDownload();
-	}
-
 	//Show progress of Plugin Manager startup at IJ bar
 	public void refreshData(Observable subject) {
 		try {
 			if (subject == xmlFileDownloader) {
 				IJ.showStatus("Downloading " + xmlFileDownloader.getTaskname() + "...");
-				IJ.showProgress(xmlFileDownloader.getCurrentlyLoaded(), xmlFileDownloader.getTotalToLoad());
+				IJ.showProgress(xmlFileDownloader.getCurrentlyLoaded(),
+						xmlFileDownloader.getTotalToLoad());
 				if (xmlFileDownloader.allTasksComplete()) {
-					pluginListBuilder = new PluginListBuilder();
+					//After downloading information successfully, read it
+					xmlFileReader = new XMLFileReader(PluginManager.XML_DIRECTORY +
+							File.separator + PluginManager.XML_FILENAME);
+					//Build a list from the information
+					pluginListBuilder = new PluginListBuilder(xmlFileReader);
 					pluginListBuilder.register(this);
 					pluginListBuilder.buildFullPluginList();
 				}
 			} else if (subject == pluginListBuilder) {
 				IJ.showStatus("Downloading " + pluginListBuilder.getTaskname() + "...");
-				IJ.showProgress(pluginListBuilder.getCurrentlyLoaded(), pluginListBuilder.getTotalToLoad());
+				IJ.showProgress(pluginListBuilder.getCurrentlyLoaded(),
+						pluginListBuilder.getTotalToLoad());
 				if (pluginListBuilder.allTasksComplete()) {
 					IJ.showStatus("");
 				}

@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -25,15 +24,13 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.text.BadLocationException;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerConfigurationException;
-import org.xml.sax.SAXException;
 
 /*
  * Main User Interface
  */
 public class FrameManager extends JFrame implements TableModelListener {
 	private PluginManager pluginManager;
+	private List<PluginObject> pluginCollection;
 	private List<PluginObject> viewList;
 
 	//User Interface elements
@@ -56,7 +53,22 @@ public class FrameManager extends JFrame implements TableModelListener {
 	public FrameManager(PluginManager pluginManager) {
 		super("Plugin Manager");
 		this.pluginManager = pluginManager;
-		viewList = pluginManager.pluginCollection; //initially, view all
+
+		//Pulls required information from pluginManager
+		pluginCollection = pluginManager.pluginCollection;
+		viewList = pluginCollection; //initially, view all
+		List<PluginObject> readOnlyList = pluginManager.readOnlyList;
+		if (readOnlyList.size() > 0) {
+			String namelist = "";
+			for (int i = 0; i < readOnlyList.size(); i++) {
+				if (i != 0 && i % 3 == 0)
+					namelist += "\n";
+				namelist += readOnlyList.get(i).getFilename();
+				if (i < readOnlyList.size() -1)
+					namelist += ", ";
+			}
+			IJ.showMessage("Read-Only Plugins", "WARNING: The following plugin files are set to read-only, you are advised to quit Fiji and set to writable:\n" + namelist);
+		}
 		setUpUserInterface();
 		pack();
 	}
@@ -258,13 +270,13 @@ public class FrameManager extends JFrame implements TableModelListener {
 
 	//Whenever search text or ComboBox has been changed
 	private void changeListingListener() {
-		viewList = pluginManager.pluginCollection;
+		viewList = pluginCollection;
 		if (!txtSearch.getText().trim().isEmpty())
-			viewList = ((PluginCollection)pluginManager.pluginCollection).getList(PluginCollection.getFilterForText(txtSearch.getText().trim()));
+			viewList = ((PluginCollection)pluginCollection).getList(PluginCollection.getFilterForText(txtSearch.getText().trim()));
 
 		PluginCollection.Filter viewFilter = getCorrespondingFilter(comboBoxViewingOptions.getSelectedIndex());
 		if (viewFilter != null) {
-			viewList = ((PluginCollection)pluginManager.pluginCollection).getList(viewFilter);
+			viewList = ((PluginCollection)pluginCollection).getList(viewFilter);
 		}
 		//Directly update the table for display
 		table.setupTableModel(viewList);
@@ -291,46 +303,8 @@ public class FrameManager extends JFrame implements TableModelListener {
 	}
 
 	private void clickToUploadRecords() {
-		Uploader uploader = null;
-		String message = null;
-		try {
-			uploader = new Uploader(pluginManager.pluginCollection);
-			uploader.generateNewPluginRecords();
-			uploader.uploadToServer();
-		} catch (IOException e1) {
-			message = e1.getLocalizedMessage();
-		} catch (SAXException e2) {
-			message = e2.getLocalizedMessage();
-		} catch (ParserConfigurationException e3) {
-			message = e3.getLocalizedMessage();
-		} catch (TransformerConfigurationException e4) {
-			message = e4.getLocalizedMessage();
-		}
-
-		if (message != null) {
-			IJ.showMessage("Error", "Failed to upload changes to server:\n" + message);
-		} else {
-			int failedListSize = uploader.getFailedUploads().size();
-			int successfulListSize = uploader.getSuccessfulUploads().size();
-			if (failedListSize == 0 && successfulListSize == 0) { //no plugin files to upload
-				IJ.showMessage("Success", "Updated existing plugin records successfully.\n" +
-						"You need to restart Plugin Manager for changes to take effect.");
-				dispose();
-			} else {
-				if (failedListSize > 0) {
-					String namelist = "";
-					for (PluginObject plugin : uploader.getFailedUploads())
-						namelist += "\n" + plugin.getFilename();
-					IJ.showMessage("Failed Uploads", "The following files failed to upload:" + namelist);
-				}
-				if (successfulListSize > 0) {
-					int totalSize = failedListSize + successfulListSize;
-					IJ.showMessage("Updated", successfulListSize + " out of " + totalSize + " plugin files uploaded successfully\n\n"
-							+ "You need to restart Plugin Manager for changes to take effect.");
-					dispose();
-				} //if there are zero successful uploads, don't need to auto-close Plugin Manager
-			}
-		}
+		Uploader uploader = new Uploader(this);
+		uploader.setUploadInformationAndStart(pluginManager);
 	}
 
 	private void clickToEditDescriptions() {
@@ -342,14 +316,14 @@ public class FrameManager extends JFrame implements TableModelListener {
 	private void clickToBeginOperations() {
 		loadedFrame = new FrameConfirmation(this);
 		FrameConfirmation frameConfirmation = (FrameConfirmation)loadedFrame;
-		frameConfirmation.displayInformation(new DependencyCompiler(pluginManager.pluginCollection));
+		frameConfirmation.displayInformation(new DependencyCompiler(pluginCollection));
 		loadedFrame.setVisible(true);
 		setEnabled(false);
 	}
 
 	private void clickToQuitPluginManager() {
 		//if there exists plugins where actions have been specified by user
-		if (((PluginCollection)pluginManager.pluginCollection).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED).size() > 0) {
+		if (((PluginCollection)pluginCollection).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED).size() > 0) {
 			if (JOptionPane.showConfirmDialog(this,
 					"You have specified changes. Are you sure you want to quit?",
 					"Quit?", JOptionPane.YES_NO_OPTION,
@@ -365,7 +339,7 @@ public class FrameManager extends JFrame implements TableModelListener {
 		loadedFrame = new FrameInstaller(this);
 		loadedFrame.setVisible(true);
 		FrameInstaller frameInstaller = (FrameInstaller)loadedFrame;
-		frameInstaller.setInstaller(new Installer(pluginManager.pluginCollection));
+		frameInstaller.setInstaller(new Installer(pluginCollection));
 		setEnabled(false);
 	}
 
@@ -378,6 +352,11 @@ public class FrameManager extends JFrame implements TableModelListener {
 	public void exitWithRestartFijiMessage() {
 		removeLoadedFrameIfExists();
 		IJ.showMessage("Restart Fiji", "You need to restart Fiji application for the Plugin status changes to take effect.");
+		dispose();
+	}
+
+	public void exitWithRestartMessage(String title, String message) {
+		IJ.showMessage(title, message);
 		dispose();
 	}
 
@@ -429,7 +408,7 @@ public class FrameManager extends JFrame implements TableModelListener {
 
 	private void enableButtonIfAnyActions(JButton button, PluginCollection.Filter filter) {
 		if (button != null) {
-			List<PluginObject> myList = ((PluginCollection)pluginManager.pluginCollection).getList(filter);
+			List<PluginObject> myList = ((PluginCollection)pluginCollection).getList(filter);
 			if (myList.size() > 0)
 				button.setEnabled(true);
 			else

@@ -8,8 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import javax.xml.parsers.ParserConfigurationException;
-import org.xml.sax.SAXException;
 
 /*
  * This class generates a list of dependencies for a given plugin. The dependencies are
@@ -23,7 +21,7 @@ public class DependencyAnalyzer extends PluginData {
 	private Class2JarFileMap map;
 	private List<PluginObject> pluginList;
 
-	public DependencyAnalyzer(List<PluginObject> pluginList) throws ParserConfigurationException, IOException, SAXException {
+	public DependencyAnalyzer(List<PluginObject> pluginList) {
 		this.pluginList = pluginList;
 		map = new Class2JarFileMap();
 	}
