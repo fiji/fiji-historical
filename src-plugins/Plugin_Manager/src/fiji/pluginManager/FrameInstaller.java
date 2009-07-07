@@ -16,13 +16,12 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 /*
  * Interface of a separate window, when downloading plugins.
  */
 class FrameInstaller extends JFrame {
-	private PluginManager pluginManager;
+	private FrameManager frameManager;
 	private Timer timer;
 	private JButton btnClose;
 	private JProgressBar progressBar;
@@ -30,8 +29,8 @@ class FrameInstaller extends JFrame {
 	private Installer installer;
 
 	//Download Window opened from Plugin Manager UI
-	public FrameInstaller(PluginManager pluginManager) {
-		this.pluginManager = pluginManager;
+	public FrameInstaller(FrameManager frameManager) {
+		this.frameManager = frameManager;
 		setUpUserInterface();
 		pack();
 	}
@@ -133,9 +132,9 @@ class FrameInstaller extends JFrame {
 		}
 		if (installer != null &&
 			(installer.downloadedList.size() > 0 || installer.markedUninstallList.size() > 0))
-			pluginManager.exitWithRestartFijiMessage();
+			frameManager.exitWithRestartFijiMessage();
 		else
-			pluginManager.backToPluginManager();
+			frameManager.backToPluginManager();
 	}
 
 	private void setPercentageComplete(int downloaded, int total) {

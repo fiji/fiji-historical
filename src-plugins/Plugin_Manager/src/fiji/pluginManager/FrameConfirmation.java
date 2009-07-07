@@ -23,7 +23,7 @@ import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
 
 public class FrameConfirmation extends JFrame {
-	private PluginManager pluginManager;
+	private FrameManager frameManager;
 	private JTextPane txtPluginList;
 	private JTextPane txtAdditionalList;
 	private JTextPane txtConflictsList;
@@ -34,8 +34,8 @@ public class FrameConfirmation extends JFrame {
 	private String msgConflictNone = "No conflicts found. You may proceed.";
 	private DependencyCompiler dependencyCompiler;
 
-	public FrameConfirmation(PluginManager pluginManager) {
-		this.pluginManager = pluginManager;
+	public FrameConfirmation(FrameManager frameManager) {
+		this.frameManager = frameManager;
 		setupUserInterface();
 		pack();
 	}
@@ -114,7 +114,7 @@ public class FrameConfirmation extends JFrame {
 		btnCancel.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				backToPluginManager();
+				backToframeManager();
 			}
 
 		});
@@ -140,11 +140,11 @@ public class FrameConfirmation extends JFrame {
 		dependencyCompiler.setToUpdate(dependencyCompiler.toUpdateList);
 		dependencyCompiler.setToRemove(dependencyCompiler.toRemoveList);
 		dependencyCompiler = null;
-		pluginManager.openDownloader();
+		frameManager.openDownloader();
 	}
 
-	private void backToPluginManager() {
-		pluginManager.backToPluginManager();
+	private void backToframeManager() {
+		frameManager.backToPluginManager();
 	}
 
 	public void displayInformation(DependencyCompiler dependencyCompiler) {

@@ -17,16 +17,16 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 public class FrameDescriptionEditor extends JFrame {
-	private PluginManager pluginManager;
+	private FrameManager frameManager;
 	private PluginObject selectedPlugin;
 	private JTextArea txtDescription;
 	private JButton btnSave;
 	private JButton btnCancel;
 	private boolean textChanged;
 
-	public FrameDescriptionEditor(PluginManager pluginManager, PluginObject selectedPlugin) {
+	public FrameDescriptionEditor(FrameManager frameManager, PluginObject selectedPlugin) {
 		super("Description Editor: " + selectedPlugin.getFilename());
-		this.pluginManager = pluginManager;
+		this.frameManager = frameManager;
 		this.selectedPlugin = selectedPlugin;
 		setUpUserInterface();
 		pack();
@@ -107,12 +107,12 @@ public class FrameDescriptionEditor extends JFrame {
 				saveText();
 			} //else ("No"), just exit
 		}
-		pluginManager.backToPluginManager();
+		frameManager.backToPluginManager();
 	}
 
 	private void saveText() {
 		selectedPlugin.setDescription(txtDescription.getText().trim());
-		pluginManager.displayPluginDetails(selectedPlugin);
+		frameManager.displayPluginDetails(selectedPlugin);
 		textChanged = false;
 	}
 }
