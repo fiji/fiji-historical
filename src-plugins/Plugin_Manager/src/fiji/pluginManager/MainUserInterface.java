@@ -26,9 +26,9 @@ import javax.swing.event.TableModelListener;
 import javax.swing.text.BadLocationException;
 
 /*
- * Main User Interface
+ * Main User Interface, where the user chooses his options...
  */
-public class FrameManager extends JFrame implements TableModelListener {
+public class MainUserInterface extends JFrame implements TableModelListener {
 	private PluginManager pluginManager;
 	private List<PluginObject> pluginCollection;
 	private List<PluginObject> viewList;
@@ -50,7 +50,7 @@ public class FrameManager extends JFrame implements TableModelListener {
 	private JButton btnUpload;
 	private JButton btnEditDescriptions;
 
-	public FrameManager(PluginManager pluginManager) {
+	public MainUserInterface(PluginManager pluginManager) {
 		super("Plugin Manager");
 		this.pluginManager = pluginManager;
 

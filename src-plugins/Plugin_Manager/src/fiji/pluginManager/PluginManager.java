@@ -46,8 +46,8 @@ public class PluginManager implements PlugIn, Observer {
 			//Interface side: This should handle presentation side of exceptions
 			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getLocalizedMessage());
 		}
-		FrameManager frameManager = new FrameManager(this);
-		frameManager.setVisible(true);
+		MainUserInterface mainUserInterface = new MainUserInterface(this);
+		mainUserInterface.setVisible(true);
 	}
 
 	//Show progress of Plugin Manager startup at IJ bar

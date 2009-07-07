@@ -31,7 +31,7 @@ import javax.swing.table.TableColumn;
  */
 public class PluginTable extends JTable {
 	private PluginTableModel pluginTableModel;
-	private FrameManager frameManager;
+	private MainUserInterface mainUserInterface;
 	private boolean isDeveloper;
 
 	private static final String[] arrUninstalledOptions = { "Not installed", "Install it" };
@@ -41,9 +41,9 @@ public class PluginTable extends JTable {
 	private static final String[] arrDevelInstalledOptions = { "Installed", "Remove it", "Upload" };
 	private static final String[] arrDevelUpdateableOptions = { "Installed", "Remove it", "Update it", "Upload" };
 
-	public PluginTable(List<PluginObject> pluginList, FrameManager frameManager) {
-		this.frameManager = frameManager;
-		isDeveloper = frameManager.isDeveloper();
+	public PluginTable(List<PluginObject> pluginList, MainUserInterface mainUserInterface) {
+		this.mainUserInterface = mainUserInterface;
+		isDeveloper = mainUserInterface.isDeveloper();
 		setupTable(pluginList);
 	}
 
@@ -61,7 +61,7 @@ public class PluginTable extends JTable {
 				} else {
 					int modelRow = convertRowIndexToModel(viewRow);
 					PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
-					frameManager.displayPluginDetails(myPlugin);
+					mainUserInterface.displayPluginDetails(myPlugin);
 				}
 			}
 
@@ -117,9 +117,9 @@ public class PluginTable extends JTable {
 
 	//Set up table model, to be called each time display list is to be changed
 	public void setupTableModel(List<PluginObject> myList) {
-		getModel().removeTableModelListener(frameManager);
+		getModel().removeTableModelListener(mainUserInterface);
 		setModel(pluginTableModel = new PluginTableModel(myList, isDeveloper));
-		getModel().addTableModelListener(frameManager); //listen for changes (tableChanged(TableModelEvent e))
+		getModel().addTableModelListener(mainUserInterface); //listen for changes (tableChanged(TableModelEvent e))
 		setColumnWidths(250, 120);
 		pluginTableModel.fireTableChanged(new TableModelEvent(pluginTableModel));
 	}

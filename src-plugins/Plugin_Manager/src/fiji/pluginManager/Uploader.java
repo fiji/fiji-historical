@@ -6,11 +6,11 @@ import javax.xml.transform.TransformerConfigurationException;
 import org.xml.sax.SAXException;
 
 public class Uploader implements Observer {
-	private FrameManager frameManager;
+	private MainUserInterface mainUserInterface;
 	private Updater updater;
 
-	public Uploader(FrameManager frameManager) {
-		this.frameManager = frameManager;
+	public Uploader(MainUserInterface mainUserInterface) {
+		this.mainUserInterface = mainUserInterface;
 		System.out.println("Uploader CLASS: Started up");
 	}
 
@@ -35,7 +35,7 @@ public class Uploader implements Observer {
 			int failedListSize = updater.failList.size();
 			int successfulListSize = updater.successList.size();
 			if (failedListSize == 0 && successfulListSize == 0) { //no plugin files to upload
-				frameManager.exitWithRestartMessage("Success",
+				mainUserInterface.exitWithRestartMessage("Success",
 						"Updated existing plugin records successfully.\n" +
 						"You need to restart Plugin Manager for changes to take effect.");
 			} else {
@@ -47,7 +47,7 @@ public class Uploader implements Observer {
 				}
 				if (successfulListSize > 0) {
 					int totalSize = failedListSize + successfulListSize;
-					frameManager.exitWithRestartMessage("Updated",
+					mainUserInterface.exitWithRestartMessage("Updated",
 							successfulListSize + " out of " + totalSize +
 							" plugin files uploaded successfully\n\n"
 							+ "You need to restart Plugin Manager for changes to take effect.");

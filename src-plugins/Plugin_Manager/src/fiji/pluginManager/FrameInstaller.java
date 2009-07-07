@@ -21,7 +21,7 @@ import java.awt.event.ActionListener;
  * Interface of a separate window, when downloading plugins.
  */
 class FrameInstaller extends JFrame {
-	private FrameManager frameManager;
+	private MainUserInterface mainUserInterface;
 	private Timer timer;
 	private JButton btnClose;
 	private JProgressBar progressBar;
@@ -29,8 +29,8 @@ class FrameInstaller extends JFrame {
 	private Installer installer;
 
 	//Download Window opened from Plugin Manager UI
-	public FrameInstaller(FrameManager frameManager) {
-		this.frameManager = frameManager;
+	public FrameInstaller(MainUserInterface mainUserInterface) {
+		this.mainUserInterface = mainUserInterface;
 		setUpUserInterface();
 		pack();
 	}
@@ -132,9 +132,9 @@ class FrameInstaller extends JFrame {
 		}
 		if (installer != null &&
 			(installer.downloadedList.size() > 0 || installer.markedUninstallList.size() > 0))
-			frameManager.exitWithRestartFijiMessage();
+			mainUserInterface.exitWithRestartFijiMessage();
 		else
-			frameManager.backToPluginManager();
+			mainUserInterface.backToPluginManager();
 	}
 
 	private void setPercentageComplete(int downloaded, int total) {
