@@ -77,13 +77,9 @@ public class Installer extends PluginData implements Runnable, Observer {
 
 	//start processing on contents of updateList
 	public void startDownload() {
-		Iterator<PluginObject> iterToDownload = ((PluginCollection)changeList).getIterator(
-				PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
-		if (iterToDownload.hasNext()) {
-			isDownloading = true;
-			downloadThread = new Thread(this);
-			downloadThread.start();
-		}
+		isDownloading = true;
+		downloadThread = new Thread(this);
+		downloadThread.start();
 	}
 
 	//stop download
