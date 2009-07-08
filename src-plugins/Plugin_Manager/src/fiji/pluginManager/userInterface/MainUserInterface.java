@@ -1,4 +1,10 @@
-package fiji.pluginManager;
+package fiji.pluginManager.userInterface;
+import fiji.pluginManager.logic.DependencyCompiler;
+import fiji.pluginManager.logic.Installer;
+import fiji.pluginManager.logic.PluginCollection;
+import fiji.pluginManager.logic.PluginManager;
+import fiji.pluginManager.logic.PluginObject;
+import fiji.pluginManager.logic.PluginCollection.Filter;
 import ij.IJ;
 import java.awt.BorderLayout;
 import java.awt.Dimension;

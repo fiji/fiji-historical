@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.userInterface;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -21,6 +21,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
+
+import fiji.pluginManager.logic.DependencyCompiler;
+import fiji.pluginManager.logic.PluginCollection;
+import fiji.pluginManager.logic.PluginObject;
 
 public class FrameConfirmation extends JFrame {
 	private MainUserInterface mainUserInterface;

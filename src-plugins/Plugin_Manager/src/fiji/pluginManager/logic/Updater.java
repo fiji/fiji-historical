@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.logic;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +14,7 @@ import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
+
 
 /*
  * This class is responsible for writing updates to server, upon given the updated

@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.userInterface;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -15,6 +15,8 @@ import javax.swing.JTextArea;
 import javax.swing.JButton;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
+import fiji.pluginManager.logic.PluginObject;
 
 public class FrameDescriptionEditor extends JFrame {
 	private MainUserInterface mainUserInterface;

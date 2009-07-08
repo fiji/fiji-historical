@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.userInterface;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -10,6 +10,9 @@ import javax.swing.JTextPane;
 import javax.swing.JProgressBar;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
+
+import fiji.pluginManager.logic.Installer;
+
 import java.util.Timer;
 import java.util.TimerTask;
 import java.awt.BorderLayout;

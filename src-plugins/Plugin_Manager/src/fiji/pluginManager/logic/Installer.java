@@ -1,9 +1,10 @@
-package fiji.pluginManager;
+package fiji.pluginManager.logic;
 
 import java.util.Iterator;
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
+
 
 /*
  * This class' main role is to download selected files, as well as indicate those that

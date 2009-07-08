@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.logic;
 
 public interface Observable {
 	public void notifyObservers();

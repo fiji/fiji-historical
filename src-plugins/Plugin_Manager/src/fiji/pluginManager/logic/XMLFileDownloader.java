@@ -1,6 +1,7 @@
-package fiji.pluginManager;
+package fiji.pluginManager.logic;
 import java.io.File;
 import java.io.IOException;
+
 
 public class XMLFileDownloader extends PluginDataObservable implements Observer {
 	private String saveFileLocation;

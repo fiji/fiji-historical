@@ -1,5 +1,6 @@
-package fiji.pluginManager;
+package fiji.pluginManager.logic;
 
+import fiji.pluginManager.userInterface.MainUserInterface;
 import ij.IJ;
 import ij.plugin.PlugIn;
 import java.io.File;

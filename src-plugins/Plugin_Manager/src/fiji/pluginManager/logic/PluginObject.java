@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.logic;
 import java.util.List;
 
 public class PluginObject {

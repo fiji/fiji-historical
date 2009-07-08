@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.userInterface;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -25,6 +25,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
+
+import fiji.pluginManager.logic.PluginObject;
 
 /*
  * This class' role is to be in charge of how the Table should be displayed

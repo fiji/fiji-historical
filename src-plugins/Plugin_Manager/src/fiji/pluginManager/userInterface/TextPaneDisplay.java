@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.userInterface;
 
 import java.awt.Color;
 import java.util.Iterator;
@@ -9,6 +9,10 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+
+import fiji.pluginManager.logic.Dependency;
+import fiji.pluginManager.logic.Installer;
+import fiji.pluginManager.logic.PluginObject;
 
 public class TextPaneDisplay extends JTextPane {
 	public SimpleAttributeSet ITALIC_BLACK;

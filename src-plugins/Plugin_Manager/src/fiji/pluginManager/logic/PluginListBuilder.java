@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.logic;
 import ij.IJ;
 import java.io.File;
 import java.io.IOException;

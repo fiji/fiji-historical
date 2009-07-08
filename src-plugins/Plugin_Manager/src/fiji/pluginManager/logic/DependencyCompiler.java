@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.logic;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;

@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.logic;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;

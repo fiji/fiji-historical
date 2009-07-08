@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.logic;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Vector;
+
 
 /*
  * Direct responsibility: Download a file given its URL to a given destination.

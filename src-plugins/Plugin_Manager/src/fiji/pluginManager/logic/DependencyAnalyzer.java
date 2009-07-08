@@ -1,4 +1,4 @@
-package fiji.pluginManager;
+package fiji.pluginManager.logic;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
 
 /*
  * This class generates a list of dependencies for a given plugin. The dependencies are

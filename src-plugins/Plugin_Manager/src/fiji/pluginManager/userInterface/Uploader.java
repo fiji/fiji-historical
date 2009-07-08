@@ -1,5 +1,10 @@
-package fiji.pluginManager;
+package fiji.pluginManager.userInterface;
 
+import fiji.pluginManager.logic.Observable;
+import fiji.pluginManager.logic.Observer;
+import fiji.pluginManager.logic.PluginManager;
+import fiji.pluginManager.logic.PluginObject;
+import fiji.pluginManager.logic.Updater;
 import ij.IJ;
 import java.io.IOException;
 import java.util.Iterator;
