@@ -705,3 +705,63 @@ In general, list of known tasks left:
    ==> Server-side. Also involves which files to copy (precompiled folder)?
 - 3rd Party Plugin support
 - Touch-up interface, code, etc
+
+
+
+7-8th July, Tue-Wed
+Tasks Completed:
+- Cleaned up code somewhat
+- Hmmm... Can I call that Facade pattern?
+   ==> Use that separately on three classes: PluginManager.java, Installer.java and Updater.java
+   ==> Interfaces MainUserInterface.java, FrameInstaller.java and Uploader.java relies on these "Facade" classes
+- Gave PluginObject more attributes as per suggestion
+   ==> Use of enum property
+   ==> Two new tracking of statuses for PluginObject: Change Status (Download/removal successful?) and Upload status (How was it uploaded?)
+
+Next task:
+- TODO and others... Use of interface specific to the class' purpose:
+   ==> Observer and Observable should become public inner interfaces for different classes...
+   ==> E.g.:
+
+         public interface SliderEventListener {
+                 void sliderChanged(SliderEvent event);
+         }
+ 
+         public void addListener(SliderEventListener listener) {
+                 listeners.add(listener);
+         }
+ 
+         public void removeListener(SliderEventListener listener) {
+                 listeners.remove(listener);
+         }
+ 
+         protected void notifyListeners() {
+                 if (listeners.isEmpty())
+                         return;
+                 SliderEvent event = new SliderEvent();
+                 event.sliderLeft = sliderLeft;
+                 event.sliderMiddle = sliderMiddle;
+                 event.sliderRight = sliderRight;
+                 for (SliderEventListener listener : listeners)
+                         listener.sliderChanged(event);
+         }
+
+   ==> Class holding these methods is the one being "observed". Will call notifyListeners as when needed.
+   ==> Downloader could use that
+      ==> Change that to deal w/ multiple files, where "Installer" class will just give it the _relevant_ list of plugins to start from!
+      ==> pass an Iterator<SourceFile> for that class, where SourceFile is an interface that contains getURL() and getFileSize()
+      ==> "Iterator iter = collection.iterator(); while (iter.hasNext() && !canceled) { ... while (!eof && !canceled) ... }"
+      ==> Pass a cancel function
+   ==> Other classes could follow...
+   ==> If the variable name does not suggest the type itself, that needs fixing.
+   ==> e.g.: destination instead of strDestination.
+   ==> using File objects as soon as possible is generally a good idea since they provide useful checking
+
+- XML file writing and reading:
+   ==> When writing, check strictly, when reading, "not-so-strict"
+
+- Packages, where to move generically-useful code and which?
+
+Now to wait for official confirmation of certain issues...
+- 1 description for all or 1 description for each?
+- etc...
