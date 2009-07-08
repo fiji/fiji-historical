@@ -276,7 +276,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 		PluginCollection.Filter viewFilter = getCorrespondingFilter(comboBoxViewingOptions.getSelectedIndex());
 		if (viewFilter != null) {
-			viewList = ((PluginCollection)pluginCollection).getList(viewFilter);
+			viewList = ((PluginCollection)viewList).getList(viewFilter);
 		}
 		//Directly update the table for display
 		table.setupTableModel(viewList);

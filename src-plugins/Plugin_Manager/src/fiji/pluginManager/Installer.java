@@ -10,20 +10,11 @@ import java.io.IOException;
  * are marked for deletion. It is able to track the number of bytes downloaded.
  */
 public class Installer extends PluginData implements Runnable, Observer {
-	private List<PluginObject> pluginsWaiting;
-	private List<PluginObject> pluginsToUninstall;
 	private volatile Thread downloadThread;
 	private volatile Downloader downloader;
 
-	//Each file has one try to download
-	private Iterator<PluginObject> iterWaiting;
-
 	//Keeping track of status
-	public List<PluginObject> markedUninstallList;
-	public List<PluginObject> failedUninstallList;
-	public List<PluginObject> downloadedList;
-	public List<PluginObject> failedDownloadsList;
-	public List<PluginObject> contentLengthErrList;
+	public List<PluginObject> changeList; //list of plugins specified to uninstall/download
 	public PluginObject currentlyDownloading;
 	private int totalBytes;
 	private int completedBytesTotal; //bytes downloaded so far of all completed files
@@ -33,17 +24,11 @@ public class Installer extends PluginData implements Runnable, Observer {
 	//Assume the list passed to constructor is a list of only plugins that wanted change
 	public Installer(List<PluginObject> pluginList) {
 		super();
-		downloadedList = new PluginCollection();
-		failedDownloadsList = new PluginCollection();
-		markedUninstallList = new PluginCollection();
-		failedUninstallList = new PluginCollection();
-		contentLengthErrList = new PluginCollection();
 
 		//divide into two groups
 		PluginCollection pluginCollection = (PluginCollection)pluginList;
-		pluginsToUninstall = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UNINSTALL);
-		pluginsWaiting = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
-		iterWaiting = pluginsWaiting.iterator();
+		changeList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
+		((PluginCollection)changeList).resetChangeAndUploadStatuses();
 	}
 
 	public int getBytesDownloaded() {
@@ -58,37 +43,43 @@ public class Installer extends PluginData implements Runnable, Observer {
 		return isDownloading;
 	}
 
+	//Convenience method to run both tasks
 	public void beginOperations() {
 		startDelete();
 		startDownload();
 	}
 
 	//start processing on contents of Delete List (Mark them for deletion)
-	private void startDelete() {
-		for (PluginObject plugin : pluginsToUninstall) {
+	public void startDelete() {
+		Iterator<PluginObject> iterToUninstall = ((PluginCollection)changeList).getIterator(
+				PluginCollection.FILTER_ACTIONS_UNINSTALL);
+		while (iterToUninstall.hasNext()) {
+			PluginObject plugin = iterToUninstall.next();
 			String filename = plugin.getFilename();
 			try {
 				//checking status of existing file
 				File file = new File(prefix(filename));
 				if (!file.canWrite()) //if unable to override existing file
-					failedUninstallList.add(plugin);
+					plugin.setChangeStatusToFail();
 				else {
 					//write a 0-byte file
-					String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);
+					String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY,
+							filename);
 					new File(pluginPath).getParentFile().mkdirs();
 					new File(pluginPath).createNewFile();
-					markedUninstallList.add(plugin);
+					plugin.setChangeStatusToSuccess();
 				}
 			} catch (IOException e) {
-				//this is for 0-byte file implementation
-				failedUninstallList.add(plugin);
+				plugin.setChangeStatusToFail();
 			}
 		}
 	}
 
 	//start processing on contents of updateList
-	private void startDownload() {
-		if (iterWaiting.hasNext()) {
+	public void startDownload() {
+		Iterator<PluginObject> iterToDownload = ((PluginCollection)changeList).getIterator(
+				PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
+		if (iterToDownload.hasNext()) {
 			isDownloading = true;
 			downloadThread = new Thread(this);
 			downloadThread.start();
@@ -105,8 +96,12 @@ public class Installer extends PluginData implements Runnable, Observer {
 	//Marking files for removal assumed finished here, thus begin download tasks
 	public void run() {
 		Thread thisThread = Thread.currentThread();
+
 		//This segment gets the size of the download
-		for (PluginObject myPlugin : pluginsWaiting) {
+		Iterator<PluginObject> iterToDownload = ((PluginCollection)changeList).getIterator(
+				PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
+		while (iterToDownload.hasNext()) {
+			PluginObject myPlugin = iterToDownload.next();
 			if (thisThread == downloadThread) {
 				if (myPlugin.isInstallable()) {
 					totalBytes += myPlugin.getFilesize();
@@ -119,8 +114,10 @@ public class Installer extends PluginData implements Runnable, Observer {
 		}
 
 		//Downloads the file(s), one by one
-		while (iterWaiting.hasNext() && thisThread == downloadThread) {
-			currentlyDownloading = iterWaiting.next();
+		iterToDownload = ((PluginCollection)changeList).getIterator(
+				PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
+		while (iterToDownload.hasNext() && thisThread == downloadThread) {
+			currentlyDownloading = iterToDownload.next();
 			String name = currentlyDownloading.getFilename();
 			String digest = null;
 			String date = null;
@@ -151,8 +148,10 @@ public class Installer extends PluginData implements Runnable, Observer {
 					else if (currentlyDownloading.isUpdateable())
 						recordedSize = currentlyDownloading.getNewFilesize();
 					if (recordedSize != downloader.getSize())
-						contentLengthErrList.add(currentlyDownloading);
-					//Configure settings and begin download
+						throw new Exception("Recorded filesize of " + name + " is " +
+							recordedSize + ". It is not equal to actual content length of " +
+							downloader.getSize() + ". Download will not proceed.");
+					//Configure settings and begin download if no other problems
 					downloader.setDownloadThread(downloadThread);
 					downloader.startDownloadAndObserve(this);
 				}
@@ -163,11 +162,12 @@ public class Installer extends PluginData implements Runnable, Observer {
 				if (thisThread == downloadThread) {
 					String realDigest = getDigest(name, saveToPath);
 					if (!realDigest.equals(digest))
-						throw new Exception("Wrong checksum: Recorded Md5 sum " + digest + " != Actual Md5 sum " + realDigest);
+						throw new Exception("Wrong checksum for " + name + ": Recorded Md5 sum "
+								+ digest + " != Actual Md5 sum " + realDigest);
 					if (name.startsWith("fiji-") && !getPlatform().startsWith("win"))
 						Runtime.getRuntime().exec(new String[] {
 								"chmod", "0755", saveToPath});
-					downloadedList.add(currentlyDownloading);
+					currentlyDownloading.setChangeStatusToSuccess();
 					System.out.println(currentlyDownloading.getFilename() + " finished download.");
 					System.out.println((thisThread == downloadThread) ? "Thread not stopped" : "Thread stopped, but downloaded????");
 					currentlyDownloading = null;
@@ -181,7 +181,7 @@ public class Installer extends PluginData implements Runnable, Observer {
 				try {
 					new File(saveToPath).delete();
 				} catch (Exception e2) { }
-				failedDownloadsList.add(currentlyDownloading);
+				currentlyDownloading.setChangeStatusToFail();
 				currentlyDownloading = null;
 				System.out.println("Could not update " + name + ": " + e.getLocalizedMessage());
 			}
@@ -191,18 +191,61 @@ public class Installer extends PluginData implements Runnable, Observer {
 	}
 
 	private void deleteUnfinished() {
-		Iterator<PluginObject> iterator = pluginsWaiting.iterator();
+		Iterator<PluginObject> iterator = ((PluginCollection)changeList).getIterator(
+				PluginCollection.FILTER_NO_SUCCESSFUL_CHANGE);
 		while (iterator.hasNext()) {
 			PluginObject plugin = iterator.next();
-			//if this plugin in waiting list is not fully downloaded yet
-			if (!downloadedList.contains(plugin)) {
-				String name = plugin.getFilename();
-				String fullPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
-				try {
-					new File(fullPath).delete(); //delete file, if it exists
-				} catch (Exception e2) { }
-			}
+			String fullPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, plugin.getFilename());
+			try {
+				new File(fullPath).delete(); //delete file, if it exists
+			} catch (Exception e2) { }
 		}
+	}
+
+	public Iterator<PluginObject> iterDownloaded() {
+		return ((PluginCollection)changeList).getIterator(
+				PluginCollection.FILTER_DOWNLOAD_SUCCESS);
+	}
+
+	public int getNumberOfSuccessfulDownloads() {
+		return ((PluginCollection)changeList).getList(
+				PluginCollection.FILTER_DOWNLOAD_SUCCESS).size();
+	}
+
+	public Iterator<PluginObject> iterFailedDownloads() {
+		return ((PluginCollection)changeList).getIterator(
+				PluginCollection.FILTER_DOWNLOAD_FAIL);
+	}
+
+	public int getNumberOfFailedDownloads() {
+		return ((PluginCollection)changeList).getList(
+				PluginCollection.FILTER_DOWNLOAD_SUCCESS).size();
+	}
+
+	public Iterator<PluginObject> iterMarkedUninstall() {
+		return ((PluginCollection)changeList).getIterator(
+				PluginCollection.FILTER_REMOVE_SUCCESS);
+	}
+
+	public int getNumberOfMarkedUninstalls() {
+		return ((PluginCollection)changeList).getList(
+				PluginCollection.FILTER_REMOVE_SUCCESS).size();
+	}
+
+	public Iterator<PluginObject> iterFailedUninstalls() {
+		return ((PluginCollection)changeList).getIterator(
+				PluginCollection.FILTER_REMOVE_FAIL);
+	}
+
+	public int getNumberOfFailedUninstalls() {
+		return ((PluginCollection)changeList).getList(
+				PluginCollection.FILTER_REMOVE_FAIL).size();
+	}
+
+	public boolean successfulChangesMade() {
+		Iterator<PluginObject> iterator = ((PluginCollection)changeList).getIterator(
+				PluginCollection.FILTER_CHANGE_SUCCEEDED);
+		return iterator.hasNext();
 	}
 
 	public void refreshData(Observable subject) {

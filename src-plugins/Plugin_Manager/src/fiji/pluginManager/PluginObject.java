@@ -11,7 +11,11 @@ public class PluginObject {
 	private String newDescription; //if any
 	private int filesize;
 	private int newFilesize; //if any
+	private List<Dependency> dependency; //Dependency object: filename and timestamp
+	private List<Dependency> newDependency; //if any
 	private boolean isFiji;
+
+	//Current physical state and action-to-take of plugin as the User sees it
 	public static final byte STATUS_UNINSTALLED = 0; //Meaning current status is not installed
 	public static final byte STATUS_INSTALLED = 1; //Meaning current status is installed
 	public static final byte STATUS_MAY_UPDATE = 2; //Meaning installed AND update-able
@@ -21,8 +25,14 @@ public class PluginObject {
 	public static final byte ACTION_UPDATE = 2; //Only possibly valid for (status == 2)
 	public static final byte ACTION_UPLOAD = 3; //Only possible for Developers
 	private byte action = ACTION_NONE; //default
-	private List<Dependency> newDependency;
-	private List<Dependency> dependency; //Dependency object: filename and timestamp
+
+	//State to indicate whether Plugin removed/downloaded successfully
+	public static enum ChangeStatus { NONE, SUCCESS, FAIL };
+	private ChangeStatus changedStatus = ChangeStatus.NONE; //default
+
+	//State to indicate how and whether Plugin uploaded successfully
+	public static enum UploadStatus { NONE, MODIFIED, FILE_UPLOADED, FAIL };
+	private UploadStatus uploadStatus = UploadStatus.NONE;
 
 	public PluginObject(String strFilename, String md5Sum, String timestamp, byte status, boolean isFiji) {
 		this.strFilename = strFilename;
@@ -88,18 +98,37 @@ public class PluginObject {
 			throw new Error("Plugin " + strFilename + " cannot update as its current state is not UPDATEABLE.");
 	}
 
-	/*public void setActionToUpload() {
-		if (isUploadable()) {
-			setAction(PluginObject.ACTION_UPLOAD);
-		} else
-			throw new Error("Plugin " + strFilename + " is not defined to be uploaded.");
-	}*/
 	public void setActionToUpload() {
 		setAction(PluginObject.ACTION_UPLOAD);
 	}
 
 	public void setActionNone() {
 		setAction(PluginObject.ACTION_NONE);
+	}
+
+	public void resetChangeAndUploadStatuses() {
+		this.changedStatus = ChangeStatus.NONE;
+		this.uploadStatus = UploadStatus.NONE;
+	}
+
+	public void setChangeStatusToSuccess() { //Indicates successful download/uninstall
+		this.changedStatus = ChangeStatus.SUCCESS;
+	}
+
+	public void setChangeStatusToFail() {
+		this.changedStatus = ChangeStatus.FAIL;
+	}
+
+	public void setUploadStatusToFileUploaded() { //Both plugin file and details are uploaded
+		this.uploadStatus = UploadStatus.FILE_UPLOADED;
+	}
+
+	public void setUploadStatusToModified() { //Only plugin details are uploaded
+		this.uploadStatus = UploadStatus.MODIFIED;
+	}
+
+	public void setUploadStatusToFail() {
+		this.uploadStatus = UploadStatus.FAIL;
 	}
 
 	private void setAction(byte action) {
@@ -205,5 +234,33 @@ public class PluginObject {
 
 	public boolean isFijiPlugin() {
 		return isFiji;
+	}
+
+	public boolean changeSucceeded() {
+		return (changedStatus == ChangeStatus.SUCCESS); //managed to download/uninstall
+	}
+
+	public boolean changeFailed() {
+		return (changedStatus == ChangeStatus.FAIL);
+	}
+
+	public boolean changeNotDone() {
+		return (changedStatus == ChangeStatus.NONE);
+	}
+
+	public boolean uploadModifiedOnly() {
+		return (uploadStatus == UploadStatus.MODIFIED); //uploaded only details
+	}
+
+	public boolean uploadPluginFileDone() {
+		return (uploadStatus == UploadStatus.FILE_UPLOADED); //uploaded both plugin file and details
+	}
+
+	public boolean uploadFailed() {
+		return (uploadStatus == UploadStatus.FAIL);
+	}
+
+	public boolean uploadNotDone() {
+		return (uploadStatus == UploadStatus.NONE);
 	}
 }

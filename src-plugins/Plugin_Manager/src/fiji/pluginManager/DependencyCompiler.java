@@ -246,32 +246,4 @@ public class DependencyCompiler {
 			return true;
 	}
 
-	//forces action for every plugin in the list to "install"
-	public void setToInstall(List<PluginObject> selectedList) {
-		for (PluginObject plugin : selectedList) {
-			if (plugin.isRemovableOnly() || plugin.isUpdateable())
-				plugin.setActionNone();
-			else if (plugin.isInstallable())
-				plugin.setActionToInstall();
-		}
-	}
-
-	//forces action for every update-able plugin in the list to be "update"
-	public void setToUpdate(List<PluginObject> selectedList) {
-		for (PluginObject plugin : selectedList)
-			if (plugin.isUpdateable())
-				plugin.setActionToUpdate();
-	}
-
-	//forces action for every plugin in the list to be "uninstall"
-	public void setToRemove(List<PluginObject> selectedList) {
-		for (PluginObject plugin : selectedList) {
-			if (plugin.isRemovableOnly())
-				plugin.setActionToRemove();
-			else if (plugin.isInstallable())
-				plugin.setActionNone();
-			else if (plugin.isUpdateable())
-				plugin.setActionToRemove();
-		}
-	}
 }

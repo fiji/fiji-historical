@@ -136,9 +136,9 @@ public class FrameConfirmation extends JFrame {
 
 	private void startActualChanges() {
 		//indicate the actions as reference for Downloader (Installer) to refer to
-		dependencyCompiler.setToInstall(dependencyCompiler.toInstallList);
-		dependencyCompiler.setToUpdate(dependencyCompiler.toUpdateList);
-		dependencyCompiler.setToRemove(dependencyCompiler.toRemoveList);
+		((PluginCollection)dependencyCompiler.toInstallList).setToInstall();
+		((PluginCollection)dependencyCompiler.toUpdateList).setToUpdate();
+		((PluginCollection)dependencyCompiler.toRemoveList).setToRemove();
 		dependencyCompiler = null;
 		mainUserInterface.openDownloader();
 	}

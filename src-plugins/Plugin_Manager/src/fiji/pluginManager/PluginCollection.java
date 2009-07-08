@@ -127,6 +127,90 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 	};
 
+	public static final Filter FILTER_CHANGE_SUCCEEDED = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return plugin.changeSucceeded();
+		}
+	};
+
+	public static final Filter FILTER_CHANGE_FAILED = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return plugin.changeFailed();
+		}
+	};
+
+	public static final Filter FILTER_NO_CHANGE_YET = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return plugin.changeNotDone();
+		}
+	};
+
+	public static final Filter FILTER_NO_SUCCESSFUL_CHANGE = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return !plugin.changeSucceeded();
+		}
+	};
+
+	public static final Filter FILTER_DOWNLOAD_SUCCESS = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return ((plugin.toInstall() || plugin.toUpdate()) &&
+					plugin.changeSucceeded());
+		}
+	};
+
+	public static final Filter FILTER_DOWNLOAD_FAIL = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return ((plugin.toInstall() || plugin.toUpdate()) &&
+					plugin.changeFailed());
+		}
+	};
+
+	public static final Filter FILTER_REMOVE_SUCCESS = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return (plugin.toRemove() && plugin.changeSucceeded());
+		}
+	};
+
+	public static final Filter FILTER_REMOVE_FAIL = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return (plugin.toRemove() && plugin.changeFailed());
+		}
+	};
+
+	public static final Filter FILTER_UPLOAD_PLUGINFILE = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return (plugin.toUpload() && plugin.uploadPluginFileDone());
+		}
+	};
+
+	public static final Filter FILTER_UPLOAD_MODIFIEDONLY = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return (plugin.toUpload() && plugin.uploadModifiedOnly());
+		}
+	};
+
+	public static final Filter FILTER_UPLOAD_SUCCESS = new Filter() {
+		//matching either condition: file uploaded OR details uploaded only
+		public boolean matchesFilter(PluginObject plugin) {
+			return (plugin.toUpload() &&
+					(plugin.uploadModifiedOnly() || plugin.uploadPluginFileDone()));
+		}
+	};
+
+	public static final Filter FILTER_NO_SUCCESSFUL_UPLOAD = new Filter() {
+		//matching either condition: file uploaded OR details uploaded only
+		public boolean matchesFilter(PluginObject plugin) {
+			return (plugin.toUpload() &&
+					!(plugin.uploadModifiedOnly() || plugin.uploadPluginFileDone()));
+		}
+	};
+
+	public static final Filter FILTER_UPLOAD_FAIL = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return (plugin.toUpload() && plugin.uploadFailed());
+		}
+	};
+
 	public Iterator<PluginObject> getIterator(Filter filter) {
 		return getList(filter).iterator();
 	}
@@ -143,5 +227,40 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			if (plugin.getFilename().equals(filename)) return plugin;
 		}
 		return null;
+	}
+
+	public void resetChangeAndUploadStatuses() {
+		for (PluginObject plugin : this) {
+			plugin.resetChangeAndUploadStatuses();
+		}
+	}
+
+	//forces action for every plugin in the list to "install"
+	public void setToInstall() {
+		for (PluginObject plugin : this) {
+			if (plugin.isRemovableOnly() || plugin.isUpdateable())
+				plugin.setActionNone();
+			else if (plugin.isInstallable())
+				plugin.setActionToInstall();
+		}
+	}
+
+	//forces action for every update-able plugin in the list to be "update"
+	public void setToUpdate() {
+		for (PluginObject plugin : this)
+			if (plugin.isUpdateable())
+				plugin.setActionToUpdate();
+	}
+
+	//forces action for every plugin in the list to be "uninstall"
+	public void setToRemove() {
+		for (PluginObject plugin : this) {
+			if (plugin.isRemovableOnly())
+				plugin.setActionToRemove();
+			else if (plugin.isInstallable())
+				plugin.setActionNone();
+			else if (plugin.isUpdateable())
+				plugin.setActionToRemove();
+		}
 	}
 }

@@ -130,8 +130,8 @@ class FrameInstaller extends JFrame {
 			} else
 				return;
 		}
-		if (installer != null &&
-			(installer.downloadedList.size() > 0 || installer.markedUninstallList.size() > 0))
+
+		if (installer != null && installer.successfulChangesMade())
 			mainUserInterface.exitWithRestartFijiMessage();
 		else
 			mainUserInterface.backToPluginManager();

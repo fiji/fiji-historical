@@ -2,6 +2,8 @@ package fiji.pluginManager;
 
 import ij.IJ;
 import java.io.IOException;
+import java.util.Iterator;
+
 import javax.xml.transform.TransformerConfigurationException;
 import org.xml.sax.SAXException;
 
@@ -32,27 +34,23 @@ public class Uploader implements Observer {
 		if (message != null) {
 			IJ.showMessage("Error", "Failed to upload changes to server:\n" + message);
 		} else {
-			int failedListSize = updater.failList.size();
-			int successfulListSize = updater.successList.size();
-			if (failedListSize == 0 && successfulListSize == 0) { //no plugin files to upload
-				mainUserInterface.exitWithRestartMessage("Success",
-						"Updated existing plugin records successfully.\n" +
-						"You need to restart Plugin Manager for changes to take effect.");
-			} else {
-				if (failedListSize > 0) {
-					String namelist = "";
-					for (PluginObject plugin : updater.failList)
-						namelist += "\n" + plugin.getFilename();
-					IJ.showMessage("Failed Uploads", "The following files failed to upload:" + namelist);
-				}
-				if (successfulListSize > 0) {
-					int totalSize = failedListSize + successfulListSize;
-					mainUserInterface.exitWithRestartMessage("Updated",
-							successfulListSize + " out of " + totalSize +
-							" plugin files uploaded successfully\n\n"
-							+ "You need to restart Plugin Manager for changes to take effect.");
-				} //if there are zero successful uploads, don't need to auto-close Plugin Manager
+			Iterator<PluginObject> iterUploadFail = updater.iterUploadFail();
+			int numFailedUploads = updater.numberOfFailedUploads();
+			int numSuccessfulUploads = updater.numberOfSuccessfulUploads();
+			if (numFailedUploads > 0) {
+				String namelist = "";
+				while (iterUploadFail.hasNext())
+					namelist += "\n" + iterUploadFail.next().getFilename();
+				IJ.showMessage("Failed Uploads", "The following files failed to upload:" + namelist);
 			}
+			if (numSuccessfulUploads > 0) {
+				int successfulNum = updater.numberOfSuccessfulUploads();
+				int totalSize = updater.numberOfFailedUploads() + successfulNum;
+				mainUserInterface.exitWithRestartMessage("Updated",
+						successfulNum + " out of " + totalSize +
+						" plugins uploaded successfully\n\n"
+						+ "You need to restart Plugin Manager for changes to take effect.");
+			} //if there are zero successful uploads, don't need to auto-close Plugin Manager
 		}
 	}
 

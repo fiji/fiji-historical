@@ -24,6 +24,11 @@ import org.xml.sax.helpers.AttributesImpl;
  * 3rd Step: Upload plugin file(s) to server
  * 4th Step: Write XML file using pluginRecords, save to server
  * 5th Step: Write text file using pluginRecords, save to server
+ * 
+ * Note: Plugins are uploaded differently
+ * - Non-Fiji plugins & new versions of Fiji Plugins will have files AND details uploaded
+ * - Uninstalled & up-to-date plugins will ONLY have their details uploaded (i.e.: XML file)
+ * 
  */
 public class Updater extends PluginDataObservable {
 	private String xmlSavepath;
@@ -37,12 +42,9 @@ public class Updater extends PluginDataObservable {
 		"{http://xml.apache.org/xslt}" + "indent-amount";
 
 	//accessible information after uploading tasks are done
-	public List<PluginObject> successList;
-	public List<PluginObject> failList;
-
+	public List<PluginObject> changesList;
 	private Map<String, List<PluginObject>> newPluginRecords;
 	private List<PluginObject> filesToUpload; //list of plugins whose files has to be uploaded
-	private List<PluginObject> changesList;
 	private DependencyAnalyzer dependencyAnalyzer;
 	private XMLFileReader xmlFileReader;
 
@@ -52,13 +54,12 @@ public class Updater extends PluginDataObservable {
 
 		PluginCollection pluginCollection = (PluginCollection)pluginManager.pluginCollection;
 		changesList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
+		((PluginCollection)changesList).resetChangeAndUploadStatuses();
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 		xmlFileReader = pluginManager.xmlFileReader;
 
 		xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
 		txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
-		successList = new PluginCollection();
-		failList = new PluginCollection();
 	}
 
 	public void generateNewPluginRecords() throws IOException {
@@ -118,6 +119,7 @@ public class Updater extends PluginDataObservable {
 		System.out.println("XML file written to server");
 		writeTxtFile();
 		System.out.println("Text file written to server");
+		convertUploadStatusesToModified();
 		setStatusComplete(); //indicate to observer there's no more tasks
 	}
 
@@ -148,10 +150,10 @@ public class Updater extends PluginDataObservable {
 			String targetPath = remotePrefix + File.separator + taskname + "-" + plugin.getTimestamp();
 			try {
 				copyFile(sourcePath, targetPath);
-				successList.add(plugin);
+				plugin.setUploadStatusToFileUploaded();
 				changeStatus(taskname, ++currentlyLoaded, totalToLoad);
 			} catch (IOException e) {
-				failList.add(plugin);
+				plugin.setUploadStatusToFail();
 			}
 		}
 	}
@@ -235,4 +237,36 @@ public class Updater extends PluginDataObservable {
 		handler.characters(value.toCharArray(), 0, value.length());
 		handler.endElement("", "", tagName);
 	}
+
+	//Method assumes no exception occurred before:
+	//Any plugins not given a status yet should be set to "Details modified only"
+	private void convertUploadStatusesToModified() {
+		for (PluginObject plugin : changesList) {
+			if (!plugin.uploadPluginFileDone() && !plugin.uploadFailed()) {
+				//plugin file upload done beforehand
+				plugin.setUploadStatusToModified();
+			}
+		}
+	}
+
+	public Iterator<PluginObject> iterUploadSuccess() {
+		return ((PluginCollection)changesList).getIterator(
+				PluginCollection.FILTER_UPLOAD_SUCCESS);
+	}
+
+	public Iterator<PluginObject> iterUploadFail() {
+		return ((PluginCollection)changesList).getIterator(
+				PluginCollection.FILTER_UPLOAD_FAIL);
+	}
+
+	public int numberOfSuccessfulUploads() {
+		return ((PluginCollection)changesList).getList(
+				PluginCollection.FILTER_UPLOAD_SUCCESS).size();
+	}
+
+	public int numberOfFailedUploads() {
+		return ((PluginCollection)changesList).getList(
+				PluginCollection.FILTER_UPLOAD_FAIL).size();
+	}
+
 }

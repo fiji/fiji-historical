@@ -1,6 +1,7 @@
 package fiji.pluginManager;
 
 import java.awt.Color;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.JTextPane;
@@ -142,45 +143,54 @@ public class TextPaneDisplay extends JTextPane {
 	}
 
 	public void showDownloadProgress(Installer installer) {
-		List<PluginObject> downloadedList = installer.downloadedList;
-		List<PluginObject> failedList = installer.failedDownloadsList;
-		List<PluginObject> markedUninstallList = installer.markedUninstallList;
-		List<PluginObject> failedUninstallList = installer.failedUninstallList;
-		List<PluginObject> contentLengthErrList = installer.contentLengthErrList;
+		Iterator<PluginObject> iterDownloaded = installer.iterDownloaded();
+		int downloadedSize = 0;
+		Iterator<PluginObject> iterFailedDownloads = installer.iterFailedDownloads();
+		int failedDownloads = 0;
+		Iterator<PluginObject> iterMarkedUninstall = installer.iterMarkedUninstall();
+		int markedUninstallSize = 0;
+		Iterator<PluginObject> iterFailedUninstalls = installer.iterFailedUninstalls();
+		int failedUninstalls = 0;
+
 		PluginObject currentlyDownloading = installer.currentlyDownloading;
 		boolean stillDownloading = installer.isDownloading();
 		String strCurrentStatus = "";
 
-		for (PluginObject myPlugin : failedUninstallList)
-			strCurrentStatus += "Failed to mark " + myPlugin.getFilename() + " for uninstalling.\n";
-		for (PluginObject myPlugin : markedUninstallList)
-			strCurrentStatus += "Marked " + myPlugin.getFilename() + " for uninstalling.\n";
-		for (PluginObject myPlugin : downloadedList)
-			strCurrentStatus += "Finished downloading " + myPlugin.getFilename() + "\n";
-		for (PluginObject myPlugin : failedList)
-			strCurrentStatus += myPlugin.getFilename() + " failed to download.\n";
+		while (iterFailedUninstalls.hasNext()) {
+			strCurrentStatus += "Failed to mark " + iterFailedUninstalls.next().getFilename() + " for uninstalling.\n";
+			failedUninstalls++;
+		}
+		while (iterMarkedUninstall.hasNext()) {
+			strCurrentStatus += "Marked " + iterMarkedUninstall.next().getFilename() + " for uninstalling.\n";
+			markedUninstallSize++;
+		}
+		while (iterDownloaded.hasNext()) {
+			strCurrentStatus += "Finished downloading " + iterDownloaded.next().getFilename() + "\n";
+			downloadedSize++;
+		}
+		while (iterFailedDownloads.hasNext()) {
+			strCurrentStatus += iterFailedDownloads.next().getFilename() + " failed to download.\n";
+			failedDownloads++;
+		}
 		if (currentlyDownloading != null)
 			strCurrentStatus += "Now downloading " + currentlyDownloading.getFilename() + "\n";
 
 		//if no more download tasks, results can be displayed
 		if (stillDownloading == false) {
-			//For inconsistent filesizes, just display a warning
-			for (PluginObject myPlugin : contentLengthErrList)
-				strCurrentStatus += "Warning: " + myPlugin.getFilename() + " actual filesize does not fit records.\n";
 			//Display overall results
-			if (markedUninstallList.size() > 0) {
-				int totalSize = markedUninstallList.size() + failedUninstallList.size();
-				strCurrentStatus += markedUninstallList.size() + " of " + totalSize +
+			if (markedUninstallSize > 0) {
+				int totalSize = markedUninstallSize + failedUninstalls;
+				strCurrentStatus += markedUninstallSize + " of " + totalSize +
 				" plugins successfully marked for removal.\n";
-			} else if (failedUninstallList.size() > 0) {
+			} else if (failedUninstalls > 0) {
 				strCurrentStatus += "Marking for deletion(s) failed.\n";
 			} //else if uninstall lists' sizes are 0, ignore
 
-			if (downloadedList.size() > 0) {
-				int totalSize = downloadedList.size() + failedList.size();
-				strCurrentStatus += downloadedList.size() + " of " + totalSize +
+			if (downloadedSize > 0) {
+				int totalSize = downloadedSize + failedDownloads;
+				strCurrentStatus += downloadedSize + " of " + totalSize +
 				" download tasks completed.\n";
-			} else if (failedList.size() > 0) {
+			} else if (failedDownloads > 0) {
 				strCurrentStatus += "Download(s) failed.\n";
 			} //else if download lists' sizes are 0, ignore
 		}
