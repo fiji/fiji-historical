@@ -35,36 +35,42 @@ public class Downloader {
 		cancelled = true;
 	}
 
-	public void startDownload() throws IOException {
+	public void startDownload() {
 		while (sourceFiles.hasNext() && !cancelled) {
 			currentSource = sourceFiles.next();
-			//Start connection
-			connection = (HttpURLConnection)(new URL(currentSource.getURL())).openConnection();
-			downloadedBytes = 0; //start with nothing downloaded
-			downloadSize = connection.getContentLength();
-			if (downloadSize < 0)
-				throw new Error("Content Length is not known");
-			notifyListenersUpdate(); //first notification starts from 0
 
-			System.out.println("Trying to connect to " + connection.getURL().toString() + "...");
-			new File(currentSource.getDestination()).getParentFile().mkdirs();
-			in = connection.getInputStream();
-			out = new FileOutputStream(currentSource.getDestination());
+			try {
+				//Start connection
+				connection = (HttpURLConnection)(new URL(currentSource.getURL())).openConnection();
+				downloadedBytes = 0; //start with nothing downloaded
+				downloadSize = connection.getContentLength();
+				if (downloadSize < 0)
+					throw new Error("Content Length is not known");
+				notifyListenersUpdate(); //first notification starts from 0
 
-			//Start actual downloading and writing to file
-			byte[] buffer = new byte[65536];
-			int count;
-			while ((count = in.read(buffer)) >= 0 && !cancelled) {
-				out.write(buffer, 0, count);
-				downloadedBytes += count;
-				notifyListenersUpdate();
+				System.out.println("Trying to connect to " + connection.getURL().toString() + "...");
+				new File(currentSource.getDestination()).getParentFile().mkdirs();
+				in = connection.getInputStream();
+				out = new FileOutputStream(currentSource.getDestination());
+
+				//Start actual downloading and writing to file
+				byte[] buffer = new byte[65536];
+				int count;
+				while ((count = in.read(buffer)) >= 0 && !cancelled) {
+					out.write(buffer, 0, count);
+					downloadedBytes += count;
+					notifyListenersUpdate();
+				}
+
+				//end connection once download done
+				in.close();
+				out.close();
+				connection.disconnect();
+				notifyListenersCompletion();
+
+			} catch (Exception e) {
+				notifyListenersError(e);
 			}
-
-			//end connection once download done
-			notifyListenersCompletion();
-			in.close();
-			out.close();
-			connection.disconnect();
 		}
 	}
 
@@ -76,7 +82,13 @@ public class Downloader {
 
 	public void notifyListenersCompletion() {
 		for (DownloadListener listener : listeners) {
-			listener.completion(currentSource);
+			listener.fileComplete(currentSource);
+		}
+	}
+
+	public void notifyListenersError(Exception e) {
+		for (DownloadListener listener : listeners) {
+			listener.fileFailed(currentSource, e);
 		}
 	}
 
@@ -86,7 +98,8 @@ public class Downloader {
 
 	public interface DownloadListener {
 		public void update(SourceFile source, int bytesSoFar, int bytesTotal);
-		public void completion(SourceFile source);
+		public void fileComplete(SourceFile source);
+		public void fileFailed(SourceFile source, Exception e);
 	}
 
 	public interface SourceFile {

@@ -108,10 +108,10 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 
 			//For each selected plugin, get download URL
 			String date = null;
-			if (currentlyDownloading.isInstallable()) {
-				date = currentlyDownloading.getTimestamp();
-			} else if (currentlyDownloading.isUpdateable()) {
-				date = currentlyDownloading.getNewTimestamp();
+			if (plugin.isInstallable()) {
+				date = plugin.getTimestamp();
+			} else if (plugin.isUpdateable()) {
+				date = plugin.getNewTimestamp();
 			}
 			String downloadURL = PluginManager.MAIN_URL + name + "-" + date;
 			PluginSource src = new PluginSource(plugin, downloadURL, saveToPath);
@@ -122,13 +122,9 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 			System.out.println("totalBytes so far: " + totalBytes);
 		}
 
-		try {
-			downloader = new Downloader(downloaderList.iterator());
-			downloader.addListener(this);
-			downloader.startDownload(); //nothing happens if downloaderList is empty
-		} catch (Exception e) {
-			clearDownloadError(currentlyDownloading, e);
-		}
+		downloader = new Downloader(downloaderList.iterator());
+		downloader.addListener(this);
+		downloader.startDownload(); //nothing happens if downloaderList is empty
 
 		if (thisThread != downloadThread) {
 			//if cancelled, remove any unfinished downloads
@@ -148,17 +144,14 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 		System.out.println("END OF THREAD");		
 	}
 
-	private void clearDownloadError(PluginObject plugin, Exception e) {
-		String destination = getSaveToLocation(PluginManager.UPDATE_DIRECTORY,
-				plugin.getFilename());
-		//try to delete the file if inconsistency is found
+	private void resolveDownloadError(PluginSource src, Exception e) {
+		//try to delete the file
 		try {
-			new File(destination).delete();
+			new File(src.getDestination()).delete();
 		} catch (Exception e2) { }
-		currentlyDownloading.setChangeStatusToFail();
+		src.getPlugin().setChangeStatusToFail();
 		System.out.println("Could not update " + currentlyDownloading.getFilename() +
 				": " + e.getLocalizedMessage());
-		currentlyDownloading = null;
 	}
 
 	public Iterator<PluginObject> iterDownloaded() {
@@ -207,8 +200,8 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 		return iterator.hasNext();
 	}
 
-	//Listener receives notification that download for file has stopped
-	public void completion(SourceFile source) {
+	//Listener receives notification that download for file has finished
+	public void fileComplete(SourceFile source) {
 		PluginSource src = (PluginSource)source;
 		currentlyDownloading = src.getPlugin();
 		String filename = currentlyDownloading.getFilename();
@@ -238,7 +231,8 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 			currentlyDownloading = null;
 
 		} catch (Exception e) {
-			clearDownloadError(currentlyDownloading, e);
+			resolveDownloadError(src, e);
+			currentlyDownloading = null;
 		}
 		completedBytesTotal += currentBytesSoFar;
 		currentBytesSoFar = 0;
@@ -249,5 +243,9 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 		currentlyDownloading = src.getPlugin();
 		currentBytesSoFar = bytesSoFar;
 		System.out.println("Downloaded so far: " + (completedBytesTotal + currentBytesSoFar));
+	}
+
+	public void fileFailed(SourceFile source, Exception e) {
+		resolveDownloadError((PluginSource)source, e);
 	}
 }
