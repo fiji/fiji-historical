@@ -21,7 +21,8 @@ public class PluginManager implements PlugIn, Observer {
 	public static final String TXT_FILENAME = "current.txt";
 	public static final String XML_FILENAME = "db.xml";
 	public static final String DTD_FILENAME = "plugins.dtd";
-	public static final String XML_DIRECTORY = "plugininfo";
+	public static final String READ_DIRECTORY = "plugininfo";
+	public static final String WRITE_DIRECTORY = "plugininfo/write";
 	public static final String UPDATE_DIRECTORY = "update";
 
 	//PluginObjects for output at User Interface
@@ -43,12 +44,13 @@ public class PluginManager implements PlugIn, Observer {
 			//Gets the PluginObject information
 			pluginCollection = pluginListBuilder.pluginCollection;
 			readOnlyList = pluginListBuilder.readOnlyList;
+
+			MainUserInterface mainUserInterface = new MainUserInterface(this);
+			mainUserInterface.setVisible(true);
 		} catch (Error e) {
 			//Interface side: This should handle presentation side of exceptions
 			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getLocalizedMessage());
 		}
-		MainUserInterface mainUserInterface = new MainUserInterface(this);
-		mainUserInterface.setVisible(true);
 	}
 
 	//Show progress of Plugin Manager startup at IJ bar
@@ -60,7 +62,7 @@ public class PluginManager implements PlugIn, Observer {
 						xmlFileDownloader.getTotalToLoad());
 				if (xmlFileDownloader.allTasksComplete()) {
 					//After downloading information successfully, read it
-					xmlFileReader = new XMLFileReader(PluginManager.XML_DIRECTORY +
+					xmlFileReader = new XMLFileReader(PluginManager.READ_DIRECTORY +
 							File.separator + PluginManager.XML_FILENAME);
 					//Build a list from the information
 					pluginListBuilder = new PluginListBuilder(xmlFileReader);

@@ -23,7 +23,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 
 	private void downloadAndSave(String url, String filename) {
 		sources.add(new InformationSource(filename, url,
-				getSaveToLocation(PluginManager.XML_DIRECTORY, filename)));
+				getSaveToLocation(PluginManager.READ_DIRECTORY, filename)));
 	}
 
 	private class InformationSource implements SourceFile {

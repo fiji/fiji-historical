@@ -15,7 +15,6 @@ import javax.xml.transform.stream.StreamResult;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-
 /*
  * This class is responsible for writing updates to server, upon given the updated
  * plugin records (Map of plugins to all versions).
@@ -29,7 +28,6 @@ import org.xml.sax.helpers.AttributesImpl;
  * Note: Plugins are uploaded differently
  * - Non-Fiji plugins & new versions of Fiji Plugins will have files AND details uploaded
  * - Uninstalled & up-to-date plugins will ONLY have their details uploaded (i.e.: XML file)
- * 
  */
 public class Updater extends PluginDataObservable {
 	private String xmlSavepath;
@@ -59,8 +57,10 @@ public class Updater extends PluginDataObservable {
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 		xmlFileReader = pluginManager.xmlFileReader;
 
-		xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
-		txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
+		//xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
+		//txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
+		xmlSavepath = getSaveToLocation(PluginManager.WRITE_DIRECTORY, PluginManager.XML_FILENAME);
+		txtSavepath = getSaveToLocation(PluginManager.WRITE_DIRECTORY, PluginManager.TXT_FILENAME);
 	}
 
 	public void generateNewPluginRecords() throws IOException {
@@ -134,7 +134,7 @@ public class Updater extends PluginDataObservable {
 		handler = tf.newTransformerHandler();
 		Transformer serializer = handler.getTransformer();
 		serializer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
-		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.XML_DIRECTORY + "/" + PluginManager.DTD_FILENAME);
+		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.WRITE_DIRECTORY + "/" + PluginManager.DTD_FILENAME);
 		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
 		serializer.setOutputProperty(XALAN_INDENT_AMOUNT, "4");
 		handler.setResult(streamResult);
@@ -221,6 +221,7 @@ public class Updater extends PluginDataObservable {
 							handler.endElement("", "", "dependency");
 						}
 					}
+					//writeSimpleTag("haha", attrib, "just testing");
 				handler.endElement("", "", "version");
 			}
 			handler.endElement("", "", "plugin");

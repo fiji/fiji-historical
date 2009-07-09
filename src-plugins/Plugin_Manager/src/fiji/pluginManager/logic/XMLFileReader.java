@@ -44,7 +44,7 @@ public class XMLFileReader extends DefaultHandler {
 		pluginRecordsList = new TreeMap<String, List<PluginObject>>();
 		
 		SAXParserFactory factory = SAXParserFactory.newInstance();
-		factory.setValidating(true);
+		//factory.setValidating(true); //commented out per postel's law
 		factory.setNamespaceAware(true);
 		SAXParser parser = factory.newSAXParser();
 
