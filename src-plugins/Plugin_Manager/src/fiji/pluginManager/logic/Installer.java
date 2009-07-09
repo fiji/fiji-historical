@@ -1,18 +1,20 @@
 package fiji.pluginManager.logic;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
-
+import fiji.pluginManager.logic.Downloader.SourceFile;
 
 /*
  * This class' main role is to download selected files, as well as indicate those that
  * are marked for deletion. It is able to track the number of bytes downloaded.
  */
-public class Installer extends PluginData implements Runnable, Observer {
+public class Installer extends PluginData implements Runnable, Downloader.DownloadListener {
 	private volatile Thread downloadThread;
 	private volatile Downloader downloader;
+	private List<SourceFile> downloaderList;
 
 	//Keeping track of status
 	public List<PluginObject> changeList; //list of plugins specified to uninstall/download
@@ -22,11 +24,8 @@ public class Installer extends PluginData implements Runnable, Observer {
 	private int currentBytesSoFar; //bytes downloaded so far of current file
 	private boolean isDownloading;
 
-	//Assume the list passed to constructor is a list of only plugins that wanted change
 	public Installer(List<PluginObject> pluginList) {
 		super();
-
-		//divide into two groups
 		PluginCollection pluginCollection = (PluginCollection)pluginList;
 		changeList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
 		((PluginCollection)changeList).resetChangeAndUploadStatuses();
@@ -87,116 +86,79 @@ public class Installer extends PluginData implements Runnable, Observer {
 	public void stopDownload() {
 		//thread will check if downloadThread is null, and stop action where necessary
 		downloadThread = null;
-		downloader.setDownloadThread(downloadThread);
+		downloader.cancelDownload();
 	}
 
 	//Marking files for removal assumed finished here, thus begin download tasks
 	public void run() {
 		Thread thisThread = Thread.currentThread();
 
-		//This segment gets the size of the download
-		Iterator<PluginObject> iterToDownload = ((PluginCollection)changeList).getIterator(
+		Iterator<PluginObject> iterDownload = ((PluginCollection)changeList).getIterator(
 				PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
-		while (iterToDownload.hasNext()) {
-			PluginObject myPlugin = iterToDownload.next();
-			if (thisThread == downloadThread) {
-				if (myPlugin.isInstallable()) {
-					totalBytes += myPlugin.getFilesize();
-				} else if (myPlugin.isUpdateable()) {
-					totalBytes += myPlugin.getNewFilesize();
-				}
-				System.out.println("totalBytes so far: " + totalBytes);
+		downloaderList = new ArrayList<SourceFile>();
+		while (iterDownload.hasNext()) {
+			PluginObject plugin = iterDownload.next();
+			//For each selected plugin, get target path to save to
+			String name = plugin.getFilename();
+			String saveToPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
+			if (name.startsWith("fiji-")) {
+				File orig = new File(saveToPath);
+				orig.renameTo(new File(saveToPath + ".old"));
 			}
-			else if (thisThread != downloadThread) break;
-		}
 
-		//Downloads the file(s), one by one
-		iterToDownload = ((PluginCollection)changeList).getIterator(
-				PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
-		while (iterToDownload.hasNext() && thisThread == downloadThread) {
-			currentlyDownloading = iterToDownload.next();
-			String name = currentlyDownloading.getFilename();
-			String digest = null;
+			//For each selected plugin, get download URL
 			String date = null;
 			if (currentlyDownloading.isInstallable()) {
-				digest = currentlyDownloading.getmd5Sum();
 				date = currentlyDownloading.getTimestamp();
 			} else if (currentlyDownloading.isUpdateable()) {
-				digest = currentlyDownloading.getNewMd5Sum();
 				date = currentlyDownloading.getNewTimestamp();
 			}
+			String downloadURL = PluginManager.MAIN_URL + name + "-" + date;
+			PluginSource src = new PluginSource(plugin, downloadURL, saveToPath);
+			downloaderList.add(src);
 
-			String saveToPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
-			String downloadURL = "";
-			try {
-				if (name.startsWith("fiji-")) {
-					File orig = new File(saveToPath);
-					orig.renameTo(new File(saveToPath + ".old"));
-				}
+			//Gets the total size of the downloads
+			totalBytes += src.getRecordedFileSize();
+			System.out.println("totalBytes so far: " + totalBytes);
+		}
 
-				//Establish connection to file for this iteration
-				downloadURL = PluginManager.MAIN_URL + name + "-" + date;
-				if (thisThread == downloadThread) {
-					downloader = new Downloader(downloadURL, saveToPath);
-					//Checking if actual filesize consistent with records
-					int recordedSize = 0;
-					if (currentlyDownloading.isInstallable())
-						recordedSize = currentlyDownloading.getFilesize();
-					else if (currentlyDownloading.isUpdateable())
-						recordedSize = currentlyDownloading.getNewFilesize();
-					if (recordedSize != downloader.getSize())
-						throw new Exception("Recorded filesize of " + name + " is " +
-							recordedSize + ". It is not equal to actual content length of " +
-							downloader.getSize() + ". Download will not proceed.");
-					//Configure settings and begin download if no other problems
-					downloader.setDownloadThread(downloadThread);
-					downloader.startDownloadAndObserve(this);
-				}
-				completedBytesTotal += currentBytesSoFar;
-				currentBytesSoFar = 0;
+		try {
+			downloader = new Downloader(downloaderList.iterator());
+			downloader.addListener(this);
+			downloader.startDownload(); //nothing happens if downloaderList is empty
+		} catch (Exception e) {
+			clearDownloadError(currentlyDownloading, e);
+		}
 
-				//if download is not yet cancelled, check if downloaded has valid md5 sum
-				if (thisThread == downloadThread) {
-					String realDigest = getDigest(name, saveToPath);
-					if (!realDigest.equals(digest))
-						throw new Exception("Wrong checksum for " + name + ": Recorded Md5 sum "
-								+ digest + " != Actual Md5 sum " + realDigest);
-					if (name.startsWith("fiji-") && !getPlatform().startsWith("win"))
-						Runtime.getRuntime().exec(new String[] {
-								"chmod", "0755", saveToPath});
-					currentlyDownloading.setChangeStatusToSuccess();
-					System.out.println(currentlyDownloading.getFilename() + " finished download.");
-					System.out.println((thisThread == downloadThread) ? "Thread not stopped" : "Thread stopped, but downloaded????");
-					currentlyDownloading = null;
-				} else {
-					//if download is cancelled, delete any possible incomplete files
-					deleteUnfinished();
-				}
-
-			} catch (Exception e) {
-				//try to delete the file
+		if (thisThread != downloadThread) {
+			//if cancelled, remove any unfinished downloads
+			Iterator<PluginObject> iterator = ((PluginCollection)changeList).getIterator(
+					PluginCollection.FILTER_NO_SUCCESSFUL_CHANGE);
+			while (iterator.hasNext()) {
+				PluginObject plugin = iterator.next();
+				String fullPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY,
+						plugin.getFilename());
 				try {
-					new File(saveToPath).delete();
+					new File(fullPath).delete(); //delete file, if it exists
 				} catch (Exception e2) { }
-				currentlyDownloading.setChangeStatusToFail();
-				currentlyDownloading = null;
-				System.out.println("Could not update " + name + ": " + e.getLocalizedMessage());
 			}
 		}
+
 		isDownloading = false;
-		System.out.println("END OF THREAD");
+		System.out.println("END OF THREAD");		
 	}
 
-	private void deleteUnfinished() {
-		Iterator<PluginObject> iterator = ((PluginCollection)changeList).getIterator(
-				PluginCollection.FILTER_NO_SUCCESSFUL_CHANGE);
-		while (iterator.hasNext()) {
-			PluginObject plugin = iterator.next();
-			String fullPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, plugin.getFilename());
-			try {
-				new File(fullPath).delete(); //delete file, if it exists
-			} catch (Exception e2) { }
-		}
+	private void clearDownloadError(PluginObject plugin, Exception e) {
+		String destination = getSaveToLocation(PluginManager.UPDATE_DIRECTORY,
+				plugin.getFilename());
+		//try to delete the file if inconsistency is found
+		try {
+			new File(destination).delete();
+		} catch (Exception e2) { }
+		currentlyDownloading.setChangeStatusToFail();
+		System.out.println("Could not update " + currentlyDownloading.getFilename() +
+				": " + e.getLocalizedMessage());
+		currentlyDownloading = null;
 	}
 
 	public Iterator<PluginObject> iterDownloaded() {
@@ -245,10 +207,47 @@ public class Installer extends PluginData implements Runnable, Observer {
 		return iterator.hasNext();
 	}
 
-	public void refreshData(Observable subject) {
-		Downloader myDownloader = (Downloader)subject;
-		currentBytesSoFar = myDownloader.getBytesSoFar();
-		System.out.println("Downloaded so far: " + (completedBytesTotal + currentBytesSoFar));
+	//Listener receives notification that download for file has stopped
+	public void completion(SourceFile source) {
+		PluginSource src = (PluginSource)source;
+		currentlyDownloading = src.getPlugin();
+		String filename = currentlyDownloading.getFilename();
+
+		try {
+			//Check filesize
+			int recordedSize = src.getRecordedFileSize();
+			int actualFilesize = getFilesizeFromFile(src.getDestination());
+			if (recordedSize != actualFilesize)
+				throw new Exception("Recorded filesize of " + filename + " is " +
+						recordedSize + ". It is not equal to actual filesize of " +
+						actualFilesize + ".");
+
+			//Check Md5 sum
+			String recordedDigest = src.getRecordedDigest();
+			String actualDigest = getDigest(filename, src.getDestination());
+			if (!recordedDigest.equals(actualDigest))
+				throw new Exception("Wrong checksum for " + filename +
+						": Recorded Md5 sum " + recordedDigest + " != Actual Md5 sum " +
+						actualDigest);
+
+			if (filename.startsWith("fiji-") && !getPlatform().startsWith("win"))
+				Runtime.getRuntime().exec(new String[] {
+						"chmod", "0755", src.getDestination()});
+			currentlyDownloading.setChangeStatusToSuccess();
+			System.out.println(currentlyDownloading.getFilename() + " finished download.");
+			currentlyDownloading = null;
+
+		} catch (Exception e) {
+			clearDownloadError(currentlyDownloading, e);
+		}
+		completedBytesTotal += currentBytesSoFar;
+		currentBytesSoFar = 0;
 	}
 
+	public void update(SourceFile source, int bytesSoFar, int bytesTotal) {
+		PluginSource src = (PluginSource)source;
+		currentlyDownloading = src.getPlugin();
+		currentBytesSoFar = bytesSoFar;
+		System.out.println("Downloaded so far: " + (completedBytesTotal + currentBytesSoFar));
+	}
 }

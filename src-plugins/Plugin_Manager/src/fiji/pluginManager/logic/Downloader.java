@@ -1,110 +1,96 @@
 package fiji.pluginManager.logic;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-
-/*
- * Direct responsibility: Download a file given its URL to a given destination.
- * Updates its download status to its Observer as well.
+/* 
+ * Direct responsibility: Download a list of files given their respective URLs to their
+ * respective destinations. Updates its download status to its Observer as well.
  */
-public class Downloader implements Observable {
-	private volatile Thread downloadThread;
-	private String strDestination;
+public class Downloader {
 	private int downloadedBytes;
 	private int downloadSize;
 	private HttpURLConnection connection;
-	private Vector<Observer> observersList;
+	private List<DownloadListener> listeners;
 	private InputStream in;
 	private OutputStream out;
+	private Iterator<SourceFile> sourceFiles;
+	private SourceFile currentSource;
+	private boolean cancelled; //stop download entirely
 
-	public Downloader(String strURL, String strDestination) throws IOException {
-		if (strURL == null || strDestination == null)
-			throw new Error("Downloader constructor parameters cannot be null");
-		this.strDestination = strDestination;
-		observersList = new Vector<Observer>();
-		connection = (HttpURLConnection)(new URL(strURL)).openConnection();
-		downloadedBytes = 0; //start with nothing downloaded
-		downloadSize = connection.getContentLength();
-		if (downloadSize < 0)
-			throw new Error("Content Length is not known");
+	public Downloader(Iterator<SourceFile> sourceFiles) {
+		this.sourceFiles = sourceFiles;
+		listeners = new ArrayList<DownloadListener>();
 	}
 
-	public int getSize() {
-		return downloadSize;
+	public void cancelDownload() {
+		cancelled = true;
 	}
 
-	public void prepareDownload() throws FileNotFoundException, IOException {
-		System.out.println("Trying to connect to " + connection.getURL().toString() + "...");
-		new File(strDestination).getParentFile().mkdirs();
-		in = connection.getInputStream();
-		out = new FileOutputStream(strDestination);
-	}
+	public void startDownload() throws IOException {
+		while (sourceFiles.hasNext() && !cancelled) {
+			currentSource = sourceFiles.next();
+			//Start connection
+			connection = (HttpURLConnection)(new URL(currentSource.getURL())).openConnection();
+			downloadedBytes = 0; //start with nothing downloaded
+			downloadSize = connection.getContentLength();
+			if (downloadSize < 0)
+				throw new Error("Content Length is not known");
+			notifyListenersUpdate(); //first notification starts from 0
 
-	public byte[] createNewBuffer() {
-		return new byte[65536];
-	}
+			System.out.println("Trying to connect to " + connection.getURL().toString() + "...");
+			new File(currentSource.getDestination()).getParentFile().mkdirs();
+			in = connection.getInputStream();
+			out = new FileOutputStream(currentSource.getDestination());
 
-	public int getNextPart(byte[] buffer) throws IOException {
-		return in.read(buffer);
-	}
+			//Start actual downloading and writing to file
+			byte[] buffer = new byte[65536];
+			int count;
+			while ((count = in.read(buffer)) >= 0 && !cancelled) {
+				out.write(buffer, 0, count);
+				downloadedBytes += count;
+				notifyListenersUpdate();
+			}
 
-	public void writePart(byte[] buffer, int count) throws IOException {
-		out.write(buffer, 0, count);
-		downloadedBytes += count;
-		notifyObservers();
-	}
-
-	public int getBytesSoFar() {
-		return downloadedBytes;
-	}
-
-	public void endConnection() throws IOException {
-		in.close();
-		out.close();
-		connection.disconnect();
-	}
-
-	//convenience method
-	public void startDownloadAndObserve(Observer observer) throws IOException {
-		//if cancelling downloads are needed, use threads to track
-		boolean useThread = (downloadThread == null ? false : true);
-		if (observer != null)
-			register(observer);
-		Thread thisThread = Thread.currentThread();
-
-		//Prepare the necessary download input and output streams
-		prepareDownload();
-		byte[] buffer = createNewBuffer();
-		int count;
-
-		//Start actual downloading and writing to file
-		while ((count = getNextPart(buffer)) >= 0 &&
-				(!useThread || (useThread && thisThread == downloadThread))) {
-			writePart(buffer, count);
-		}
-		endConnection(); //end connection once download done
-	}
-
-	public void setDownloadThread(Thread downloadThread) {
-		this.downloadThread = downloadThread;
-	}
-
-	public void notifyObservers() {
-		for (Observer observer : observersList) {
-			observer.refreshData(this);
+			//end connection once download done
+			notifyListenersCompletion();
+			in.close();
+			out.close();
+			connection.disconnect();
 		}
 	}
 
-	public void register(Observer obs) {
-		observersList.addElement(obs);
+	public void notifyListenersUpdate() {
+		for (DownloadListener listener : listeners) {
+			listener.update(currentSource, downloadedBytes, downloadSize);
+		}
 	}
 
+	public void notifyListenersCompletion() {
+		for (DownloadListener listener : listeners) {
+			listener.completion(currentSource);
+		}
+	}
+
+	public void addListener(DownloadListener listener) {
+		listeners.add(listener);
+	}
+
+	public interface DownloadListener {
+		public void update(SourceFile source, int bytesSoFar, int bytesTotal);
+		public void completion(SourceFile source);
+	}
+
+	public interface SourceFile {
+		public String getDestination();
+		public String getURL();
+	}
 }
