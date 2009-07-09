@@ -765,3 +765,33 @@ Next task:
 Now to wait for official confirmation of certain issues...
 - 1 description for all or 1 description for each?
 - etc...
+
+
+
+9th July, Thursday
+- Downloader, Installer, and XMLFileDownloader heavily refactored
+   ==> Installer now uses specialized listeners...
+   ==> Tracks download status more elegantly... --> e.g.: update(SourceFile source, int bytesSoFar, int bytesTotal)
+   ==> If I got the time remaining after implementation is finished, maybe some of the other classes could do with specialized listeners
+
+- TODO: Move off to finishing off XML writing and reading...
+- In terms of restructuring, I think we can still retain the format of plugins.dtd
+- Only now we consider the latest plugins
+- We'll have to comment out some of the "conditions"
+
+What I gathered so far about future implementation:
+Uploading db.xml
+1) Program asks for editing db.xml
+2) db.xml set to read-only
+3) Program reads db.xml, processes it
+4) When user submits changes...
+5) Read db.xml again to verify it did not change...
+6) Writes to db.xml.lock file (Validating it at the same time)
+7) Finished? Program force rename db.xml.lock to db.xml
+
+Lock ==> db.xml being read-only
+Release it when db.xml.lock no longer exists
+When attempting to write to db.xml.lock, check: If already exists, writing fails.
+
+Other stuff... Questions...
+- To compress both db.xml and plugins.dtd into one file, or standalone?
