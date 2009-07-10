@@ -795,3 +795,25 @@ When attempting to write to db.xml.lock, check: If already exists, writing fails
 
 Other stuff... Questions...
 - To compress both db.xml and plugins.dtd into one file, or standalone?
+
+
+
+10th July, Friday
+- XML read/write implemented as according to Postel's Law
+   ==> current.txt as before
+   ==> db.xml reads "more liberally" so newer XML files can be read by older programs (Backward compatibility)
+   ==> db.xml writes "strictly", using DTD to check
+      ==> XML contents written to memory first
+      ==> XML contents checked using DTD file downloaded (at plugininfo folder)
+      ==> Finally, XML contents written to XML file
+- XML file now compressed before uploading to server
+   ==> XML contents validated using plugins.dtd downloaded earlier, and is then compressed into db.xml.gz and uploaded
+   ==> db.xml.gz is retrieved from server, uncompressed, and is then read and parsed.
+
+TODO:
+- Remaining implementation/improvement of CompressionUtility is to resolve the repeating code it has with DependencyAnalyzer...
+   ==> Should we convert CompressionUtility into FileUtility?
+- Convert XML file into a format that have only latest version information of plugins
+   ==> Both read and write methods
+   ==> DTD structure may retain though
+- ...
