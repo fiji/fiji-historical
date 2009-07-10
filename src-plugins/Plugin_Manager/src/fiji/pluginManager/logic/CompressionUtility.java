@@ -29,6 +29,8 @@ public class CompressionUtility {
 		dout.close();
 	}
 
+	//TODO: This potentially useful method is an exact copy of DependencyAnalyzer's method
+	//How to resolve?
 	//Gets the bytes data of a file
 	public byte[] readStream(InputStream input) throws IOException {
 		byte[] buffer = new byte[1024];
