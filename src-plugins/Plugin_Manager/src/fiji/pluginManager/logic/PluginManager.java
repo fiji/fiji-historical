@@ -16,13 +16,13 @@ import org.xml.sax.SAXException;
  */
 public class PluginManager implements PlugIn, Observer {
 	//TODO: strange, why not the original "/var/www/update/"?
-	public static final String defaultServerPath = "var/www/update/";
+	//public static final String defaultServerPath = "var/www/update/"; //... obselete?
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
 	public static final String TXT_FILENAME = "current.txt";
 	public static final String XML_FILENAME = "db.xml";
 	public static final String DTD_FILENAME = "plugins.dtd";
 	public static final String READ_DIRECTORY = "plugininfo";
-	public static final String WRITE_DIRECTORY = "plugininfo/write";
+	public static final String WRITE_DIRECTORY = "var/www/update/"; //write to local, then uploaded
 	public static final String UPDATE_DIRECTORY = "update";
 
 	//PluginObjects for output at User Interface

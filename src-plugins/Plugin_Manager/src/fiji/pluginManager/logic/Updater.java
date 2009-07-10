@@ -66,8 +66,8 @@ public class Updater extends PluginDataObservable {
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 		xmlFileReader = pluginManager.xmlFileReader;
 
-		xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
-		txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
+		xmlSavepath = PluginManager.WRITE_DIRECTORY + PluginManager.XML_FILENAME;
+		txtSavepath = PluginManager.WRITE_DIRECTORY + PluginManager.TXT_FILENAME;
 	}
 
 	public void generateNewPluginRecords() throws IOException {
@@ -210,7 +210,7 @@ public class Updater extends PluginDataObservable {
 		Transformer serializer = handler.getTransformer();
 		serializer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
 		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.READ_DIRECTORY +
-				"/" + PluginManager.DTD_FILENAME);
+				"/" + PluginManager.DTD_FILENAME); //Relative path where it would be read
 		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
 		serializer.setOutputProperty(XALAN_INDENT_AMOUNT, "4");
 		handler.setResult(streamResult);
