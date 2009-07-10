@@ -9,6 +9,7 @@ import ij.IJ;
 import java.io.IOException;
 import java.util.Iterator;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
 import org.xml.sax.SAXException;
 
@@ -34,6 +35,10 @@ public class Uploader implements Observer {
 			message = e2.getLocalizedMessage();
 		} catch (SAXException e3) {
 			message = e3.getLocalizedMessage();
+		} catch (ParserConfigurationException e4) {
+			message = e4.getLocalizedMessage();
+		} catch (Error e5) {
+			message = e5.getLocalizedMessage();
 		}
 
 		if (message != null) {

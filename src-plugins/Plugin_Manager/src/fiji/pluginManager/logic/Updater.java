@@ -1,18 +1,26 @@
 package fiji.pluginManager.logic;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
 
 /*
@@ -33,6 +41,7 @@ public class Updater extends PluginDataObservable {
 	private String xmlSavepath;
 	private String txtSavepath;
 	private PrintStream xmlPrintStream;
+	private ByteArrayOutputStream xmlWriter; //writes to memory
 	private PrintStream txtPrintStream;
 	private StreamResult streamResult;
 	private SAXTransformerFactory tf;
@@ -57,10 +66,8 @@ public class Updater extends PluginDataObservable {
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 		xmlFileReader = pluginManager.xmlFileReader;
 
-		//xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
-		//txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
-		xmlSavepath = getSaveToLocation(PluginManager.WRITE_DIRECTORY, PluginManager.XML_FILENAME);
-		txtSavepath = getSaveToLocation(PluginManager.WRITE_DIRECTORY, PluginManager.TXT_FILENAME);
+		xmlSavepath = PluginManager.defaultServerPath + PluginManager.XML_FILENAME;
+		txtSavepath = PluginManager.defaultServerPath + PluginManager.TXT_FILENAME;
 	}
 
 	public void generateNewPluginRecords() throws IOException {
@@ -113,9 +120,14 @@ public class Updater extends PluginDataObservable {
 		return null;
 	}
 
-	public void uploadFilesToServer() throws SAXException, TransformerConfigurationException, IOException  {
-		prepareFilesForWriting();
+	public void uploadFilesToServer() throws SAXException, TransformerConfigurationException,
+	IOException, FileNotFoundException, ParserConfigurationException  {
 		writePlugins();
+		System.out.println("Plugins, if any, written to server.");
+		writeXMLToMemory();
+		System.out.println("XML contents written to memory, checking for validation");
+		validateXML();
+		System.out.println("XML contents validated");
 		writeXMLFile();
 		System.out.println("XML file written to server");
 		writeTxtFile();
@@ -124,20 +136,21 @@ public class Updater extends PluginDataObservable {
 		setStatusComplete(); //indicate to observer there's no more tasks
 	}
 
-	//Prepare the print streams to write plugin indexes to (XML file and current.txt)
-	private void prepareFilesForWriting() throws TransformerConfigurationException, IOException {
-		txtPrintStream = new PrintStream(txtSavepath); //current.txt
-		xmlPrintStream = new PrintStream(xmlSavepath); //pluginRecords.xml
-		streamResult = new StreamResult(xmlPrintStream);
-		tf = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
+	private void validateXML() throws ParserConfigurationException, SAXException, IOException {
+		SAXParserFactory factory = SAXParserFactory.newInstance();
+		factory.setValidating(true);
+		factory.setNamespaceAware(true);
+		SAXParser parser = factory.newSAXParser();
 
-		handler = tf.newTransformerHandler();
-		Transformer serializer = handler.getTransformer();
-		serializer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
-		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.WRITE_DIRECTORY + "/" + PluginManager.DTD_FILENAME);
-		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
-		serializer.setOutputProperty(XALAN_INDENT_AMOUNT, "4");
-		handler.setResult(streamResult);
+		XMLReader xr = parser.getXMLReader();
+		xr.setErrorHandler(new XMLFileErrorHandler());
+		xr.parse(new InputSource(new ByteArrayInputStream(xmlWriter.toByteArray())));
+	}
+
+	private void writeXMLFile() throws IOException { //assumed validation is done
+		xmlPrintStream = new PrintStream(xmlSavepath); //pluginRecords.xml
+		xmlPrintStream.write(xmlWriter.toByteArray());
+		xmlPrintStream.close();
 	}
 
 	//Write plugin files (JAR) to the server
@@ -160,7 +173,8 @@ public class Updater extends PluginDataObservable {
 	}
 
 	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
-	private void writeTxtFile() {
+	private void writeTxtFile() throws FileNotFoundException {
+		txtPrintStream = new PrintStream(txtSavepath); //Writing to current.txt
 		changeStatus(PluginManager.TXT_FILENAME, 0, 1);
 
 		//start writing
@@ -176,7 +190,8 @@ public class Updater extends PluginDataObservable {
 					latestPlugin = plugin;
 				}
 			}
-			txtPrintStream.println(latestPlugin.getFilename() + " " +
+			if (!latestPlugin.uploadFailed()) //do not add entry if indicated "failed upload"
+				txtPrintStream.println(latestPlugin.getFilename() + " " +
 					latestPlugin.getTimestamp() + " " + latestPlugin.getmd5Sum());
 		}
 
@@ -185,10 +200,24 @@ public class Updater extends PluginDataObservable {
 	}
 
 	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
-	private void writeXMLFile() throws SAXException {
+	private void writeXMLToMemory() throws SAXException, TransformerConfigurationException {
+		//Prepare XML writing for later purposes of validation
+		xmlWriter = new ByteArrayOutputStream();
+		streamResult = new StreamResult(xmlWriter);
+		tf = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
+
+		handler = tf.newTransformerHandler();
+		Transformer serializer = handler.getTransformer();
+		serializer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
+		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.READ_DIRECTORY +
+				"/" + PluginManager.DTD_FILENAME);
+		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
+		serializer.setOutputProperty(XALAN_INDENT_AMOUNT, "4");
+		handler.setResult(streamResult);
+
 		changeStatus(PluginManager.XML_FILENAME, 0, 1);
 
-		//Start writing
+		//Start writing to memory
 		handler.startDocument();
 		AttributesImpl attrib = new AttributesImpl();
 
@@ -201,8 +230,9 @@ public class Updater extends PluginDataObservable {
 			handler.startElement("", "", "plugin", attrib);
 			List<PluginObject> versionList = newPluginRecords.get(filenameAttribute);
 			for (PluginObject plugin : versionList) {
-				attrib.clear();
-				handler.startElement("", "", "version", attrib);
+				if (!plugin.uploadFailed()) { //do not add entry if indicated "failed upload"
+					attrib.clear();
+					handler.startElement("", "", "version", attrib);
 					writeSimpleTag("checksum", attrib, plugin.getmd5Sum());
 					writeSimpleTag("timestamp", attrib, plugin.getTimestamp());
 					String description = (plugin.getDescription() == null ? "" : plugin.getDescription());
@@ -214,15 +244,15 @@ public class Updater extends PluginDataObservable {
 						for (Dependency dependency : dependencies) {
 							attrib.clear();
 							handler.startElement("", "", "dependency", attrib);
-								writeSimpleTag("filename", attrib, dependency.getFilename());
-								writeSimpleTag("date", attrib, dependency.getTimestamp());
-								//hd.characters(dependency.getRelation().toCharArray(), 0, dependency.getRelation().length());
-								writeSimpleTag("relation", attrib, "at-least");
+							writeSimpleTag("filename", attrib, dependency.getFilename());
+							writeSimpleTag("date", attrib, dependency.getTimestamp());
+							//hd.characters(dependency.getRelation().toCharArray(), 0, dependency.getRelation().length());
+							writeSimpleTag("relation", attrib, "at-least");
 							handler.endElement("", "", "dependency");
 						}
 					}
-					//writeSimpleTag("haha", attrib, "just testing");
-				handler.endElement("", "", "version");
+					handler.endElement("", "", "version");
+				}
 			}
 			handler.endElement("", "", "plugin");
 		}
@@ -230,10 +260,10 @@ public class Updater extends PluginDataObservable {
 		handler.endDocument();
 
 		changeStatus(PluginManager.XML_FILENAME, 1, 1);
-		xmlPrintStream.close();
 	}
 
-	private void writeSimpleTag(String tagName, AttributesImpl attrib, String value) throws SAXException {
+	private void writeSimpleTag(String tagName, AttributesImpl attrib, String value)
+	throws SAXException {
 		attrib.clear();
 		handler.startElement("", "", tagName, attrib);
 		handler.characters(value.toCharArray(), 0, value.length());
