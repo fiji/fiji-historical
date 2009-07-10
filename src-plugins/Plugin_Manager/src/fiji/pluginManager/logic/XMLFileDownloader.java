@@ -1,5 +1,7 @@
 package fiji.pluginManager.logic;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import fiji.pluginManager.logic.Downloader.SourceFile;
@@ -10,7 +12,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 	public void startDownload() {
 		sources = new ArrayList<SourceFile>();
 		//TODO: Replace it with XML and DTD files (2 files to download)
-		downloadAndSave(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME, PluginManager.TXT_FILENAME);
+		addToDownload(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME, PluginManager.TXT_FILENAME);
 		//downloadAndSave(PluginManager.MAIN_URL + PluginManager.XML_FILENAME, PluginManager.XML_FILENAME);
 		//downloadAndSave(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME, PluginManager.DTD_FILENAME);
 
@@ -18,10 +20,26 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		downloader.addListener(this);
 		downloader.startDownload();
 
+		//Uncompress the XML file
+		try {
+			CompressionUtility compressionUtility = new CompressionUtility();
+			String compressedFileLocation = getSaveToLocation(PluginManager.READ_DIRECTORY,
+					PluginManager.XML_COMPRESSED_FILENAME);
+			String xmlFileLocation = getSaveToLocation(PluginManager.READ_DIRECTORY,
+					PluginManager.XML_FILENAME);
+			byte[] data = compressionUtility.getDecompressedData(
+					new FileInputStream(compressedFileLocation));
+			FileOutputStream saveFile = new FileOutputStream(xmlFileLocation); //if needed...
+			saveFile.write(data);
+			saveFile.close();
+		} catch (Exception e) {
+			throw new Error("Failed to decompress XML file.");
+		}
+
 		setStatusComplete(); //indicate to observer there's no more tasks
 	}
 
-	private void downloadAndSave(String url, String filename) {
+	private void addToDownload(String url, String filename) {
 		sources.add(new InformationSource(filename, url,
 				getSaveToLocation(PluginManager.READ_DIRECTORY, filename)));
 	}

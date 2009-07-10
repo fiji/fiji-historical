@@ -19,6 +19,7 @@ public class PluginManager implements PlugIn, Observer {
 	//public static final String defaultServerPath = "var/www/update/"; //... obselete?
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
 	public static final String TXT_FILENAME = "current.txt";
+	public static final String XML_COMPRESSED_FILENAME = "db.xml.gz";
 	public static final String XML_FILENAME = "db.xml";
 	public static final String DTD_FILENAME = "plugins.dtd";
 	public static final String READ_DIRECTORY = "plugininfo";

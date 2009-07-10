@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Iterator;
@@ -40,9 +41,7 @@ import org.xml.sax.helpers.AttributesImpl;
 public class Updater extends PluginDataObservable {
 	private String xmlSavepath;
 	private String txtSavepath;
-	private PrintStream xmlPrintStream;
 	private ByteArrayOutputStream xmlWriter; //writes to memory
-	private PrintStream txtPrintStream;
 	private StreamResult streamResult;
 	private SAXTransformerFactory tf;
 	private TransformerHandler handler;
@@ -66,7 +65,7 @@ public class Updater extends PluginDataObservable {
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 		xmlFileReader = pluginManager.xmlFileReader;
 
-		xmlSavepath = PluginManager.WRITE_DIRECTORY + PluginManager.XML_FILENAME;
+		xmlSavepath = PluginManager.WRITE_DIRECTORY + PluginManager.XML_COMPRESSED_FILENAME;
 		txtSavepath = PluginManager.WRITE_DIRECTORY + PluginManager.TXT_FILENAME;
 	}
 
@@ -148,9 +147,13 @@ public class Updater extends PluginDataObservable {
 	}
 
 	private void writeXMLFile() throws IOException { //assumed validation is done
-		xmlPrintStream = new PrintStream(xmlSavepath); //pluginRecords.xml
-		xmlPrintStream.write(xmlWriter.toByteArray());
-		xmlPrintStream.close();
+		CompressionUtility compressionUtility = new CompressionUtility();
+
+		//Compress and save using given path
+		FileOutputStream xmlOutputStream = new FileOutputStream(xmlSavepath);
+		compressionUtility.compressAndSave(xmlWriter.toByteArray(),
+				xmlOutputStream);
+		xmlOutputStream.close();
 	}
 
 	//Write plugin files (JAR) to the server
@@ -174,7 +177,7 @@ public class Updater extends PluginDataObservable {
 
 	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
 	private void writeTxtFile() throws FileNotFoundException {
-		txtPrintStream = new PrintStream(txtSavepath); //Writing to current.txt
+		PrintStream txtPrintStream = new PrintStream(txtSavepath); //Writing to current.txt
 		changeStatus(PluginManager.TXT_FILENAME, 0, 1);
 
 		//start writing

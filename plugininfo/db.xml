@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pluginRecords SYSTEM "plugininfo/write/plugins.dtd">
+<!DOCTYPE pluginRecords SYSTEM "plugininfo/plugins.dtd">
 <pluginRecords>
     <plugin filename="ij.jar">
         <version>
@@ -120,7 +120,26 @@ This is latest version. Testing purposes, it is to be left uninstalled so as to 
         <version>
             <checksum>0528f1cd0125627b24c300472230b63ffde47607</checksum>
             <timestamp>20090703202454</timestamp>
-            <description/>
+            <description>T
+E
+S
+T
+I
+N
+G
+
+j
+a
+v
+a
+c
+.
+j
+a
+r
+!
+!
+!</description>
             <filesize>1041423</filesize>
         </version>
     </plugin>
