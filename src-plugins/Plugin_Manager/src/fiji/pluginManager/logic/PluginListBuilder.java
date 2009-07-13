@@ -167,6 +167,7 @@ public class PluginListBuilder extends PluginDataObservable {
 				myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(pluginName, pluginDate));
 			} else { //if digest of this plugin does not exist in the records
 				myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
+				//TODO?: Get information from server instead?
 			}
 			pluginCollection.add(myPlugin);
 		}

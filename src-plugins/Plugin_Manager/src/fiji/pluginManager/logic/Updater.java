@@ -50,7 +50,7 @@ public class Updater extends PluginDataObservable {
 
 	//accessible information after uploading tasks are done
 	public List<PluginObject> changesList;
-	private Map<String, List<PluginObject>> newPluginRecords;
+	public Map<String, PluginObject> newPluginRecords;
 	private List<PluginObject> filesToUpload; //list of plugins whose files has to be uploaded
 	private DependencyAnalyzer dependencyAnalyzer;
 	private XMLFileReader xmlFileReader;
@@ -72,51 +72,34 @@ public class Updater extends PluginDataObservable {
 	public void generateNewPluginRecords() throws IOException {
 		//Checking list for Fiji plugins - Either new versions or changes to existing ones
 		filesToUpload = new PluginCollection();
-		newPluginRecords = xmlFileReader.getXMLRecords();
-		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
-		while (pluginNamelist.hasNext()) {
-			String name = pluginNamelist.next();
-			List<PluginObject> versionList = newPluginRecords.get(name);
+		newPluginRecords = xmlFileReader.getLatestFijiPlugins();
+		Iterator<String> filenames = newPluginRecords.keySet().iterator();
+		while (filenames.hasNext()) {
+			String filename = filenames.next();
+			PluginObject plugin = newPluginRecords.get(filename);
 			for (PluginObject pluginToUpload : changesList) {
-				if (pluginToUpload.getFilename().equals(name)) {
-					PluginObject version = getPluginMatchingDigest(pluginToUpload.getmd5Sum(), versionList);
-					if (version != null) {
-						//edit the existing version's details, but no new file uploaded
-						version.setDescription(pluginToUpload.getDescription());
-					} else {
-						//this version does not appear in existing records, therefore add it
-						addPluginToVersionList(pluginToUpload, versionList);
+				if (pluginToUpload.getFilename().equals(plugin.getFilename())) {
+					pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
+					newPluginRecords.put(filename, pluginToUpload);
+					//If it is not part of existing records, it has to be new upgrade
+					if (!pluginToUpload.getmd5Sum().equals(plugin.getmd5Sum())) {
+						filesToUpload.add(pluginToUpload);
 					}
 					break;
 				}
 			}
 		}
-
 		//Checking list for non-Fiji plugins to add to new records
 		for (PluginObject pluginToUpload : changesList) {
 			String name = pluginToUpload.getFilename();
-			List<PluginObject> versionList = newPluginRecords.get(name);
-			if (versionList == null) { //non-Fiji plugin, therefore add it
-				versionList = new PluginCollection();
-				addPluginToVersionList(pluginToUpload, versionList);
-				newPluginRecords.put(name, versionList);
+			PluginObject plugin = newPluginRecords.get(name);
+			if (plugin == null) { //non-Fiji plugin that doesn't exist in records yet
+				//therefore add it as a new Fiji plugin
+				pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
+				newPluginRecords.put(name, pluginToUpload);
+				filesToUpload.add(pluginToUpload);
 			}
 		}
-	}
-
-	private void addPluginToVersionList(PluginObject pluginToUpload, List<PluginObject> versionList) throws IOException {
-		pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
-		versionList.add(pluginToUpload);
-		filesToUpload.add(pluginToUpload); //indicates plugin file itself has to be uploaded
-	}
-
-	private PluginObject getPluginMatchingDigest(String digest, List<PluginObject> pluginList) {
-		for (PluginObject plugin : pluginList) {
-			if (digest.equals(plugin.getmd5Sum())) {
-				return plugin;
-			}
-		}
-		return null;
 	}
 
 	public void uploadFilesToServer() throws SAXException, TransformerConfigurationException,
@@ -184,15 +167,7 @@ public class Updater extends PluginDataObservable {
 		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
 		while (pluginNamelist.hasNext()) {
 			String filename = pluginNamelist.next();
-			List<PluginObject> versionList = newPluginRecords.get(filename);
-			PluginObject latestPlugin = null;
-			for (PluginObject plugin : versionList) {
-				if (latestPlugin == null ||
-					(latestPlugin != null &&
-					latestPlugin.getTimestamp().compareTo(plugin.getTimestamp()) < 0)) {
-					latestPlugin = plugin;
-				}
-			}
+			PluginObject latestPlugin = newPluginRecords.get(filename);
 			if (!latestPlugin.uploadFailed()) //do not add entry if indicated "failed upload"
 				txtPrintStream.println(latestPlugin.getFilename() + " " +
 					latestPlugin.getTimestamp() + " " + latestPlugin.getmd5Sum());
@@ -231,31 +206,29 @@ public class Updater extends PluginDataObservable {
 			attrib.clear();
 			attrib.addAttribute("", "", "filename", "CDATA", filenameAttribute);
 			handler.startElement("", "", "plugin", attrib);
-			List<PluginObject> versionList = newPluginRecords.get(filenameAttribute);
-			for (PluginObject plugin : versionList) {
-				if (!plugin.uploadFailed()) { //do not add entry if indicated "failed upload"
-					attrib.clear();
-					handler.startElement("", "", "version", attrib);
-					writeSimpleTag("checksum", attrib, plugin.getmd5Sum());
-					writeSimpleTag("timestamp", attrib, plugin.getTimestamp());
-					String description = (plugin.getDescription() == null ? "" : plugin.getDescription());
-					writeSimpleTag("description", attrib, description);
-					String strFilesize = "" + plugin.getFilesize();
-					writeSimpleTag("filesize", attrib, strFilesize);
-					if (plugin.getDependencies() != null && plugin.getDependencies().size() > 0) {
-						List<Dependency> dependencies = plugin.getDependencies();
-						for (Dependency dependency : dependencies) {
-							attrib.clear();
-							handler.startElement("", "", "dependency", attrib);
-							writeSimpleTag("filename", attrib, dependency.getFilename());
-							writeSimpleTag("date", attrib, dependency.getTimestamp());
-							//hd.characters(dependency.getRelation().toCharArray(), 0, dependency.getRelation().length());
-							writeSimpleTag("relation", attrib, "at-least");
-							handler.endElement("", "", "dependency");
-						}
+			PluginObject plugin = newPluginRecords.get(filenameAttribute);
+			if (!plugin.uploadFailed()) { //do not add entry if indicated "failed upload"
+				attrib.clear();
+				handler.startElement("", "", "version", attrib);
+				writeSimpleTag("checksum", attrib, plugin.getmd5Sum());
+				writeSimpleTag("timestamp", attrib, plugin.getTimestamp());
+				String description = (plugin.getDescription() == null ? "" : plugin.getDescription());
+				writeSimpleTag("description", attrib, description);
+				String strFilesize = "" + plugin.getFilesize();
+				writeSimpleTag("filesize", attrib, strFilesize);
+				if (plugin.getDependencies() != null && plugin.getDependencies().size() > 0) {
+					List<Dependency> dependencies = plugin.getDependencies();
+					for (Dependency dependency : dependencies) {
+						attrib.clear();
+						handler.startElement("", "", "dependency", attrib);
+						writeSimpleTag("filename", attrib, dependency.getFilename());
+						writeSimpleTag("date", attrib, dependency.getTimestamp());
+						//hd.characters(dependency.getRelation().toCharArray(), 0, dependency.getRelation().length());
+						writeSimpleTag("relation", attrib, "at-least");
+						handler.endElement("", "", "dependency");
 					}
-					handler.endElement("", "", "version");
 				}
+				handler.endElement("", "", "version");
 			}
 			handler.endElement("", "", "plugin");
 		}
