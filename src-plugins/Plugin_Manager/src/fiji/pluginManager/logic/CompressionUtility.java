@@ -1,5 +1,7 @@
 package fiji.pluginManager.logic;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,30 +31,17 @@ public class CompressionUtility {
 		dout.close();
 	}
 
-	//TODO: This potentially useful method is an exact copy of DependencyAnalyzer's method
-	//How to resolve?
-	//Gets the bytes data of a file
-	public byte[] readStream(InputStream input) throws IOException {
-		byte[] buffer = new byte[1024];
-		int offset = 0, len = 0;
-		for (;;) {
-			if (offset == buffer.length)
-				buffer = realloc(buffer,
-						2 * buffer.length);
-			len = input.read(buffer, offset,
-					buffer.length - offset);
-			if (len < 0)
-				return realloc(buffer, offset);
-			offset += len;
-		}
-	}
-
-	private byte[] realloc(byte[] buffer, int newLength) {
-		if (newLength == buffer.length)
-			return buffer;
-		byte[] newBuffer = new byte[newLength];
-		System.arraycopy(buffer, 0, newBuffer, 0,
-				Math.min(newLength, buffer.length));
-		return newBuffer;
+	//Testing
+	public static void main(String args[]) throws IOException {
+		CompressionUtility utility = new CompressionUtility();
+		String compressedFileLocation = PluginManager.READ_DIRECTORY + "/" +
+				PluginManager.XML_COMPRESSED_FILENAME;
+		String xmlFileLocation = PluginManager.READ_DIRECTORY + "/" +
+				PluginManager.XML_FILENAME;
+		byte[] data = utility.getDecompressedData(
+				new FileInputStream(compressedFileLocation));
+		FileOutputStream saveFile = new FileOutputStream(xmlFileLocation); //if needed...
+		saveFile.write(data);
+		saveFile.close();
 	}
 }
