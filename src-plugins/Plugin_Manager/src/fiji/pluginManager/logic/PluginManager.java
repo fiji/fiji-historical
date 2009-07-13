@@ -35,6 +35,9 @@ public class PluginManager implements PlugIn, Observer {
 	private PluginListBuilder pluginListBuilder;
 	public XMLFileReader xmlFileReader;
 
+	//toggle
+	boolean isDeveloper = true;
+
 	public void run(String arg) {
 		try {
 			//Downloads files, convert info into PluginObjects useful for interface usage
@@ -46,7 +49,7 @@ public class PluginManager implements PlugIn, Observer {
 			pluginCollection = pluginListBuilder.pluginCollection;
 			readOnlyList = pluginListBuilder.readOnlyList;
 
-			MainUserInterface mainUserInterface = new MainUserInterface(this);
+			MainUserInterface mainUserInterface = new MainUserInterface(this, isDeveloper);
 			mainUserInterface.setVisible(true);
 		} catch (Error e) {
 			//Interface side: This should handle presentation side of exceptions

@@ -40,7 +40,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private List<PluginObject> viewList;
 
 	//User Interface elements
-	private boolean isDeveloper = true; //temporarily activated by change of code
+	private boolean isDeveloper;
 	private JFrame loadedFrame;
 	private String[] arrViewingOptions;
 	private JTextField txtSearch;
@@ -56,8 +56,9 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private JButton btnUpload;
 	private JButton btnEditDescriptions;
 
-	public MainUserInterface(PluginManager pluginManager) {
+	public MainUserInterface(PluginManager pluginManager, boolean isDeveloper) {
 		super("Plugin Manager");
+		this.isDeveloper = isDeveloper;
 		this.pluginManager = pluginManager;
 
 		//Pulls required information from pluginManager
