@@ -817,3 +817,53 @@ TODO:
    ==> Both read and write methods
    ==> DTD structure may retain though
 - ...
+
+
+
+13th July, Monday
+- Implementation of "one version per plugin" format for XML file
+   ==> The code now assumes XML file only has one version per plugin record - Both reading and writing
+   ==> XML file retains original format as defined by the DTD file.
+   ==> Do I sense a more extensive version of db.xml?
+
+"Algorithm" for uploading files
+1) At Developer's mode
+2) Program downloads db.xml, loads it
+3) Developer chooses plugins he wants to upload, takes action
+4) Generate and validate XML contents
+5) Uploads the plugins first (Fiji_Uploader)
+6) Lock db.xml at the server
+7) Create db.xml.lock at the server (0444)
+   ==> if db.xml.lock creation fails (Already exists), quit
+   ==> Program reads db.xml again to verify it did not change...
+   ==> Upload XML contents to db.xml.lock
+8) Upload new version of current.txt
+9) Finished? Program force rename db.xml.lock to db.xml
+
+Lock ==> db.xml being read-only
+Release it when db.xml.lock no longer exists
+When attempting to write to db.xml.lock, check: If already exists, writing fails.
+
+Pseudocode for Updater.java:
+   Updater.register(Listener)
+   Updater.generateNewPluginRecords()
+   Updater.setupConnection()
+   Updater.uploadFilesToServer()
+      - writeXMLToMemory()
+      - validateXML()
+      - writePlugins() //upload to server
+      - lockAndCreateXML() //at server (locking db.xml.lock)
+      - readOriginalxML()
+      - writeXMLFile()
+      - writeTxtFile()
+      - releaseLock() //force rename db.xml.lock to db.xml
+   Updater.convertUploadStatusesToModified()
+
+   rely on this method:
+   uploadFile(File) {
+      get file data
+      use Fiji Uploader, upload data
+   }
+
+Same question...
+- To compress both db.xml and plugins.dtd into one file, or standalone?
