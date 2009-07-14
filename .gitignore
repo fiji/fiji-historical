@@ -97,3 +97,5 @@
 /plugins/Colocalisation_Analysis.jar
 /plugins/LocalThickness_.jar
 /plugins/Object_Counter3D.jar
+/plugins/Input-Output/HandleExtraFileTypes.class
+/plugins/Analyze/Grid_.class
