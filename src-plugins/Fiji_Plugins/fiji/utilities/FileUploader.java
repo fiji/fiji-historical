@@ -83,6 +83,7 @@ public class FileUploader {
 
 	public synchronized void uploadMultipleFiles(Iterator<File> files) {
 		uploadSize = 0;
+		uploadedBytes = 0;
 		while (files.hasNext()) {
 			File file = files.next();
 			uploadSize += new Long(file.length()).intValue();
@@ -92,9 +93,9 @@ public class FileUploader {
 	}
 
 	public synchronized void uploadFile(File file) {
-		uploadSize = new Long(file.length()).intValue();
-		actualUpload(file);
-		notifyListenersCompletion();
+		List<File> singleFileList = new ArrayList<File>();
+		singleFileList.add(file);
+		uploadMultipleFiles(singleFileList.iterator());
 	}
 
 	private synchronized void actualUpload(File file) {
@@ -104,11 +105,10 @@ public class FileUploader {
 			String path = file.getName().replace(' ', '_');
 
 			// send "C0644 filesize filename"
-			uploadedBytes = 0;
 			String command = "C0444 " + new Long(file.length()).intValue() + " " + path + "\n";
 			out.write(command.getBytes());
 			out.flush();
-			
+
 			//Acknowledgement, going to upload this particular file
 			if (checkAck(in) != 0) {
 				return;
