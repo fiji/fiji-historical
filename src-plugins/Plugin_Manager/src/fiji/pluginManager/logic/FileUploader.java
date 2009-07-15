@@ -18,6 +18,10 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
+/*
+ * This FileUploader is highly specialized to upload plugins and XML information over to
+ * Pacific. There is a series of steps to follow.
+ */
 public class FileUploader {
 	final String user = "uploads";
 	final String host = "pacific.mpi-cbg.de";
@@ -83,6 +87,17 @@ public class FileUploader {
 		System.out.println("Acknowledgement done, prepared to upload file(s)");
 	}
 
+	//TODO
+	public synchronized void uploadXMLFile() {
+		
+	}
+
+	//TODO
+	public synchronized void uploadTextFile() {
+		
+	}
+
+	//TODO: This will become one step in a series of steps
 	public synchronized void uploadFiles(List<SourceFile> sources) throws Exception {
 		uploadSize = 0;
 		uploadedBytes = 0;
