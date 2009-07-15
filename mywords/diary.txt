@@ -867,3 +867,21 @@ Pseudocode for Updater.java:
 
 Same question...
 - To compress both db.xml and plugins.dtd into one file, or standalone?
+
+
+
+14-15th July, Tuesday-Wednesday
+Time to deal with Server-side issues
+- Change: Lock before you upload anything, and release right away when something fails
+   ==> Create the db.xml.lock file immediately at the start of upload
+- Scenario: If there's a disconnection before lock is released.
+   ==> A server-side script can take care of that
+- As it seems, on the client side, the tasks to implement remain largely the same
+
+What's up
+- Now there are two versions of FileUploader.java. One simpler version for Fiji Utilities' Fiji_Uploader.java and the other one for Plugin Manager.
+- Both have been refactored
+- Plugin Manager's FileUploader modified to allow creation of folder and uploading file(s) there, optimization done
+
+What's right next...
+- XML file issues, complete the series of steps in order to achieve Plugin Manager requirement.
