@@ -9,8 +9,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.Map;
+import java.util.TreeMap;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.HostKey;
@@ -83,100 +83,116 @@ public class FileUploader {
 		System.out.println("Acknowledgement done, prepared to upload file(s)");
 	}
 
-	public synchronized void uploadMultipleFiles(Iterator<SourceFile> sources) {
+	public synchronized void uploadFiles(List<SourceFile> sources) throws Exception {
 		uploadSize = 0;
-		while (sources.hasNext()) {
-			SourceFile source = sources.next();
+		uploadedBytes = 0;
+
+		//compile filesize total
+		for (SourceFile source : sources)
 			uploadSize += source.getFilesize();
-			actualUpload(source);
+
+		Map<String, List<SourceFile>> mapDirToSources = compileMapDirToFiles(sources);
+		Iterator<String> directories = mapDirToSources.keySet().iterator();
+		while (directories.hasNext()) {
+			String directory = directories.next();
+			writeFilesInsideDirectory(mapDirToSources.get(directory), directory);
 		}
+		//No exceptions occurred, thus inform listener of upload completion
 		notifyListenersCompletion();
 	}
 
-	public synchronized void uploadFile(SourceFile source) {
-		uploadSize = source.getFilesize();
-		actualUpload(source);
-		notifyListenersCompletion();
-	}
+	//creates a TreeMap of directory locations that map to corresponding files
+	private synchronized Map<String, List<SourceFile>> compileMapDirToFiles(List<SourceFile> sources) {
+		Map<String, List<SourceFile>> mapDirToSources = new TreeMap<String, List<SourceFile>>();
+		for (SourceFile source : sources) {
+			//Format the relative path to get relative directories
+			String formattedPath = source.getRelativePath().replace(File.separator, "/");
+			if (formattedPath.startsWith("/"))
+				formattedPath = formattedPath.substring(1);
+			if (formattedPath.endsWith("/"))
+				formattedPath = formattedPath.substring(0, formattedPath.length()-1);
+			formattedPath = formattedPath.substring(0, formattedPath.lastIndexOf("/"));
 
-	private Deque<String> dirNames;
-	private synchronized void writeFileInsideDirectories(SourceFile source) throws IOException {
-		dirNames = new ArrayDeque<String>();
-		File file = source.getFile();
-		System.out.println("Going to upload " + file.getName());
-		String path = file.getName().replace(' ', '_');
-
-		String formattedPath = source.getRelativePath().replace(File.separator, "/");
-		if (formattedPath.startsWith("/"))
-			formattedPath = formattedPath.substring(1);
-		if (formattedPath.endsWith("/"))
-			formattedPath = formattedPath.substring(0, formattedPath.length()-1);
-		String[] directories = formattedPath.split("/");
-
-		for (int i = 0; i < directories.length; i++) {
-			String name = directories[i];
-			System.out.println(name);
-			dirNames.push(name);
-
-			String command = null;
-			if (i < (directories.length -1)) {
-				command = "D0755 0 " + name + "\n";
+			//Add the location and its file
+			if (!mapDirToSources.containsKey(formattedPath)) {
+				//if no mapping to files for this directory yet
+				List<SourceFile> dirSources = new ArrayList<SourceFile>();
+				dirSources.add(source);
+				mapDirToSources.put(formattedPath, dirSources);
 			} else {
-				command = "C0444 " + source.getFilesize() + " " + path + "\n";
+				List<SourceFile> dirSources = mapDirToSources.get(formattedPath);
+				dirSources.add(source);
 			}
+		}
+		return mapDirToSources;
+	}
+
+	private synchronized void writeFilesInsideDirectory(List<SourceFile> sources,
+			String directory) throws Exception {
+		String[] directoryList = directory.split("/");
+
+		//Go into the directory where the files should lie
+		for (String name : directoryList) {
+			System.out.println("Entering " + name + "...");
+
+			String command = "D0755 0 " + name + "\n";
 			out.write(command.getBytes());
 			out.flush();
 			if (checkAck(in) != 0) {
-				return;
+				throw new Exception("Cannot enter directory.");
 			}
 		}
-		System.out.println("Acknowledged. Upload of " + file.getName() + " will proceed.");
-		
-		// send contents of file
-		FileInputStream input = new FileInputStream(file);
-		byte[] buf = new byte[16384];
-		for (;;) {
-			int len = input.read(buf, 0, buf.length);
-			if (len <= 0)
-				break;
-			out.write(buf, 0, len);
-			uploadedBytes += len;
-			notifyListenersUpdate(); //update listeners every data upload
+		System.out.println("Folder " + directory + " acknowledged. Upload of files will proceed.");
+
+		//Write the file, one by one
+		for (SourceFile source : sources) {
+			currentUpload = source;
+			notifyListenersUpdate();
+
+			File file = source.getFile();
+			String path = file.getName().replace(' ', '_');
+			System.out.println("Going to upload " + file.getName());
+
+			// notification that file is about to be written
+			String command = "C0444 " + source.getFilesize() + " " + path + "\n";
+			out.write(command.getBytes());
+			out.flush();
+			checkAckUploadError();
+
+			// send contents of file
+			FileInputStream input = new FileInputStream(file);
+			byte[] buf = new byte[16384];
+			for (;;) {
+				int len = input.read(buf, 0, buf.length);
+				if (len <= 0)
+					break;
+				out.write(buf, 0, len);
+				uploadedBytes += len;
+				notifyListenersUpdate(); //update listeners every data upload
+			}
+			input.close();
+
+			// send '\0'
+			buf[0] = 0;
+			out.write(buf, 0, 1);
+			out.flush();
+			checkAckUploadError();
+			System.out.println("Acknowledged that file " + source.getRelativePath() + " uploaded.");
 		}
-		input.close();
 
-		// send '\0'
-		buf[0] = 0;
-		out.write(buf, 0, 1);
-		out.flush();
-		if (checkAck(in) != 0)
-			return;
-		System.out.println("Acknowledged that file uploaded.");
-	}
-
-	private synchronized void indicateEndOfDirectories() throws IOException {
-		dirNames.pop(); //last element is a filename
-		while (!dirNames.isEmpty()) {
-			dirNames.pop();
+		//Exiting the directories (Go back to home) after writing the files
+		for (int i = 0; i < directoryList.length; i++) {
 			out.write("E\n".getBytes());
 			out.flush();
-			if (checkAck(in) != 0) {
-				return;
-			}
+			checkAckUploadError();
 		}
+		System.out.println("Folder " + directory + " exited.");
 	}
 
-	private synchronized void actualUpload(SourceFile source) {
-		currentUpload = source;
-		try {
-			writeFileInsideDirectories(source);
-			indicateEndOfDirectories();
-		} catch (IOException e2) {
-			notifyListenersError(e2);
-		} catch (Exception e3) {
-			notifyListenersError(new Exception("Unidentified Exception when uploading " +
-					currentUpload.getFile().getPath()));
-		}
+	private synchronized void checkAckUploadError() throws Exception {
+		if (checkAck(in) != 0)
+			throw new Exception("checkAck failed during uploading " +
+				currentUpload.getRelativePath());
 	}
 
 	public synchronized void disconnectSession() throws IOException {
@@ -268,13 +284,17 @@ public class FileUploader {
 				fileUploader = new FileUploader("incoming");
 				fileUploader.addListener(this);
 				List<SourceFile> files = new ArrayList<SourceFile>();
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/Folder1/Folder2/shoes01.jpg", "Folder1/Folder2/shoes01.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/Folder1/Folder2/taxi01.jpg", "Folder1/Folder2/taxi01.jpg"));
-				fileUploader.uploadMultipleFiles(files.iterator());
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder1/shoes01.jpg", "TestFolder/SubFolder1/shoes01.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder\\SubFolder1\\taxi01.jpg", "/TestFolder/SubFolder1/taxi01.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\shoes01.jpg", "TestFolder\\SubFolder2\\shoes01.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/taxi01.jpg", "TestFolder/SubFolder2/taxi01.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\SubsubFolder\\shoes01.jpg", "/TestFolder/SubFolder2/SubsubFolder/shoes01.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/SubsubFolder/taxi01.jpg", "TestFolder/SubFolder2/SubsubFolder/taxi01.jpg"));
+				fileUploader.uploadFiles(files);
 				fileUploader.disconnectSession();
 				System.out.println("Upload tasks complete.");
 			} catch(Exception e){
-				System.out.println(e.toString());
+				System.out.println(e.getLocalizedMessage());
 			}
 		}
 		public void update(SourceFile source, int bytesSoFar, int bytesTotal) {
