@@ -23,11 +23,11 @@ public class Downloader {
 	private List<DownloadListener> listeners;
 	private InputStream in;
 	private OutputStream out;
-	private Iterator<SourceFile> sourceFiles;
-	private SourceFile currentSource;
+	private Iterator<FileDownload> sourceFiles;
+	private FileDownload currentSource;
 	private boolean cancelled; //stop download entirely
 
-	public Downloader(Iterator<SourceFile> sourceFiles) {
+	public Downloader(Iterator<FileDownload> sourceFiles) {
 		this.sourceFiles = sourceFiles;
 		listeners = new ArrayList<DownloadListener>();
 	}
@@ -102,12 +102,12 @@ public class Downloader {
 	}
 
 	public interface DownloadListener {
-		public void update(SourceFile source, int bytesSoFar, int bytesTotal);
-		public void fileComplete(SourceFile source);
-		public void fileFailed(SourceFile source, Exception e);
+		public void update(FileDownload source, int bytesSoFar, int bytesTotal);
+		public void fileComplete(FileDownload source);
+		public void fileFailed(FileDownload source, Exception e);
 	}
 
-	public interface SourceFile {
+	public interface FileDownload {
 		public String getDestination();
 		public String getURL();
 	}

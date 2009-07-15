@@ -4,13 +4,13 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import fiji.pluginManager.logic.Downloader.SourceFile;
+import fiji.pluginManager.logic.Downloader.FileDownload;
 
 public class XMLFileDownloader extends PluginDataObservable implements Downloader.DownloadListener {
-	private List<SourceFile> sources;
+	private List<FileDownload> sources;
 
 	public void startDownload() {
-		sources = new ArrayList<SourceFile>();
+		sources = new ArrayList<FileDownload>();
 		//TODO: Replace it with XML and DTD files (2 files to download)
 		addToDownload(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME, PluginManager.TXT_FILENAME);
 		//downloadAndSave(PluginManager.MAIN_URL + PluginManager.XML_FILENAME, PluginManager.XML_FILENAME);
@@ -44,7 +44,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 				getSaveToLocation(PluginManager.READ_DIRECTORY, filename)));
 	}
 
-	private class InformationSource implements SourceFile {
+	private class InformationSource implements FileDownload {
 		private String destination;
 		private String url;
 		private String filename;
@@ -68,15 +68,15 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		}
 	}
 
-	public void fileComplete(SourceFile source) {}
+	public void fileComplete(FileDownload source) {}
 
-	public void update(SourceFile source, int bytesSoFar, int bytesTotal) {
+	public void update(FileDownload source, int bytesSoFar, int bytesTotal) {
 		InformationSource src = (InformationSource)source;
 		changeStatus(src.getFilename(), bytesSoFar, bytesTotal);
 		System.out.println("Downloaded so far: " + currentlyLoaded);
 	}
 
-	public void fileFailed(SourceFile source, Exception e) {
+	public void fileFailed(FileDownload source, Exception e) {
 		try {
 			new File(source.getDestination()).delete();
 		} catch (Exception e2) { }

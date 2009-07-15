@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
-import fiji.pluginManager.logic.Downloader.SourceFile;
+import fiji.pluginManager.logic.Downloader.FileDownload;
 
 /*
  * This class' main role is to download selected files, as well as indicate those that
@@ -14,7 +14,7 @@ import fiji.pluginManager.logic.Downloader.SourceFile;
 public class Installer extends PluginData implements Runnable, Downloader.DownloadListener {
 	private volatile Thread downloadThread;
 	private volatile Downloader downloader;
-	private List<SourceFile> downloaderList;
+	private List<FileDownload> downloaderList;
 
 	//Keeping track of status
 	public List<PluginObject> changeList; //list of plugins specified to uninstall/download
@@ -95,7 +95,7 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 
 		Iterator<PluginObject> iterDownload = ((PluginCollection)changeList).getIterator(
 				PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
-		downloaderList = new ArrayList<SourceFile>();
+		downloaderList = new ArrayList<FileDownload>();
 		while (iterDownload.hasNext()) {
 			PluginObject plugin = iterDownload.next();
 			//For each selected plugin, get target path to save to
@@ -114,7 +114,7 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 				date = plugin.getNewTimestamp();
 			}
 			String downloadURL = PluginManager.MAIN_URL + name + "-" + date;
-			PluginSource src = new PluginSource(plugin, downloadURL, saveToPath);
+			PluginDownload src = new PluginDownload(plugin, downloadURL, saveToPath);
 			downloaderList.add(src);
 
 			//Gets the total size of the downloads
@@ -144,7 +144,7 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 		System.out.println("END OF THREAD");		
 	}
 
-	private void resolveDownloadError(PluginSource src, Exception e) {
+	private void resolveDownloadError(PluginDownload src, Exception e) {
 		//try to delete the file
 		try {
 			new File(src.getDestination()).delete();
@@ -201,8 +201,8 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 	}
 
 	//Listener receives notification that download for file has finished
-	public void fileComplete(SourceFile source) {
-		PluginSource src = (PluginSource)source;
+	public void fileComplete(FileDownload source) {
+		PluginDownload src = (PluginDownload)source;
 		currentlyDownloading = src.getPlugin();
 		String filename = currentlyDownloading.getFilename();
 
@@ -238,14 +238,14 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 		currentBytesSoFar = 0;
 	}
 
-	public void update(SourceFile source, int bytesSoFar, int bytesTotal) {
-		PluginSource src = (PluginSource)source;
+	public void update(FileDownload source, int bytesSoFar, int bytesTotal) {
+		PluginDownload src = (PluginDownload)source;
 		currentlyDownloading = src.getPlugin();
 		currentBytesSoFar = bytesSoFar;
 		System.out.println("Downloaded so far: " + (completedBytesTotal + currentBytesSoFar));
 	}
 
-	public void fileFailed(SourceFile source, Exception e) {
-		resolveDownloadError((PluginSource)source, e);
+	public void fileFailed(FileDownload source, Exception e) {
+		resolveDownloadError((PluginDownload)source, e);
 	}
 }

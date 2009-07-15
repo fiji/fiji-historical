@@ -1,50 +1,27 @@
 package fiji.pluginManager.logic;
-import fiji.pluginManager.logic.Downloader.SourceFile;
+import java.io.File;
 
-/*
- * This class' role is to provide download details of a given Plugin for the Downloader
- * utility class to refer to - Through implementing the required SourceFile interface.
- */
+import fiji.pluginManager.logic.FileUploader.SourceFile;
+
 public class PluginSource implements SourceFile {
-	private String destination;
-	private String url;
 	private PluginObject plugin;
 
-	public PluginSource(PluginObject plugin, String url, String destination) {
-		if (plugin == null || url == null || destination == null)
+	public PluginSource(PluginObject plugin) {
+		if (plugin == null)
 			throw new Error("PluginSource constructor parameters cannot be null");
-		this.destination = destination;
-		this.url = url;
 		this.plugin = plugin;
 	}
 
-	public PluginObject getPlugin() {
-		return plugin;
+	public File getFile() {
+		return new File("");
 	}
 
-	public int getRecordedFileSize() {
-		if (plugin.toUpdate())
-			return plugin.getNewFilesize();
+	public int getFilesize() {
 		return plugin.getFilesize();
 	}
 
-	public String getRecordedDigest() {
-		if (plugin.toUpdate())
-			return plugin.getNewMd5Sum();
-		return plugin.getmd5Sum();
+	public String getRelativePath() {
+		return plugin.getFilename();
 	}
 
-	public String getRecordedTimestamp() {
-		if (plugin.toUpdate())
-			return plugin.getNewTimestamp();
-		return plugin.getTimestamp();
-	}
-
-	public String getDestination() { //implemented by SourceFile
-		return destination;
-	}
-
-	public String getURL() { //implemented by SourceFile
-		return url;
-	}
 }

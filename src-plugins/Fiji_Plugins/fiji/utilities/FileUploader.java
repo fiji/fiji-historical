@@ -17,7 +17,30 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
 public class FileUploader {
-	private String hostKey;
+	final String user = "uploads";
+	final String host = "pacific.mpi-cbg.de";
+	final int hostKeyType = HostKey.SSHRSA;
+	final String hostKey =
+		" 00 00 00 07 73 73 68 2d 72 73 61 00 00 00 01 23" +
+		" 00 00 01 01 00 c5 8b 21 2f f2 59 8e d1 b9 de 7f" +
+		" 57 e7 3c c9 d8 d8 0b d7 d2 f7 0e 67 62 3e f6 95" +
+		" 79 09 ec d9 5a 17 3c 9f 31 1c 2a 33 75 d7 a2 1f" +
+		" c2 15 74 ba b7 53 ef f4 94 e3 d9 5c 03 d8 7b bf" +
+		" 23 43 0f 0e f7 87 14 e4 67 0f 64 04 91 f0 9b 24" +
+		" 2a 31 59 7f 86 7f 50 77 6c 35 24 5a 78 9c a9 9a" +
+		" fd a6 39 26 6f bf b0 8d 09 f9 0d fa 64 74 ec f5" +
+		" dc 29 0d 07 e8 7b c5 ac 41 55 27 1c ba b1 d9 8b" +
+		" 2a 56 a6 f7 d8 ad ce 44 7c fd ee d6 91 00 1f 8c" +
+		" a3 ea 0c 68 39 1f c5 65 2f 95 b9 40 28 38 cd bf" +
+		" 01 bf d1 ad e6 c6 34 d7 95 56 ae 2f f1 17 29 e9" +
+		" a5 4e 4c 93 b2 6f e7 7f b2 5d 5c 9b b6 09 27 83" +
+		" aa 87 33 aa 2b de 2a a0 c2 7a 9d 96 6c 0e 32 b3" +
+		" 15 12 f2 8f 3f 9c 03 6f 9a 3b f5 8d 57 c0 9a 17" +
+		" 0a 46 44 72 c4 83 5d 4d 23 1b d9 92 7b 02 98 e4" +
+		" 9a 55 db 33 82 a0 c7 96 86 78 bf 31 fd b4 6c 62" +
+		" bf 42 3a 05 63";
+	final String password = "fiji";
+
 	private Session session;
 	private Channel channel;
 	private List<UploadListener> listeners;
@@ -27,9 +50,9 @@ public class FileUploader {
 	private OutputStream out;
 	private InputStream in;
 
-	public FileUploader(String host, String hostKey, int hostKeyType, String user, String password)
-	throws JSchException, IOException {
-		this.hostKey = hostKey;
+	public FileUploader(String directory) throws JSchException, IOException {
+		if (directory == null)
+			directory = "";
 		listeners = new ArrayList<UploadListener>();
 
 		JSch jsch = new JSch();
@@ -40,17 +63,12 @@ public class FileUploader {
 		session = jsch.getSession(user, host, 22);
 		session.setPassword(password);
 		session.connect();
-	}
-
-	public void openChannelForUpload(String directory) throws JSchException, IOException {
-		if (directory == null)
-			directory = "";
 
 		//Open up a channel to upload files (With possibility of multiple files)
 		channel = session.openChannel("exec");
 		String command = "scp -p -t -r " + directory;
 		((ChannelExec)channel).setCommand(command);
-		
+
 		// get I/O streams for remote scp
 		out = channel.getOutputStream();
 		in = channel.getInputStream();
@@ -63,13 +81,23 @@ public class FileUploader {
 		System.out.println("Acknowledgement done, prepared to upload file(s)");
 	}
 
-	public void uploadMultipleFiles(Iterator<File> files) {
-		while (files.hasNext())
-			uploadFile(files.next());
+	public synchronized void uploadMultipleFiles(Iterator<File> files) {
+		uploadSize = 0;
+		while (files.hasNext()) {
+			File file = files.next();
+			uploadSize += new Long(file.length()).intValue();
+			actualUpload(file);
+		}
+		notifyListenersCompletion();
 	}
 
-	//Standard to upload a file
-	public void uploadFile(File file) {
+	public synchronized void uploadFile(File file) {
+		uploadSize = new Long(file.length()).intValue();
+		actualUpload(file);
+		notifyListenersCompletion();
+	}
+
+	private synchronized void actualUpload(File file) {
 		currentUpload = file;
 		try {
 			System.out.println("Going to upload " + file.getName());
@@ -77,8 +105,7 @@ public class FileUploader {
 
 			// send "C0644 filesize filename"
 			uploadedBytes = 0;
-			uploadSize = new Long(file.length()).intValue();
-			String command = "C0444 " + uploadSize + " " + path + "\n";
+			String command = "C0444 " + new Long(file.length()).intValue() + " " + path + "\n";
 			out.write(command.getBytes());
 			out.flush();
 			
@@ -97,9 +124,8 @@ public class FileUploader {
 					break;
 				out.write(buf, 0, len);
 				uploadedBytes += len;
-				notifyListenersUpdate();
+				notifyListenersUpdate(); //update listeners every data upload
 			}
-			notifyListenersCompletion();
 			input.close();
 
 			// send '\0'
@@ -118,13 +144,10 @@ public class FileUploader {
 		}
 	}
 
-	public void disconnectSession() throws IOException {
-		session.disconnect();
-	}
-
-	public void disconnectChannel() throws IOException {
+	public synchronized void disconnectSession() throws IOException {
 		out.close();
 		channel.disconnect();
+		session.disconnect();
 	}
 
 	static int checkAck(InputStream in) throws IOException {
@@ -171,19 +194,19 @@ public class FileUploader {
 
 	public void notifyListenersUpdate() {
 		for (UploadListener listener : listeners) {
-			listener.update(currentUpload, uploadedBytes, uploadSize);
+			listener.update(currentUpload.getName(), uploadedBytes, uploadSize);
 		}
 	}
 
 	public void notifyListenersCompletion() {
 		for (UploadListener listener : listeners) {
-			listener.uploadComplete(currentUpload);
+			listener.uploadComplete(currentUpload.getName());
 		}
 	}
 
 	public void notifyListenersError(Exception e) {
 		for (UploadListener listener : listeners) {
-			listener.uploadFailed(currentUpload, e);
+			listener.uploadFailed(currentUpload.getName(), e);
 		}
 	}
 
@@ -192,8 +215,8 @@ public class FileUploader {
 	}
 
 	public interface UploadListener {
-		public void update(File source, int bytesSoFar, int bytesTotal);
-		public void uploadComplete(File source);
-		public void uploadFailed(File source, Exception e);
+		public void update(String filename, int bytesSoFar, int bytesTotal);
+		public void uploadComplete(String filename);
+		public void uploadFailed(String filename, Exception e);
 	}
 }
