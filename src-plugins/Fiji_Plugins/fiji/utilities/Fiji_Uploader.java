@@ -43,18 +43,20 @@ public class Fiji_Uploader implements PlugIn, UploadListener {
 	public void run(String arg) {
 		OpenDialog od = new OpenDialog("File to upload", arg);
 		if (od.getDirectory() == null)
-			return; // canceled
+			return; // cancelled
 
 		File file = new File(od.getDirectory(), od.getFileName());
-		fileUploader = new FileUploader(host, hostKey, hostKeyType);
 		try {
-			fileUploader.connectSession(user, pwd);
+			fileUploader = new FileUploader(host, hostKey, hostKeyType, user, pwd);
+			fileUploader.addListener(this);
+			fileUploader.openChannelForUpload("incoming");
+			fileUploader.uploadFile(file);
+			fileUploader.disconnectChannel();
+			fileUploader.disconnectSession();
+			System.out.println("Upload tasks complete.");
 		} catch(Exception e){
 			IJ.error(e.toString());
 		}
-		fileUploader.addListener(this);
-		fileUploader.uploadFile(file);
-		fileUploader.disconnectSession();
 	}
 
 	public void uploadComplete(File source) {

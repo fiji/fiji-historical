@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
@@ -16,68 +17,80 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
 public class FileUploader {
-	private String host;
-	private int hostKeyType;
 	private String hostKey;
-	private JSch jsch;
 	private Session session;
 	private Channel channel;
 	private List<UploadListener> listeners;
 	private File currentUpload;
 	private int uploadedBytes;
 	private int uploadSize;
+	private OutputStream out;
+	private InputStream in;
 
-	public FileUploader(String host, String hostKey, int hostKeyType) {
-		this.host = host;
+	public FileUploader(String host, String hostKey, int hostKeyType, String user, String password)
+	throws JSchException, IOException {
 		this.hostKey = hostKey;
-		this.hostKeyType = hostKeyType;
 		listeners = new ArrayList<UploadListener>();
-	}
 
-	public void connectSession(String user, String password) throws JSchException {
-		jsch = new JSch();
-		HostKey hostKey = new HostKey(host, hostKeyType,
+		JSch jsch = new JSch();
+		HostKey hostKeyObject = new HostKey(host, hostKeyType,
 			getHostKeyBytes());
-		jsch.getHostKeyRepository().add(hostKey, null);
+		jsch.getHostKeyRepository().add(hostKeyObject, null);
 
 		session = jsch.getSession(user, host, 22);
 		session.setPassword(password);
 		session.connect();
 	}
 
+	public void openChannelForUpload(String directory) throws JSchException, IOException {
+		if (directory == null)
+			directory = "";
+
+		//Open up a channel to upload files (With possibility of multiple files)
+		channel = session.openChannel("exec");
+		String command = "scp -p -t -r " + directory;
+		((ChannelExec)channel).setCommand(command);
+		
+		// get I/O streams for remote scp
+		out = channel.getOutputStream();
+		in = channel.getInputStream();
+		channel.connect();
+
+		//Acknowledgement, going to upload file(s)
+		if(checkAck(in) != 0) {
+			return;
+		}
+		System.out.println("Acknowledgement done, prepared to upload file(s)");
+	}
+
+	public void uploadMultipleFiles(Iterator<File> files) {
+		while (files.hasNext())
+			uploadFile(files.next());
+	}
+
 	//Standard to upload a file
 	public void uploadFile(File file) {
 		currentUpload = file;
 		try {
-			// exec 'scp -t file' remotely
+			System.out.println("Going to upload " + file.getName());
 			String path = file.getName().replace(' ', '_');
-			String command = "scp -p -t incoming/" + path;
-			Channel channel = session.openChannel("exec");
-			((ChannelExec)channel).setCommand(command);
-
-			// get I/O streams for remote scp
-			OutputStream out = channel.getOutputStream();
-			InputStream in = channel.getInputStream();
-
-			channel.connect();
-
-			if(checkAck(in) != 0)
-				return;
 
 			// send "C0644 filesize filename"
 			uploadedBytes = 0;
 			uploadSize = new Long(file.length()).intValue();
-			command = "C0444 " + uploadSize + " " + path + "\n";
+			String command = "C0444 " + uploadSize + " " + path + "\n";
 			out.write(command.getBytes());
 			out.flush();
-			if(checkAck(in) != 0)
+			
+			//Acknowledgement, going to upload this particular file
+			if (checkAck(in) != 0) {
 				return;
+			}
+			System.out.println("Acknowledged. Upload of " + file.getName() + " will proceed.");
 
-			// send a content of file
-			IJ.showStatus("Uploading " + file.getName());
+			// send contents of file
 			FileInputStream input = new FileInputStream(file);
 			byte[] buf = new byte[16384];
-			//long total = 0;
 			for (;;) {
 				int len = input.read(buf, 0, buf.length);
 				if (len <= 0)
@@ -95,12 +108,8 @@ public class FileUploader {
 			out.flush();
 			if (checkAck(in) != 0)
 				return;
-			out.close();
+			System.out.println("Acknowledged that file uploaded.");
 
-			channel.disconnect();
-
-		} catch (JSchException e1) {
-			notifyListenersError(e1);
 		} catch (IOException e2) {
 			notifyListenersError(e2);
 		} catch (Exception e3) {
@@ -109,8 +118,13 @@ public class FileUploader {
 		}
 	}
 
-	public void disconnectSession() {
+	public void disconnectSession() throws IOException {
 		session.disconnect();
+	}
+
+	public void disconnectChannel() throws IOException {
+		out.close();
+		channel.disconnect();
 	}
 
 	static int checkAck(InputStream in) throws IOException {
