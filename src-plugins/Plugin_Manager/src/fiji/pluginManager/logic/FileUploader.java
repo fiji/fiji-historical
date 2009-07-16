@@ -56,9 +56,7 @@ public class FileUploader {
 	private OutputStream out;
 	private InputStream in;
 
-	public FileUploader(String directory) throws JSchException, IOException {
-		if (directory == null)
-			directory = "";
+	public FileUploader() throws JSchException, IOException {
 		listeners = new ArrayList<UploadListener>();
 
 		JSch jsch = new JSch();
@@ -72,8 +70,27 @@ public class FileUploader {
 
 		//Open up a channel to upload files (With possibility of multiple files)
 		channel = session.openChannel("exec");
-		String command = "scp -p -t -r " + directory;
+	}
+
+	private synchronized void setCommand(String command) throws Exception {
+		if (out != null)
+			out.close();
 		((ChannelExec)channel).setCommand(command);
+
+		// get I/O streams for remote scp
+		out = channel.getOutputStream();
+		in = channel.getInputStream();
+
+		//Error check
+		if(checkAck(in) != 0) {
+			throw new Exception("Failed to set command " + command);
+		}
+	}
+
+	//Steps to accomplish entire upload task
+	public void beganUpload(List<SourceFile> sources) throws Exception {
+		//Start up
+		((ChannelExec)channel).setCommand("scp -p -t -r incoming");
 
 		// get I/O streams for remote scp
 		out = channel.getOutputStream();
@@ -85,6 +102,8 @@ public class FileUploader {
 			return;
 		}
 		System.out.println("Acknowledgement done, prepared to upload file(s)");
+
+		uploadFiles(sources);
 	}
 
 	//TODO
@@ -97,8 +116,7 @@ public class FileUploader {
 		
 	}
 
-	//TODO: This will become one step in a series of steps
-	public synchronized void uploadFiles(List<SourceFile> sources) throws Exception {
+	private synchronized void uploadFiles(List<SourceFile> sources) throws Exception {
 		uploadSize = 0;
 		uploadedBytes = 0;
 
@@ -126,7 +144,10 @@ public class FileUploader {
 				formattedPath = formattedPath.substring(1);
 			if (formattedPath.endsWith("/"))
 				formattedPath = formattedPath.substring(0, formattedPath.length()-1);
-			formattedPath = formattedPath.substring(0, formattedPath.lastIndexOf("/"));
+			if (formattedPath.indexOf("/") != -1) //remove the file
+				formattedPath = formattedPath.substring(0, formattedPath.lastIndexOf("/"));
+			else
+				formattedPath = "";
 
 			//Add the location and its file
 			if (!mapDirToSources.containsKey(formattedPath)) {
@@ -144,20 +165,23 @@ public class FileUploader {
 
 	private synchronized void writeFilesInsideDirectory(List<SourceFile> sources,
 			String directory) throws Exception {
-		String[] directoryList = directory.split("/");
+		String[] directoryList = null;
+		if (!directory.equals("")) {
+			directoryList = directory.split("/");
 
-		//Go into the directory where the files should lie
-		for (String name : directoryList) {
-			System.out.println("Entering " + name + "...");
+			//Go into the directory where the files should lie
+			for (String name : directoryList) {
+				System.out.println("Entering " + name + "...");
 
-			String command = "D0755 0 " + name + "\n";
-			out.write(command.getBytes());
-			out.flush();
-			if (checkAck(in) != 0) {
-				throw new Exception("Cannot enter directory.");
+				String command = "D0755 0 " + name + "\n";
+				out.write(command.getBytes());
+				out.flush();
+				if (checkAck(in) != 0) {
+					throw new Exception("Cannot enter directory.");
+				}
 			}
+			System.out.println("Folder " + directory + " acknowledged. Upload of files will proceed.");
 		}
-		System.out.println("Folder " + directory + " acknowledged. Upload of files will proceed.");
 
 		//Write the file, one by one
 		for (SourceFile source : sources) {
@@ -196,12 +220,14 @@ public class FileUploader {
 		}
 
 		//Exiting the directories (Go back to home) after writing the files
-		for (int i = 0; i < directoryList.length; i++) {
-			out.write("E\n".getBytes());
-			out.flush();
-			checkAckUploadError();
+		if (directoryList != null) {
+			for (int i = 0; i < directoryList.length; i++) {
+				out.write("E\n".getBytes());
+				out.flush();
+				checkAckUploadError();
+			}
+			System.out.println("Folder " + directory + " exited.");
 		}
-		System.out.println("Folder " + directory + " exited.");
 	}
 
 	private synchronized void checkAckUploadError() throws Exception {
@@ -296,16 +322,17 @@ public class FileUploader {
 		public TestClass() {
 			FileUploader fileUploader;
 			try {
-				fileUploader = new FileUploader("incoming");
+				fileUploader = new FileUploader();
 				fileUploader.addListener(this);
 				List<SourceFile> files = new ArrayList<SourceFile>();
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder1/shoes01.jpg", "TestFolder/SubFolder1/shoes01.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder\\SubFolder1\\taxi01.jpg", "/TestFolder/SubFolder1/taxi01.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\shoes01.jpg", "TestFolder\\SubFolder2\\shoes01.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/taxi01.jpg", "TestFolder/SubFolder2/taxi01.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\SubsubFolder\\shoes01.jpg", "/TestFolder/SubFolder2/SubsubFolder/shoes01.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/SubsubFolder/taxi01.jpg", "TestFolder/SubFolder2/SubsubFolder/taxi01.jpg"));
-				fileUploader.uploadFiles(files);
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder1/shoes04.jpg", "TestFolder/SubFolder1/shoes04.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder\\SubFolder1\\taxi04.jpg", "/TestFolder/SubFolder1/taxi04.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\shoes04.jpg", "TestFolder\\SubFolder2\\shoes04.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/taxi04.jpg", "TestFolder/SubFolder2/taxi04.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\SubsubFolder\\shoes04.jpg", "/TestFolder/SubFolder2/SubsubFolder/shoes04.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/SubsubFolder/taxi04.jpg", "TestFolder/SubFolder2/SubsubFolder/taxi04.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/1db.xml.gz", "1db.xml.gz"));
+				fileUploader.beganUpload(files);
 				fileUploader.disconnectSession();
 				System.out.println("Upload tasks complete.");
 			} catch(Exception e){
