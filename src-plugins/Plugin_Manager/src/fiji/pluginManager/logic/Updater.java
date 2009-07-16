@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +24,9 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
-
 import com.jcraft.jsch.JSchException;
+import fiji.pluginManager.userInterface.Uploader;
+import fiji.pluginManager.logic.FileUploader.SourceFile;
 
 /*
  * This class is responsible for writing updates to server, upon given the updated
@@ -40,10 +42,12 @@ import com.jcraft.jsch.JSchException;
  * - Non-Fiji plugins & new versions of Fiji Plugins will have files AND details uploaded
  * - Uninstalled & up-to-date plugins will ONLY have their details uploaded (i.e.: XML file)
  */
-public class Updater extends PluginDataObservable {
+public class Updater extends PluginData {
 	private FileUploader fileUploader;
-	private String xmlSavepath;
-	private String txtSavepath;
+	private String xmlSavePath;
+	private String xmlRelativePath;
+	private String txtSavePath;
+	private String txtRelativePath;
 	private ByteArrayOutputStream xmlWriter; //writes to memory
 	private StreamResult streamResult;
 	private SAXTransformerFactory tf;
@@ -54,7 +58,7 @@ public class Updater extends PluginDataObservable {
 	//accessible information after uploading tasks are done
 	public List<PluginObject> changesList;
 	public Map<String, PluginObject> newPluginRecords;
-	private List<PluginObject> filesToUpload; //list of plugins whose files has to be uploaded
+	private ArrayList<SourceFile> filesToUpload; //list of plugins whose files has to be uploaded
 	private DependencyAnalyzer dependencyAnalyzer;
 	private XMLFileReader xmlFileReader;
 
@@ -68,13 +72,15 @@ public class Updater extends PluginDataObservable {
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 		xmlFileReader = pluginManager.xmlFileReader;
 
-		xmlSavepath = PluginManager.WRITE_DIRECTORY + PluginManager.XML_COMPRESSED_FILENAME;
-		txtSavepath = PluginManager.WRITE_DIRECTORY + PluginManager.TXT_FILENAME;
+		xmlRelativePath = PluginManager.XML_COMPRESSED_LOCK;
+		txtRelativePath = PluginManager.TXT_FILENAME;
+		xmlSavePath = prefix(xmlRelativePath);
+		txtSavePath = prefix(txtRelativePath);
 	}
 
 	public void generateNewPluginRecords() throws IOException {
 		//Checking list for Fiji plugins - Either new versions or changes to existing ones
-		filesToUpload = new PluginCollection();
+		filesToUpload = new ArrayList<SourceFile>();
 		newPluginRecords = xmlFileReader.getLatestFijiPlugins();
 		Iterator<String> filenames = newPluginRecords.keySet().iterator();
 		while (filenames.hasNext()) {
@@ -86,7 +92,8 @@ public class Updater extends PluginDataObservable {
 					newPluginRecords.put(filename, pluginToUpload);
 					//If it is not part of existing records, it has to be new upgrade
 					if (!pluginToUpload.getmd5Sum().equals(plugin.getmd5Sum())) {
-						filesToUpload.add(pluginToUpload);
+						filesToUpload.add(new UpdateSource(pluginToUpload,
+								prefix(pluginToUpload.getFilename())));
 					}
 					break;
 				}
@@ -100,53 +107,37 @@ public class Updater extends PluginDataObservable {
 				//therefore add it as a new Fiji plugin
 				pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
 				newPluginRecords.put(name, pluginToUpload);
-				filesToUpload.add(pluginToUpload);
+				filesToUpload.add(new UpdateSource(pluginToUpload,
+						prefix(pluginToUpload.getFilename())));
 			}
 		}
 	}
 
-	public void uploadFilesToServer() throws SAXException, TransformerConfigurationException,
-	IOException, FileNotFoundException, ParserConfigurationException, JSchException  {
+	public void uploadFilesToServer(Uploader uploader) throws Exception  {
 		fileUploader = new FileUploader();
-		writeXMLToMemory();
-		System.out.println("XML contents written to memory, checking for validation");
-		validateXML();
-		System.out.println("XML contents validated");
-		//fileUploader.addListener(this);
+		fileUploader.addListener(uploader);
 
-		writePlugins();
-		System.out.println("Plugins, if any, written to server.");
-		writeXMLFile();
-		System.out.println("XML file written to server");
-		writeTxtFile();
-		System.out.println("Text file written to server");
+		generateAndValidateXML();
+		saveXMLFile();
+		saveTextFile();
+		SourceFile xmlSource = new UpdateSource(new File(xmlSavePath), xmlRelativePath);
+		SourceFile txtSource = new UpdateSource(new File(txtSavePath), txtRelativePath);
+		fileUploader.beganUpload(xmlSource, filesToUpload, txtSource);
 		convertUploadStatusesToModified();
-		setStatusComplete(); //indicate to observer there's no more tasks
 	}
 
-	private void validateXML() throws ParserConfigurationException, SAXException, IOException {
-		SAXParserFactory factory = SAXParserFactory.newInstance();
-		factory.setValidating(true);
-		factory.setNamespaceAware(true);
-		SAXParser parser = factory.newSAXParser();
-
-		XMLReader xr = parser.getXMLReader();
-		xr.setErrorHandler(new XMLFileErrorHandler());
-		xr.parse(new InputSource(new ByteArrayInputStream(xmlWriter.toByteArray())));
-	}
-
-	private void writeXMLFile() throws IOException { //assumed validation is done
+	private void saveXMLFile() throws IOException { //assumed validation is done
 		CompressionUtility compressionUtility = new CompressionUtility();
 
 		//Compress and save using given path
-		FileOutputStream xmlOutputStream = new FileOutputStream(xmlSavepath);
+		FileOutputStream xmlOutputStream = new FileOutputStream(xmlSavePath);
 		compressionUtility.compressAndSave(xmlWriter.toByteArray(),
 				xmlOutputStream);
 		xmlOutputStream.close();
 	}
 
 	//Write plugin files (JAR) to the server
-	private void writePlugins() {
+	/*private void writePlugins() {
 		currentlyLoaded = 0;
 		totalToLoad = filesToUpload.size();
 		String remotePrefix = new File(xmlSavepath).getParent();
@@ -162,12 +153,11 @@ public class Updater extends PluginDataObservable {
 				plugin.setUploadStatusToFail();
 			}
 		}
-	}
+	}*/
 
 	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
-	private void writeTxtFile() throws FileNotFoundException {
-		PrintStream txtPrintStream = new PrintStream(txtSavepath); //Writing to current.txt
-		changeStatus(PluginManager.TXT_FILENAME, 0, 1);
+	private void saveTextFile() throws FileNotFoundException {
+		PrintStream txtPrintStream = new PrintStream(txtSavePath); //Writing to current.txt
 
 		//start writing
 		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
@@ -179,12 +169,12 @@ public class Updater extends PluginDataObservable {
 					latestPlugin.getTimestamp() + " " + latestPlugin.getmd5Sum());
 		}
 
-		changeStatus(PluginManager.TXT_FILENAME, 1, 1);
 		txtPrintStream.close();
 	}
 
 	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
-	private void writeXMLToMemory() throws SAXException, TransformerConfigurationException {
+	private void generateAndValidateXML() throws SAXException,
+	TransformerConfigurationException, IOException, ParserConfigurationException {
 		//Prepare XML writing for later purposes of validation
 		xmlWriter = new ByteArrayOutputStream();
 		streamResult = new StreamResult(xmlWriter);
@@ -198,8 +188,6 @@ public class Updater extends PluginDataObservable {
 		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
 		serializer.setOutputProperty(XALAN_INDENT_AMOUNT, "4");
 		handler.setResult(streamResult);
-
-		changeStatus(PluginManager.XML_FILENAME, 0, 1);
 
 		//Start writing to memory
 		handler.startDocument();
@@ -240,8 +228,18 @@ public class Updater extends PluginDataObservable {
 		}
 		handler.endElement("", "", "pluginRecords");
 		handler.endDocument();
+		System.out.println("XML contents written to memory, checking for validation");
 
-		changeStatus(PluginManager.XML_FILENAME, 1, 1);
+		//Validate XML contents
+		SAXParserFactory factory = SAXParserFactory.newInstance();
+		factory.setValidating(true);
+		factory.setNamespaceAware(true);
+		SAXParser parser = factory.newSAXParser();
+
+		XMLReader xr = parser.getXMLReader();
+		xr.setErrorHandler(new XMLFileErrorHandler());
+		xr.parse(new InputSource(new ByteArrayInputStream(xmlWriter.toByteArray())));
+		System.out.println("XML contents validated");
 	}
 
 	private void writeSimpleTag(String tagName, AttributesImpl attrib, String value)

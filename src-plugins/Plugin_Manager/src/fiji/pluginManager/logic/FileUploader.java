@@ -20,7 +20,8 @@ import com.jcraft.jsch.Session;
 
 /*
  * This FileUploader is highly specialized to upload plugins and XML information over to
- * Pacific. There is a series of steps to follow.
+ * Pacific. There is a series of steps to follow. Any exception means entire upload process
+ * is considered invalid.
  */
 public class FileUploader {
 	final String user = "uploads";
@@ -51,8 +52,8 @@ public class FileUploader {
 	private Channel channel;
 	private List<UploadListener> listeners;
 	private SourceFile currentUpload;
-	private int uploadedBytes;
-	private int uploadSize;
+	private long uploadedBytes;
+	private long uploadSize;
 	private OutputStream out;
 	private InputStream in;
 
@@ -90,7 +91,7 @@ public class FileUploader {
 		setCommand("chmod u-w /incoming/db.xml.gz");
 		System.out.println("db.xml.gz set to read-only mode");
 
-		setCommand("chmod u+w /incoming/db.xml.gz.lock");
+		//setCommand("chmod u+w /incoming/db.xml.gz.lock");
 
 		//Prepare for uploading of files
 		String uploadFilesCommand = "scp -p -t -r /incoming";
@@ -111,6 +112,9 @@ public class FileUploader {
 		//setCommand("trap - { rm /var/www/update/db.xml.gz.lock } && " +
 		//		"scp -p -t /var/www/update/ && chmod u+w /var/www/update/db.xml.gz && " +
 		//		"mv /var/www/update/db.xml.gz.lock /var/www/update/db.xml.gz");
+
+		//No exceptions occurred, thus inform listener of upload completion
+		notifyListenersCompletionAll();
 	}
 
 	//Writes the XML file ==> Note that it is a lock version
@@ -136,9 +140,6 @@ public class FileUploader {
 			String directory = directories.next();
 			writeFilesInsideDirectory(mapDirToSources.get(directory), directory);
 		}
-
-		//No exceptions occurred, thus inform listener of upload completion
-		notifyListenersCompletion();
 	}
 
 	//Writes the text file
@@ -221,8 +222,6 @@ public class FileUploader {
 		notifyListenersUpdate();
 
 		File file = source.getFile();
-		System.out.println("Going to upload " + file.getName());
-
 		// notification that file is about to be written
 		String command = permissions + " " + source.getFilesize() + " " + file.getName() + "\n";
 		out.write(command.getBytes());
@@ -247,7 +246,7 @@ public class FileUploader {
 		out.write(buf, 0, 1);
 		out.flush();
 		checkAckUploadError();
-		System.out.println("Acknowledged that file " + source.getRelativePath() + " uploaded.");
+		notifyListenersFileComplete();
 	}
 
 	private synchronized void checkAckUploadError() throws Exception {
@@ -303,21 +302,21 @@ public class FileUploader {
 		throw new RuntimeException("Illegal hex character: " + c);
 	}
 
-	public void notifyListenersUpdate() {
+	private void notifyListenersUpdate() {
 		for (UploadListener listener : listeners) {
 			listener.update(currentUpload, uploadedBytes, uploadSize);
 		}
 	}
 
-	public void notifyListenersCompletion() {
+	private void notifyListenersCompletionAll() {
 		for (UploadListener listener : listeners) {
-			listener.uploadComplete(currentUpload);
+			listener.uploadProcessComplete();
 		}
 	}
-
-	public void notifyListenersError(Exception e) {
+	
+	private void notifyListenersFileComplete() {
 		for (UploadListener listener : listeners) {
-			listener.uploadFailed(currentUpload, e);
+			listener.uploadFileComplete(currentUpload);
 		}
 	}
 
@@ -326,15 +325,15 @@ public class FileUploader {
 	}
 
 	public interface UploadListener {
-		public void update(SourceFile source, int bytesSoFar, int bytesTotal);
-		public void uploadComplete(SourceFile source);
-		public void uploadFailed(SourceFile source, Exception e);
+		public void update(SourceFile source, long bytesSoFar, long bytesTotal);
+		public void uploadFileComplete(SourceFile source);
+		public void uploadProcessComplete();
 	}
 
 	public interface SourceFile {
-		public int getFilesize();
 		public String getRelativePath();
 		public File getFile();
+		public long getFilesize();
 	}
 
 	protected static class TestClass implements FileUploader.UploadListener {
@@ -360,16 +359,12 @@ public class FileUploader {
 				System.out.println(e.getLocalizedMessage());
 			}
 		}
-		public void update(SourceFile source, int bytesSoFar, int bytesTotal) {
+		public void update(SourceFile source, long bytesSoFar, long bytesTotal) {
 			System.out.println(source.getRelativePath() + ": " + bytesSoFar + "/" + bytesTotal);
 		}
 
-		public void uploadComplete(SourceFile source) {
-			System.out.println(source.getRelativePath() + " complete upload");
-		}
-
-		public void uploadFailed(SourceFile source, Exception e) {
-			System.out.println(source.getRelativePath() + " : " + e.toString());
+		public void uploadProcessComplete() {
+			System.out.println("Complete uploads");
 		}
 
 		public class TestSource implements FileUploader.SourceFile {
@@ -385,14 +380,18 @@ public class FileUploader {
 				return new File(absolutePath);
 			}
 
-			public int getFilesize() {
-				return new Long(new File(absolutePath).length()).intValue();
-			}
-
 			public String getRelativePath() {
 				return relativePath;
 			}
+
+			public long getFilesize() {
+				return new File(absolutePath).length();
+			}
 			
+		}
+
+		public void uploadFileComplete(SourceFile source) {
+			System.out.println("Uploaded " + source.getRelativePath() + " successfully");
 		}
 	}
 
