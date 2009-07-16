@@ -13,6 +13,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
 import org.xml.sax.SAXException;
 
+import com.jcraft.jsch.JSchException;
+
 public class Uploader implements Observer {
 	private MainUserInterface mainUserInterface;
 	private Updater updater;
@@ -39,6 +41,8 @@ public class Uploader implements Observer {
 			message = e4.getLocalizedMessage();
 		} catch (Error e5) {
 			message = e5.getLocalizedMessage();
+		} catch (JSchException e6) {
+			message = e6.getLocalizedMessage();
 		}
 
 		if (message != null) {

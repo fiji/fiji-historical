@@ -24,6 +24,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
 
+import com.jcraft.jsch.JSchException;
+
 /*
  * This class is responsible for writing updates to server, upon given the updated
  * plugin records (Map of plugins to all versions).
@@ -39,6 +41,7 @@ import org.xml.sax.helpers.AttributesImpl;
  * - Uninstalled & up-to-date plugins will ONLY have their details uploaded (i.e.: XML file)
  */
 public class Updater extends PluginDataObservable {
+	private FileUploader fileUploader;
 	private String xmlSavepath;
 	private String txtSavepath;
 	private ByteArrayOutputStream xmlWriter; //writes to memory
@@ -103,13 +106,16 @@ public class Updater extends PluginDataObservable {
 	}
 
 	public void uploadFilesToServer() throws SAXException, TransformerConfigurationException,
-	IOException, FileNotFoundException, ParserConfigurationException  {
-		writePlugins();
-		System.out.println("Plugins, if any, written to server.");
+	IOException, FileNotFoundException, ParserConfigurationException, JSchException  {
+		fileUploader = new FileUploader();
 		writeXMLToMemory();
 		System.out.println("XML contents written to memory, checking for validation");
 		validateXML();
 		System.out.println("XML contents validated");
+		//fileUploader.addListener(this);
+
+		writePlugins();
+		System.out.println("Plugins, if any, written to server.");
 		writeXMLFile();
 		System.out.println("XML file written to server");
 		writeTxtFile();

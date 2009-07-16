@@ -67,53 +67,58 @@ public class FileUploader {
 		session = jsch.getSession(user, host, 22);
 		session.setPassword(password);
 		session.connect();
-
-		//Open up a channel to upload files (With possibility of multiple files)
-		channel = session.openChannel("exec");
 	}
 
 	private synchronized void setCommand(String command) throws Exception {
-		if (out != null)
+		if (out != null) {
 			out.close();
+			channel.disconnect();
+		}
+		channel = session.openChannel("exec");
 		((ChannelExec)channel).setCommand(command);
 
 		// get I/O streams for remote scp
 		out = channel.getOutputStream();
 		in = channel.getInputStream();
-
-		//Error check
-		if(checkAck(in) != 0) {
-			throw new Exception("Failed to set command " + command);
-		}
+		channel.connect();
 	}
 
 	//Steps to accomplish entire upload task
-	public void beganUpload(List<SourceFile> sources) throws Exception {
-		//Start up
-		((ChannelExec)channel).setCommand("scp -p -t -r incoming");
+	public void beganUpload(SourceFile xmlSource, List<SourceFile> sources,
+			SourceFile textSource) throws Exception {
+		//Set db.xml.gz to read-only
+		setCommand("chmod u-w /incoming/db.xml.gz");
+		System.out.println("db.xml.gz set to read-only mode");
 
-		// get I/O streams for remote scp
-		out = channel.getOutputStream();
-		in = channel.getInputStream();
-		channel.connect();
+		setCommand("chmod u+w /incoming/db.xml.gz.lock");
 
-		//Acknowledgement, going to upload file(s)
+		//Prepare for uploading of files
+		String uploadFilesCommand = "scp -p -t -r /incoming";
+		setCommand(uploadFilesCommand);
+		//Error check
 		if(checkAck(in) != 0) {
-			return;
+			throw new Exception("Failed to set command " + uploadFilesCommand);
 		}
 		System.out.println("Acknowledgement done, prepared to upload file(s)");
-
+		uploadXMLFileLock(xmlSource); //lock indicator, others cannot overwrite
 		uploadFiles(sources);
+		uploadTextFile(textSource);
+
+		//force rename db.xml.gz.lock to db.xml.gz
+		setCommand("trap - { rm /incoming/db.xml.gz.lock } && " +
+				"scp -p -t /incoming/ && chmod u+w /incoming/db.xml.gz && " +
+				"mv /incoming/db.xml.gz.lock /incoming/db.xml.gz");
+		//setCommand("trap - { rm /var/www/update/db.xml.gz.lock } && " +
+		//		"scp -p -t /var/www/update/ && chmod u+w /var/www/update/db.xml.gz && " +
+		//		"mv /var/www/update/db.xml.gz.lock /var/www/update/db.xml.gz");
 	}
 
-	//TODO
-	public synchronized void uploadXMLFile() {
-		
-	}
-
-	//TODO
-	public synchronized void uploadTextFile() {
-		
+	//Writes the XML file ==> Note that it is a lock version
+	private synchronized void uploadXMLFileLock(SourceFile xmlSource) throws Exception {
+		uploadSize = xmlSource.getFilesize();
+		uploadedBytes = 0;
+		//Write XML file as read-only
+		uploadSingleFile(xmlSource, "C0444");
 	}
 
 	private synchronized void uploadFiles(List<SourceFile> sources) throws Exception {
@@ -124,14 +129,25 @@ public class FileUploader {
 		for (SourceFile source : sources)
 			uploadSize += source.getFilesize();
 
+		//Write plugin files to server
 		Map<String, List<SourceFile>> mapDirToSources = compileMapDirToFiles(sources);
 		Iterator<String> directories = mapDirToSources.keySet().iterator();
 		while (directories.hasNext()) {
 			String directory = directories.next();
 			writeFilesInsideDirectory(mapDirToSources.get(directory), directory);
 		}
+
 		//No exceptions occurred, thus inform listener of upload completion
 		notifyListenersCompletion();
+	}
+
+	//Writes the text file
+	private synchronized void uploadTextFile(SourceFile textSource) throws Exception {
+		uploadSize = textSource.getFilesize();
+		uploadedBytes = 0;
+		
+		//note: do not write as read-only
+		uploadSingleFile(textSource, "C0664");
 	}
 
 	//creates a TreeMap of directory locations that map to corresponding files
@@ -185,38 +201,7 @@ public class FileUploader {
 
 		//Write the file, one by one
 		for (SourceFile source : sources) {
-			currentUpload = source;
-			notifyListenersUpdate();
-
-			File file = source.getFile();
-			String path = file.getName().replace(' ', '_');
-			System.out.println("Going to upload " + file.getName());
-
-			// notification that file is about to be written
-			String command = "C0444 " + source.getFilesize() + " " + path + "\n";
-			out.write(command.getBytes());
-			out.flush();
-			checkAckUploadError();
-
-			// send contents of file
-			FileInputStream input = new FileInputStream(file);
-			byte[] buf = new byte[16384];
-			for (;;) {
-				int len = input.read(buf, 0, buf.length);
-				if (len <= 0)
-					break;
-				out.write(buf, 0, len);
-				uploadedBytes += len;
-				notifyListenersUpdate(); //update listeners every data upload
-			}
-			input.close();
-
-			// send '\0'
-			buf[0] = 0;
-			out.write(buf, 0, 1);
-			out.flush();
-			checkAckUploadError();
-			System.out.println("Acknowledged that file " + source.getRelativePath() + " uploaded.");
+			uploadSingleFile(source, "C0444");
 		}
 
 		//Exiting the directories (Go back to home) after writing the files
@@ -228,6 +213,41 @@ public class FileUploader {
 			}
 			System.out.println("Folder " + directory + " exited.");
 		}
+	}
+
+	private synchronized void uploadSingleFile(SourceFile source, String permissions)
+	throws Exception {
+		currentUpload = source;
+		notifyListenersUpdate();
+
+		File file = source.getFile();
+		System.out.println("Going to upload " + file.getName());
+
+		// notification that file is about to be written
+		String command = permissions + " " + source.getFilesize() + " " + file.getName() + "\n";
+		out.write(command.getBytes());
+		out.flush();
+		checkAckUploadError();
+
+		// send contents of file
+		FileInputStream input = new FileInputStream(file);
+		byte[] buf = new byte[16384];
+		for (;;) {
+			int len = input.read(buf, 0, buf.length);
+			if (len <= 0)
+				break;
+			out.write(buf, 0, len);
+			uploadedBytes += len;
+			notifyListenersUpdate(); //update listeners every data upload
+		}
+		input.close();
+
+		// send '\0'
+		buf[0] = 0;
+		out.write(buf, 0, 1);
+		out.flush();
+		checkAckUploadError();
+		System.out.println("Acknowledged that file " + source.getRelativePath() + " uploaded.");
 	}
 
 	private synchronized void checkAckUploadError() throws Exception {
@@ -259,8 +279,7 @@ public class FileUploader {
 			do {
 				c = in.read();
 				sb.append((char)c);
-			}
-			while (c != '\n');
+			} while (c != '\n');
 			IJ.error(sb.toString());
 		}
 		return b;
@@ -317,7 +336,7 @@ public class FileUploader {
 		public String getRelativePath();
 		public File getFile();
 	}
-	
+
 	protected static class TestClass implements FileUploader.UploadListener {
 		public TestClass() {
 			FileUploader fileUploader;
@@ -325,14 +344,16 @@ public class FileUploader {
 				fileUploader = new FileUploader();
 				fileUploader.addListener(this);
 				List<SourceFile> files = new ArrayList<SourceFile>();
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder1/shoes04.jpg", "TestFolder/SubFolder1/shoes04.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder\\SubFolder1\\taxi04.jpg", "/TestFolder/SubFolder1/taxi04.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\shoes04.jpg", "TestFolder\\SubFolder2\\shoes04.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/taxi04.jpg", "TestFolder/SubFolder2/taxi04.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\SubsubFolder\\shoes04.jpg", "/TestFolder/SubFolder2/SubsubFolder/shoes04.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/SubsubFolder/taxi04.jpg", "TestFolder/SubFolder2/SubsubFolder/taxi04.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/1db.xml.gz", "1db.xml.gz"));
-				fileUploader.beganUpload(files);
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder1/shoes05.jpg", "TestFolder/SubFolder1/shoes05.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder\\SubFolder1\\taxi05.jpg", "/TestFolder/SubFolder1/taxi05.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\shoes05.jpg", "TestFolder\\SubFolder2\\shoes05.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/taxi05.jpg", "TestFolder/SubFolder2/taxi05.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\SubsubFolder\\shoes05.jpg", "/TestFolder/SubFolder2/SubsubFolder/shoes05.jpg"));
+				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/SubsubFolder/taxi05.jpg", "TestFolder/SubFolder2/SubsubFolder/taxi05.jpg"));
+				fileUploader.beganUpload(
+						new TestSource("C:/Users/Yap Chin Kiet/Desktop/db.xml.gz.lock", "db.xml.gz.lock"),
+						files,
+						new TestSource("C:/Users/Yap Chin Kiet/Desktop/current.txt", "current.txt"));
 				fileUploader.disconnectSession();
 				System.out.println("Upload tasks complete.");
 			} catch(Exception e){
