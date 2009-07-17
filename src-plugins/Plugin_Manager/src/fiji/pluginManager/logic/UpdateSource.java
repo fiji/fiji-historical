@@ -4,27 +4,50 @@ import fiji.pluginManager.logic.FileUploader.SourceFile;
 
 public class UpdateSource implements SourceFile {
 	private String absolutePath;
+	private String permissions;
 	private String filenameToWrite;
 	private String directory;
 	private long filesize;
 	private PluginObject plugin = null; //if null, it means not a plugin file
 
-	UpdateSource(PluginObject plugin, String absolutePath) {
+	public UpdateSource(String absolutePath, String relativePath, String permissions) {
+		if (!isValidPermissions(permissions))
+			throw new Error("Permissions settings for " + relativePath + " not valid.");
+		this.permissions = permissions;
+		this.absolutePath = absolutePath;
+		filesize = new File(absolutePath).length();
+		getDirectoryAndFilename(relativePath);
+	}
+
+	UpdateSource(String absolutePath, PluginObject plugin, String permissions) {
 		if (plugin == null)
-			throw new Error("UpdateSource constructor parameters cannot be null");
+			throw new Error("PluginObject parameter cannot be null!");
+		if (!isValidPermissions(permissions))
+			throw new Error("Permissions settings for " + plugin.getFilename() + " not valid.");
 		this.plugin = plugin;
+		this.permissions = permissions;
 		this.absolutePath = absolutePath;
 		filesize = plugin.getFilesize();
 		getDirectoryAndFilename(plugin.getFilename());
 		filenameToWrite += "-" + plugin.getTimestamp();
 	}
 
-	public UpdateSource(File file, String relativePath) {
-		if (file == null)
-			throw new Error("UpdateSource constructor parameters cannot be null");
-		absolutePath = file.getAbsolutePath();
-		filesize = file.length();
-		getDirectoryAndFilename(relativePath);
+	private boolean isValidPermissions(String permissions) {
+		if (permissions.startsWith("C") && permissions.length() > 1 &&
+				isValidNumber(permissions.substring(1))) {
+			return true;
+		} else
+			return false;
+	}
+
+	private boolean isValidNumber(String number) {
+		if (number.startsWith("0") && number.length() == 4) {
+			try {
+				Integer.parseInt(number);
+				return true;
+			} catch (NumberFormatException e) { }
+		}
+		return false;
 	}
 
 	//format relative path to get relative directories and filename separately
@@ -54,6 +77,7 @@ public class UpdateSource implements SourceFile {
 			return directory + "/" + filenameToWrite;
 	}
 
+	//********** Implemented methods for SourceFile **********
 	public long getFilesize() {
 		return filesize;
 	}
@@ -68,5 +92,9 @@ public class UpdateSource implements SourceFile {
 
 	public String getFilenameToWrite() {
 		return filenameToWrite;
+	}
+
+	public String getPermissions() {
+		return permissions;
 	}
 }

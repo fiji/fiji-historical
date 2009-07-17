@@ -92,8 +92,8 @@ public class Updater extends PluginData {
 					newPluginRecords.put(filename, pluginToUpload);
 					//If it is not part of existing records, it has to be new upgrade
 					if (!pluginToUpload.getmd5Sum().equals(plugin.getmd5Sum())) {
-						filesToUpload.add(new UpdateSource(pluginToUpload,
-								prefix(pluginToUpload.getFilename())));
+						filesToUpload.add(new UpdateSource(prefix(pluginToUpload.getFilename()),
+								pluginToUpload, "C0444"));
 					}
 					break;
 				}
@@ -107,8 +107,8 @@ public class Updater extends PluginData {
 				//therefore add it as a new Fiji plugin
 				pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
 				newPluginRecords.put(name, pluginToUpload);
-				filesToUpload.add(new UpdateSource(pluginToUpload,
-						prefix(pluginToUpload.getFilename())));
+				filesToUpload.add(new UpdateSource(prefix(pluginToUpload.getFilename()),
+						pluginToUpload, "C0444"));
 			}
 		}
 	}
@@ -120,8 +120,10 @@ public class Updater extends PluginData {
 		generateAndValidateXML();
 		saveXMLFile();
 		saveTextFile();
-		SourceFile xmlSource = new UpdateSource(new File(xmlSavePath), xmlRelativePath);
-		SourceFile txtSource = new UpdateSource(new File(txtSavePath), txtRelativePath);
+		//_LOCK_ file to write, writable for none but current uploader
+		SourceFile xmlSource = new UpdateSource(xmlSavePath, xmlRelativePath, "C0644");
+		//Text file for old Fiji Updater, writable for all uploaders
+		SourceFile txtSource = new UpdateSource(txtSavePath, txtRelativePath, "C0664");
 		fileUploader.beganUpload(xmlSource, filesToUpload, txtSource);
 		convertUploadStatusesToModified();
 	}

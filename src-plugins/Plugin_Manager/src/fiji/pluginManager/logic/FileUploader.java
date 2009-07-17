@@ -91,8 +91,6 @@ public class FileUploader {
 		setCommand("chmod u-w /incoming/db.xml.gz");
 		System.out.println("db.xml.gz set to read-only mode");
 
-		//setCommand("chmod u+w /incoming/db.xml.gz.lock");
-
 		//Prepare for uploading of files
 		String uploadFilesCommand = "scp -p -t -r /incoming";
 		setCommand(uploadFilesCommand);
@@ -101,9 +99,11 @@ public class FileUploader {
 			throw new Exception("Failed to set command " + uploadFilesCommand);
 		}
 		System.out.println("Acknowledgement done, prepared to upload file(s)");
-		uploadXMLFileLock(xmlSource); //lock indicator, others cannot overwrite
+
+		//Start actual upload
+		uploadSingleFile(xmlSource);
 		uploadFiles(sources);
-		uploadTextFile(textSource);
+		uploadSingleFile(textSource);
 
 		//force rename db.xml.gz.lock to db.xml.gz
 		setCommand("trap 'rm -f /incoming/db.xml.gz.lock' EXIT && " +
@@ -112,19 +112,17 @@ public class FileUploader {
 		//setCommand("trap - { rm -f /var/www/update/db.xml.gz.lock } && " +
 		//		"scp -p -t /var/www/update/ && chmod u+w /var/www/update/db.xml.gz && " +
 		//		"mv /var/www/update/db.xml.gz.lock /var/www/update/db.xml.gz");
-		System.out.println("");
-		//why 
-		//setCommand("rm -f /incoming/db.xml.gz.lock");
+		System.out.println("db.xml.gz.lock renamed back to db.xml.gz");
+
 		//No exceptions occurred, thus inform listener of upload completion
 		notifyListenersCompletionAll();
 	}
 
-	//Writes the XML file ==> Note that it is a lock version
-	private synchronized void uploadXMLFileLock(SourceFile xmlSource) throws Exception {
-		uploadSize = xmlSource.getFilesize();
-		uploadedBytes = 0;
-		//Write XML file as read-only, writable only by current uploader
-		uploadSingleFile(xmlSource, "C0644");
+	//Upload and tracks the status of this single file
+	private synchronized void uploadSingleFile(SourceFile source) throws Exception {
+		List<SourceFile> singleSource = new ArrayList<SourceFile>();
+		singleSource.add(source);
+		uploadFiles(singleSource);
 	}
 
 	private synchronized void uploadFiles(List<SourceFile> sources) throws Exception {
@@ -135,22 +133,13 @@ public class FileUploader {
 		for (SourceFile source : sources)
 			uploadSize += source.getFilesize();
 
-		//Write plugin files to server
+		//Write files to server
 		Map<String, List<SourceFile>> mapDirToSources = compileMapDirToFiles(sources);
 		Iterator<String> directories = mapDirToSources.keySet().iterator();
 		while (directories.hasNext()) {
 			String directory = directories.next();
 			writeFilesInsideDirectory(mapDirToSources.get(directory), directory);
 		}
-	}
-
-	//Writes the text file
-	private synchronized void uploadTextFile(SourceFile textSource) throws Exception {
-		uploadSize = textSource.getFilesize();
-		uploadedBytes = 0;
-		
-		//Writes to home directory. Writable to all uploaders
-		uploadSingleFile(textSource, "C0664");
 	}
 
 	//creates a TreeMap of directory locations that map to corresponding files
@@ -195,7 +184,35 @@ public class FileUploader {
 
 		//Write the file, one by one
 		for (SourceFile source : sources) {
-			uploadSingleFile(source, "C0444");
+			currentUpload = source;
+			notifyListenersUpdate();
+
+			// notification that file is about to be written
+			String command = source.getPermissions() + " " + source.getFilesize() + " " +
+				source.getFilenameToWrite() + "\n";
+			out.write(command.getBytes());
+			out.flush();
+			checkAckUploadError();
+
+			// send contents of file
+			FileInputStream input = new FileInputStream(source.getAbsolutePath());
+			byte[] buf = new byte[16384];
+			for (;;) {
+				int len = input.read(buf, 0, buf.length);
+				if (len <= 0)
+					break;
+				out.write(buf, 0, len);
+				uploadedBytes += len;
+				notifyListenersUpdate(); //update listeners every data upload
+			}
+			input.close();
+
+			// send '\0'
+			buf[0] = 0;
+			out.write(buf, 0, 1);
+			out.flush();
+			checkAckUploadError();
+			notifyListenersFileComplete();
 		}
 
 		//Exiting the directories (Go back to home) after writing the files
@@ -207,39 +224,6 @@ public class FileUploader {
 			}
 			System.out.println("Folder " + directory + " exited.");
 		}
-	}
-
-	private synchronized void uploadSingleFile(SourceFile source, String permissions)
-	throws Exception {
-		currentUpload = source;
-		notifyListenersUpdate();
-
-		// notification that file is about to be written
-		String command = permissions + " " + source.getFilesize() + " " +
-			source.getFilenameToWrite() + "\n";
-		out.write(command.getBytes());
-		out.flush();
-		checkAckUploadError();
-
-		// send contents of file
-		FileInputStream input = new FileInputStream(source.getAbsolutePath());
-		byte[] buf = new byte[16384];
-		for (;;) {
-			int len = input.read(buf, 0, buf.length);
-			if (len <= 0)
-				break;
-			out.write(buf, 0, len);
-			uploadedBytes += len;
-			notifyListenersUpdate(); //update listeners every data upload
-		}
-		input.close();
-
-		// send '\0'
-		buf[0] = 0;
-		out.write(buf, 0, 1);
-		out.flush();
-		checkAckUploadError();
-		notifyListenersFileComplete();
 	}
 
 	private synchronized void checkAckUploadError() throws Exception {
@@ -327,86 +311,7 @@ public class FileUploader {
 		public String getAbsolutePath();
 		public String getDirectory();
 		public String getFilenameToWrite();
+		public String getPermissions();
 		public long getFilesize();
-	}
-
-	protected static class TestClass implements FileUploader.UploadListener {
-		public TestClass() {
-			FileUploader fileUploader;
-			try {
-				fileUploader = new FileUploader();
-				fileUploader.addListener(this);
-				List<SourceFile> files = new ArrayList<SourceFile>();
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder1/shoes05.jpg", "TestFolder/SubFolder1/shoes05.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder\\SubFolder1\\taxi05.jpg", "/TestFolder/SubFolder1/taxi05.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\shoes05.jpg", "TestFolder\\SubFolder2\\shoes05.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/taxi05.jpg", "TestFolder/SubFolder2/taxi05.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2\\SubsubFolder\\shoes05.jpg", "/TestFolder/SubFolder2/SubsubFolder/shoes05.jpg"));
-				files.add(new TestSource("C:/Users/Yap Chin Kiet/Desktop/TestFolder/SubFolder2/SubsubFolder/taxi05.jpg", "TestFolder/SubFolder2/SubsubFolder/taxi05.jpg"));
-				fileUploader.beganUpload(
-						new TestSource("C:/Users/Yap Chin Kiet/Desktop/db.xml.gz.lock", "db.xml.gz.lock"),
-						files,
-						new TestSource("C:/Users/Yap Chin Kiet/Desktop/current.txt", "current.txt"));
-				fileUploader.disconnectSession();
-				System.out.println("Upload tasks complete.");
-			} catch(Exception e){
-				System.out.println(e.getLocalizedMessage());
-			}
-		}
-		public void update(SourceFile source, long bytesSoFar, long bytesTotal) {
-			System.out.println(source.getFilenameToWrite() + ": " + bytesSoFar + "/" + bytesTotal);
-		}
-
-		public void uploadProcessComplete() {
-			System.out.println("Complete uploads");
-		}
-
-		public class TestSource implements FileUploader.SourceFile {
-			String absolutePath;
-			String directory;
-			String filenameToWrite;
-
-			public TestSource(String absolutePath, String relativePath) {
-				this.absolutePath = absolutePath;
-
-				//Format the relative path to get relative directories
-				directory = relativePath.replace(File.separator, "/");
-				if (directory.startsWith("/"))
-					directory = directory.substring(1);
-				if (directory.endsWith("/"))
-					directory = directory.substring(0, directory.length()-1);
-				if (directory.indexOf("/") != -1) { //remove the file
-					filenameToWrite = directory.substring(directory.lastIndexOf("/") +1);
-					directory = directory.substring(0, directory.lastIndexOf("/"));
-				} else {
-					filenameToWrite = directory;
-					directory = "";
-				}
-			}
-
-			public long getFilesize() {
-				return new File(absolutePath).length();
-			}
-
-			public String getAbsolutePath() {
-				return absolutePath;
-			}
-
-			public String getDirectory() {
-				return directory;
-			}
-
-			public String getFilenameToWrite() {
-				return filenameToWrite;
-			}
-		}
-
-		public void uploadFileComplete(SourceFile source) {
-			System.out.println("Uploaded " + source.getFilenameToWrite() + " successfully");
-		}
-	}
-
-	public static void main(String args[]) {
-		TestClass testclass = new TestClass(); //let it roll
 	}
 }
