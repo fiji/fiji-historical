@@ -74,15 +74,14 @@ public class Uploader implements UploadListener {
 	}
 
 	public void update(SourceFile source, long bytesSoFar, long bytesTotal) {
-		IJ.showStatus("Uploading " + source.getRelativePath() + "...");
+		UpdateSource updateSource = (UpdateSource)source;
+		IJ.showStatus("Uploading " + updateSource.getRelativePath() + "...");
 		IJ.showProgress(bytesSoFar / (double)bytesTotal);	
 	}
 
 	public void uploadFileComplete(SourceFile source) {
 		UpdateSource updateSource = (UpdateSource)source;
-		if (updateSource.getPlugin() != null)
-			updateSource.getPlugin().setUploadStatusToFileUploaded();
-		System.out.println("File " + source.getRelativePath() + " uploaded.");
+		System.out.println("File " + updateSource.getRelativePath() + " uploaded.");
 	}
 
 	public void uploadProcessComplete() {

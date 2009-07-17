@@ -3,8 +3,9 @@ import java.io.File;
 import fiji.pluginManager.logic.FileUploader.SourceFile;
 
 public class UpdateSource implements SourceFile {
-	private File file;
-	private String relativePath;
+	private String absolutePath;
+	private String filenameToWrite;
+	private String directory;
 	private long filesize;
 	private PluginObject plugin = null; //if null, it means not a plugin file
 
@@ -12,33 +13,60 @@ public class UpdateSource implements SourceFile {
 		if (plugin == null)
 			throw new Error("UpdateSource constructor parameters cannot be null");
 		this.plugin = plugin;
-		relativePath = plugin.getFilename();
-		file = new File(absolutePath);
+		this.absolutePath = absolutePath;
 		filesize = plugin.getFilesize();
+		getDirectoryAndFilename(plugin.getFilename());
+		filenameToWrite += "-" + plugin.getTimestamp();
 	}
 
 	public UpdateSource(File file, String relativePath) {
 		if (file == null)
 			throw new Error("UpdateSource constructor parameters cannot be null");
-		this.file = file;
-		this.relativePath = relativePath;
+		absolutePath = file.getAbsolutePath();
 		filesize = file.length();
+		getDirectoryAndFilename(relativePath);
 	}
 
-	public PluginObject getPlugin() {
-		return plugin;
+	//format relative path to get relative directories and filename separately
+	private void getDirectoryAndFilename(String relativePath) {
+		directory = relativePath.replace(File.separator, "/");
+		if (directory.startsWith("/"))
+			directory = directory.substring(1);
+		if (directory.endsWith("/"))
+			directory = directory.substring(0, directory.length()-1);
+		if (directory.indexOf("/") != -1) { //remove the file
+			filenameToWrite = directory.substring(directory.lastIndexOf("/") +1);
+			directory = directory.substring(0, directory.lastIndexOf("/"));
+		} else {
+			filenameToWrite = directory;
+			directory = "";
+		}
 	}
 
-	public File getFile() {
-		return file;
+	public boolean isPlugin() {
+		return (plugin != null);
+	}
+	
+	public String getRelativePath() {
+		if (isPlugin())
+			return plugin.getFilename();
+		else
+			return directory + "/" + filenameToWrite;
 	}
 
 	public long getFilesize() {
 		return filesize;
 	}
 
-	public String getRelativePath() {
-		return relativePath;
+	public String getAbsolutePath() {
+		return absolutePath;
 	}
 
+	public String getDirectory() {
+		return directory;
+	}
+
+	public String getFilenameToWrite() {
+		return filenameToWrite;
+	}
 }

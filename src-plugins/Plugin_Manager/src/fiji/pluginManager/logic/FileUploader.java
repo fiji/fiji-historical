@@ -106,13 +106,15 @@ public class FileUploader {
 		uploadTextFile(textSource);
 
 		//force rename db.xml.gz.lock to db.xml.gz
-		setCommand("trap - { rm /incoming/db.xml.gz.lock } && " +
+		setCommand("trap 'rm -f /incoming/db.xml.gz.lock' EXIT && " +
 				"scp -p -t /incoming/ && chmod u+w /incoming/db.xml.gz && " +
 				"mv /incoming/db.xml.gz.lock /incoming/db.xml.gz");
-		//setCommand("trap - { rm /var/www/update/db.xml.gz.lock } && " +
+		//setCommand("trap - { rm -f /var/www/update/db.xml.gz.lock } && " +
 		//		"scp -p -t /var/www/update/ && chmod u+w /var/www/update/db.xml.gz && " +
 		//		"mv /var/www/update/db.xml.gz.lock /var/www/update/db.xml.gz");
-
+		System.out.println("");
+		//why 
+		//setCommand("rm -f /incoming/db.xml.gz.lock");
 		//No exceptions occurred, thus inform listener of upload completion
 		notifyListenersCompletionAll();
 	}
@@ -121,8 +123,8 @@ public class FileUploader {
 	private synchronized void uploadXMLFileLock(SourceFile xmlSource) throws Exception {
 		uploadSize = xmlSource.getFilesize();
 		uploadedBytes = 0;
-		//Write XML file as read-only
-		uploadSingleFile(xmlSource, "C0444");
+		//Write XML file as read-only, writable only by current uploader
+		uploadSingleFile(xmlSource, "C0644");
 	}
 
 	private synchronized void uploadFiles(List<SourceFile> sources) throws Exception {
@@ -147,7 +149,7 @@ public class FileUploader {
 		uploadSize = textSource.getFilesize();
 		uploadedBytes = 0;
 		
-		//note: do not write as read-only
+		//Writes to home directory. Writable to all uploaders
 		uploadSingleFile(textSource, "C0664");
 	}
 
@@ -155,25 +157,16 @@ public class FileUploader {
 	private synchronized Map<String, List<SourceFile>> compileMapDirToFiles(List<SourceFile> sources) {
 		Map<String, List<SourceFile>> mapDirToSources = new TreeMap<String, List<SourceFile>>();
 		for (SourceFile source : sources) {
-			//Format the relative path to get relative directories
-			String formattedPath = source.getRelativePath().replace(File.separator, "/");
-			if (formattedPath.startsWith("/"))
-				formattedPath = formattedPath.substring(1);
-			if (formattedPath.endsWith("/"))
-				formattedPath = formattedPath.substring(0, formattedPath.length()-1);
-			if (formattedPath.indexOf("/") != -1) //remove the file
-				formattedPath = formattedPath.substring(0, formattedPath.lastIndexOf("/"));
-			else
-				formattedPath = "";
+			String directory = source.getDirectory();
 
 			//Add the location and its file
-			if (!mapDirToSources.containsKey(formattedPath)) {
+			if (!mapDirToSources.containsKey(directory)) {
 				//if no mapping to files for this directory yet
 				List<SourceFile> dirSources = new ArrayList<SourceFile>();
 				dirSources.add(source);
-				mapDirToSources.put(formattedPath, dirSources);
+				mapDirToSources.put(directory, dirSources);
 			} else {
-				List<SourceFile> dirSources = mapDirToSources.get(formattedPath);
+				List<SourceFile> dirSources = mapDirToSources.get(directory);
 				dirSources.add(source);
 			}
 		}
@@ -221,15 +214,15 @@ public class FileUploader {
 		currentUpload = source;
 		notifyListenersUpdate();
 
-		File file = source.getFile();
 		// notification that file is about to be written
-		String command = permissions + " " + source.getFilesize() + " " + file.getName() + "\n";
+		String command = permissions + " " + source.getFilesize() + " " +
+			source.getFilenameToWrite() + "\n";
 		out.write(command.getBytes());
 		out.flush();
 		checkAckUploadError();
 
 		// send contents of file
-		FileInputStream input = new FileInputStream(file);
+		FileInputStream input = new FileInputStream(source.getAbsolutePath());
 		byte[] buf = new byte[16384];
 		for (;;) {
 			int len = input.read(buf, 0, buf.length);
@@ -252,7 +245,7 @@ public class FileUploader {
 	private synchronized void checkAckUploadError() throws Exception {
 		if (checkAck(in) != 0)
 			throw new Exception("checkAck failed during uploading " +
-				currentUpload.getRelativePath());
+				currentUpload.getDirectory() + "/" + currentUpload.getFilenameToWrite());
 	}
 
 	public synchronized void disconnectSession() throws IOException {
@@ -331,8 +324,9 @@ public class FileUploader {
 	}
 
 	public interface SourceFile {
-		public String getRelativePath();
-		public File getFile();
+		public String getAbsolutePath();
+		public String getDirectory();
+		public String getFilenameToWrite();
 		public long getFilesize();
 	}
 
@@ -360,7 +354,7 @@ public class FileUploader {
 			}
 		}
 		public void update(SourceFile source, long bytesSoFar, long bytesTotal) {
-			System.out.println(source.getRelativePath() + ": " + bytesSoFar + "/" + bytesTotal);
+			System.out.println(source.getFilenameToWrite() + ": " + bytesSoFar + "/" + bytesTotal);
 		}
 
 		public void uploadProcessComplete() {
@@ -369,29 +363,46 @@ public class FileUploader {
 
 		public class TestSource implements FileUploader.SourceFile {
 			String absolutePath;
-			String relativePath;
+			String directory;
+			String filenameToWrite;
 
 			public TestSource(String absolutePath, String relativePath) {
 				this.absolutePath = absolutePath;
-				this.relativePath = relativePath;
-			}
 
-			public File getFile() {
-				return new File(absolutePath);
-			}
-
-			public String getRelativePath() {
-				return relativePath;
+				//Format the relative path to get relative directories
+				directory = relativePath.replace(File.separator, "/");
+				if (directory.startsWith("/"))
+					directory = directory.substring(1);
+				if (directory.endsWith("/"))
+					directory = directory.substring(0, directory.length()-1);
+				if (directory.indexOf("/") != -1) { //remove the file
+					filenameToWrite = directory.substring(directory.lastIndexOf("/") +1);
+					directory = directory.substring(0, directory.lastIndexOf("/"));
+				} else {
+					filenameToWrite = directory;
+					directory = "";
+				}
 			}
 
 			public long getFilesize() {
 				return new File(absolutePath).length();
 			}
-			
+
+			public String getAbsolutePath() {
+				return absolutePath;
+			}
+
+			public String getDirectory() {
+				return directory;
+			}
+
+			public String getFilenameToWrite() {
+				return filenameToWrite;
+			}
 		}
 
 		public void uploadFileComplete(SourceFile source) {
-			System.out.println("Uploaded " + source.getRelativePath() + " successfully");
+			System.out.println("Uploaded " + source.getFilenameToWrite() + " successfully");
 		}
 	}
 
