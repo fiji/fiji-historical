@@ -885,3 +885,21 @@ What's up
 
 What's right next...
 - XML file issues, complete the series of steps in order to achieve Plugin Manager requirement.
+
+
+
+16-17th July, Thursday-Friday
+Pseudocode for Updater.java:
+   Updater.register(Listener)
+   Updater.generateNewPluginRecords()
+   Updater.uploadFilesToServer()
+      - generateAndValidateXML()
+      - connect()
+      - lockXML()
+      - createLock() //at server, create db.xml.lock
+      - writeFiles() //upload to server
+      - releaseLock() //force rename db.xml.lock to db.xml (Set another command)
+
+Right now, the implementation is that upon any error, entire upload fails.
+
+Goal coming so close......
