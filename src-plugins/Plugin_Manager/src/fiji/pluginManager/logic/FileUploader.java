@@ -1,7 +1,6 @@
 package fiji.pluginManager.logic;
 
 import ij.IJ;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,12 +21,18 @@ import com.jcraft.jsch.Session;
  * This FileUploader is highly specialized to upload plugins and XML information over to
  * Pacific. There is a series of steps to follow. Any exception means entire upload process
  * is considered invalid.
+ * 
+ * 1.) Set db.xml.gz to read-only
+ * 2.) Upload db.xml.gz.lock (Lock file, prevent others from writing it ATM)
+ * 3.) Upload plugin files and current.txt
+ * 4.) If all goes well, force rename db.xml.gz.lock to db.xml.gz
+ * 
  */
 public class FileUploader {
-	final String user = "uploads";
-	final String host = "pacific.mpi-cbg.de";
-	final int hostKeyType = HostKey.SSHRSA;
-	final String hostKey =
+	private final String user = "uploads";
+	private final String host = "pacific.mpi-cbg.de";
+	private final int hostKeyType = HostKey.SSHRSA;
+	private final String hostKey =
 		" 00 00 00 07 73 73 68 2d 72 73 61 00 00 00 01 23" +
 		" 00 00 01 01 00 c5 8b 21 2f f2 59 8e d1 b9 de 7f" +
 		" 57 e7 3c c9 d8 d8 0b d7 d2 f7 0e 67 62 3e f6 95" +
@@ -46,8 +51,9 @@ public class FileUploader {
 		" 0a 46 44 72 c4 83 5d 4d 23 1b d9 92 7b 02 98 e4" +
 		" 9a 55 db 33 82 a0 c7 96 86 78 bf 31 fd b4 6c 62" +
 		" bf 42 3a 05 63";
-	final String password = "fiji";
+	private final String password = "fiji";
 
+	private final String uploadDir = "/incoming/";
 	private Session session;
 	private Channel channel;
 	private List<UploadListener> listeners;
@@ -70,7 +76,39 @@ public class FileUploader {
 		session.connect();
 	}
 
-	private synchronized void setCommand(String command) throws Exception {
+	//Steps to accomplish entire upload task
+	public synchronized void beganUpload(SourceFile xmlSource, List<SourceFile> sources,
+			SourceFile textSource) throws Exception {
+		//Set db.xml.gz to read-only
+		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED_FILENAME);
+		System.out.println("db.xml.gz set to read-only mode");
+
+		//Prepare for uploading of files
+		String uploadFilesCommand = "scp -p -t -r " + uploadDir;
+		setCommand(uploadFilesCommand);
+		if(checkAck(in) != 0) { //Error check
+			throw new Exception("Failed to set command " + uploadFilesCommand);
+		}
+		System.out.println("Acknowledgement done, prepared to upload file(s)");
+
+		//Start actual upload
+		uploadSingleFile(xmlSource);
+		uploadFiles(sources);
+		uploadSingleFile(textSource);
+
+		//Force rename db.xml.gz.lock to db.xml.gz
+		setCommand("trap 'rm -f " + uploadDir + PluginManager.XML_COMPRESSED_LOCK + "' EXIT && " +
+				"scp -p -t " + uploadDir + " && " +
+				"chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED_FILENAME + " && " +
+				"mv " + uploadDir + PluginManager.XML_COMPRESSED_LOCK + " " +
+				uploadDir + PluginManager.XML_COMPRESSED_FILENAME);
+		System.out.println("db.xml.gz.lock renamed back to db.xml.gz");
+
+		//No exceptions occurred, thus inform listener of upload completion
+		notifyListenersCompletionAll();
+	}
+
+	private void setCommand(String command) throws Exception {
 		if (out != null) {
 			out.close();
 			channel.disconnect();
@@ -84,48 +122,14 @@ public class FileUploader {
 		channel.connect();
 	}
 
-	//Steps to accomplish entire upload task
-	public void beganUpload(SourceFile xmlSource, List<SourceFile> sources,
-			SourceFile textSource) throws Exception {
-		//Set db.xml.gz to read-only
-		setCommand("chmod u-w /incoming/db.xml.gz");
-		System.out.println("db.xml.gz set to read-only mode");
-
-		//Prepare for uploading of files
-		String uploadFilesCommand = "scp -p -t -r /incoming";
-		setCommand(uploadFilesCommand);
-		//Error check
-		if(checkAck(in) != 0) {
-			throw new Exception("Failed to set command " + uploadFilesCommand);
-		}
-		System.out.println("Acknowledgement done, prepared to upload file(s)");
-
-		//Start actual upload
-		uploadSingleFile(xmlSource);
-		uploadFiles(sources);
-		uploadSingleFile(textSource);
-
-		//force rename db.xml.gz.lock to db.xml.gz
-		setCommand("trap 'rm -f /incoming/db.xml.gz.lock' EXIT && " +
-				"scp -p -t /incoming/ && chmod u+w /incoming/db.xml.gz && " +
-				"mv /incoming/db.xml.gz.lock /incoming/db.xml.gz");
-		//setCommand("trap - { rm -f /var/www/update/db.xml.gz.lock } && " +
-		//		"scp -p -t /var/www/update/ && chmod u+w /var/www/update/db.xml.gz && " +
-		//		"mv /var/www/update/db.xml.gz.lock /var/www/update/db.xml.gz");
-		System.out.println("db.xml.gz.lock renamed back to db.xml.gz");
-
-		//No exceptions occurred, thus inform listener of upload completion
-		notifyListenersCompletionAll();
-	}
-
 	//Upload and tracks the status of this single file
-	private synchronized void uploadSingleFile(SourceFile source) throws Exception {
+	private void uploadSingleFile(SourceFile source) throws Exception {
 		List<SourceFile> singleSource = new ArrayList<SourceFile>();
 		singleSource.add(source);
 		uploadFiles(singleSource);
 	}
 
-	private synchronized void uploadFiles(List<SourceFile> sources) throws Exception {
+	private void uploadFiles(List<SourceFile> sources) throws Exception {
 		uploadSize = 0;
 		uploadedBytes = 0;
 
@@ -143,7 +147,7 @@ public class FileUploader {
 	}
 
 	//creates a TreeMap of directory locations that map to corresponding files
-	private synchronized Map<String, List<SourceFile>> compileMapDirToFiles(List<SourceFile> sources) {
+	private Map<String, List<SourceFile>> compileMapDirToFiles(List<SourceFile> sources) {
 		Map<String, List<SourceFile>> mapDirToSources = new TreeMap<String, List<SourceFile>>();
 		for (SourceFile source : sources) {
 			String directory = source.getDirectory();
@@ -162,7 +166,7 @@ public class FileUploader {
 		return mapDirToSources;
 	}
 
-	private synchronized void writeFilesInsideDirectory(List<SourceFile> sources,
+	private void writeFilesInsideDirectory(List<SourceFile> sources,
 			String directory) throws Exception {
 		String[] directoryList = null;
 		if (!directory.equals("")) {
@@ -170,16 +174,13 @@ public class FileUploader {
 
 			//Go into the directory where the files should lie
 			for (String name : directoryList) {
-				System.out.println("Entering " + name + "...");
-
 				String command = "D0755 0 " + name + "\n";
 				out.write(command.getBytes());
 				out.flush();
 				if (checkAck(in) != 0) {
-					throw new Exception("Cannot enter directory.");
+					throw new Exception("Cannot enter directory " + name);
 				}
 			}
-			System.out.println("Folder " + directory + " acknowledged. Upload of files will proceed.");
 		}
 
 		//Write the file, one by one
@@ -222,23 +223,22 @@ public class FileUploader {
 				out.flush();
 				checkAckUploadError();
 			}
-			System.out.println("Folder " + directory + " exited.");
 		}
 	}
 
-	private synchronized void checkAckUploadError() throws Exception {
+	private void checkAckUploadError() throws Exception {
 		if (checkAck(in) != 0)
 			throw new Exception("checkAck failed during uploading " +
 				currentUpload.getDirectory() + "/" + currentUpload.getFilenameToWrite());
 	}
 
-	public synchronized void disconnectSession() throws IOException {
+	public void disconnectSession() throws IOException {
 		out.close();
 		channel.disconnect();
 		session.disconnect();
 	}
 
-	static int checkAck(InputStream in) throws IOException {
+	private int checkAck(InputStream in) throws IOException {
 		int b = in.read();
 		// b may be 0 for success,
 		//          1 for error,
@@ -261,7 +261,7 @@ public class FileUploader {
 		return b;
 	}
 
-	byte[] getHostKeyBytes() {
+	private byte[] getHostKeyBytes() {
 		byte[] result = new byte[hostKey.length() / 3];
 		for (int i = 0; i < result.length; i++)
 			result[i] = (byte)(fromHex(hostKey.charAt(i * 3 + 2))
@@ -269,7 +269,7 @@ public class FileUploader {
 		return result;
 	}
 
-	int fromHex(char c) {
+	private int fromHex(char c) {
 		if (c >= '0' && c <= '9')
 			return c - '0';
 		if (c >= 'a' && c <= 'f')
@@ -297,7 +297,7 @@ public class FileUploader {
 		}
 	}
 
-	public void addListener(UploadListener listener) {
+	public synchronized void addListener(UploadListener listener) {
 		listeners.add(listener);
 	}
 

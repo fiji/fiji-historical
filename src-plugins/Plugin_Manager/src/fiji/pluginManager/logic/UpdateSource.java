@@ -8,7 +8,6 @@ public class UpdateSource implements SourceFile {
 	private String filenameToWrite;
 	private String directory;
 	private long filesize;
-	private PluginObject plugin = null; //if null, it means not a plugin file
 
 	public UpdateSource(String absolutePath, String relativePath, String permissions) {
 		if (!isValidPermissions(permissions))
@@ -19,12 +18,11 @@ public class UpdateSource implements SourceFile {
 		getDirectoryAndFilename(relativePath);
 	}
 
-	UpdateSource(String absolutePath, PluginObject plugin, String permissions) {
+	public UpdateSource(String absolutePath, PluginObject plugin, String permissions) {
 		if (plugin == null)
 			throw new Error("PluginObject parameter cannot be null!");
 		if (!isValidPermissions(permissions))
 			throw new Error("Permissions settings for " + plugin.getFilename() + " not valid.");
-		this.plugin = plugin;
 		this.permissions = permissions;
 		this.absolutePath = absolutePath;
 		filesize = plugin.getFilesize();
@@ -66,15 +64,10 @@ public class UpdateSource implements SourceFile {
 		}
 	}
 
-	public boolean isPlugin() {
-		return (plugin != null);
-	}
-	
 	public String getRelativePath() {
-		if (isPlugin())
-			return plugin.getFilename();
-		else
-			return directory + "/" + filenameToWrite;
+		if (directory.equals(""))
+			return filenameToWrite;
+		return directory + "/" + filenameToWrite;
 	}
 
 	//********** Implemented methods for SourceFile **********

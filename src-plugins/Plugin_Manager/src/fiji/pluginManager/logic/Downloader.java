@@ -79,19 +79,19 @@ public class Downloader {
 		}
 	}
 
-	public void notifyListenersUpdate() {
+	private void notifyListenersUpdate() {
 		for (DownloadListener listener : listeners) {
 			listener.update(currentSource, downloadedBytes, downloadSize);
 		}
 	}
 
-	public void notifyListenersCompletion() {
+	private void notifyListenersCompletion() {
 		for (DownloadListener listener : listeners) {
 			listener.fileComplete(currentSource);
 		}
 	}
 
-	public void notifyListenersError(Exception e) {
+	private void notifyListenersError(Exception e) {
 		for (DownloadListener listener : listeners) {
 			listener.fileFailed(currentSource, e);
 		}

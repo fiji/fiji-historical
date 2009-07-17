@@ -2,7 +2,6 @@ package fiji.pluginManager.logic;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,17 +23,16 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
-import com.jcraft.jsch.JSchException;
-import fiji.pluginManager.userInterface.Uploader;
 import fiji.pluginManager.logic.FileUploader.SourceFile;
+import fiji.pluginManager.logic.FileUploader.UploadListener;
 
 /*
  * This class is responsible for writing updates to server, upon given the updated
  * plugin records (Map of plugins to all versions).
  * 
  * 1st Step: Generates the updated records (newPluginRecords & filesToUpload)
- * 2nd Step: Prepare print streams for writing XML and text files.
- * 3rd Step: Upload plugin file(s) to server
+ * 2nd Step: Writes XML and current.txt contents and connect to server
+ * 3rd Step: Upload plugin file(s) and/or other information to server
  * 4th Step: Write XML file using pluginRecords, save to server
  * 5th Step: Write text file using pluginRecords, save to server
  * 
@@ -78,7 +76,7 @@ public class Updater extends PluginData {
 		txtSavePath = prefix(txtRelativePath);
 	}
 
-	public void generateNewPluginRecords() throws IOException {
+	public synchronized void generateNewPluginRecords() throws IOException {
 		//Checking list for Fiji plugins - Either new versions or changes to existing ones
 		filesToUpload = new ArrayList<SourceFile>();
 		newPluginRecords = xmlFileReader.getLatestFijiPlugins();
@@ -113,14 +111,14 @@ public class Updater extends PluginData {
 		}
 	}
 
-	public void uploadFilesToServer(Uploader uploader) throws Exception  {
+	public synchronized void uploadFilesToServer(UploadListener uploadListener) throws Exception  {
 		fileUploader = new FileUploader();
-		fileUploader.addListener(uploader);
+		fileUploader.addListener(uploadListener);
 
 		generateAndValidateXML();
 		saveXMLFile();
 		saveTextFile();
-		//_LOCK_ file to write, writable for none but current uploader
+		//_Lock_ file, writable for none but current uploader
 		SourceFile xmlSource = new UpdateSource(xmlSavePath, xmlRelativePath, "C0644");
 		//Text file for old Fiji Updater, writable for all uploaders
 		SourceFile txtSource = new UpdateSource(txtSavePath, txtRelativePath, "C0664");
@@ -137,25 +135,6 @@ public class Updater extends PluginData {
 				xmlOutputStream);
 		xmlOutputStream.close();
 	}
-
-	//Write plugin files (JAR) to the server
-	/*private void writePlugins() {
-		currentlyLoaded = 0;
-		totalToLoad = filesToUpload.size();
-		String remotePrefix = new File(xmlSavepath).getParent();
-		for (PluginObject plugin : filesToUpload) {
-			taskname = plugin.getFilename();
-			String sourcePath = prefix(taskname);
-			String targetPath = remotePrefix + File.separator + taskname + "-" + plugin.getTimestamp();
-			try {
-				copyFile(sourcePath, targetPath);
-				plugin.setUploadStatusToFileUploaded();
-				changeStatus(taskname, ++currentlyLoaded, totalToLoad);
-			} catch (IOException e) {
-				plugin.setUploadStatusToFail();
-			}
-		}
-	}*/
 
 	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
 	private void saveTextFile() throws FileNotFoundException {
