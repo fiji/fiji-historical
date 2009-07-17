@@ -37,10 +37,18 @@ public class XMLFileReader extends DefaultHandler {
 	private String dependencyRelation;
 	private String currentTag;
 
-	private Map<String, PluginObject> latestPlugins;
+	//TODO
+	/*
+	 pluginRecords will consist of plugin names mapped to list of their respective versions.
+	 Latest version can be retrieved using PluginCollection's method
+	 */
+	//private Map<String, List<PluginObject>> pluginRecords;
+	private Map<String, PluginObject> pluginRecords;
 
 	public XMLFileReader(String fileLocation) throws ParserConfigurationException, IOException, SAXException {
-		latestPlugins = new TreeMap<String, PluginObject>();
+		//TODO
+		//pluginRecords = new TreeMap<String, List<PluginObject>>();
+		pluginRecords = new TreeMap<String, PluginObject>();
 		
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		//factory.setValidating(true); //commented out per postel's law
@@ -53,16 +61,9 @@ public class XMLFileReader extends DefaultHandler {
 		xr.parse(new InputSource(fileLocation));
 	}
 
-	public Map<String, String> getLatestDigests() {
-		return null;
-	}
-
-	public Map<String, String> getLatestDates() {
-		return null;
-	}
-
+	//TODO: The role this method performs should be left unchanged, just refactor it
 	public void getLatestDigestsAndDates(Map<String, String> latestDigests, Map<String, String> latestDates) {
-		Iterator<PluginObject> iterPlugins = latestPlugins.values().iterator();
+		Iterator<PluginObject> iterPlugins = pluginRecords.values().iterator();
 		while (iterPlugins.hasNext()) {
 			PluginObject plugin = iterPlugins.next();
 			latestDigests.put(plugin.getFilename(), plugin.getmd5Sum());
@@ -70,12 +71,13 @@ public class XMLFileReader extends DefaultHandler {
 		}
 	}
 
+	//TODO
 	public Map<String,PluginObject> getLatestFijiPlugins() {
-		return latestPlugins;
+		return pluginRecords;
 	}
 
 	private PluginObject getPluginMatching(String filename, String timestamp) {
-		PluginObject plugin = latestPlugins.get(filename);
+		PluginObject plugin = pluginRecords.get(filename);
 		if (plugin != null) {
 			if (plugin.getTimestamp().equals(timestamp))
 				return plugin;
@@ -108,7 +110,7 @@ public class XMLFileReader extends DefaultHandler {
 
 	//Get timestamp associated with specified version, assumed filename & digest are correct
 	public String getTimestamp(String outputFilename, String outputDigest) {
-		PluginObject plugin = latestPlugins.get(outputFilename);
+		PluginObject plugin = pluginRecords.get(outputFilename);
 		if (plugin != null) {
 			if (plugin.getmd5Sum().equals(outputDigest))
 				return plugin.getTimestamp();
@@ -166,7 +168,7 @@ public class XMLFileReader extends DefaultHandler {
 			plugin.setFilesize(Integer.parseInt(filesize));
 			if (dependencyList.size() > 0)
 				plugin.setDependency(dependencyList);
-			latestPlugins.put(plugin.getFilename(), plugin);
+			pluginRecords.put(plugin.getFilename(), plugin);
 
 		} else if (tagName.equals("dependency")) {
 			if (dependencyRelation.toLowerCase().equals(Dependency.RELATION_AT_LEAST)) {

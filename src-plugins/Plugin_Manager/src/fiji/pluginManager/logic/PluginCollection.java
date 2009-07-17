@@ -229,6 +229,15 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return null;
 	}
 
+	//this method assumes list of plugins are of the same filename (i.e.: different versions)
+	public PluginObject getLatestPlugin() {
+		PluginObject latest = null;
+		for (PluginObject plugin : this)
+			if (latest == null || plugin.getTimestamp().compareTo(latest.getTimestamp()) > 0)
+				latest = plugin;
+		return latest;
+	}
+
 	public void resetChangeAndUploadStatuses() {
 		for (PluginObject plugin : this) {
 			plugin.resetChangeAndUploadStatuses();
