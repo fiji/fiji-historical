@@ -15,8 +15,6 @@ import org.xml.sax.SAXException;
  * required list of PluginObjects that interface will use for display.
  */
 public class PluginManager implements PlugIn, Observer {
-	//TODO: strange, why not the original "/var/www/update/"?
-	//public static final String defaultServerPath = "var/www/update/"; //... obselete?
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
 	public static final String TXT_FILENAME = "current.txt";
 	public static final String XML_COMPRESSED_LOCK = "db.xml.gz.lock";
@@ -35,6 +33,9 @@ public class PluginManager implements PlugIn, Observer {
 	private PluginListBuilder pluginListBuilder;
 	public XMLFileReader xmlFileReader;
 
+	//cache, time
+	private long xmlModifiedSince;
+
 	//toggle
 	boolean isDeveloper = true;
 
@@ -43,7 +44,8 @@ public class PluginManager implements PlugIn, Observer {
 			//Downloads files, convert info into PluginObjects useful for interface usage
 			xmlFileDownloader = new XMLFileDownloader();
 			xmlFileDownloader.register(this);
-			xmlFileDownloader.startDownload();
+			xmlModifiedSince = System.currentTimeMillis();
+			xmlFileDownloader.startDownload(xmlModifiedSince);
 
 			//Gets the PluginObject information
 			pluginCollection = pluginListBuilder.pluginCollection;
@@ -55,6 +57,10 @@ public class PluginManager implements PlugIn, Observer {
 			//Interface side: This should handle presentation side of exceptions
 			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getLocalizedMessage());
 		}
+	}
+
+	public long getXMLModifiedSince() {
+		return xmlModifiedSince;
 	}
 
 	//Show progress of Plugin Manager startup at IJ bar

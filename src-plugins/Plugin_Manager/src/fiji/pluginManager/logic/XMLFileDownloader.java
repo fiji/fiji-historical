@@ -9,12 +9,14 @@ import fiji.pluginManager.logic.Downloader.FileDownload;
 public class XMLFileDownloader extends PluginDataObservable implements Downloader.DownloadListener {
 	private List<FileDownload> sources;
 
-	public void startDownload() {
+	public void startDownload(long xmlModifiedSince) {
 		sources = new ArrayList<FileDownload>();
 		//TODO: Replace it with XML and DTD files (2 files to download)
 		addToDownload(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME, PluginManager.TXT_FILENAME);
-		//downloadAndSave(PluginManager.MAIN_URL + PluginManager.XML_FILENAME, PluginManager.XML_FILENAME);
-		//downloadAndSave(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME, PluginManager.DTD_FILENAME);
+		//addToDownload(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED_FILENAME,
+		//		PluginManager.XML_COMPRESSED_FILENAME);
+		//addToDownload(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME,
+		//		PluginManager.DTD_FILENAME);
 
 		Downloader downloader = new Downloader(sources.iterator());
 		downloader.addListener(this);

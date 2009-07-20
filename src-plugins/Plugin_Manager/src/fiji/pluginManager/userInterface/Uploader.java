@@ -43,6 +43,7 @@ public class Uploader implements UploadListener {
 		}
 
 		if (message != null) {
+			//TODO  Instructions to delete unclean db.xml.lock.gz and unlock db.xml.gz again?
 			mainUserInterface.exitWithRestartMessage("Error",
 					"Failed to upload changes to server: " + message + "\n\n" +
 					"You need to restart Plugin Manager again.");

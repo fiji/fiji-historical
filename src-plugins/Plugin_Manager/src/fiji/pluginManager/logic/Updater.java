@@ -52,6 +52,7 @@ public class Updater extends PluginData {
 	private TransformerHandler handler;
 	private final String XALAN_INDENT_AMOUNT =
 		"{http://xml.apache.org/xslt}" + "indent-amount";
+	private long xmlModifiedSince;
 
 	//accessible information after uploading tasks are done
 	public List<PluginObject> changesList;
@@ -70,6 +71,7 @@ public class Updater extends PluginData {
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 		xmlFileReader = pluginManager.xmlFileReader;
 
+		xmlModifiedSince = pluginManager.getXMLModifiedSince();
 		xmlRelativePath = PluginManager.XML_COMPRESSED_LOCK;
 		txtRelativePath = PluginManager.TXT_FILENAME;
 		xmlSavePath = prefix(xmlRelativePath);
@@ -131,7 +133,7 @@ public class Updater extends PluginData {
 		SourceFile xmlSource = new UpdateSource(xmlSavePath, xmlRelativePath, "C0644");
 		//Text file for old Fiji Updater, writable for all uploaders
 		SourceFile txtSource = new UpdateSource(txtSavePath, txtRelativePath, "C0664");
-		fileUploader.beganUpload(xmlSource, filesToUpload, txtSource);
+		fileUploader.beganUpload(xmlModifiedSince, xmlSource, filesToUpload, txtSource);
 	}
 
 	private void saveXMLFile() throws IOException { //assumed validation is done

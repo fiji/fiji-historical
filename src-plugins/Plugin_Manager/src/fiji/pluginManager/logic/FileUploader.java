@@ -5,6 +5,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -53,7 +56,7 @@ public class FileUploader {
 		" bf 42 3a 05 63";
 	private final String password = "fiji";
 
-	private final String uploadDir = "/incoming/";
+	private final String uploadDir = "/incoming/"; //TODO: Change to the LIVE version
 	private Session session;
 	private Channel channel;
 	private List<UploadListener> listeners;
@@ -77,8 +80,8 @@ public class FileUploader {
 	}
 
 	//Steps to accomplish entire upload task
-	public synchronized void beganUpload(SourceFile xmlSource, List<SourceFile> sources,
-			SourceFile textSource) throws Exception {
+	public synchronized void beganUpload(long xmlModifiedSince, SourceFile xmlSource,
+			List<SourceFile> sources, SourceFile textSource) throws Exception {
 		//Set db.xml.gz to read-only
 		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED_FILENAME);
 		System.out.println("db.xml.gz set to read-only mode");
@@ -90,6 +93,13 @@ public class FileUploader {
 			throw new Exception("Failed to set command " + uploadFilesCommand);
 		}
 		System.out.println("Acknowledgement done, prepared to upload file(s)");
+
+		//Verify that XML file did not change since last downloaded
+		System.out.println("Checking if XML file has been modified since last download...");
+		if (!verifyXMLFileDidNotChange(xmlModifiedSince)) {
+			throw new Exception("Conflict: XML file has been modified since it was last downloaded.");
+		}
+		System.out.println("XML file was not modified since last download, clear!");
 
 		//Start actual upload
 		uploadSingleFile(xmlSource);
@@ -120,6 +130,16 @@ public class FileUploader {
 		out = channel.getOutputStream();
 		in = channel.getInputStream();
 		channel.connect();
+	}
+
+	private boolean verifyXMLFileDidNotChange(long xmlModifiedSince) throws MalformedURLException, IOException {
+		//Use isModifiedSince header field to identify
+		//TODO: Use back XML file when it comes to LIVE test-out!!!
+		URL xmlURL = new URL(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME);
+		//URL xmlURL = new URL(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED_FILENAME);
+		HttpURLConnection uc = (HttpURLConnection)xmlURL.openConnection();
+		uc.setIfModifiedSince(xmlModifiedSince);
+		return (uc.getInputStream().read() == -1);
 	}
 
 	//Upload and tracks the status of this single file
