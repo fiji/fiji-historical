@@ -903,3 +903,20 @@ Pseudocode for Updater.java:
 Right now, the implementation is that upon any error, entire upload fails.
 
 Goal coming so close......
+
+
+
+20th July, Monday
+Program recognises "previous-version" tags of db.xml.
+    ==> If outdated Fiji plugin (i.e. older than latest recorded), any attempts to upload only updates the description
+
+Program uses ifModifiedSince header to identify if db.xml.gz has been modified before uploading db.xml.gz.lock
+    ==> Throw Exception if there happened to be any modifications, force restart Plugin Manager
+
+Core is done
+- only left bug-fixing (What's up with that IJ progress bar?)
+- Writing of plugin descriptions ==> Actual construction of db.xml
+- We shall see if we can do actual downloading of db.xml instead of just a mock simulation.
+- Other miscellaneous, like scrubbing of code
+
+Oh God, time passed so fast, less than 3 weeks to school!
