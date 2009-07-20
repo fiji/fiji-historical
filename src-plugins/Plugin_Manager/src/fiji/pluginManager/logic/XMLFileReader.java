@@ -26,7 +26,6 @@ import org.xml.sax.helpers.DefaultHandler;
  * 
  */
 public class XMLFileReader extends DefaultHandler {
-	private List<PluginObject> versions;
 	private String filename;
 	private String timestamp;
 	private String digest;
@@ -38,18 +37,12 @@ public class XMLFileReader extends DefaultHandler {
 	private String dependencyRelation;
 	private String currentTag;
 
-	//TODO
-	/*
-	 pluginRecords will consist of plugin names mapped to list of their respective versions.
-	 Latest version can be retrieved using PluginCollection's method
-	 */
+	//plugin names mapped to list of their respective versions
 	private Map<String, List<PluginObject>> pluginRecords;
-	//private Map<String, PluginObject> pluginRecords;
 
-	public XMLFileReader(String fileLocation) throws ParserConfigurationException, IOException, SAXException {
-		//TODO
+	public XMLFileReader(String fileLocation) throws ParserConfigurationException,
+	IOException, SAXException {
 		pluginRecords = new TreeMap<String, List<PluginObject>>();
-		//pluginRecords = new TreeMap<String, PluginObject>();
 		
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		//factory.setValidating(true); //commented out per postel's law
@@ -62,7 +55,6 @@ public class XMLFileReader extends DefaultHandler {
 		xr.parse(new InputSource(fileLocation));
 	}
 
-	//TODO: The role this method performs should be left unchanged, just refactor it
 	public void getLatestDigestsAndDates(Map<String, String> latestDigests, Map<String, String> latestDates) {
 		//Iterator<PluginObject> iterPlugins = pluginRecords.values().iterator();
 		Iterator<String> iterNamelist = pluginRecords.keySet().iterator();
@@ -73,15 +65,8 @@ public class XMLFileReader extends DefaultHandler {
 			latestDigests.put(plugin.getFilename(), plugin.getmd5Sum());
 			latestDates.put(plugin.getFilename(), plugin.getTimestamp());
 		}
-		/*while (iterPlugins.hasNext()) {
-			PluginObject plugin = iterPlugins.next();
-			latestDigests.put(plugin.getFilename(), plugin.getmd5Sum());
-			latestDates.put(plugin.getFilename(), plugin.getTimestamp());
-		}*/
 	}
 
-	//TODO
-	//public Map<String,PluginObject> getLatestFijiPlugins() {
 	public Map<String, List<PluginObject>> getAllPluginRecords() {
 		return pluginRecords;
 	}
@@ -109,14 +94,6 @@ public class XMLFileReader extends DefaultHandler {
 		return getPluginMatching(filename).getDependencies(); //only useful for latest
 	}
 
-	/*public boolean matchesFilenameAndDigest(String filename, String digest) {
-		if (getTimestamp(filename, digest) == null) {
-			return false; //implies plugin of given filename and digest do not exist
-		} else {
-			return true;
-		}
-	}*/
-
 	//Get timestamp associated with specified version, assumed filename & digest are correct
 	public String getTimestampFromRecords(String filename, String digest) {
 		PluginCollection versions = (PluginCollection)pluginRecords.get(filename);
@@ -127,19 +104,12 @@ public class XMLFileReader extends DefaultHandler {
 				timestamp = match.getTimestamp();
 		}
 		return timestamp;
-		/*PluginObject plugin = pluginRecords.get(outputFilename);
-		if (plugin != null) {
-			if (plugin.getmd5Sum().equals(outputDigest))
-				return plugin.getTimestamp();
-		}
-		return null; //digest does not exist*/
 	}
 
 	public void startDocument () { }
 
 	public void endDocument () {
 		//no longer needed after parsing, set back to default values
-		versions = null;
 		filename = null;
 		timestamp = null;
 		digest = null;

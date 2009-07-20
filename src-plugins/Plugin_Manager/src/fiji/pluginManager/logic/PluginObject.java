@@ -27,10 +27,6 @@ public class PluginObject {
 	public static enum ChangeStatus { NONE, SUCCESS, FAIL };
 	private ChangeStatus changedStatus = ChangeStatus.NONE; //default
 
-	//State to indicate how and whether Plugin uploaded successfully
-	public static enum UploadStatus { NONE, MODIFIED, FILE_UPLOADED, FAIL };
-	private UploadStatus uploadStatus = UploadStatus.NONE;
-
 	public PluginObject(String strFilename, String md5Sum, String timestamp, byte status, boolean isFiji) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
@@ -100,9 +96,8 @@ public class PluginObject {
 		setAction(PluginObject.ACTION_NONE);
 	}
 
-	public void resetChangeAndUploadStatuses() {
+	public void resetChangeStatuses() {
 		this.changedStatus = ChangeStatus.NONE;
-		this.uploadStatus = UploadStatus.NONE;
 	}
 
 	public void setChangeStatusToSuccess() { //Indicates successful download/uninstall
@@ -111,18 +106,6 @@ public class PluginObject {
 
 	public void setChangeStatusToFail() {
 		this.changedStatus = ChangeStatus.FAIL;
-	}
-
-	public void setUploadStatusToFileUploaded() { //Both plugin file and details are uploaded
-		this.uploadStatus = UploadStatus.FILE_UPLOADED;
-	}
-
-	public void setUploadStatusToModified() { //Only plugin details are uploaded
-		this.uploadStatus = UploadStatus.MODIFIED;
-	}
-
-	public void setUploadStatusToFail() {
-		this.uploadStatus = UploadStatus.FAIL;
 	}
 
 	private void setAction(byte action) {
@@ -226,19 +209,4 @@ public class PluginObject {
 		return (changedStatus == ChangeStatus.NONE);
 	}
 
-	public boolean uploadModifiedOnly() {
-		return (uploadStatus == UploadStatus.MODIFIED); //uploaded only details
-	}
-
-	public boolean uploadPluginFileDone() {
-		return (uploadStatus == UploadStatus.FILE_UPLOADED); //uploaded both plugin file and details
-	}
-
-	public boolean uploadFailed() {
-		return (uploadStatus == UploadStatus.FAIL);
-	}
-
-	public boolean uploadNotDone() {
-		return (uploadStatus == UploadStatus.NONE);
-	}
 }

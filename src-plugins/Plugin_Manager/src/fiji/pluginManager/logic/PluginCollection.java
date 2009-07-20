@@ -177,40 +177,6 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 	};
 
-	public static final Filter FILTER_UPLOAD_PLUGINFILE = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return (plugin.toUpload() && plugin.uploadPluginFileDone());
-		}
-	};
-
-	public static final Filter FILTER_UPLOAD_MODIFIEDONLY = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return (plugin.toUpload() && plugin.uploadModifiedOnly());
-		}
-	};
-
-	public static final Filter FILTER_UPLOAD_SUCCESS = new Filter() {
-		//matching either condition: file uploaded OR details uploaded only
-		public boolean matchesFilter(PluginObject plugin) {
-			return (plugin.toUpload() &&
-					(plugin.uploadModifiedOnly() || plugin.uploadPluginFileDone()));
-		}
-	};
-
-	public static final Filter FILTER_NO_SUCCESSFUL_UPLOAD = new Filter() {
-		//matching either condition: file uploaded OR details uploaded only
-		public boolean matchesFilter(PluginObject plugin) {
-			return (plugin.toUpload() &&
-					!(plugin.uploadModifiedOnly() || plugin.uploadPluginFileDone()));
-		}
-	};
-
-	public static final Filter FILTER_UPLOAD_FAIL = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return (plugin.toUpload() && plugin.uploadFailed());
-		}
-	};
-
 	public Iterator<PluginObject> getIterator(Filter filter) {
 		return getList(filter).iterator();
 	}
@@ -258,9 +224,9 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return latest;
 	}
 
-	public void resetChangeAndUploadStatuses() {
+	public void resetChangeStatuses() {
 		for (PluginObject plugin : this) {
-			plugin.resetChangeAndUploadStatuses();
+			plugin.resetChangeStatuses();
 		}
 	}
 

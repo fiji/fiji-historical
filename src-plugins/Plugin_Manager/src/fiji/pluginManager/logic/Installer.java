@@ -28,7 +28,7 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 		super();
 		PluginCollection pluginCollection = (PluginCollection)pluginList;
 		changeList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
-		((PluginCollection)changeList).resetChangeAndUploadStatuses();
+		((PluginCollection)changeList).resetChangeStatuses();
 	}
 
 	public int getBytesDownloaded() {

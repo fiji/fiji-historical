@@ -66,7 +66,7 @@ public class Updater extends PluginData {
 
 		PluginCollection pluginCollection = (PluginCollection)pluginManager.pluginCollection;
 		changesList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
-		((PluginCollection)changesList).resetChangeAndUploadStatuses();
+		((PluginCollection)changesList).resetChangeStatuses();
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 		xmlFileReader = pluginManager.xmlFileReader;
 
@@ -132,7 +132,6 @@ public class Updater extends PluginData {
 		//Text file for old Fiji Updater, writable for all uploaders
 		SourceFile txtSource = new UpdateSource(txtSavePath, txtRelativePath, "C0664");
 		fileUploader.beganUpload(xmlSource, filesToUpload, txtSource);
-		convertUploadStatusesToModified();
 	}
 
 	private void saveXMLFile() throws IOException { //assumed validation is done
@@ -253,37 +252,6 @@ public class Updater extends PluginData {
 		handler.startElement("", "", tagName, attrib);
 		handler.characters(value.toCharArray(), 0, value.length());
 		handler.endElement("", "", tagName);
-	}
-
-	//Method assumes no exception occurred before:
-	//Any plugins not given a status yet should be set to "Details modified only"
-	private void convertUploadStatusesToModified() {
-		for (PluginObject plugin : changesList) {
-			if (!plugin.uploadPluginFileDone() && !plugin.uploadFailed()) {
-				//plugin file upload done beforehand
-				plugin.setUploadStatusToModified();
-			}
-		}
-	}
-
-	public Iterator<PluginObject> iterUploadSuccess() {
-		return ((PluginCollection)changesList).getIterator(
-				PluginCollection.FILTER_UPLOAD_SUCCESS);
-	}
-
-	public Iterator<PluginObject> iterUploadFail() {
-		return ((PluginCollection)changesList).getIterator(
-				PluginCollection.FILTER_UPLOAD_FAIL);
-	}
-
-	public int numberOfSuccessfulUploads() {
-		return ((PluginCollection)changesList).getList(
-				PluginCollection.FILTER_UPLOAD_SUCCESS).size();
-	}
-
-	public int numberOfFailedUploads() {
-		return ((PluginCollection)changesList).getList(
-				PluginCollection.FILTER_UPLOAD_FAIL).size();
 	}
 
 }
