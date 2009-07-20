@@ -134,12 +134,6 @@ public class TextPaneDisplay extends JTextPane {
 			insertBlankLine();
 			insertBoldText("Released: ");
 			insertText(plugin.getNewTimestamp());
-			insertBlankLine();
-			insertBoldText("Dependency");
-			insertDependenciesList(plugin.getNewDependencies());
-			insertBlankLine();
-			insertBoldText("Description");
-			insertDescription(plugin.getNewDescription());
 		}
 
 		//ensure first line of text is always shown (i.e.: scrolled to top)

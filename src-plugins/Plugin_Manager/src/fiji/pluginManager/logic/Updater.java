@@ -55,7 +55,7 @@ public class Updater extends PluginData {
 
 	//accessible information after uploading tasks are done
 	public List<PluginObject> changesList;
-	public Map<String, PluginObject> newPluginRecords;
+	public Map<String, List<PluginObject>> newPluginRecords;
 	private ArrayList<SourceFile> filesToUpload; //list of plugins whose files has to be uploaded
 	private DependencyAnalyzer dependencyAnalyzer;
 	private XMLFileReader xmlFileReader;
@@ -79,34 +79,43 @@ public class Updater extends PluginData {
 	public synchronized void generateNewPluginRecords() throws IOException {
 		//Checking list for Fiji plugins - Either new versions or changes to existing ones
 		filesToUpload = new ArrayList<SourceFile>();
-		newPluginRecords = xmlFileReader.getLatestFijiPlugins();
+		newPluginRecords = xmlFileReader.getAllPluginRecords();
 		Iterator<String> filenames = newPluginRecords.keySet().iterator();
 		while (filenames.hasNext()) {
 			String filename = filenames.next();
-			PluginObject plugin = newPluginRecords.get(filename);
-			for (PluginObject pluginToUpload : changesList) {
-				if (pluginToUpload.getFilename().equals(plugin.getFilename())) {
-					pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
-					newPluginRecords.put(filename, pluginToUpload);
-					//If it is not part of existing records, it has to be new upgrade
-					if (!pluginToUpload.getmd5Sum().equals(plugin.getmd5Sum())) {
-						filesToUpload.add(new UpdateSource(prefix(pluginToUpload.getFilename()),
-								pluginToUpload, "C0444"));
-					}
-					break;
+			PluginObject pluginToUpload = ((PluginCollection)changesList).getPlugin(filename);
+			if (pluginToUpload != null) {
+				PluginCollection versions = (PluginCollection)newPluginRecords.get(filename);
+				PluginObject latest = versions.getLatestPlugin();
+				//if either an existing version, or timestamp is older than recorded version
+				if (latest.getmd5Sum().equals(pluginToUpload.getmd5Sum()) ||
+						latest.getTimestamp().compareTo(pluginToUpload.getTimestamp()) >= 0) {
+					//Just update details
+					latest.setDescription(pluginToUpload.getDescription());
+				} else {
+					//Newer version which does not exist in records yet, thus requires upload
+					pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(
+							pluginToUpload.getFilename()));
+					filesToUpload.add(new UpdateSource(prefix(pluginToUpload.getFilename()),
+							pluginToUpload, "C0444"));
+					//Add to existing records
+					versions.add(pluginToUpload);
+					
 				}
 			}
 		}
 		//Checking list for non-Fiji plugins to add to new records
 		for (PluginObject pluginToUpload : changesList) {
 			String name = pluginToUpload.getFilename();
-			PluginObject plugin = newPluginRecords.get(name);
-			if (plugin == null) { //non-Fiji plugin that doesn't exist in records yet
-				//therefore add it as a new Fiji plugin
-				pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(pluginToUpload.getFilename()));
-				newPluginRecords.put(name, pluginToUpload);
+			List<PluginObject> pluginVersions = newPluginRecords.get(name);
+			if (pluginVersions == null) { //non-Fiji plugin doesn't exist in records yet
+				pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(name));
 				filesToUpload.add(new UpdateSource(prefix(pluginToUpload.getFilename()),
 						pluginToUpload, "C0444"));
+				//therefore add it as a Fiji Plugin
+				PluginCollection newPluginRecord = new PluginCollection();
+				newPluginRecord.add(pluginToUpload);
+				newPluginRecords.put(name, newPluginRecord);
 			}
 		}
 	}
@@ -127,11 +136,11 @@ public class Updater extends PluginData {
 	}
 
 	private void saveXMLFile() throws IOException { //assumed validation is done
-		CompressionUtility compressionUtility = new CompressionUtility();
+		FileUtility fileUtility = new FileUtility();
 
 		//Compress and save using given path
 		FileOutputStream xmlOutputStream = new FileOutputStream(xmlSavePath);
-		compressionUtility.compressAndSave(xmlWriter.toByteArray(),
+		fileUtility.compressAndSave(xmlWriter.toByteArray(),
 				xmlOutputStream);
 		xmlOutputStream.close();
 	}
@@ -144,10 +153,10 @@ public class Updater extends PluginData {
 		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
 		while (pluginNamelist.hasNext()) {
 			String filename = pluginNamelist.next();
-			PluginObject latestPlugin = newPluginRecords.get(filename);
-			if (!latestPlugin.uploadFailed()) //do not add entry if indicated "failed upload"
-				txtPrintStream.println(latestPlugin.getFilename() + " " +
-					latestPlugin.getTimestamp() + " " + latestPlugin.getmd5Sum());
+			PluginCollection versions = (PluginCollection)newPluginRecords.get(filename);
+			PluginObject latestPlugin = versions.getLatestPlugin();
+			txtPrintStream.println(latestPlugin.getFilename() + " " +
+				latestPlugin.getTimestamp() + " " + latestPlugin.getmd5Sum());
 		}
 
 		txtPrintStream.close();
@@ -173,38 +182,53 @@ public class Updater extends PluginData {
 		//Start writing to memory
 		handler.startDocument();
 		AttributesImpl attrib = new AttributesImpl();
-
 		handler.startElement("", "", "pluginRecords", attrib);
 		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
 		while (pluginNamelist.hasNext()) {
 			String filenameAttribute = pluginNamelist.next();
+
+			//latest version have the tag "version", others given the tag "previous-version"
+			PluginCollection versions = (PluginCollection)newPluginRecords.get(filenameAttribute);
+			PluginObject latest = versions.getLatestPlugin();
+			PluginCollection otherVersions = new PluginCollection();
+			for (PluginObject version : versions)
+				if (version != latest)
+					otherVersions.add(version);
+
 			attrib.clear();
 			attrib.addAttribute("", "", "filename", "CDATA", filenameAttribute);
 			handler.startElement("", "", "plugin", attrib);
-			PluginObject plugin = newPluginRecords.get(filenameAttribute);
-			if (!plugin.uploadFailed()) { //do not add entry if indicated "failed upload"
+				//tag "version" for the latest version
 				attrib.clear();
 				handler.startElement("", "", "version", attrib);
-				writeSimpleTag("checksum", attrib, plugin.getmd5Sum());
-				writeSimpleTag("timestamp", attrib, plugin.getTimestamp());
-				String description = (plugin.getDescription() == null ? "" : plugin.getDescription());
+				writeSimpleTag("checksum", attrib, latest.getmd5Sum());
+				writeSimpleTag("timestamp", attrib, latest.getTimestamp());
+				String description = (latest.getDescription() == null ? "" : latest.getDescription());
 				writeSimpleTag("description", attrib, description);
-				String strFilesize = "" + plugin.getFilesize();
+				String strFilesize = "" + latest.getFilesize();
 				writeSimpleTag("filesize", attrib, strFilesize);
-				if (plugin.getDependencies() != null && plugin.getDependencies().size() > 0) {
-					List<Dependency> dependencies = plugin.getDependencies();
+				if (latest.getDependencies() != null && latest.getDependencies().size() > 0) {
+					List<Dependency> dependencies = latest.getDependencies();
 					for (Dependency dependency : dependencies) {
 						attrib.clear();
 						handler.startElement("", "", "dependency", attrib);
 						writeSimpleTag("filename", attrib, dependency.getFilename());
 						writeSimpleTag("date", attrib, dependency.getTimestamp());
-						//hd.characters(dependency.getRelation().toCharArray(), 0, dependency.getRelation().length());
 						writeSimpleTag("relation", attrib, "at-least");
 						handler.endElement("", "", "dependency");
 					}
 				}
 				handler.endElement("", "", "version");
-			}
+
+				//As for the rest of the plugin's history record...
+				for (PluginObject version : otherVersions) {
+					//tag "previous-version"
+					attrib.clear();
+					attrib.addAttribute("", "", "timestamp", "CDATA", version.getTimestamp());
+					attrib.addAttribute("", "", "checksum", "CDATA", version.getmd5Sum());
+					handler.startElement("", "", "previous-version", attrib);
+					handler.endElement("", "", "previous-version");
+				}
 			handler.endElement("", "", "plugin");
 		}
 		handler.endElement("", "", "pluginRecords");

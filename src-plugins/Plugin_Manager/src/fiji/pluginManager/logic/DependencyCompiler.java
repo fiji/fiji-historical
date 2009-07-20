@@ -65,47 +65,17 @@ public class DependencyCompiler {
 	//comes up with a list of plugins needed for download to go with this selected plugin
 	private void addDependency(List<PluginObject> changeToInstallList, List<PluginObject> changeToUpdateList, PluginObject selectedPlugin) {
 		//First retrieve the dependency list
-		List<Dependency> dependencyList = new ArrayList<Dependency>();
-		boolean updateableState = selectedPlugin.isUpdateable();
-		boolean selectedInInstallList = changeToInstallList.contains(selectedPlugin);
-		boolean selectedInUpdateList = changeToUpdateList.contains(selectedPlugin);
+		List<Dependency> dependencyList = selectedPlugin.getDependencies();
 
 		//Does not belong in any lists yet
-		if (!selectedInInstallList && !selectedInUpdateList) {
-			if (updateableState) {
-				//in context of "addDependency", it can only mean "update the plugin"
+		if (!changeToInstallList.contains(selectedPlugin) &&
+				!changeToUpdateList.contains(selectedPlugin)) {
+			if (selectedPlugin.isUpdateable()) //can only mean "update the plugin"
 				changeToUpdateList.add(selectedPlugin);
-				selectedInInstallList = false;
-				selectedInUpdateList = true;
-			} else {
-				//in context of "addDependency", it can only mean "install the plugin"
+			else //in context of "addDependency", can only mean "install the plugin"
 				changeToInstallList.add(selectedPlugin);
-				selectedInInstallList = true;
-				selectedInUpdateList = false;
-			}
-		} //else... (Plugin already added earlier)
-
-		//if "Update-able" state
-		if (updateableState) {
-			//if in updateList, use update's dependencies, if not, go on as per normal
-			if (!selectedInInstallList && selectedInUpdateList) {
-				dependencyList = selectedPlugin.getNewDependencies();
-			} else if (selectedInInstallList && !selectedInUpdateList) {
-				//if already in the "Install" list but indicated to update
-				if (selectedPlugin.toUpdate()) {
-					changeToInstallList.remove(selectedPlugin);
-					changeToUpdateList.add(selectedPlugin);
-					dependencyList = selectedPlugin.getNewDependencies();
-				} else {
-					dependencyList = selectedPlugin.getDependencies();
-				}
-			}
 		}
-		//Otherwise, it only means "installable", no updates
-		else {
-			//if it is not an "Update-able" state, then go on as per normal
-			dependencyList = selectedPlugin.getDependencies();
-		}
+		//else... (Plugin already added earlier)
 
 		//if there are no dependencies for this selected plugin
 		if (dependencyList == null || dependencyList.size() == 0) {
@@ -113,45 +83,42 @@ public class DependencyCompiler {
 		} else {
 			//if there are dependencies, check for prerequisites
 			for (Dependency dependency : dependencyList) {
+				PluginCollection pluginCollection = (PluginCollection)pluginList;
+				PluginObject plugin = pluginCollection.getPlugin(dependency.getFilename());
 
-				for (PluginObject plugin : pluginList) {
-
-					//if Prerequisite is found,
-					if (plugin.getFilename().equals(dependency.getFilename())) {
-						boolean inInstallList = changeToInstallList.contains(plugin);
-						boolean inUpdateList = changeToUpdateList.contains(plugin);
-						//Which does not exist in any of the "change" lists yet
-						if (!inInstallList && !inUpdateList) {
-
-							//if prerequisite installed/uninstalled
-							if (plugin.isRemovableOnly() || plugin.isInstallable()) {
-								//add to list
-								changeToInstallList.add(plugin);
-								addDependency(changeToInstallList, changeToUpdateList, plugin);
-							}
-							//if prerequisite is update-able
-							else if (plugin.isUpdateable()) {
-								//if current dependency's plugin is outdated
-								if (plugin.getTimestamp().compareTo(dependency.getTimestamp()) < 0) {
-									changeToUpdateList.add(plugin); //add to update list ("special" case)
-								} else { //if not, just installing is the minimum
-									changeToInstallList.add(plugin);
-								}
-								addDependency(changeToInstallList, changeToUpdateList, plugin);
-							}
+				//When prerequisite is found
+				if (plugin != null) {
+					boolean inInstallList = changeToInstallList.contains(plugin);
+					boolean inUpdateList = changeToUpdateList.contains(plugin);
+					//Which does not exist in any of the "change" lists yet
+					if (!inInstallList && !inUpdateList) {
+						//if prerequisite installed/uninstalled
+						if (plugin.isRemovableOnly() || plugin.isInstallable()) {
+							//add to list
+							changeToInstallList.add(plugin);
+							addDependency(changeToInstallList, changeToUpdateList, plugin);
 						}
-						//if previous "update-able" prerequisite only requires an install
-						else if (inInstallList && !inUpdateList && plugin.isUpdateable()) {
-							//Then check again if this current dependency's plugin is outdated
+						//if prerequisite is update-able
+						else if (plugin.isUpdateable()) {
+							//if current dependency's plugin is outdated
 							if (plugin.getTimestamp().compareTo(dependency.getTimestamp()) < 0) {
-								changeToInstallList.remove(plugin);
 								changeToUpdateList.add(plugin); //add to update list ("special" case)
 								addDependency(changeToInstallList, changeToUpdateList, plugin);
+							} else { //if not, just remain as it is should be fine
+								changeToInstallList.add(plugin);
 							}
-						} //else do nothing, prerequisites added already
-						break;
+						}
 					}
-				} //end of searching through pluginList
+					//if previous "update-able" prerequisite only requires an install
+					else if (inInstallList && !inUpdateList && plugin.isUpdateable()) {
+						//Then check again if this current dependency's plugin is outdated
+						if (plugin.getTimestamp().compareTo(dependency.getTimestamp()) < 0) {
+							changeToInstallList.remove(plugin);
+							changeToUpdateList.add(plugin); //add to update list ("special" case)
+							addDependency(changeToInstallList, changeToUpdateList, plugin);
+						}
+					}
+				}
 
 			}
 		}

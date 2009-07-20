@@ -23,9 +23,7 @@ public class PluginDownload implements FileDownload {
 	}
 
 	public int getRecordedFileSize() {
-		if (plugin.toUpdate())
-			return plugin.getNewFilesize();
-		return plugin.getFilesize();
+		return plugin.getFilesize(); //always return the latest version's size
 	}
 
 	public String getRecordedDigest() {

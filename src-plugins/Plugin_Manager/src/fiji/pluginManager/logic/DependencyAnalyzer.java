@@ -1,7 +1,6 @@
 package fiji.pluginManager.logic;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -39,7 +38,8 @@ public class DependencyAnalyzer extends PluginData {
 			//Read only class files inside the selected jar file
 			if (file.getName().endsWith(".class")) {
 				//Analyze each class file for dependent classes
-				ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(readStream(jarfile.getInputStream(file)));
+				ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(
+						new FileUtility().readStream(jarfile.getInputStream(file)));
 
 				//For each dependent class
 				Iterator<String> iter = analyzer.getClassNames();
@@ -57,37 +57,13 @@ public class DependencyAnalyzer extends PluginData {
 							result.add(new Dependency(strJarDependency, timestamp, "at-least"));
 							filenameList.add(strJarDependency);
 						} else {
-							System.out.println("Dependency Analyzer Question: Is it possible to reach here? Apparently so.");
+							System.out.println("Is it possible to reach here? Apparently so.");
 						}
 					}
 				}
 			}
 		}
 		return result;
-	}
-
-	private byte[] readStream(InputStream input) throws IOException {
-		byte[] buffer = new byte[1024];
-		int offset = 0, len = 0;
-		for (;;) {
-			if (offset == buffer.length)
-				buffer = realloc(buffer,
-						2 * buffer.length);
-			len = input.read(buffer, offset,
-					buffer.length - offset);
-			if (len < 0)
-				return realloc(buffer, offset);
-			offset += len;
-		}
-	}
-
-	private byte[] realloc(byte[] buffer, int newLength) {
-		if (newLength == buffer.length)
-			return buffer;
-		byte[] newBuffer = new byte[newLength];
-		System.arraycopy(buffer, 0, newBuffer, 0,
-				Math.min(newLength, buffer.length));
-		return newBuffer;
 	}
 
 	static class ByteCodeAnalyzer {

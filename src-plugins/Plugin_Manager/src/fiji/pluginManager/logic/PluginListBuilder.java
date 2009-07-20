@@ -72,14 +72,14 @@ public class PluginListBuilder extends PluginDataObservable {
 
 	public void buildFullPluginList() throws ParserConfigurationException, IOException, SAXException {
 		//Generates information of plugins on local side (digests, dates)
-		buildLocalPluginList();
+		buildLocalPluginData();
 		//Generates information of latest plugins on remote side
 		xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
 		//Builds up a list of PluginObjects, of both local and remote
 		generatePluginList();
 	}
 
-	private void buildLocalPluginList() throws ParserConfigurationException, SAXException, IOException {
+	private void buildLocalPluginData() throws ParserConfigurationException, SAXException, IOException {
 		//To get a list of plugins on the local side
 		List<String> queue = new ArrayList<String>();
 
@@ -107,14 +107,12 @@ public class PluginListBuilder extends PluginDataObservable {
 			String outputDigest = getDigestFromFile(outputFilename); //TODO: forServer flag
 			digests.put(outputFilename, outputDigest);
 
-			String outputDate;
-			//if XML file does not contain plugin filename or digest does not exist
-			if (!xmlFileReader.matchesFilenameAndDigest(outputFilename, outputDigest)) {
-				//use the local plugin's last modified timestamp instead
+			//null indicate XML records does not have such plugin filename and md5 sums
+			String outputDate = xmlFileReader.getTimestampFromRecords(outputFilename,
+					outputDigest);
+			if (outputDate == null) {
+				//use local plugin's last modified timestamp instead
 				outputDate = getTimestampFromFile(outputFilename);
-			} else {
-				//if it does exist, then use the associated timestamp as recorded
-				outputDate = xmlFileReader.getTimestamp(outputFilename, outputDigest);
 			}
 			dates.put(outputFilename, outputDate);
 
@@ -147,28 +145,13 @@ public class PluginListBuilder extends PluginDataObservable {
 			} else { //if its installed but can be updated
 				myPlugin = new PluginObject(pluginName, digest, date, PluginObject.STATUS_MAY_UPDATE, true);
 				//set latest update details
-				String updatedDescription = xmlFileReader.getDescriptionFrom(pluginName, remoteDate);
-				List<Dependency> updatedDependencies = xmlFileReader.getDependenciesFrom(pluginName, remoteDate);
-				int updatedFilesize = xmlFileReader.getFilesizeFrom(pluginName, remoteDate);
-				myPlugin.setUpdateDetails(remoteDigest,
-						remoteDate,
-						updatedDescription,
-						updatedDependencies,
-						updatedFilesize);
+				myPlugin.setUpdateDetails(remoteDigest, remoteDate);
 			}
+			//Plugin shall only contains the latest version's details
+			myPlugin.setDescription(xmlFileReader.getDescriptionFrom(pluginName));
+			myPlugin.setDependency(xmlFileReader.getDependenciesFrom(pluginName));
+			myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(pluginName));
 
-			String pluginDate = myPlugin.getTimestamp();
-			String pluginDigest = myPlugin.getmd5Sum();
-			//if md5 sum exists in XML records, then timestamp exists as well
-			if (xmlFileReader.matchesFilenameAndDigest(pluginName, pluginDigest)) {
-				//Use filename and timestamp to get associated description & dependencies
-				myPlugin.setDescription(xmlFileReader.getDescriptionFrom(pluginName, pluginDate));
-				myPlugin.setDependency(xmlFileReader.getDependenciesFrom(pluginName, pluginDate));
-				myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(pluginName, pluginDate));
-			} else { //if digest of this plugin does not exist in the records
-				myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
-				//TODO?: Get information from server instead?
-			}
 			pluginCollection.add(myPlugin);
 		}
 

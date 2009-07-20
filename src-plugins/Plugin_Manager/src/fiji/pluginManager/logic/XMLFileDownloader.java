@@ -22,12 +22,12 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 
 		//Uncompress the XML file
 		try {
-			CompressionUtility compressionUtility = new CompressionUtility();
+			FileUtility fileUtility = new FileUtility();
 			String compressedFileLocation = getSaveToLocation(PluginManager.READ_DIRECTORY,
 					PluginManager.XML_COMPRESSED_FILENAME);
 			String xmlFileLocation = getSaveToLocation(PluginManager.READ_DIRECTORY,
 					PluginManager.XML_FILENAME);
-			byte[] data = compressionUtility.getDecompressedData(
+			byte[] data = fileUtility.getDecompressedData(
 					new FileInputStream(compressedFileLocation));
 			FileOutputStream saveFile = new FileOutputStream(xmlFileLocation); //if needed...
 			saveFile.write(data);

@@ -25,7 +25,7 @@ public class UpdateSource implements SourceFile {
 			throw new Error("Permissions settings for " + plugin.getFilename() + " not valid.");
 		this.permissions = permissions;
 		this.absolutePath = absolutePath;
-		filesize = plugin.getFilesize();
+		filesize = new File(absolutePath).length();
 		getDirectoryAndFilename(plugin.getFilename());
 		filenameToWrite += "-" + plugin.getTimestamp();
 	}

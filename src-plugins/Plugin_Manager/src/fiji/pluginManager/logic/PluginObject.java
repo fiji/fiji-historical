@@ -8,11 +8,8 @@ public class PluginObject {
 	private String newMd5Sum; //if any
 	private String newTimestamp; //if any
 	private String description;
-	private String newDescription; //if any
 	private int filesize;
-	private int newFilesize; //if any
 	private List<Dependency> dependency; //Dependency object: filename and timestamp
-	private List<Dependency> newDependency; //if any
 	private boolean isFiji;
 
 	//Current physical state and action-to-take of plugin as the User sees it
@@ -52,13 +49,10 @@ public class PluginObject {
 		this.action = action;
 	}
 
-	public void setUpdateDetails(String newMd5Sum, String newTimestamp, String newDescription, List<Dependency> newDependency, int newFilesize) {
+	public void setUpdateDetails(String newMd5Sum, String newTimestamp) {
 		setStatus(PluginObject.STATUS_MAY_UPDATE); //set status, if not done so already
 		this.newMd5Sum = newMd5Sum;
 		this.newTimestamp = newTimestamp;
-		this.newDescription = newDescription;
-		this.newDependency = newDependency;
-		this.newFilesize = newFilesize;
 	}
 
 	private void setStatus(byte status) {
@@ -158,10 +152,6 @@ public class PluginObject {
 	public String getDescription() {
 		return description;
 	}
-	
-	public String getNewDescription() {
-		return newDescription;
-	}
 
 	public int getFilesize() {
 		return filesize;
@@ -173,18 +163,6 @@ public class PluginObject {
 
 	public Dependency getDependency(int index) {
 		return dependency.get(index);
-	}
-
-	public List<Dependency> getNewDependencies() {
-		return newDependency;
-	}
-	
-	public Dependency getNewDependency(int index) {
-		return newDependency.get(index);
-	}
-	
-	public int getNewFilesize() {
-		return newFilesize;
 	}
 
 	public byte getStatus() {

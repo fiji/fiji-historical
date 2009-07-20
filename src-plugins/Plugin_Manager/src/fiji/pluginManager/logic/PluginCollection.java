@@ -229,6 +229,26 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return null;
 	}
 
+	public PluginObject getPluginFromTimestamp(String filename, String timestamp) {
+		for (PluginObject plugin : this) {
+			if (plugin.getFilename().equals(filename) &&
+					plugin.getTimestamp().equals(timestamp)) {
+				return plugin;
+			}
+		}
+		return null;
+	}
+
+	public PluginObject getPluginFromDigest(String filename, String digest) {
+		for (PluginObject plugin : this) {
+			if (plugin.getFilename().equals(filename) &&
+					plugin.getmd5Sum().equals(digest)) {
+				return plugin;
+			}
+		}
+		return null;
+	}
+
 	//this method assumes list of plugins are of the same filename (i.e.: different versions)
 	public PluginObject getLatestPlugin() {
 		PluginObject latest = null;
