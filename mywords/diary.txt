@@ -920,3 +920,13 @@ Core is done
 - Other miscellaneous, like scrubbing of code
 
 Oh God, time passed so fast, less than 3 weeks to school!
+
+
+
+21st July, Tuesday
+Bug-fixing day and some refactoring basically.
+   ==> XML File now able to download properly - Cache is ignored.
+   ==> Divided classes further with a new package: utilities
+      ==> Downloader, FileUtility, and PluginData
+
+To do... Plugin descriptions...
