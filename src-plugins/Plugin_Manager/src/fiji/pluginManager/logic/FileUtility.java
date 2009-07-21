@@ -67,7 +67,7 @@ public class FileUtility {
 		/*InputStream inStream = new FileInputStream(PluginManager.XML_FILENAME);
 		OutputStream outStream = new FileOutputStream(PluginManager.XML_COMPRESSED_LOCK);
 		utility.compressAndSave(utility.readStream(inStream), outStream);*/
-		
+
 		//test uncompress
 		byte[] data = utility.getDecompressedData(new FileInputStream(
 				PluginManager.XML_COMPRESSED_LOCK));

@@ -12,11 +12,12 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 	public void startDownload(long xmlModifiedSince) {
 		sources = new ArrayList<FileDownload>();
 		//TODO: Replace it with XML and DTD files (2 files to download)
-		addToDownload(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME, PluginManager.TXT_FILENAME);
-		//addToDownload(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED_FILENAME,
-		//		PluginManager.XML_COMPRESSED_FILENAME);
-		//addToDownload(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME,
-		//		PluginManager.DTD_FILENAME);
+		//addToDownload(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME,
+		//		PluginManager.TXT_FILENAME);
+		addToDownload(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED_FILENAME,
+				PluginManager.XML_COMPRESSED_FILENAME);
+		addToDownload(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME,
+				PluginManager.DTD_FILENAME);
 
 		Downloader downloader = new Downloader(sources.iterator());
 		downloader.addListener(this);
@@ -25,10 +26,8 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		//Uncompress the XML file
 		try {
 			FileUtility fileUtility = new FileUtility();
-			String compressedFileLocation = getSaveToLocation(PluginManager.READ_DIRECTORY,
-					PluginManager.XML_COMPRESSED_FILENAME);
-			String xmlFileLocation = getSaveToLocation(PluginManager.READ_DIRECTORY,
-					PluginManager.XML_FILENAME);
+			String compressedFileLocation = prefix(PluginManager.XML_COMPRESSED_FILENAME);
+			String xmlFileLocation = prefix(PluginManager.XML_FILENAME);
 			byte[] data = fileUtility.getDecompressedData(
 					new FileInputStream(compressedFileLocation));
 			FileOutputStream saveFile = new FileOutputStream(xmlFileLocation); //if needed...
@@ -42,8 +41,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 	}
 
 	private void addToDownload(String url, String filename) {
-		sources.add(new InformationSource(filename, url,
-				getSaveToLocation(PluginManager.READ_DIRECTORY, filename)));
+		sources.add(new InformationSource(filename, url, prefix(filename)));
 	}
 
 	private class InformationSource implements FileDownload {

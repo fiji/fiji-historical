@@ -80,8 +80,9 @@ public class FileUploader {
 	}
 
 	//Steps to accomplish entire upload task
-	public synchronized void beganUpload(long xmlModifiedSince, SourceFile xmlSource,
-			List<SourceFile> sources, SourceFile textSource) throws Exception {
+	//Note: For information list, index 0 is XML lock file, 1 is text file
+	public synchronized void beganUpload(long xmlModifiedSince, List<SourceFile> information,
+			List<SourceFile> sources) throws Exception {
 		//Set db.xml.gz to read-only
 		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED_FILENAME);
 		System.out.println("db.xml.gz set to read-only mode");
@@ -102,19 +103,39 @@ public class FileUploader {
 		System.out.println("XML file was not modified since last download, clear!");
 
 		//Start actual upload
-		uploadSingleFile(xmlSource);
+		uploadSingleFile(information.get(0)); //XML lock file
 		uploadFiles(sources);
-		uploadSingleFile(textSource);
+		uploadSingleFile(information.get(1)); //current.txt file
+
+		//Unlock process
+		String cmd1 = "chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED_FILENAME;
+		String cmd2 = "mv " + uploadDir + PluginManager.XML_COMPRESSED_LOCK + " " +
+		uploadDir + PluginManager.XML_COMPRESSED_FILENAME;
+		String cmd3 = "rm -f " + uploadDir + PluginManager.XML_COMPRESSED_LOCK;
+
+		setCommand(cmd1);
+		System.out.println("Command ran: " + cmd1);
+
+		setCommand(cmd2);
+		System.out.println("Command ran: " + cmd2);
+
+		setCommand(cmd3);
+		System.out.println("Command ran: " + cmd3);
+
+		//setCommand("sh -c \"" + cmd1 + " && " + cmd2 + " && " + cmd3 + "\"");
+		//System.out.println("Command ran: sh -c " + cmd1 + "," + cmd2 + "," + cmd3);
 
 		//Force rename db.xml.gz.lock to db.xml.gz
-		setCommand("trap 'rm -f " + uploadDir + PluginManager.XML_COMPRESSED_LOCK + "' EXIT && " +
+		/*setCommand("sh -c \"trap 'rm -f " + uploadDir + PluginManager.XML_COMPRESSED_LOCK + "' EXIT && " +
 				"scp -p -t " + uploadDir + " && " +
 				"chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED_FILENAME + " && " +
 				"mv " + uploadDir + PluginManager.XML_COMPRESSED_LOCK + " " +
-				uploadDir + PluginManager.XML_COMPRESSED_FILENAME);
-		System.out.println("db.xml.gz.lock renamed back to db.xml.gz");
+				uploadDir + PluginManager.XML_COMPRESSED_FILENAME + "\"");
+		System.out.println("db.xml.gz.lock renamed back to db.xml.gz");*/
 
 		//No exceptions occurred, thus inform listener of upload completion
+		out.close();
+		channel.disconnect();
 		notifyListenersCompletionAll();
 	}
 

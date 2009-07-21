@@ -42,17 +42,18 @@ import fiji.pluginManager.logic.FileUploader.UploadListener;
  */
 public class Updater extends PluginData {
 	private FileUploader fileUploader;
-	private String xmlSavePath;
-	private String xmlRelativePath;
-	private String txtSavePath;
-	private String txtRelativePath;
+	private String[] relativePaths = {
+			PluginManager.XML_COMPRESSED_LOCK,
+			PluginManager.TXT_FILENAME
+	};
+	private String[] savePaths;
+	private long xmlModifiedSince;
 	private ByteArrayOutputStream xmlWriter; //writes to memory
 	private StreamResult streamResult;
 	private SAXTransformerFactory tf;
 	private TransformerHandler handler;
 	private final String XALAN_INDENT_AMOUNT =
 		"{http://xml.apache.org/xslt}" + "indent-amount";
-	private long xmlModifiedSince;
 
 	//accessible information after uploading tasks are done
 	public List<PluginObject> changesList;
@@ -72,10 +73,9 @@ public class Updater extends PluginData {
 		xmlFileReader = pluginManager.xmlFileReader;
 
 		xmlModifiedSince = pluginManager.getXMLModifiedSince();
-		xmlRelativePath = PluginManager.XML_COMPRESSED_LOCK;
-		txtRelativePath = PluginManager.TXT_FILENAME;
-		xmlSavePath = prefix(xmlRelativePath);
-		txtSavePath = prefix(txtRelativePath);
+		savePaths = new String[relativePaths.length];
+		for (int i = 0; i < savePaths.length; i++)
+			savePaths[i] = prefix(relativePaths[i]);
 	}
 
 	public synchronized void generateNewPluginRecords() throws IOException {
@@ -99,7 +99,7 @@ public class Updater extends PluginData {
 					pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(
 							pluginToUpload.getFilename()));
 					filesToUpload.add(new UpdateSource(prefix(pluginToUpload.getFilename()),
-							pluginToUpload, "C0444"));
+							pluginToUpload, "C0644"));
 					//Add to existing records
 					versions.add(pluginToUpload);
 					
@@ -113,7 +113,7 @@ public class Updater extends PluginData {
 			if (pluginVersions == null) { //non-Fiji plugin doesn't exist in records yet
 				pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(name));
 				filesToUpload.add(new UpdateSource(prefix(pluginToUpload.getFilename()),
-						pluginToUpload, "C0444"));
+						pluginToUpload, "C0644"));
 				//therefore add it as a Fiji Plugin
 				PluginCollection newPluginRecord = new PluginCollection();
 				newPluginRecord.add(pluginToUpload);
@@ -129,18 +129,19 @@ public class Updater extends PluginData {
 		generateAndValidateXML();
 		saveXMLFile();
 		saveTextFile();
+		List<SourceFile> information = new ArrayList<SourceFile>();
 		//_Lock_ file, writable for none but current uploader
-		SourceFile xmlSource = new UpdateSource(xmlSavePath, xmlRelativePath, "C0644");
+		information.add(0, new UpdateSource(savePaths[0], relativePaths[0], "C0644"));
 		//Text file for old Fiji Updater, writable for all uploaders
-		SourceFile txtSource = new UpdateSource(txtSavePath, txtRelativePath, "C0664");
-		fileUploader.beganUpload(xmlModifiedSince, xmlSource, filesToUpload, txtSource);
+		information.add(1, new UpdateSource(savePaths[1], relativePaths[1], "C0664"));
+		fileUploader.beganUpload(xmlModifiedSince, information, filesToUpload);
 	}
 
 	private void saveXMLFile() throws IOException { //assumed validation is done
 		FileUtility fileUtility = new FileUtility();
 
 		//Compress and save using given path
-		FileOutputStream xmlOutputStream = new FileOutputStream(xmlSavePath);
+		FileOutputStream xmlOutputStream = new FileOutputStream(savePaths[0]);
 		fileUtility.compressAndSave(xmlWriter.toByteArray(),
 				xmlOutputStream);
 		xmlOutputStream.close();
@@ -148,7 +149,7 @@ public class Updater extends PluginData {
 
 	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
 	private void saveTextFile() throws FileNotFoundException {
-		PrintStream txtPrintStream = new PrintStream(txtSavePath); //Writing to current.txt
+		PrintStream txtPrintStream = new PrintStream(savePaths[1]); //Writing to current.txt
 
 		//start writing
 		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
@@ -174,8 +175,7 @@ public class Updater extends PluginData {
 		handler = tf.newTransformerHandler();
 		Transformer serializer = handler.getTransformer();
 		serializer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
-		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.READ_DIRECTORY +
-				"/" + PluginManager.DTD_FILENAME); //Relative path where it would be read
+		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.DTD_FILENAME);
 		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
 		serializer.setOutputProperty(XALAN_INDENT_AMOUNT, "4");
 		handler.setResult(streamResult);

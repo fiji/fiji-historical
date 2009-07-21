@@ -3,7 +3,6 @@ package fiji.pluginManager.logic;
 import fiji.pluginManager.userInterface.MainUserInterface;
 import ij.IJ;
 import ij.plugin.PlugIn;
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
@@ -15,13 +14,14 @@ import org.xml.sax.SAXException;
  * required list of PluginObjects that interface will use for display.
  */
 public class PluginManager implements PlugIn, Observer {
-	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
+	//TODO
+	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/";
+	//public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
 	public static final String TXT_FILENAME = "current.txt";
 	public static final String XML_COMPRESSED_LOCK = "db.xml.gz.lock";
 	public static final String XML_COMPRESSED_FILENAME = "db.xml.gz";
 	public static final String XML_FILENAME = "db.xml";
 	public static final String DTD_FILENAME = "plugins.dtd";
-	public static final String READ_DIRECTORY = "plugininfo";
 	public static final String UPDATE_DIRECTORY = "update";
 
 	//PluginObjects for output at User Interface
@@ -72,8 +72,7 @@ public class PluginManager implements PlugIn, Observer {
 						xmlFileDownloader.getTotalToLoad());
 				if (xmlFileDownloader.allTasksComplete()) {
 					//After downloading information successfully, read it
-					xmlFileReader = new XMLFileReader(PluginManager.READ_DIRECTORY +
-							File.separator + PluginManager.XML_FILENAME);
+					xmlFileReader = new XMLFileReader(PluginManager.XML_FILENAME);
 					//Build a list from the information
 					pluginListBuilder = new PluginListBuilder(xmlFileReader);
 					pluginListBuilder.register(this);
