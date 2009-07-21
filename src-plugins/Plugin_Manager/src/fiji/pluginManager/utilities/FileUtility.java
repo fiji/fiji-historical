@@ -66,16 +66,16 @@ public class FileUtility {
 	public static void main(String args[]) throws IOException {
 		FileUtility utility = new FileUtility();
 		//test compression
-		/*InputStream inStream = new FileInputStream(PluginManager.XML_FILENAME);
+		InputStream inStream = new FileInputStream(PluginManager.XML_FILENAME);
 		OutputStream outStream = new FileOutputStream(PluginManager.XML_COMPRESSED_LOCK);
-		utility.compressAndSave(utility.readStream(inStream), outStream);*/
+		utility.compressAndSave(utility.readStream(inStream), outStream);
 
 		//test uncompress
-		byte[] data = utility.getDecompressedData(new FileInputStream(
+		/*byte[] data = utility.getDecompressedData(new FileInputStream(
 				PluginManager.XML_COMPRESSED_LOCK));
 		OutputStream writer = new FileOutputStream(PluginManager.XML_FILENAME);
 		writer.write(data);
 		writer.flush();
-		writer.close();
+		writer.close();*/
 	}
 }
