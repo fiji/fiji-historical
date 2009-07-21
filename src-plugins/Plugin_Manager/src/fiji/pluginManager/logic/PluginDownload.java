@@ -1,5 +1,5 @@
 package fiji.pluginManager.logic;
-import fiji.pluginManager.logic.Downloader.FileDownload;
+import fiji.pluginManager.utilities.Downloader.FileDownload;
 
 /*
  * This class' role is to provide download details of a given Plugin for the Downloader

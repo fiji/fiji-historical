@@ -25,6 +25,8 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
 import fiji.pluginManager.logic.FileUploader.SourceFile;
 import fiji.pluginManager.logic.FileUploader.UploadListener;
+import fiji.pluginManager.utilities.FileUtility;
+import fiji.pluginManager.utilities.PluginData;
 
 /*
  * This class is responsible for writing updates to server, upon given the updated
@@ -48,12 +50,8 @@ public class Updater extends PluginData {
 	};
 	private String[] savePaths;
 	private long xmlModifiedSince;
+	private TransformerHandler handler; //tool for writing of XML contents
 	private ByteArrayOutputStream xmlWriter; //writes to memory
-	private StreamResult streamResult;
-	private SAXTransformerFactory tf;
-	private TransformerHandler handler;
-	private final String XALAN_INDENT_AMOUNT =
-		"{http://xml.apache.org/xslt}" + "indent-amount";
 
 	//accessible information after uploading tasks are done
 	public List<PluginObject> changesList;
@@ -169,16 +167,9 @@ public class Updater extends PluginData {
 	TransformerConfigurationException, IOException, ParserConfigurationException {
 		//Prepare XML writing for later purposes of validation
 		xmlWriter = new ByteArrayOutputStream();
-		streamResult = new StreamResult(xmlWriter);
-		tf = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
-
-		handler = tf.newTransformerHandler();
-		Transformer serializer = handler.getTransformer();
-		serializer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
-		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, PluginManager.DTD_FILENAME);
-		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
-		serializer.setOutputProperty(XALAN_INDENT_AMOUNT, "4");
-		handler.setResult(streamResult);
+		
+		XMLFileHandler xmlFileHandler = new XMLFileHandler(xmlWriter);
+		handler = xmlFileHandler.getXMLHandler();
 
 		//Start writing to memory
 		handler.startDocument();
@@ -237,14 +228,7 @@ public class Updater extends PluginData {
 		System.out.println("XML contents written to memory, checking for validation");
 
 		//Validate XML contents
-		SAXParserFactory factory = SAXParserFactory.newInstance();
-		factory.setValidating(true);
-		factory.setNamespaceAware(true);
-		SAXParser parser = factory.newSAXParser();
-
-		XMLReader xr = parser.getXMLReader();
-		xr.setErrorHandler(new XMLFileErrorHandler());
-		xr.parse(new InputSource(new ByteArrayInputStream(xmlWriter.toByteArray())));
+		xmlFileHandler.validateXMLContents(new ByteArrayInputStream(xmlWriter.toByteArray()));
 		System.out.println("XML contents validated");
 	}
 

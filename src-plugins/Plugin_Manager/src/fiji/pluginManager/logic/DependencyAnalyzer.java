@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import fiji.pluginManager.utilities.FileUtility;
+import fiji.pluginManager.utilities.PluginData;
+
 
 /*
  * This class generates a list of dependencies for a given plugin. The dependencies are

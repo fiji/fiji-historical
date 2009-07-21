@@ -1,4 +1,4 @@
-package fiji.pluginManager.logic;
+package fiji.pluginManager.utilities;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,6 +8,8 @@ import java.io.OutputStream;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
+
+import fiji.pluginManager.logic.PluginManager;
 
 /*
  * Main role is to compress/decompress file data.

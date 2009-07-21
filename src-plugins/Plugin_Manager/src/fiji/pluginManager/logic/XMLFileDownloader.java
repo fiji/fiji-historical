@@ -4,7 +4,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import fiji.pluginManager.logic.Downloader.FileDownload;
+
+import fiji.pluginManager.utilities.Downloader;
+import fiji.pluginManager.utilities.FileUtility;
+import fiji.pluginManager.utilities.Downloader.FileDownload;
 
 public class XMLFileDownloader extends PluginDataObservable implements Downloader.DownloadListener {
 	private List<FileDownload> sources;

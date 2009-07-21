@@ -1,4 +1,4 @@
-package fiji.pluginManager.logic;
+package fiji.pluginManager.utilities;
 
 import java.io.File;
 import java.io.FileNotFoundException;

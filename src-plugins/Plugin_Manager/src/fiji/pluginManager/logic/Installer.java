@@ -5,7 +5,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
-import fiji.pluginManager.logic.Downloader.FileDownload;
+
+import fiji.pluginManager.utilities.Downloader;
+import fiji.pluginManager.utilities.PluginData;
+import fiji.pluginManager.utilities.Downloader.FileDownload;
 
 /*
  * This class' main role is to download selected files, as well as indicate those that

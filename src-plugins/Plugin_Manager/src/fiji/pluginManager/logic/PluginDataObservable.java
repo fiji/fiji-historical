@@ -2,6 +2,8 @@ package fiji.pluginManager.logic;
 
 import java.util.Vector;
 
+import fiji.pluginManager.utilities.PluginData;
+
 /*
  * Class functionality:
  * A specialized version of PluginData.
