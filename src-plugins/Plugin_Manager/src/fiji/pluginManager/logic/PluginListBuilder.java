@@ -22,7 +22,7 @@ import org.xml.sax.SAXException;
  * latestDigests and latestDates hold Md5 sums and versions of latest Fiji plugins
  */
 public class PluginListBuilder extends PluginDataObservable {
-	private String[] pluginDirectories = {"plugins", "jars", "retro", "misc"};
+	private final String[] pluginDirectories = {"plugins", "jars", "retro", "misc"};
 	public List<PluginObject> pluginCollection; //info available after list is built
 	public List<PluginObject> readOnlyList; //info available after list is built
 	private Map<String, String> digests;
@@ -44,32 +44,6 @@ public class PluginListBuilder extends PluginDataObservable {
 		readOnlyList = new PluginCollection();
 	}
 
-	//recursively looks into a directory and adds the relevant file
-	private void queueDirectory(List<String> queue, String path) {
-		File dir = new File(prefix(path));
-		if (!dir.isDirectory())
-			return;
-		String[] list = dir.list();
-		for (int i = 0; i < list.length; i++)
-			if (list[i].equals(".") || list[i].equals(".."))
-				continue;
-			else if (list[i].endsWith(".jar"))
-				queue.add(path + File.separator + list[i]);
-			else
-				queueDirectory(queue,
-					path + File.separator + list[i]);
-	}
-
-	private void queueDirectory(List<String> queue, String[] pluginDirectories) {
-		for (String directory : pluginDirectories) {
-			File dir = new File(prefix(directory));
-			if (!dir.isDirectory())
-				throw new Error("Plugin Directory " + directory + " does not exist!");
-			else
-				queueDirectory(queue, directory);
-		}
-	}
-
 	public void buildFullPluginList() throws ParserConfigurationException, IOException, SAXException {
 		//Generates information of plugins on local side (digests, dates)
 		buildLocalPluginData();
@@ -79,24 +53,9 @@ public class PluginListBuilder extends PluginDataObservable {
 		generatePluginList();
 	}
 
+	//To get data of plugins on the local side
 	private void buildLocalPluginData() throws ParserConfigurationException, SAXException, IOException {
-		//To get a list of plugins on the local side
-		List<String> queue = new ArrayList<String>();
-
-		//Gather filenames of all local plugins
-		//TODO (Done?): Check if these launchers exist before adding them
-		if (getPlatform().equals("macosx")) {
-			String macosx = (getUseMacPrefix() ? getMacPrefix() : "") + "fiji-macosx";
-			String tiger = (getUseMacPrefix() ? getMacPrefix() : "") + "fiji-tiger";
-			if (fileExists(macosx)) queue.add(macosx);
-			if (fileExists(tiger)) queue.add(tiger);
-		} else {
-			String fijiapp = "fiji-" + getPlatform();
-			if (fileExists(fijiapp)) queue.add("fiji-" + getPlatform());
-		}
-		if (fileExists("ij.jar")) queue.add("ij.jar");
-
-		queueDirectory(queue, pluginDirectories); //directories assumed to exist
+		List<String> queue = generatePluginNamelist();
 
 		//To calculate the Md5 sums on the local side
 		Iterator<String> iter = queue.iterator();
@@ -118,6 +77,49 @@ public class PluginListBuilder extends PluginDataObservable {
 
 			changeStatus(outputFilename, ++currentlyLoaded, totalToLoad);
 		}
+	}
+
+	private List<String> generatePluginNamelist() {
+		List<String> queue = new ArrayList<String>();
+
+		//Gather filenames of all local plugins
+		//TODO (Done?): Check if these launchers exist before adding them
+		if (getPlatform().equals("macosx")) {
+			String macosx = (getUseMacPrefix() ? getMacPrefix() : "") + "fiji-macosx";
+			String tiger = (getUseMacPrefix() ? getMacPrefix() : "") + "fiji-tiger";
+			if (fileExists(macosx)) queue.add(macosx);
+			if (fileExists(tiger)) queue.add(tiger);
+		} else {
+			String fijiapp = "fiji-" + getPlatform();
+			if (fileExists(fijiapp)) queue.add("fiji-" + getPlatform());
+		}
+		if (fileExists("ij.jar")) queue.add("ij.jar");
+
+		for (String directory : pluginDirectories) {
+			File dir = new File(prefix(directory));
+			if (!dir.isDirectory())
+				throw new Error("Plugin Directory " + directory + " does not exist!");
+			else
+				queueDirectory(queue, directory);
+		}
+
+		return queue;
+	}
+
+	//recursively looks into a directory and adds the relevant file
+	private void queueDirectory(List<String> queue, String path) {
+		File dir = new File(prefix(path));
+		if (!dir.isDirectory())
+			return;
+		String[] list = dir.list();
+		for (int i = 0; i < list.length; i++)
+			if (list[i].equals(".") || list[i].equals(".."))
+				continue;
+			else if (list[i].endsWith(".jar"))
+				queue.add(path + File.separator + list[i]);
+			else
+				queueDirectory(queue,
+					path + File.separator + list[i]);
 	}
 
 	private void generatePluginList() {

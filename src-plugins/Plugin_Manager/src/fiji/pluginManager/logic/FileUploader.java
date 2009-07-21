@@ -26,9 +26,10 @@ import com.jcraft.jsch.Session;
  * is considered invalid.
  * 
  * 1.) Set db.xml.gz to read-only
- * 2.) Upload db.xml.gz.lock (Lock file, prevent others from writing it ATM)
- * 3.) Upload plugin files and current.txt
- * 4.) If all goes well, force rename db.xml.gz.lock to db.xml.gz
+ * 2.) Verify db.xml.gz has not been modified, if not, upload process cancelled
+ * 3.) Upload db.xml.gz.lock (Lock file, prevent others from writing it ATM)
+ * 4.) Upload plugin files and current.txt
+ * 5.) If all goes well, force rename db.xml.gz.lock to db.xml.gz
  * 
  */
 public class FileUploader {

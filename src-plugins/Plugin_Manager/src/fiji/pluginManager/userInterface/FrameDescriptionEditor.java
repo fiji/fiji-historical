@@ -1,9 +1,7 @@
 package fiji.pluginManager.userInterface;
-
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -11,8 +9,8 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JButton;
+import javax.swing.JTextPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -21,7 +19,7 @@ import fiji.pluginManager.logic.PluginObject;
 public class FrameDescriptionEditor extends JFrame {
 	private MainUserInterface mainUserInterface;
 	private PluginObject selectedPlugin;
-	private JTextArea txtDescription;
+	private JTextPane txtDescription;
 	private JButton btnSave;
 	private JButton btnCancel;
 	private boolean textChanged;
@@ -36,8 +34,8 @@ public class FrameDescriptionEditor extends JFrame {
 
 	private void setUpUserInterface() {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		txtDescription = new JTextArea();
-		txtDescription.setPreferredSize(new Dimension(425, 200));
+		txtDescription = new JTextPane();
+		txtDescription.setPreferredSize(new Dimension(450, 200));
 		txtDescription.getDocument().addDocumentListener(new DocumentListener() {
 
 			public void changedUpdate(DocumentEvent e) {
@@ -55,8 +53,12 @@ public class FrameDescriptionEditor extends JFrame {
 		});
 		if (selectedPlugin.getDescription() != null)
 			txtDescription.setText(selectedPlugin.getDescription());
+		txtDescription.setSelectionStart(0);
+		txtDescription.setSelectionEnd(0);
+
 		textChanged = false;
 		JScrollPane txtScrollpane = new JScrollPane(txtDescription);
+		//txtDescription.set
 		txtScrollpane.getViewport().setBackground(txtDescription.getBackground());
 		txtScrollpane.setPreferredSize(new Dimension(450, 200));
 

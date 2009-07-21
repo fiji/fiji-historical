@@ -2,6 +2,9 @@ package fiji.pluginManager.logic;
 import java.io.File;
 import fiji.pluginManager.logic.FileUploader.SourceFile;
 
+/*
+ * Implementation of class containing information for FileUploader to use
+ */
 public class UpdateSource implements SourceFile {
 	private String absolutePath;
 	private String permissions;
