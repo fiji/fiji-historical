@@ -43,6 +43,7 @@ public class Downloader {
 			try {
 				//Start connection
 				connection = (HttpURLConnection)(new URL(currentSource.getURL())).openConnection();
+				connection.setUseCaches(false);
 				downloadedBytes = 0; //start with nothing downloaded
 				downloadSize = connection.getContentLength();
 				if (downloadSize < 0)
