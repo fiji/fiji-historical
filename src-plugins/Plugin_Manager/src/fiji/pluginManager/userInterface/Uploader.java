@@ -7,20 +7,50 @@ import fiji.pluginManager.logic.FileUploader.SourceFile;
 import fiji.pluginManager.logic.FileUploader.UploadListener;
 import ij.IJ;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+
+import javax.swing.SwingUtilities;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
 import org.xml.sax.SAXException;
 import com.jcraft.jsch.JSchException;
 
-public class Uploader implements UploadListener {
-	private MainUserInterface mainUserInterface;
-	private Updater updater;
+public class Uploader implements UploadListener, Runnable {
+	private volatile MainUserInterface mainUserInterface;
+	private volatile PluginManager pluginManager;
+	private volatile Updater updater;
+	private Thread uploadThread;
 
 	public Uploader(MainUserInterface mainUserInterface) {
 		this.mainUserInterface = mainUserInterface;
 	}
 
 	public synchronized void setUploadInformationAndStart(PluginManager pluginManager) {
+		this.pluginManager = pluginManager;
+		uploadThread = new Thread(this);
+		uploadThread.start();
+	}
+
+	public synchronized void update(SourceFile source, long bytesSoFar, long bytesTotal) {
+		UpdateSource updateSource = (UpdateSource)source;
+		IJ.showStatus("Uploading " + updateSource.getRelativePath() + "...");
+		IJ.showProgress((int)bytesSoFar, (int)bytesTotal);
+	}
+
+	public synchronized void uploadFileComplete(SourceFile source) {
+		UpdateSource updateSource = (UpdateSource)source;
+		System.out.println("File " + updateSource.getRelativePath() + " uploaded.");
+	}
+
+	public synchronized void uploadProcessComplete() {
+		IJ.showStatus("");
+		System.out.println("Upload process complete!");
+		mainUserInterface.exitWithRestartMessage("Updated",
+				"Files successfully uploaded to server!\n\n"
+				+ "You need to restart Plugin Manager for changes to take effect.");
+	}
+
+	public void run() {
 		String message = null;
 		try {
 			updater = new Updater(pluginManager);
@@ -48,24 +78,5 @@ public class Uploader implements UploadListener {
 					"Failed to upload changes to server: " + message + "\n\n" +
 					"You need to restart Plugin Manager again.");
 		}
-	}
-
-	public synchronized void update(SourceFile source, long bytesSoFar, long bytesTotal) {
-		UpdateSource updateSource = (UpdateSource)source;
-		IJ.showStatus("Uploading " + updateSource.getRelativePath() + "...");
-		IJ.showProgress((int)bytesSoFar, (int)bytesTotal);
-	}
-
-	public synchronized void uploadFileComplete(SourceFile source) {
-		UpdateSource updateSource = (UpdateSource)source;
-		System.out.println("File " + updateSource.getRelativePath() + " uploaded.");
-	}
-
-	public synchronized void uploadProcessComplete() {
-		IJ.showStatus("");
-		System.out.println("Upload process complete!");
-		mainUserInterface.exitWithRestartMessage("Updated",
-				"Files successfully uploaded to server!\n\n"
-				+ "You need to restart Plugin Manager for changes to take effect.");
 	}
 }
