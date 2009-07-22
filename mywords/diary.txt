@@ -930,3 +930,14 @@ Bug-fixing day and some refactoring basically.
       ==> Downloader, FileUtility, and PluginData
 
 To do... Plugin descriptions...
+
+
+
+22nd July, Wednesday
+At this stage, it would be time to do code clean-up and bug fixing besides writing plugin descriptions.
+   ==> db.xml.gz might require name change...
+   ==> Might want to simplify some of the variable names at PluginManager and FileUploader.
+   ==> Might want to see how to refactor DependencyCompiler --> Whether name-change or rework on the logic
+
+The db.xml is ready for inserting descriptions.
+   ==> All information is available, synchronized with server's current.txt, except for the plugin dependencies where the dates are not yet modified.
