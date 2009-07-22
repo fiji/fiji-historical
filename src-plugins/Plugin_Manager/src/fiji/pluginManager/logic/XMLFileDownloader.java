@@ -2,6 +2,8 @@ package fiji.pluginManager.logic;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,13 +13,21 @@ import fiji.pluginManager.utilities.Downloader.FileDownload;
 
 public class XMLFileDownloader extends PluginDataObservable implements Downloader.DownloadListener {
 	private List<FileDownload> sources;
+	private long xmlLastModified;
 
-	public void startDownload(long xmlModifiedSince) {
+	public void startDownload() {
 		sources = new ArrayList<FileDownload>();
-		addToDownload(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED_FILENAME,
-				PluginManager.XML_COMPRESSED_FILENAME);
+		String xml_url = PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED_FILENAME;
+		addToDownload(xml_url, PluginManager.XML_COMPRESSED_FILENAME);
 		addToDownload(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME,
 				PluginManager.DTD_FILENAME);
+
+		//Get last modified date of XML, used for uploading purposes (Lock conflict)
+		try {
+			xmlLastModified = new URL(xml_url).openConnection().getLastModified();
+		} catch (Exception ex) {
+			throw new Error("Failed to get last modified date of XML document");
+		}
 
 		Downloader downloader = new Downloader(sources.iterator());
 		downloader.addListener(this);
@@ -38,6 +48,10 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		}
 
 		setStatusComplete(); //indicate to observer there's no more tasks
+	}
+
+	public long getXMLLastModified() {
+		return xmlLastModified;
 	}
 
 	private void addToDownload(String url, String filename) {
@@ -73,7 +87,6 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 	public void update(FileDownload source, int bytesSoFar, int bytesTotal) {
 		InformationSource src = (InformationSource)source;
 		changeStatus(src.getFilename(), bytesSoFar, bytesTotal);
-		System.out.println("Downloaded so far: " + currentlyLoaded);
 	}
 
 	public void fileFailed(FileDownload source, Exception e) {

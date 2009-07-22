@@ -144,7 +144,6 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 		}
 
 		isDownloading = false;
-		System.out.println("END OF THREAD");		
 	}
 
 	private void resolveDownloadError(PluginDownload src, Exception e) {

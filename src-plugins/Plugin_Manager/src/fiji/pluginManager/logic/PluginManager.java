@@ -4,6 +4,8 @@ import fiji.pluginManager.userInterface.MainUserInterface;
 import ij.IJ;
 import ij.plugin.PlugIn;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
@@ -34,7 +36,7 @@ public class PluginManager implements PlugIn, Observer {
 	public XMLFileReader xmlFileReader;
 
 	//cache, time
-	private long xmlModifiedSince;
+	private long xmlLastModified;
 
 	//toggle
 	boolean isDeveloper = true;
@@ -44,8 +46,8 @@ public class PluginManager implements PlugIn, Observer {
 			//Downloads files, convert info into PluginObjects useful for interface usage
 			xmlFileDownloader = new XMLFileDownloader();
 			xmlFileDownloader.register(this);
-			xmlModifiedSince = System.currentTimeMillis();
-			xmlFileDownloader.startDownload(xmlModifiedSince);
+			xmlFileDownloader.startDownload();
+			xmlLastModified = xmlFileDownloader.getXMLLastModified();
 
 			//Gets the PluginObject information
 			pluginCollection = pluginListBuilder.pluginCollection;
@@ -59,8 +61,8 @@ public class PluginManager implements PlugIn, Observer {
 		}
 	}
 
-	public long getXMLModifiedSince() {
-		return xmlModifiedSince;
+	public long getXMLLastModified() {
+		return xmlLastModified;
 	}
 
 	//Show progress of Plugin Manager startup at IJ bar

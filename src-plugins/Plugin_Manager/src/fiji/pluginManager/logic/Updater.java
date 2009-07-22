@@ -41,7 +41,7 @@ public class Updater extends PluginData {
 			PluginManager.TXT_FILENAME
 	};
 	private String[] savePaths;
-	private long xmlModifiedSince;
+	private long xmlLastModified; //Use for lock conflict check
 	private TransformerHandler handler; //tool for writing of XML contents
 	private ByteArrayOutputStream xmlWriter; //writes to memory
 
@@ -62,7 +62,7 @@ public class Updater extends PluginData {
 		dependencyAnalyzer = new DependencyAnalyzer(pluginCollection);
 		xmlFileReader = pluginManager.xmlFileReader;
 
-		xmlModifiedSince = pluginManager.getXMLModifiedSince();
+		xmlLastModified = pluginManager.getXMLLastModified();
 		savePaths = new String[relativePaths.length];
 		for (int i = 0; i < savePaths.length; i++)
 			savePaths[i] = prefix(relativePaths[i]);
@@ -113,6 +113,8 @@ public class Updater extends PluginData {
 	}
 
 	public synchronized void uploadFilesToServer(UploadListener uploadListener) throws Exception  {
+		System.out.println("********** Upload Process begins **********");
+
 		fileUploader = new FileUploader();
 		fileUploader.addListener(uploadListener);
 
@@ -124,7 +126,9 @@ public class Updater extends PluginData {
 		information.add(0, new UpdateSource(savePaths[0], relativePaths[0], "C0644"));
 		//Text file for old Fiji Updater, writable for all uploaders
 		information.add(1, new UpdateSource(savePaths[1], relativePaths[1], "C0664"));
-		fileUploader.beganUpload(xmlModifiedSince, information, filesToUpload);
+		fileUploader.beganUpload(xmlLastModified, information, filesToUpload);
+
+		System.out.println("********** Upload Process ended **********");
 	}
 
 	private void saveXMLFile() throws IOException { //assumed validation is done

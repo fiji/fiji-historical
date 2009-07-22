@@ -82,7 +82,7 @@ public class FileUploader {
 
 	//Steps to accomplish entire upload task
 	//Note: For information list, index 0 is XML lock file, 1 is text file
-	public synchronized void beganUpload(long xmlModifiedSince, List<SourceFile> information,
+	public synchronized void beganUpload(long xmlLastModified, List<SourceFile> information,
 			List<SourceFile> sources) throws Exception {
 		//Set db.xml.gz to read-only
 		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED_FILENAME);
@@ -98,7 +98,7 @@ public class FileUploader {
 
 		//Verify that XML file did not change since last downloaded
 		System.out.println("Checking if XML file has been modified since last download...");
-		if (!verifyXMLFileDidNotChange(xmlModifiedSince)) {
+		if (!verifyXMLFileDidNotChange(xmlLastModified)) {
 			throw new Exception("Conflict: XML file has been modified since it was last downloaded.");
 		}
 		System.out.println("XML file was not modified since last download, clear!");
@@ -122,6 +122,7 @@ public class FileUploader {
 
 		setCommand(cmd3);
 		System.out.println("Command ran: " + cmd3);
+		System.out.println("Uploaded at " + System.currentTimeMillis());
 
 		//setCommand("sh -c \"" + cmd1 + " && " + cmd2 + " && " + cmd3 + "\"");
 		//System.out.println("Command ran: sh -c " + cmd1 + "," + cmd2 + "," + cmd3);
@@ -156,12 +157,13 @@ public class FileUploader {
 
 	private boolean verifyXMLFileDidNotChange(long xmlModifiedSince) throws MalformedURLException, IOException {
 		//Use isModifiedSince header field to identify
-		//TODO: Use back XML file when it comes to LIVE test-out!!!
-		URL xmlURL = new URL(PluginManager.MAIN_URL + PluginManager.TXT_FILENAME);
-		//URL xmlURL = new URL(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED_FILENAME);
+		URL xmlURL = new URL(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED_FILENAME);
 		HttpURLConnection uc = (HttpURLConnection)xmlURL.openConnection();
-		uc.setIfModifiedSince(xmlModifiedSince);
-		return (uc.getInputStream().read() == -1);
+		/*uc.setIfModifiedSince(xmlModifiedSince);
+		System.out.println("xmlModifiedSince... " + xmlModifiedSince);
+		return (uc.getInputStream().read() == -1);*/
+		if (xmlModifiedSince != uc.getLastModified()) return false;
+		else return true;
 	}
 
 	//Upload and tracks the status of this single file
