@@ -122,7 +122,6 @@ public class FileUploader {
 
 		setCommand(cmd3);
 		System.out.println("Command ran: " + cmd3);
-		System.out.println("Uploaded at " + System.currentTimeMillis());
 
 		//setCommand("sh -c \"" + cmd1 + " && " + cmd2 + " && " + cmd3 + "\"");
 		//System.out.println("Command ran: sh -c " + cmd1 + "," + cmd2 + "," + cmd3);
