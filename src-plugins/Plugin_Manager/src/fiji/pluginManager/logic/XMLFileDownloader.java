@@ -11,6 +11,9 @@ import fiji.pluginManager.utilities.Downloader;
 import fiji.pluginManager.utilities.FileUtility;
 import fiji.pluginManager.utilities.Downloader.FileDownload;
 
+/*
+ * Directly in charge of downloading and saving start-up files (i.e.: XML file and related).
+ */
 public class XMLFileDownloader extends PluginDataObservable implements Downloader.DownloadListener {
 	private List<FileDownload> sources;
 	private long xmlLastModified;
@@ -22,13 +25,14 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		addToDownload(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME,
 				PluginManager.DTD_FILENAME);
 
-		//Get last modified date of XML, used for uploading purposes (Lock conflict)
+		//Record last modified date of XML, used for uploading purposes (Lock conflict)
 		try {
 			xmlLastModified = new URL(xml_url).openConnection().getLastModified();
 		} catch (Exception ex) {
 			throw new Error("Failed to get last modified date of XML document");
 		}
 
+		//Start downloading the required files
 		Downloader downloader = new Downloader(sources.iterator());
 		downloader.addListener(this);
 		downloader.startDownload();

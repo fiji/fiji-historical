@@ -4,8 +4,6 @@ import fiji.pluginManager.userInterface.MainUserInterface;
 import ij.IJ;
 import ij.plugin.PlugIn;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
@@ -35,26 +33,17 @@ public class PluginManager implements PlugIn, Observer {
 	private PluginListBuilder pluginListBuilder;
 	public XMLFileReader xmlFileReader;
 
-	//cache, time
-	private long xmlLastModified;
-
-	//toggle
+	private long xmlLastModified; //Track when was file modified (Lock conflict purposes)
 	boolean isDeveloper = true;
 
 	public void run(String arg) {
 		try {
-			//Downloads files, convert info into PluginObjects useful for interface usage
+			System.out.println("********** Plugin Manager Startup **********");
+			//First download the required information, which starts the program running
 			xmlFileDownloader = new XMLFileDownloader();
 			xmlFileDownloader.register(this);
+			System.out.println("Attempting to download required information.");
 			xmlFileDownloader.startDownload();
-			xmlLastModified = xmlFileDownloader.getXMLLastModified();
-
-			//Gets the PluginObject information
-			pluginCollection = pluginListBuilder.pluginCollection;
-			readOnlyList = pluginListBuilder.readOnlyList;
-
-			MainUserInterface mainUserInterface = new MainUserInterface(this, isDeveloper);
-			mainUserInterface.setVisible(true);
 		} catch (Error e) {
 			//Interface side: This should handle presentation side of exceptions
 			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getLocalizedMessage());
@@ -65,28 +54,41 @@ public class PluginManager implements PlugIn, Observer {
 		return xmlLastModified;
 	}
 
-	//Show progress of Plugin Manager startup at IJ bar
+	//Show progress of startup at IJ bar, directs what actions to take after task is complete.
 	public void refreshData(Observable subject) {
-		try {
+		try {	
 			if (subject == xmlFileDownloader) {
 				IJ.showStatus("Downloading " + xmlFileDownloader.getTaskname() + "...");
 				IJ.showProgress(xmlFileDownloader.getCurrentlyLoaded(),
 						xmlFileDownloader.getTotalToLoad());
+				//After required files are downloaded, read and retrieve them
 				if (xmlFileDownloader.allTasksComplete()) {
-					//After downloading information successfully, read it
+					System.out.println("Download complete.");
+					xmlLastModified = xmlFileDownloader.getXMLLastModified();
 					xmlFileReader = new XMLFileReader(PluginManager.XML_FILENAME);
-					//Build a list from the information
+
+					//Start to build a list from the information
 					pluginListBuilder = new PluginListBuilder(xmlFileReader);
 					pluginListBuilder.register(this);
 					pluginListBuilder.buildFullPluginList();
 				}
+
 			} else if (subject == pluginListBuilder) {
 				IJ.showStatus("Downloading " + pluginListBuilder.getTaskname() + "...");
 				IJ.showProgress(pluginListBuilder.getCurrentlyLoaded(),
 						pluginListBuilder.getTotalToLoad());
+
+				//After plugin list is built successfully, retrieve it and show main interface
 				if (pluginListBuilder.allTasksComplete()) {
+					System.out.println("Building up plugin data complete.");
 					IJ.showStatus("");
+					pluginCollection = pluginListBuilder.pluginCollection;
+					readOnlyList = pluginListBuilder.readOnlyList;
+					MainUserInterface mainUserInterface = new MainUserInterface(this, isDeveloper);
+					mainUserInterface.setVisible(true);
+					System.out.println("********** Startup Ended **********");
 				}
+
 			}
 		} catch (ParserConfigurationException e1) {
 			throw new Error(e1.getLocalizedMessage());

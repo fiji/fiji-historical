@@ -50,7 +50,6 @@ public class Downloader {
 					throw new Error("Content Length is not known");
 				notifyListenersUpdate(); //first notification starts from 0
 
-				System.out.println("Trying to connect to " + connection.getURL().toString() + "...");
 				new File(currentSource.getDestination()).getParentFile().mkdirs();
 				in = connection.getInputStream();
 				out = new FileOutputStream(currentSource.getDestination());
