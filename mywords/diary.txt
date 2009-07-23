@@ -941,3 +941,13 @@ At this stage, it would be time to do code clean-up and bug fixing besides writi
 
 The db.xml is ready for inserting descriptions.
    ==> All information is available, synchronized with server's current.txt, except for the plugin dependencies where the dates are not yet modified.
+
+
+
+23rd July, Thursday
+-Descriptions were written for about 10+ plugins...
+-Improved interface issues as I continue adding on descriptions
+   ==> Such as Button positioning of the main interface
+
+More suggestions?
+- Maybe an XML tag for "link" and "author" --> If implemented, should be made optional though
