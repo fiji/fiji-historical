@@ -7,14 +7,14 @@ import fiji.pluginManager.logic.FileUploader.SourceFile;
 import fiji.pluginManager.logic.FileUploader.UploadListener;
 import ij.IJ;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-
-import javax.swing.SwingUtilities;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
 import org.xml.sax.SAXException;
 import com.jcraft.jsch.JSchException;
 
+/*
+ * The "interface" for uploading plugins (Actually, it mainly consists of IJ progress bar).
+ */
 public class Uploader implements UploadListener, Runnable {
 	private volatile MainUserInterface mainUserInterface;
 	private volatile PluginManager pluginManager;
@@ -47,7 +47,7 @@ public class Uploader implements UploadListener, Runnable {
 		System.out.println("Upload process complete!");
 		mainUserInterface.exitWithRestartMessage("Updated",
 				"Files successfully uploaded to server!\n\n"
-				+ "You need to restart Plugin Manager for changes to take effect.");
+				+ "You need to restart Plugin Manager for changes to take effect."); //exit if successful
 	}
 
 	public void run() {
@@ -76,7 +76,8 @@ public class Uploader implements UploadListener, Runnable {
 			//TODO  Instructions to delete unclean db.xml.lock.gz and unlock db.xml.gz again?
 			mainUserInterface.exitWithRestartMessage("Error",
 					"Failed to upload changes to server: " + message + "\n\n" +
-					"You need to restart Plugin Manager again.");
+					"You need to restart Plugin Manager again."); //exit if failure
 		}
+		//Doesn't need usual task of re-enabling MainUserInterface, as program will always exit after this
 	}
 }

@@ -3,29 +3,19 @@ package fiji.pluginManager.userInterface;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.swing.JOptionPane;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
-import javax.swing.JFrame;
 import javax.swing.JTable;
-import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
-import javax.swing.event.CellEditorListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
-
 import fiji.pluginManager.logic.PluginObject;
 
 /*
@@ -122,7 +112,7 @@ public class PluginTable extends JTable {
 		getModel().removeTableModelListener(mainUserInterface);
 		setModel(pluginTableModel = new PluginTableModel(myList, isDeveloper));
 		getModel().addTableModelListener(mainUserInterface); //listen for changes (tableChanged(TableModelEvent e))
-		setColumnWidths(250, 120);
+		setColumnWidths(250, 100);
 		pluginTableModel.fireTableChanged(new TableModelEvent(pluginTableModel));
 	}
 

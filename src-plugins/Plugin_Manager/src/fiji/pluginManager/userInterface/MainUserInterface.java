@@ -4,7 +4,6 @@ import fiji.pluginManager.logic.Installer;
 import fiji.pluginManager.logic.PluginCollection;
 import fiji.pluginManager.logic.PluginManager;
 import fiji.pluginManager.logic.PluginObject;
-import fiji.pluginManager.logic.PluginCollection.Filter;
 import ij.IJ;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -83,7 +82,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private void setUpUserInterface() {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-		//======== LEFT PANEL ========
+		//======== Start: LEFT PANEL ========
 		//Create text search
 		JLabel lblSearch1 = new JLabel("Search:", SwingConstants.LEFT);
 		txtSearch = new JTextField();
@@ -164,15 +163,15 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		leftPanel.add(pluginListScrollpane);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,5)));
 		leftPanel.add(lblSummaryPanel);
-		//======== LEFT PANEL ========
+		//======== End: LEFT PANEL ========
 
-		//======== RIGHT PANEL ========
+		//======== Start: RIGHT PANEL ========
 		//Create textpane to hold the information and its scrollpane
 		txtPluginDetails = new TextPaneDisplay();
-		txtPluginDetails.setPreferredSize(new Dimension(335,315));
+		txtPluginDetails.setPreferredSize(new Dimension(350,315));
 		JScrollPane txtScrollpane = new JScrollPane(txtPluginDetails);
 		txtScrollpane.getViewport().setBackground(txtPluginDetails.getBackground());
-		txtScrollpane.setPreferredSize(new Dimension(335,315));
+		txtScrollpane.setPreferredSize(new Dimension(350,315));
 
 		//Tabbed pane of plugin details to hold the textpane (w/ scrollpane)
 		JTabbedPane tabbedPane = new JTabbedPane();
@@ -180,12 +179,11 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		panelPluginDetails.setLayout(new BorderLayout());
 		panelPluginDetails.add(txtScrollpane, BorderLayout.CENTER);
 		tabbedPane.addTab("Details", null, panelPluginDetails, "Individual Plugin information");
-		tabbedPane.setPreferredSize(new Dimension(335,315));
+		tabbedPane.setPreferredSize(new Dimension(350,315));
 
 		JPanel rightPanel = new JPanel();
 		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
 		rightPanel.add(Box.createVerticalGlue());
-		rightPanel.add(tabbedPane);
 
 		if (isDeveloper) {
 			JPanel editButtonPanel = new JPanel();
@@ -200,15 +198,15 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 			});
 			btnEditDescriptions.setEnabled(true);
-			editButtonPanel.add(btnEditDescriptions);
 			editButtonPanel.add(Box.createHorizontalGlue());
+			editButtonPanel.add(btnEditDescriptions);
 			rightPanel.add(editButtonPanel);
-		} else {
-			rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
 		}
-		//======== RIGHT PANEL ========
+		rightPanel.add(tabbedPane);
+		rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
+		//======== End: RIGHT PANEL ========
 
-		//======== TOP PANEL (LEFT + RIGHT) ========
+		//======== Start: TOP PANEL (LEFT + RIGHT) ========
 		JPanel topPanel = new JPanel();
 		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
 		topPanel.add(leftPanel);
@@ -252,9 +250,9 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 			}
 
 		});
-		//======== TOP PANEL (LEFT + RIGHT) ========
+		//======== End: TOP PANEL (LEFT + RIGHT) ========
 
-		//======== BOTTOM PANEL ========
+		//======== Start: BOTTOM PANEL ========
 		JPanel bottomPanel = new JPanel();
 		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
 		bottomPanel.add(btnStart);
@@ -265,7 +263,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		bottomPanel.add(Box.createHorizontalGlue());
 		bottomPanel.add(btnOK);
 		bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
-		//======== BOTTOM PANEL ========
+		//======== End: BOTTOM PANEL ========
 
 		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 		getContentPane().add(topPanel);
@@ -310,7 +308,9 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	private void clickToUploadRecords() {
+		//There's no frame interface for Uploader, makes disabling pointless, thus set invisible
 		Uploader uploader = new Uploader(this);
+		setVisible(false);
 		uploader.setUploadInformationAndStart(pluginManager);
 	}
 

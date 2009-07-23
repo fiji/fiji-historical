@@ -333,7 +333,7 @@ public class FileUploader {
 			listener.uploadProcessComplete();
 		}
 	}
-	
+
 	private void notifyListenersFileComplete() {
 		for (UploadListener listener : listeners) {
 			listener.uploadFileComplete(currentUpload);
