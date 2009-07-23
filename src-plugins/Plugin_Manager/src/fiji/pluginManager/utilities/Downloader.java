@@ -32,11 +32,11 @@ public class Downloader {
 		listeners = new ArrayList<DownloadListener>();
 	}
 
-	public void cancelDownload() {
+	public synchronized void cancelDownload() {
 		cancelled = true;
 	}
 
-	public void startDownload() {
+	public synchronized void startDownload() {
 		while (sourceFiles.hasNext() && !cancelled) {
 			currentSource = sourceFiles.next();
 
@@ -47,7 +47,7 @@ public class Downloader {
 				downloadedBytes = 0; //start with nothing downloaded
 				downloadSize = connection.getContentLength();
 				if (downloadSize < 0)
-					throw new Error("Content Length is not known");
+					throw new Exception("Content Length is not known");
 				notifyListenersUpdate(); //first notification starts from 0
 
 				new File(currentSource.getDestination()).getParentFile().mkdirs();
@@ -73,8 +73,7 @@ public class Downloader {
 			} catch (IOException e2) {
 				notifyListenersError(e2);
 			} catch (Exception e3) {
-				notifyListenersError(new Exception("Failed to download from " +
-						currentSource.getURL()));
+				notifyListenersError(e3);
 			}
 		}
 	}
@@ -97,7 +96,7 @@ public class Downloader {
 		}
 	}
 
-	public void addListener(DownloadListener listener) {
+	public synchronized void addListener(DownloadListener listener) {
 		listeners.add(listener);
 	}
 

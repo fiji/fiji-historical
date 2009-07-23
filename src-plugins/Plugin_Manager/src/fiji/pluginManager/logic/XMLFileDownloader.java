@@ -97,6 +97,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		try {
 			new File(source.getDestination()).delete();
 		} catch (Exception e2) { }
-		throw new Error("Could not download " + taskname + " successfully: " + e.getLocalizedMessage());
+		throw new Error("Failed to save from " + source.getURL() + ", " +
+				e.getLocalizedMessage());
 	}
 }

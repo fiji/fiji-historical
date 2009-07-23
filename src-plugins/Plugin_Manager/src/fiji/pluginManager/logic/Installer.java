@@ -122,7 +122,6 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 
 			//Gets the total size of the downloads
 			totalBytes += src.getRecordedFileSize();
-			System.out.println("totalBytes so far: " + totalBytes);
 		}
 
 		downloader = new Downloader(downloaderList.iterator());
@@ -150,9 +149,9 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 		//try to delete the file
 		try {
 			new File(src.getDestination()).delete();
-		} catch (Exception e2) { }
+		} catch (Exception e1) { }
 		src.getPlugin().setChangeStatusToFail();
-		System.out.println("Could not update " + currentlyDownloading.getFilename() +
+		System.out.println("Could not update " + src.getPlugin().getFilename() +
 				": " + e.getLocalizedMessage());
 	}
 

@@ -21,7 +21,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /*
- * Interface of a separate window, when downloading plugins.
+ * Interface of a separate window, when downloading/removing plugins.
  */
 class FrameInstaller extends JFrame {
 	private MainUserInterface mainUserInterface;
