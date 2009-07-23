@@ -193,6 +193,7 @@ public class PluginObject {
 		return (action == PluginObject.ACTION_UPLOAD);
 	}
 
+	//TODO: I think we should add another function verifying if plugin exists in XML records
 	public boolean isFijiPlugin() {
 		return isFiji;
 	}

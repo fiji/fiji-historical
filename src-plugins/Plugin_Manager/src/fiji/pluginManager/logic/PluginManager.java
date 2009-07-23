@@ -80,7 +80,7 @@ public class PluginManager implements PlugIn, Observer {
 
 				//After plugin list is built successfully, retrieve it and show main interface
 				if (pluginListBuilder.allTasksComplete()) {
-					System.out.println("Building up plugin data complete.");
+					System.out.println("Finished building up plugin data.");
 					IJ.showStatus("");
 					pluginCollection = pluginListBuilder.pluginCollection;
 					readOnlyList = pluginListBuilder.readOnlyList;
