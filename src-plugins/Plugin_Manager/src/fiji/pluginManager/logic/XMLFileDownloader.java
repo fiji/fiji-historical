@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fiji.pluginManager.utilities.Downloader;
-import fiji.pluginManager.utilities.FileUtility;
+import fiji.pluginManager.utilities.CompressionUtility;
 import fiji.pluginManager.utilities.Downloader.FileDownload;
 
 /*
@@ -38,10 +38,9 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 
 		//Uncompress the XML file
 		try {
-			FileUtility fileUtility = new FileUtility();
 			String compressedFileLocation = prefix(PluginManager.XML_COMPRESSED_FILENAME);
 			String xmlFileLocation = prefix(PluginManager.XML_FILENAME);
-			byte[] data = fileUtility.getDecompressedData(
+			byte[] data = CompressionUtility.getDecompressedData(
 					new FileInputStream(compressedFileLocation));
 			FileOutputStream saveFile = new FileOutputStream(xmlFileLocation); //if needed...
 			saveFile.write(data);

@@ -8,9 +8,8 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import fiji.pluginManager.utilities.FileUtility;
+import fiji.pluginManager.utilities.CompressionUtility;
 import fiji.pluginManager.utilities.PluginData;
-
 
 /*
  * This class generates a list of dependencies for a given plugin. The dependencies are
@@ -42,7 +41,7 @@ public class DependencyAnalyzer extends PluginData {
 			if (file.getName().endsWith(".class")) {
 				//Analyze each class file for dependent classes
 				ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(
-						new FileUtility().readStream(jarfile.getInputStream(file)));
+						CompressionUtility.readStream(jarfile.getInputStream(file)));
 
 				//For each dependent class
 				Iterator<String> iter = analyzer.getClassNames();
