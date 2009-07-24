@@ -951,3 +951,35 @@ The db.xml is ready for inserting descriptions.
 
 More suggestions?
 - Maybe an XML tag for "link" and "author" --> If implemented, should be made optional though
+
+
+
+24th July, Friday
+TODO: Take note
+
+Interaction issues picked up when writing descriptions:
+1 - Next week maybe should start working on extending XML to include <link> and <author> tags?
+   ==> The tags should be optional on XML side, and thus their contents should of course be optional on the interface side (Like descriptions)
+   ==> Links section is quite prevalent here
+   ==> So does authors from what I can see
+      ==> Classes I see that requires editing:
+         - XMLFileReader (Reading the new tags)
+         - PluginObject (Include new properties, maybe another new class PluginDetails?)
+         - Updater (Writing the new tags)
+         - MainUserInterface (New buttons to add links/author, or extend interface for FrameDescriptionEditor?)
+
+2 - Sometimes I forgot to select the plugin to upload and start going straight to editing descriptions
+   ==> Introduce more constraints: Developer may only start editing details after he selected a plugin to upload...
+      ==> Classes I see that requires editing:
+         - MainUserInterface (displayPluginDetails() and tableChanged() event -> Button enable/disable)
+
+3 - What if an error occurred during uploading?
+   ==> Save a copy of the edited plugin records if an error occurred --> Maybe we can call that "db.bak"
+      ==> Classes I see that requires editing:
+         - Updater (Saving db.bak)
+         - Uploader (Change error message)
+         - Note that for certain exceptions db.bak may not be generated, since error might occur with generating db.xml itself
+
+Time frame:
+I foresee the above improvements would take a few days to implement.
+Would 7 working days be enough to finish writing the remaining descriptions before school re-opens?
