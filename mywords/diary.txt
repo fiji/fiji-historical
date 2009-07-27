@@ -983,3 +983,21 @@ Interaction issues picked up when writing descriptions:
 Time frame:
 I foresee the above improvements would take a few days to implement.
 Would 7 working days be enough to finish writing the remaining descriptions before school re-opens?
+
+
+
+27th July, Monday
+
+Issues uncovered last week:
+- Backward compatibility of db.xml.gz
+   ==> If Plugin Manager is the replacement for Fiji Updater...
+      ==> In case of new versions (i.e.: Decompression failed), download current.txt, let it become backup...
+   ==> If Plugin Manager is to be used alongside Fiji Updater...
+      ==> Close, inform user, and advise to use Fiji Updater instead?
+
+What has been implemented:
+- <link> and <author> XML tag implemented for both reading and writing.
+- Implemented writing first and then play test the application before moving on to implementing the reading of XML file
+   ==> Confirmed extensibility of XML file
+- Plugin must be specified to upload before allowed to edit details (descriptions, link and author)
+- If fails to de-compress (IOW cannot load at all), Plugin Manager will ask for permission to use older version to fix the problem
