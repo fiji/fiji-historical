@@ -19,15 +19,12 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		//determining whether search text fits description/title
 		public boolean matchesFilter(PluginObject plugin) {
 			String lcFilename = plugin.getFilename().trim().toLowerCase();
-			boolean existsInTitle = (lcFilename.indexOf(text) >= 0);
-			boolean existsInDescription = false;
-
-			if (plugin.getDescription() != null) {
-				String lcDescription = plugin.getDescription().trim().toLowerCase();
-				existsInDescription = (lcDescription.indexOf(text) >= 0);
-			}
-
-			return (existsInTitle || existsInDescription);
+			if (lcFilename.indexOf(text) >= 0)
+				return true;
+			else if (plugin.getPluginDetails().matchesDetails(text))
+				return true;
+			else
+				return false;
 		}
 	}
 

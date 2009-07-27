@@ -79,8 +79,7 @@ public class TextPaneDisplay extends JTextPane {
 	}
 
 	//appends plugin description to existing text
-	public void insertDescription(String description)
-	throws BadLocationException {
+	public void insertDescription(String description) throws BadLocationException {
 		if (description == null || description.trim().equals("")) {
 			insertText("\nNo description available.");
 		} else {
@@ -88,9 +87,33 @@ public class TextPaneDisplay extends JTextPane {
 		}
 	}
 
+	public void insertAuthors(List<String> authors) throws BadLocationException {
+		if (authors == null || authors.size() == 0) {
+			insertText("Not specified.");
+		} else {
+			String authorNames = "";
+			for (int i = 0; i < authors.size(); i++) {
+				authorNames += authors.get(i);
+				if (i < authors.size() -1)
+					authorNames += ", ";
+			}
+			insertText(authorNames);
+		}
+	}
+
+	public void insertLinks(List<String> links) throws BadLocationException {
+		if (links == null || links.size() == 0) {
+			insertText("\nNone.");
+		} else {
+			String linkNames = "";
+			for (int i = 0; i < links.size(); i++)
+				linkNames += "\n- " + links.get(i);
+			insertText(linkNames);
+		}
+	}
+
 	//appends list of plugin names to existing text
-	public void insertPluginNamelist(List<PluginObject> myList)
-	throws BadLocationException {
+	public void insertPluginNamelist(List<PluginObject> myList) throws BadLocationException {
 		insertText("\n");
 		for (int i = 0; i < myList.size(); i++) {
 			PluginObject myPlugin = myList.get(i);
@@ -111,17 +134,23 @@ public class TextPaneDisplay extends JTextPane {
 		if (plugin.isUpdateable())
 			insertStyledText("\n(Update is available)", ITALIC_BLACK);
 		insertBlankLine();
-		insertBoldText("Md5 Sum");
-		insertText("\n" + plugin.getmd5Sum());
-		insertBlankLine();
 		insertBoldText("Date: ");
 		insertText(plugin.getTimestamp());
 		insertBlankLine();
+		insertBoldText("Author(s): ");
+		insertAuthors(plugin.getPluginDetails().getAuthors());
+		insertBlankLine();
 		insertBoldText("Description");
-		insertDescription(plugin.getDescription());
+		insertDescription(plugin.getPluginDetails().getDescription());
 		insertBlankLine();
 		insertBoldText("Dependency");
 		insertDependenciesList(plugin.getDependencies());
+		insertBlankLine();
+		insertBoldText("Reference Link(s):");
+		insertLinks(plugin.getPluginDetails().getLinks());
+		insertBlankLine();
+		insertBoldText("Md5 Sum");
+		insertText("\n" + plugin.getmd5Sum());
 		insertBlankLine();
 		insertBoldText("Is Fiji Plugin: ");
 		insertText(plugin.isFijiPlugin() ? "Yes" : "No");

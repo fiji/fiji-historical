@@ -201,7 +201,7 @@ public class FrameConfirmation extends JFrame {
 			for (int i = 0; i < changeList.size(); i++) {
 				PluginObject myPlugin = changeList.get(i);
 				String pluginName = myPlugin.getFilename();
-				String pluginDescription = myPlugin.getDescription();
+				String pluginDescription = myPlugin.getPluginDetails().getDescription();
 
 				String strAction = "";
 				if (myPlugin.isRemovableOnly()) {

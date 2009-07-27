@@ -188,8 +188,8 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		if (isDeveloper) {
 			JPanel editButtonPanel = new JPanel();
 			editButtonPanel.setLayout(new BoxLayout(editButtonPanel, BoxLayout.X_AXIS));
-			btnEditDescriptions = new JButton("Edit Descriptions");
-			btnEditDescriptions.setToolTipText("Edit the descriptions of selected plugin");
+			btnEditDescriptions = new JButton("Edit Plugin Details");
+			btnEditDescriptions.setToolTipText("Edit the details of selected plugin");
 			btnEditDescriptions.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent e) {
@@ -315,7 +315,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	private void clickToEditDescriptions() {
-		loadedFrame = new FrameDescriptionEditor(this, currentPlugin);
+		loadedFrame = new FrameDetailsEditor(this, currentPlugin);
 		loadedFrame.setVisible(true);
 		setEnabled(false);
 	}

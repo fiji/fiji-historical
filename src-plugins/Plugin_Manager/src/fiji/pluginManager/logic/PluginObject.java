@@ -7,7 +7,7 @@ public class PluginObject {
 	private String timestamp; //Version of plugin file ("Unique within each filename")
 	private String newMd5Sum; //if any
 	private String newTimestamp; //if any
-	private String description;
+	private PluginDetails pluginDetails;
 	private int filesize;
 	private List<Dependency> dependency; //Dependency object: filename and timestamp
 	private boolean isFiji;
@@ -33,16 +33,7 @@ public class PluginObject {
 		this.timestamp = timestamp;
 		this.status = status;
 		this.isFiji = isFiji;
-	}
-
-	public PluginObject(String strFilename, String md5Sum, String timestamp, String description, List<Dependency> dependency, byte status, byte action) {
-		this.strFilename = strFilename;
-		this.md5Sum = md5Sum;
-		this.timestamp = timestamp;
-		this.description = description;
-		this.dependency = dependency;
-		this.status = status;
-		this.action = action;
+		pluginDetails = new PluginDetails(); //default: no information, empty
 	}
 
 	public void setUpdateDetails(String newMd5Sum, String newTimestamp) {
@@ -55,8 +46,11 @@ public class PluginObject {
 		this.status = status;
 	}
 
-	public void setDescription(String description) {
-		this.description = description;
+	//set description details
+	public void setPluginDetails(PluginDetails pluginDetails) {
+		if (pluginDetails == null)
+			throw new Error("Plugin " + strFilename + " cannot have null PluginDetails object.");
+		this.pluginDetails = pluginDetails;
 	}
 
 	public void setDependency(List<Dependency> dependency) {
@@ -132,8 +126,8 @@ public class PluginObject {
 		return newTimestamp;
 	}
 
-	public String getDescription() {
-		return description;
+	public PluginDetails getPluginDetails() {
+		return pluginDetails;
 	}
 
 	public int getFilesize() {

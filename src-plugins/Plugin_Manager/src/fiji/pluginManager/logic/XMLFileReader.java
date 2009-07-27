@@ -69,6 +69,7 @@ public class XMLFileReader extends DefaultHandler {
 		return pluginRecords;
 	}
 
+	//Get the latest version, which _will_ have all the important details/information
 	private PluginObject getPluginMatching(String filename) {
 		PluginCollection versions = (PluginCollection)pluginRecords.get(filename);
 		if (versions != null) {
@@ -77,17 +78,17 @@ public class XMLFileReader extends DefaultHandler {
 		throw new Error("Plugin " + filename + " does not exist.");
 	}
 
-	//Get filesize associated with specified version, assumed filename & timestamp are correct
+	//Get filesize associated with latest version, assumed filename is correct
 	public int getFilesizeFrom(String filename) {
 		return getPluginMatching(filename).getFilesize(); //only useful for latest
 	}
 
-	//Get description associated with specified version, assumed filename & timestamp are correct
-	public String getDescriptionFrom(String filename) {
-		return getPluginMatching(filename).getDescription(); //only useful for latest
+	//Get description associated with latest version, assumed filename is correct
+	public PluginDetails getPluginDetailsFrom(String filename) {
+		return getPluginMatching(filename).getPluginDetails();
 	}
 
-	//Get dependencies associated with specified version, assumed filename & timestamp are correct
+	//Get dependencies associated with latest version, assumed filename is correct
 	public List<Dependency> getDependenciesFrom(String filename) {
 		return getPluginMatching(filename).getDependencies(); //only useful for latest
 	}
@@ -157,7 +158,7 @@ public class XMLFileReader extends DefaultHandler {
 
 		if (tagName.equals("version") || tagName.equals("previous-version")) {
 			PluginObject plugin = new PluginObject(filename, digest, timestamp, PluginObject.STATUS_UNINSTALLED, true);
-			plugin.setDescription(description);
+			plugin.setPluginDetails(new PluginDetails(description, new ArrayList<String>(), new ArrayList<String>()));
 			plugin.setFilesize(Integer.parseInt(filesize));
 			if (dependencyList.size() > 0)
 				plugin.setDependency(dependencyList);

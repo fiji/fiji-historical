@@ -33,6 +33,7 @@ import fiji.pluginManager.utilities.PluginData;
  * Note: Plugins are uploaded differently
  * - Non-Fiji plugins & new versions of Fiji Plugins will have files AND details uploaded
  * - Uninstalled & up-to-date plugins will ONLY have their details uploaded (i.e.: XML file)
+ * - Updater's FileUploader does NOT upload the DTD file. It assumes the DTD file is up to date.
  */
 public class Updater extends PluginData {
 	private FileUploader fileUploader;
@@ -83,7 +84,7 @@ public class Updater extends PluginData {
 				if (latest.getmd5Sum().equals(pluginToUpload.getmd5Sum()) ||
 						latest.getTimestamp().compareTo(pluginToUpload.getTimestamp()) >= 0) {
 					//Just update details
-					latest.setDescription(pluginToUpload.getDescription());
+					latest.setPluginDetails(pluginToUpload.getPluginDetails());
 				} else {
 					//Newer version which does not exist in records yet, thus requires upload
 					pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(
@@ -188,10 +189,13 @@ public class Updater extends PluginData {
 				handler.startElement("", "", "version", attrib);
 				writeSimpleTag("checksum", attrib, latest.getmd5Sum());
 				writeSimpleTag("timestamp", attrib, latest.getTimestamp());
-				String description = (latest.getDescription() == null ? "" : latest.getDescription());
+				String description = (latest.getPluginDetails().getDescription() == null ?
+						"" : latest.getPluginDetails().getDescription());
 				writeSimpleTag("description", attrib, description);
 				String strFilesize = "" + latest.getFilesize();
 				writeSimpleTag("filesize", attrib, strFilesize);
+
+				//Write dependencies if any
 				if (latest.getDependencies() != null && latest.getDependencies().size() > 0) {
 					List<Dependency> dependencies = latest.getDependencies();
 					for (Dependency dependency : dependencies) {
@@ -203,6 +207,9 @@ public class Updater extends PluginData {
 						handler.endElement("", "", "dependency");
 					}
 				}
+				//write <link> and <author> tags if any
+				writeMultipleSimpleTags("link", attrib, latest.getPluginDetails().getLinks());
+				writeMultipleSimpleTags("author", attrib, latest.getPluginDetails().getAuthors());
 				handler.endElement("", "", "version");
 
 				//As for the rest of the plugin's history record...
@@ -223,6 +230,13 @@ public class Updater extends PluginData {
 		//Validate XML contents
 		xmlFileHandler.validateXMLContents(new ByteArrayInputStream(xmlWriter.toByteArray()));
 		System.out.println("XML contents validated");
+	}
+
+	private void writeMultipleSimpleTags(String tagName, AttributesImpl attrib, List<String> values)
+	throws SAXException {
+		if (values != null && values.size() > 0)
+			for (String value : values)
+				writeSimpleTag(tagName, attrib, value);
 	}
 
 	private void writeSimpleTag(String tagName, AttributesImpl attrib, String value)
