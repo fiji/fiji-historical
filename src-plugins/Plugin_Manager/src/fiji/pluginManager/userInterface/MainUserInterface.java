@@ -53,7 +53,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	//For developers
 	private JButton btnUpload;
-	private JButton btnEditDescriptions;
+	private JButton btnEditDetails;
 
 	public MainUserInterface(PluginManager pluginManager, boolean isDeveloper) {
 		super("Plugin Manager");
@@ -188,18 +188,18 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		if (isDeveloper) {
 			JPanel editButtonPanel = new JPanel();
 			editButtonPanel.setLayout(new BoxLayout(editButtonPanel, BoxLayout.X_AXIS));
-			btnEditDescriptions = new JButton("Edit Plugin Details");
-			btnEditDescriptions.setToolTipText("Edit the details of selected plugin");
-			btnEditDescriptions.addActionListener(new ActionListener() {
+			btnEditDetails = new JButton("Edit Plugin Details");
+			btnEditDetails.setToolTipText("Edit the details of selected plugin");
+			btnEditDetails.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent e) {
 					clickToEditDescriptions();
 				}
 
 			});
-			btnEditDescriptions.setEnabled(true);
+			btnEditDetails.setEnabled(false);
 			editButtonPanel.add(Box.createHorizontalGlue());
-			editButtonPanel.add(btnEditDescriptions);
+			editButtonPanel.add(btnEditDetails);
 			rightPanel.add(editButtonPanel);
 		}
 		rightPanel.add(tabbedPane);
@@ -383,6 +383,11 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		} catch (BadLocationException e) {
 			throw new Error("Problem with printing Plugin information: " + e.getMessage());
 		}
+		//Enable/Disable edit button depending on _Action_ user wants of selected plugin
+		if (isDeveloper && currentPlugin.toUpload())
+			btnEditDetails.setEnabled(true);
+		else
+			btnEditDetails.setEnabled(false);
 	}
 
 	public void tableChanged(TableModelEvent e) {
@@ -409,6 +414,8 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		if (isDeveloper) txtAction += ", To upload: " + uploadCount;
 
 		lblPluginSummary.setText(txtAction);
+		if (isDeveloper && btnEditDetails != null)
+			btnEditDetails.setEnabled(false);
 		enableButtonIfAnyActions(btnStart, PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
 		enableButtonIfAnyActions(btnUpload, PluginCollection.FILTER_ACTIONS_UPLOAD);
 	}

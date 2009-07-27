@@ -74,7 +74,7 @@ public class PluginManager implements PlugIn, Observer {
 				}
 
 			} else if (subject == pluginListBuilder) {
-				IJ.showStatus("Downloading " + pluginListBuilder.getTaskname() + "...");
+				IJ.showStatus("Loading " + pluginListBuilder.getTaskname() + "...");
 				IJ.showProgress(pluginListBuilder.getCurrentlyLoaded(),
 						pluginListBuilder.getTotalToLoad());
 
