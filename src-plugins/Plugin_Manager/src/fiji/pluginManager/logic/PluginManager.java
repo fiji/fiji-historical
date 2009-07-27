@@ -4,7 +4,11 @@ import fiji.pluginManager.userInterface.MainUserInterface;
 import ij.IJ;
 import ij.plugin.PlugIn;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
+
+import javax.swing.JOptionPane;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
@@ -47,6 +51,17 @@ public class PluginManager implements PlugIn, Observer {
 		} catch (Error e) {
 			//Interface side: This should handle presentation side of exceptions
 			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getLocalizedMessage());
+		} catch (IOException e) {
+			//Scenario if decompression fails
+			if (JOptionPane.showConfirmDialog(null,
+					"Plugin Manager has failed to decompress plugin information db.xml.gz." +
+					"\nAn upgrade may be necessary. Do you want to use an older version to help download " +
+					"the latest version of Plugin Manager?", "Using UpdateFiji", JOptionPane.YES_NO_OPTION,
+					JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+				UpdateFiji updateFiji = new UpdateFiji();
+				updateFiji.hasGUI = true;
+				updateFiji.exec(UpdateFiji.defaultURL);
+			}
 		}
 	}
 

@@ -2,6 +2,7 @@ package fiji.pluginManager.logic;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 	private List<FileDownload> sources;
 	private long xmlLastModified;
 
-	public void startDownload() {
+	public void startDownload() throws IOException {
 		sources = new ArrayList<FileDownload>();
 		String xml_url = PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED_FILENAME;
 		addToDownload(xml_url, PluginManager.XML_COMPRESSED_FILENAME);
@@ -37,17 +38,13 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		downloader.startDownload();
 
 		//Uncompress the XML file
-		try {
-			String compressedFileLocation = prefix(PluginManager.XML_COMPRESSED_FILENAME);
-			String xmlFileLocation = prefix(PluginManager.XML_FILENAME);
-			byte[] data = CompressionUtility.getDecompressedData(
-					new FileInputStream(compressedFileLocation));
-			FileOutputStream saveFile = new FileOutputStream(xmlFileLocation); //if needed...
-			saveFile.write(data);
-			saveFile.close();
-		} catch (Exception e) {
-			throw new Error("Failed to decompress XML file.");
-		}
+		String compressedFileLocation = prefix(PluginManager.XML_COMPRESSED_FILENAME);
+		String xmlFileLocation = prefix(PluginManager.XML_FILENAME);
+		byte[] data = CompressionUtility.getDecompressedData(
+				new FileInputStream(compressedFileLocation));
+		FileOutputStream saveFile = new FileOutputStream(xmlFileLocation); //if needed...
+		saveFile.write(data);
+		saveFile.close();
 
 		setStatusComplete(); //indicate to observer there's no more tasks
 	}
