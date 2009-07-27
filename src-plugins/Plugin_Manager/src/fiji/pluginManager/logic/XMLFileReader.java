@@ -29,6 +29,10 @@ public class XMLFileReader extends DefaultHandler {
 	private String digest;
 	private String description;
 	private String filesize;
+	private String link;
+	private List<String> links;
+	private String author;
+	private List<String> authors;
 	private List<Dependency> dependencyList;
 	private String dependencyFilename;
 	private String dependencyTimestamp;
@@ -114,6 +118,10 @@ public class XMLFileReader extends DefaultHandler {
 		digest = null;
 		description = null;
 		filesize = null;
+		link = null;
+		links = null;
+		author = null;
+		authors = null;
 		dependencyList = null;
 		dependencyFilename = null;
 		dependencyTimestamp = null;
@@ -130,23 +138,31 @@ public class XMLFileReader extends DefaultHandler {
 		if (currentTag.equals("plugin")) {
 			filename = atts.getValue("filename");
 		} else if (currentTag.equals("version")) {
-			digest = "";
-			timestamp = "";
-			description = "";
-			filesize = "";
-			dependencyList = new ArrayList<Dependency>();
+			resetPluginValues();
 		} else if (currentTag.equals("dependency")) {
 			dependencyFilename = "";
 			dependencyTimestamp = "";
 			dependencyRelation = "";
+		} else if (currentTag.equals("link")) {
+			link = "";
+		} else if (currentTag.equals("author")) {
+			author = "";
 		} else if (currentTag.equals("previous-version")) {
+			resetPluginValues();
 			timestamp = atts.getValue("timestamp");
 			digest = atts.getValue("checksum");
-			//not supposed to be recorded
-			description = "";
 			filesize = "0";
-			dependencyList = new ArrayList<Dependency>();
 		}
+	}
+
+	private void resetPluginValues() {
+		digest = "";
+		timestamp = "";
+		description = "";
+		filesize = "";
+		dependencyList = new ArrayList<Dependency>();
+		links = new ArrayList<String>();
+		authors = new ArrayList<String>();
 	}
 
 	public void endElement (String uri, String name, String qName) {
@@ -158,7 +174,8 @@ public class XMLFileReader extends DefaultHandler {
 
 		if (tagName.equals("version") || tagName.equals("previous-version")) {
 			PluginObject plugin = new PluginObject(filename, digest, timestamp, PluginObject.STATUS_UNINSTALLED, true);
-			plugin.setPluginDetails(new PluginDetails(description, new ArrayList<String>(), new ArrayList<String>()));
+			if (tagName.equals("version"))
+				plugin.setPluginDetails(new PluginDetails(description, links, authors));
 			plugin.setFilesize(Integer.parseInt(filesize));
 			if (dependencyList.size() > 0)
 				plugin.setDependency(dependencyList);
@@ -184,6 +201,11 @@ public class XMLFileReader extends DefaultHandler {
 			}
 			Dependency dependency = new Dependency(dependencyFilename, dependencyTimestamp, dependencyRelation);
 			dependencyList.add(dependency);
+
+		} else if (tagName.equals("link")) {
+			links.add(link);
+		} else if (tagName.equals("author")) {
+			authors.add(author);
 		}
 	}
 
@@ -203,6 +225,10 @@ public class XMLFileReader extends DefaultHandler {
 				dependencyTimestamp += ch[i];
 			} else if (currentTag.equals("relation")) {
 				dependencyRelation += ch[i];
+			} else if (currentTag.equals("link")) {
+				link += ch[i];
+			} else if (currentTag.equals("author")) {
+				author += ch[i];
 			}
 		}
 	}
