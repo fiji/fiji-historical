@@ -29,12 +29,14 @@ public class PlugInExecuter implements Runnable {
 		thread = new Thread(this, plugin);
 		thread.setPriority(Math.max(thread.getPriority()-2, Thread.MIN_PRIORITY));
 		thread.start();
+		System.out.println("It comes in constructor");
 	}
 
 	public void run() {
 		try {
 			ImageJ ij = IJ.getInstance();
 			IJ.resetEscape();
+			System.out.println("It comes in run");
 			if (ij!=null) ij.runUserPlugIn(plugin, plugin, "", true);
 		} catch(Throwable e) {
 			IJ.showStatus("");
