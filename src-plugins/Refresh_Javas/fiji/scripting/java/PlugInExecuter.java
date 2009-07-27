@@ -1,4 +1,4 @@
-package refreshJavas;
+package fiji.scripting.java;
 
 import ij.IJ;
 import ij.ImageJ;
