@@ -38,7 +38,7 @@ import fiji.pluginManager.utilities.PluginData;
 public class Updater extends PluginData {
 	private FileUploader fileUploader;
 	private String[] relativePaths = {
-			PluginManager.XML_COMPRESSED_LOCK,
+			PluginManager.XML_LOCK,
 			PluginManager.TXT_FILENAME
 	};
 	private String[] savePaths;

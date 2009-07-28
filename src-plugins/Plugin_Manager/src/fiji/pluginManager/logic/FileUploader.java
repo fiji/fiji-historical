@@ -84,7 +84,7 @@ public class FileUploader {
 	public synchronized void beganUpload(long xmlLastModified, List<SourceFile> information,
 			List<SourceFile> sources) throws Exception {
 		//Set db.xml.gz to read-only
-		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED_FILENAME);
+		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED);
 		System.out.println("db.xml.gz set to read-only mode");
 
 		//Prepare for uploading of files
@@ -108,10 +108,10 @@ public class FileUploader {
 		uploadSingleFile(information.get(1)); //current.txt file
 
 		//Unlock process
-		String cmd1 = "chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED_FILENAME;
-		String cmd2 = "mv " + uploadDir + PluginManager.XML_COMPRESSED_LOCK + " " +
-		uploadDir + PluginManager.XML_COMPRESSED_FILENAME;
-		String cmd3 = "rm -f " + uploadDir + PluginManager.XML_COMPRESSED_LOCK;
+		String cmd1 = "chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED;
+		String cmd2 = "mv " + uploadDir + PluginManager.XML_LOCK + " " +
+		uploadDir + PluginManager.XML_COMPRESSED;
+		String cmd3 = "rm -f " + uploadDir + PluginManager.XML_LOCK;
 
 		setCommand(cmd1);
 		System.out.println("Command ran: " + cmd1);
@@ -155,7 +155,7 @@ public class FileUploader {
 
 	private boolean verifyXMLFileDidNotChange(long xmlModifiedSince) throws MalformedURLException, IOException {
 		//Use isModifiedSince header field to identify
-		URL xmlURL = new URL(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED_FILENAME);
+		URL xmlURL = new URL(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED);
 		HttpURLConnection uc = (HttpURLConnection)xmlURL.openConnection();
 		/*uc.setIfModifiedSince(xmlModifiedSince);
 		System.out.println("xmlModifiedSince... " + xmlModifiedSince);

@@ -20,8 +20,8 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 
 	public void startDownload() throws IOException {
 		sources = new ArrayList<FileDownload>();
-		String xml_url = PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED_FILENAME;
-		addToDownload(xml_url, PluginManager.XML_COMPRESSED_FILENAME);
+		String xml_url = PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED;
+		addToDownload(xml_url, PluginManager.XML_COMPRESSED);
 		addToDownload(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME,
 				PluginManager.DTD_FILENAME);
 
@@ -38,7 +38,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		downloader.startDownload();
 
 		//Uncompress the XML file
-		String compressedFileLocation = prefix(PluginManager.XML_COMPRESSED_FILENAME);
+		String compressedFileLocation = prefix(PluginManager.XML_COMPRESSED);
 		String xmlFileLocation = prefix(PluginManager.XML_FILENAME);
 		byte[] data = Compressor.getDecompressedData(
 				new FileInputStream(compressedFileLocation));

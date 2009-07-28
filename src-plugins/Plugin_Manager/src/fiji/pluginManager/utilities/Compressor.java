@@ -63,12 +63,12 @@ public class Compressor {
 	public static void main(String args[]) throws IOException {
 		//test compression
 		InputStream inStream = new FileInputStream(PluginManager.XML_FILENAME);
-		OutputStream outStream = new FileOutputStream(PluginManager.XML_COMPRESSED_FILENAME);
+		OutputStream outStream = new FileOutputStream(PluginManager.XML_COMPRESSED);
 		Compressor.compressAndSave(Compressor.readStream(inStream), outStream);
 
 		//test uncompress
 		byte[] data = Compressor.getDecompressedData(new FileInputStream(
-				PluginManager.XML_COMPRESSED_FILENAME));
+				PluginManager.XML_COMPRESSED));
 		OutputStream writer = new FileOutputStream(PluginManager.XML_FILENAME);
 		writer.write(data);
 		writer.flush();
