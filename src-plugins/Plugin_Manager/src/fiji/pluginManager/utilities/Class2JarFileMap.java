@@ -1,4 +1,4 @@
-package fiji.pluginManager.logic;
+package fiji.pluginManager.utilities;
 import ij.IJ;
 import ij.ImageJ;
 import ij.Menus;
@@ -21,18 +21,12 @@ public class Class2JarFileMap extends HashMap<String, String> {
 		addDirectory("jars");
 	}
 
-	String getFijiDirectory() {
-		return stripSuffix(stripSuffix(Menus.getPlugInsPath(), File.separator),
-				File.separator + "plugins").replace('\\', '/');
+	private String getFijiDirectory() {
+		return UpdateFiji.stripSuffix(UpdateFiji.stripSuffix(Menus.getPlugInsPath(),
+				File.separator), File.separator + "plugins").replace('\\', '/');
 	}
 
-	String stripSuffix(String string, String suffix) {
-		if (!string.endsWith(suffix))
-			return string;
-		return string.substring(0, string.length() - suffix.length());
-	}
-
-	void addDirectory(String directory) {
+	private void addDirectory(String directory) {
 		File dir = new File(fijiDirectory + "/" + directory);
 		if (!dir.isDirectory())
 			return;
@@ -49,19 +43,19 @@ public class Class2JarFileMap extends HashMap<String, String> {
 		}
 	}
 
-	void addJar(String jar) throws IOException {
+	private void addJar(String jar) throws IOException {
 		JarFile file = new JarFile(fijiDirectory + "/" + jar);
 		Enumeration entries = file.entries();
 		while (entries.hasMoreElements()) {
 			String name =
 				((JarEntry)entries.nextElement()).getName();
 			if (name.endsWith(".class"))
-				addClass(stripSuffix(name,
+				addClass(UpdateFiji.stripSuffix(name,
 					".class").replace('/', '.'), jar);
 		}
 	}
 
-	void addClass(String className, String jar) {
+	private void addClass(String className, String jar) {
 		if (containsKey(className))
 			IJ.log("Warning: class " + className + " was found both"
 				+ " in " + get(className) + " and in " + jar);

@@ -1,5 +1,6 @@
 package fiji.pluginManager.logic;
 import fiji.pluginManager.ui.MainUserInterface;
+import fiji.pluginManager.utilities.UpdateFiji;
 import ij.IJ;
 import ij.plugin.PlugIn;
 import java.io.IOException;
@@ -54,6 +55,7 @@ public class PluginManager implements PlugIn, Observer {
 					"\nAn upgrade may be necessary. Do you want to use an older version to help download " +
 					"the latest version of Plugin Manager?", "Using UpdateFiji", JOptionPane.YES_NO_OPTION,
 					JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+				//Load the older version of Fiji Updater instead
 				UpdateFiji updateFiji = new UpdateFiji();
 				updateFiji.hasGUI = true;
 				updateFiji.exec(UpdateFiji.defaultURL);

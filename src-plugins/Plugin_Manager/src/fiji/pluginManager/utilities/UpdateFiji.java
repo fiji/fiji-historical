@@ -1,4 +1,4 @@
-package fiji.pluginManager.logic;
+package fiji.pluginManager.utilities;
 import ij.IJ;
 import ij.Menus;
 
@@ -48,11 +48,11 @@ import java.util.TreeMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class UpdateFiji implements PlugIn { //legacy code?
+public class UpdateFiji implements PlugIn { //legacy code & utility class?
 	Map dates, digests;
 	String fijiPath;
 	String currentDate;
-	boolean hasGUI = false;
+	public boolean hasGUI = false;
 	boolean forServer = false;
 
 	public static final String defaultURL =
@@ -85,8 +85,7 @@ public class UpdateFiji implements PlugIn { //legacy code?
 	}
 
 	public void exec(String url) {
-		String path = stripSuffix(stripSuffix(Menus.getPlugInsPath(),
-				File.separator), "plugins");
+		String path = getFijiRootPath();
 		File ij_jar = new File(path, "ij.jar");
 		if (ij_jar.exists() && !ij_jar.canWrite() &&
 				!IJ.showMessageWithCancel("Fiji Updater",
@@ -102,6 +101,11 @@ public class UpdateFiji implements PlugIn { //legacy code?
 		} catch (MalformedURLException e) {
 			IJ.write("Invalid URL: " + url);
 		}
+	}
+
+	public static String getFijiRootPath() {
+		return stripSuffix(stripSuffix(Menus.getPlugInsPath(),
+				File.separator), "plugins");
 	}
 
 	public String getDefaultFijiPath() {
@@ -164,7 +168,7 @@ public class UpdateFiji implements PlugIn { //legacy code?
 		return osName;
 	}
 
-	private class JarEntryComparator implements Comparator {
+	private static class JarEntryComparator implements Comparator {
 		public int compare(Object o1, Object o2) {
 			String name1 = ((JarEntry)o1).getName();
 			String name2 = ((JarEntry)o2).getName();
@@ -183,7 +187,7 @@ public class UpdateFiji implements PlugIn { //legacy code?
 		return MessageDigest.getInstance("SHA-1");
 	}
 
-	public void updateDigest(InputStream input, MessageDigest digest)
+	public static void updateDigest(InputStream input, MessageDigest digest)
 			throws IOException {
 		byte[] buffer = new byte[65536];
 		DigestInputStream digestStream =
@@ -207,7 +211,7 @@ public class UpdateFiji implements PlugIn { //legacy code?
 		return new String(buffer);
 	}
 
-	public String getJarDigest(String path)
+	public static String getJarDigest(String path)
 			throws FileNotFoundException, IOException {
 		MessageDigest digest = null;
 		try {
@@ -239,7 +243,7 @@ public class UpdateFiji implements PlugIn { //legacy code?
 			+ path;
 	}
 
-	public String getDigest(String path, String fullPath)
+	public static String getDigest(String path, String fullPath)
 			throws NoSuchAlgorithmException, FileNotFoundException,
 				IOException, UnsupportedEncodingException {
 		if (path.endsWith(".jar"))

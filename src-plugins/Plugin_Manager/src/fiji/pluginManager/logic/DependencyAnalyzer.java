@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import fiji.pluginManager.utilities.Class2JarFileMap;
 import fiji.pluginManager.utilities.Compressor;
 import fiji.pluginManager.utilities.PluginData;
 
