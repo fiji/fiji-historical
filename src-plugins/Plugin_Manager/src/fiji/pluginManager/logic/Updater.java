@@ -54,9 +54,6 @@ public class Updater extends PluginData {
 	private XMLFileReader xmlFileReader;
 
 	public Updater(PluginManager pluginManager) {
-		//For purposes of uploading to server
-		super(true);
-
 		PluginCollection pluginCollection = (PluginCollection)pluginManager.pluginCollection;
 		changesList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
 		((PluginCollection)changesList).resetChangeStatuses();

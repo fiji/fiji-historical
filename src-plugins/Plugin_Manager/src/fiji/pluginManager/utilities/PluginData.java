@@ -19,14 +19,8 @@ public abstract class PluginData {
 	private boolean useMacPrefix;
 	private String fijiPath;
 	private String platform;
-	private boolean forServer;
 
 	public PluginData() {
-		this(false);
-	}
-
-	public PluginData(boolean forServer) {
-		this.forServer = forServer;
 		fijiPath = UpdateFiji.getFijiRootPath();
 		platform = UpdateFiji.getPlatform(); //gets the platform string value
 
@@ -58,13 +52,7 @@ public abstract class PluginData {
 
 	//Gets the location of specified file when inside of saveDirectory
 	protected String getSaveToLocation(String saveDirectory, String filename) {
-		String savePath = prefix(saveDirectory + File.separator + filename);
-		if (filename.startsWith("fiji-")) {
-			boolean useMacPrefix = getUseMacPrefix();
-			String macPrefix = getMacPrefix();
-			savePath = prefix((useMacPrefix ? macPrefix : "") + filename);
-		}
-		return savePath;
+		return prefix(saveDirectory + File.separator + filename);
 	}
 
 	protected String getTimestampFromFile(String filename) {
@@ -84,17 +72,12 @@ public abstract class PluginData {
 			String fullPath = prefix(filename);
 			return getDigest(filename, fullPath);
 		} catch (Exception e) {
-			if (e instanceof FileNotFoundException && filename.startsWith("fiji-"))
-				return null;
 			throw new Error("Could not get digest: " + prefix(filename) + " (" + e + ")");
 		}
 	}
 
 	protected String prefix(String path) {
-		return fijiPath + File.separator
-			+ (forServer && path.startsWith("fiji-") ?
-					"precompiled/" : "")
-			+ path;
+		return fijiPath + File.separator + path;
 	}
 
 	protected String initializeFilename(String filename) {

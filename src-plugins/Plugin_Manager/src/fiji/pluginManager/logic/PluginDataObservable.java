@@ -18,13 +18,8 @@ public class PluginDataObservable extends PluginData implements Observable {
 	protected int totalToLoad;
 	protected boolean allTasksComplete;
 
-	public PluginDataObservable(boolean forServer) {
-		super(forServer);
-		observersList = new Vector<Observer>();
-	}
-
 	public PluginDataObservable() {
-		this(false);
+		observersList = new Vector<Observer>();
 	}
 
 	public String getTaskname() {

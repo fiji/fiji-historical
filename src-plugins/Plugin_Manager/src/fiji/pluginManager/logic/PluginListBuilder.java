@@ -63,7 +63,7 @@ public class PluginListBuilder extends PluginDataObservable {
 		totalToLoad = queue.size();
 		while (iter.hasNext()) {
 			String outputFilename = initializeFilename(iter.next());
-			String outputDigest = getDigestFromFile(outputFilename); //TODO: forServer flag
+			String outputDigest = getDigestFromFile(outputFilename);
 			digests.put(outputFilename, outputDigest);
 
 			//null indicate XML records does not have such plugin filename and md5 sums
@@ -83,16 +83,6 @@ public class PluginListBuilder extends PluginDataObservable {
 		List<String> queue = new ArrayList<String>();
 
 		//Gather filenames of all local plugins
-		//TODO (Done?): Check if these launchers exist before adding them
-		if (getPlatform().equals("macosx")) {
-			String macosx = (getUseMacPrefix() ? getMacPrefix() : "") + "fiji-macosx";
-			String tiger = (getUseMacPrefix() ? getMacPrefix() : "") + "fiji-tiger";
-			if (fileExists(macosx)) queue.add(macosx);
-			if (fileExists(tiger)) queue.add(tiger);
-		} else {
-			String fijiapp = "fiji-" + getPlatform();
-			if (fileExists(fijiapp)) queue.add("fiji-" + getPlatform());
-		}
 		if (fileExists("ij.jar")) queue.add("ij.jar");
 
 		for (String directory : pluginDirectories) {
@@ -127,13 +117,6 @@ public class PluginListBuilder extends PluginDataObservable {
 		Iterator<String> iterLatest = latestDigests.keySet().iterator();
 		while (iterLatest.hasNext()) {
 			String pluginName = iterLatest.next();
-			// launcher is platform-specific
-			if (pluginName.startsWith("fiji-")) {
-				if (!pluginName.equals("fiji-" + getPlatform()) &&
-						(!getPlatform().equals("macosx") || !pluginName.startsWith("fiji-tiger"))) {
-					continue;
-				}
-			}
 			String digest = digests.get(pluginName);
 			String remoteDigest = latestDigests.get(pluginName);
 			String date = dates.get(pluginName);
