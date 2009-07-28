@@ -1,21 +1,23 @@
-package fiji.pluginManager.userInterface;
+package fiji.pluginManager.ui;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JButton;
 import javax.swing.JTextPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
 import fiji.pluginManager.logic.PluginObject;
 
-public class FrameDetailsEditor extends JFrame {
+public class DetailsEditor extends JFrame {
 	private DocumentListener changeListener;
 	private MainUserInterface mainUserInterface;
 	private PluginObject selectedPlugin;
@@ -26,7 +28,7 @@ public class FrameDetailsEditor extends JFrame {
 	private JButton btnCancel;
 	private boolean textChanged;
 
-	public FrameDetailsEditor(MainUserInterface mainUserInterface, PluginObject selectedPlugin) {
+	public DetailsEditor(MainUserInterface mainUserInterface, PluginObject selectedPlugin) {
 		super("Description Editor: " + selectedPlugin.getFilename());
 		this.mainUserInterface = mainUserInterface;
 		this.selectedPlugin = selectedPlugin;

@@ -1,6 +1,5 @@
 package fiji.pluginManager.logic;
-
-import fiji.pluginManager.userInterface.MainUserInterface;
+import fiji.pluginManager.ui.MainUserInterface;
 import ij.IJ;
 import ij.plugin.PlugIn;
 import java.io.IOException;

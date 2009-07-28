@@ -1,16 +1,21 @@
-package fiji.pluginManager.userInterface;
+package fiji.pluginManager.ui;
+
+import ij.IJ;
+
+import java.io.IOException;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerConfigurationException;
+
+import org.xml.sax.SAXException;
+
+import com.jcraft.jsch.JSchException;
 
 import fiji.pluginManager.logic.PluginManager;
 import fiji.pluginManager.logic.UpdateSource;
 import fiji.pluginManager.logic.Updater;
 import fiji.pluginManager.logic.FileUploader.SourceFile;
 import fiji.pluginManager.logic.FileUploader.UploadListener;
-import ij.IJ;
-import java.io.IOException;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerConfigurationException;
-import org.xml.sax.SAXException;
-import com.jcraft.jsch.JSchException;
 
 /*
  * The "interface" for uploading plugins (Actually, it mainly consists of IJ progress bar).

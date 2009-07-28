@@ -1,5 +1,4 @@
 package fiji.pluginManager.logic;
-
 import ij.IJ;
 import java.io.FileInputStream;
 import java.io.IOException;

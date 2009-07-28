@@ -1,14 +1,11 @@
-package fiji.pluginManager.userInterface;
-import fiji.pluginManager.logic.DependencyCompiler;
-import fiji.pluginManager.logic.Installer;
-import fiji.pluginManager.logic.PluginCollection;
-import fiji.pluginManager.logic.PluginManager;
-import fiji.pluginManager.logic.PluginObject;
+package fiji.pluginManager.ui;
 import ij.IJ;
+
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -28,6 +25,12 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+
+import fiji.pluginManager.logic.DependencyCompiler;
+import fiji.pluginManager.logic.UpdateTracker;
+import fiji.pluginManager.logic.PluginCollection;
+import fiji.pluginManager.logic.PluginManager;
+import fiji.pluginManager.logic.PluginObject;
 
 /*
  * Main User Interface, where the user chooses his options...
@@ -288,15 +291,15 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	private void clickToEditDescriptions() {
-		loadedFrame = new FrameDetailsEditor(this, currentPlugin);
+		loadedFrame = new DetailsEditor(this, currentPlugin);
 		loadedFrame.setVisible(true);
 		setEnabled(false);
 	}
 
 	private void clickToBeginOperations() {
-		loadedFrame = new FrameConfirmation(this);
-		FrameConfirmation frameConfirmation = (FrameConfirmation)loadedFrame;
-		frameConfirmation.displayInformation(new DependencyCompiler(pluginCollection));
+		loadedFrame = new Confirmation(this);
+		Confirmation confirmation = (Confirmation)loadedFrame;
+		confirmation.displayInformation(new DependencyCompiler(pluginCollection));
 		loadedFrame.setVisible(true);
 		setEnabled(false);
 	}
@@ -316,10 +319,10 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	public void openDownloader() {
 		backToPluginManager();
-		loadedFrame = new FrameInstaller(this);
+		loadedFrame = new Installer(this);
 		loadedFrame.setVisible(true);
-		FrameInstaller frameInstaller = (FrameInstaller)loadedFrame;
-		frameInstaller.setInstaller(new Installer(pluginCollection));
+		Installer installer = (Installer)loadedFrame;
+		installer.setInstaller(new UpdateTracker(pluginCollection));
 		setEnabled(false);
 	}
 

@@ -1,6 +1,7 @@
-package fiji.pluginManager.userInterface;
+package fiji.pluginManager.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;

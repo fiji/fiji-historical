@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import fiji.pluginManager.utilities.CompressionUtility;
+import fiji.pluginManager.utilities.Compressor;
 import fiji.pluginManager.utilities.PluginData;
 
 /*
@@ -41,7 +41,7 @@ public class DependencyAnalyzer extends PluginData {
 			if (file.getName().endsWith(".class")) {
 				//Analyze each class file for dependent classes
 				ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(
-						CompressionUtility.readStream(jarfile.getInputStream(file)));
+						Compressor.readStream(jarfile.getInputStream(file)));
 
 				//For each dependent class
 				Iterator<String> iter = analyzer.getClassNames();

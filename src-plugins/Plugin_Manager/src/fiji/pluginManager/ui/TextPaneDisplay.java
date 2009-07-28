@@ -1,4 +1,4 @@
-package fiji.pluginManager.userInterface;
+package fiji.pluginManager.ui;
 
 import java.awt.Color;
 import java.util.Iterator;
@@ -12,7 +12,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 import fiji.pluginManager.logic.Dependency;
-import fiji.pluginManager.logic.Installer;
+import fiji.pluginManager.logic.UpdateTracker;
 import fiji.pluginManager.logic.PluginObject;
 
 public class TextPaneDisplay extends JTextPane {
@@ -169,18 +169,18 @@ public class TextPaneDisplay extends JTextPane {
 		scrollToTop();
 	}
 
-	public void showDownloadProgress(Installer installer) {
-		Iterator<PluginObject> iterDownloaded = installer.iterDownloaded();
+	public void showDownloadProgress(UpdateTracker updateTracker) {
+		Iterator<PluginObject> iterDownloaded = updateTracker.iterDownloaded();
 		int downloadedSize = 0;
-		Iterator<PluginObject> iterFailedDownloads = installer.iterFailedDownloads();
+		Iterator<PluginObject> iterFailedDownloads = updateTracker.iterFailedDownloads();
 		int failedDownloads = 0;
-		Iterator<PluginObject> iterMarkedUninstall = installer.iterMarkedUninstall();
+		Iterator<PluginObject> iterMarkedUninstall = updateTracker.iterMarkedUninstall();
 		int markedUninstallSize = 0;
-		Iterator<PluginObject> iterFailedUninstalls = installer.iterFailedUninstalls();
+		Iterator<PluginObject> iterFailedUninstalls = updateTracker.iterFailedUninstalls();
 		int failedUninstalls = 0;
 
-		PluginObject currentlyDownloading = installer.currentlyDownloading;
-		boolean stillDownloading = installer.isDownloading();
+		PluginObject currentlyDownloading = updateTracker.currentlyDownloading;
+		boolean stillDownloading = updateTracker.isDownloading();
 		String strCurrentStatus = "";
 
 		while (iterFailedUninstalls.hasNext()) {

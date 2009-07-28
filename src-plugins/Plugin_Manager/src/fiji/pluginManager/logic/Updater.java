@@ -17,7 +17,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 import fiji.pluginManager.logic.FileUploader.SourceFile;
 import fiji.pluginManager.logic.FileUploader.UploadListener;
-import fiji.pluginManager.utilities.CompressionUtility;
+import fiji.pluginManager.utilities.Compressor;
 import fiji.pluginManager.utilities.PluginData;
 
 /*
@@ -135,7 +135,7 @@ public class Updater extends PluginData {
 	private void saveXMLFile() throws IOException { //assumed validation is done
 		//Compress and save using given path
 		FileOutputStream xmlOutputStream = new FileOutputStream(savePaths[0]);
-		CompressionUtility.compressAndSave(xmlWriter.toByteArray(), xmlOutputStream);
+		Compressor.compressAndSave(xmlWriter.toByteArray(), xmlOutputStream);
 		xmlOutputStream.close();
 	}
 

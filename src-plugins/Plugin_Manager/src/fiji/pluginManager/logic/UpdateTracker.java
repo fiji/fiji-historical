@@ -11,10 +11,12 @@ import fiji.pluginManager.utilities.PluginData;
 import fiji.pluginManager.utilities.Downloader.FileDownload;
 
 /*
+ * UpdateTracker.java is for normal users in managing their plugins.
+ * 
  * This class' main role is to download selected files, as well as indicate those that
  * are marked for deletion. It is able to track the number of bytes downloaded.
  */
-public class Installer extends PluginData implements Runnable, Downloader.DownloadListener {
+public class UpdateTracker extends PluginData implements Runnable, Downloader.DownloadListener {
 	private volatile Thread downloadThread;
 	private volatile Downloader downloader;
 	private List<FileDownload> downloaderList;
@@ -27,7 +29,7 @@ public class Installer extends PluginData implements Runnable, Downloader.Downlo
 	private int currentBytesSoFar; //bytes downloaded so far of current file
 	private boolean isDownloading;
 
-	public Installer(List<PluginObject> pluginList) {
+	public UpdateTracker(List<PluginObject> pluginList) {
 		super();
 		PluginCollection pluginCollection = (PluginCollection)pluginList;
 		changeList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);

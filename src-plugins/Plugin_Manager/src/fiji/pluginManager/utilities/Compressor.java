@@ -13,7 +13,7 @@ import fiji.pluginManager.logic.PluginManager;
  * Main role is to compress/decompress file data.
  * Utility to get entire byte data of a file from InputStream exists too.
  */
-public class CompressionUtility {
+public class Compressor {
 	//Decompress a file
 	public static byte[] getDecompressedData(InputStream in) throws IOException {
 		GZIPInputStream gzipInputStream = new GZIPInputStream(in);
@@ -64,10 +64,10 @@ public class CompressionUtility {
 		//test compression
 		InputStream inStream = new FileInputStream(PluginManager.XML_FILENAME);
 		OutputStream outStream = new FileOutputStream(PluginManager.XML_COMPRESSED_FILENAME);
-		CompressionUtility.compressAndSave(CompressionUtility.readStream(inStream), outStream);
+		Compressor.compressAndSave(Compressor.readStream(inStream), outStream);
 
 		//test uncompress
-		byte[] data = CompressionUtility.getDecompressedData(new FileInputStream(
+		byte[] data = Compressor.getDecompressedData(new FileInputStream(
 				PluginManager.XML_COMPRESSED_FILENAME));
 		OutputStream writer = new FileOutputStream(PluginManager.XML_FILENAME);
 		writer.write(data);

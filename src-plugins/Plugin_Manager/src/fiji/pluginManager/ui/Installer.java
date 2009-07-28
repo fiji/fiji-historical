@@ -1,36 +1,38 @@
-package fiji.pluginManager.userInterface;
+package fiji.pluginManager.ui;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
-import javax.swing.JProgressBar;
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
-import fiji.pluginManager.logic.Installer;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+
+import fiji.pluginManager.logic.UpdateTracker;
 
 /*
  * Interface of a separate window, when downloading/removing plugins.
  */
-class FrameInstaller extends JFrame {
+class Installer extends JFrame {
 	private MainUserInterface mainUserInterface;
 	private Timer timer;
 	private JButton btnClose;
 	private JProgressBar progressBar;
 	private JTextPane txtProgressDetails;
-	private Installer installer;
+	private UpdateTracker updateTracker;
 
 	//Download Window opened from Plugin Manager UI
-	public FrameInstaller(MainUserInterface mainUserInterface) {
+	public Installer(MainUserInterface mainUserInterface) {
 		this.mainUserInterface = mainUserInterface;
 		setUpUserInterface();
 		pack();
@@ -74,12 +76,12 @@ class FrameInstaller extends JFrame {
 		getContentPane().add(panel, BorderLayout.CENTER);
 	}
 
-	public void setInstaller(Installer installer) {
-		if (this.installer != null) throw new Error("Installer object already exists.");
+	public void setInstaller(UpdateTracker updateTracker) {
+		if (this.updateTracker != null) throw new Error("Installer object already exists.");
 		else {
-			this.installer = installer;
-			installer.beginOperations();
-			if (installer.isDownloading()) {
+			this.updateTracker = updateTracker;
+			updateTracker.beginOperations();
+			if (updateTracker.isDownloading()) {
 				//Timer to check for download
 				timer = new Timer();
 				timer.schedule(new DownloadStatus(), 0, 100); //status refreshes every 100 ms
@@ -91,41 +93,41 @@ class FrameInstaller extends JFrame {
 	}
 
 	private void setFrameDisplay() {
-		int totalBytes = installer.getBytesTotal();
-		int downloadedBytes = installer.getBytesDownloaded();
-		if (installer.isDownloading()) {
+		int totalBytes = updateTracker.getBytesTotal();
+		int downloadedBytes = updateTracker.getBytesDownloaded();
+		if (updateTracker.isDownloading()) {
 			btnClose.setText("Cancel");
 			btnClose.setToolTipText("Stop downloads and return");
 		} else {
 			btnClose.setText("Done");
 			btnClose.setToolTipText("Close Window");
 		}
-		((TextPaneDisplay)txtProgressDetails).showDownloadProgress(installer);
+		((TextPaneDisplay)txtProgressDetails).showDownloadProgress(updateTracker);
 		setPercentageComplete(downloadedBytes, totalBytes);
 	}
 
 	private class DownloadStatus extends TimerTask {
 		public void run() {
 			setFrameDisplay();
-			if (installer.isDownloading() == false)
+			if (updateTracker.isDownloading() == false)
 				timer.cancel(); //Not downloading anything, no progress to refresh
 		}
 	}
 
 	private void closeFrameInstaller() {
 		//plugin manager will deal with this
-		if (installer.isDownloading()) {
+		if (updateTracker.isDownloading()) {
 			if (JOptionPane.showConfirmDialog(this,
 					"Are you sure you want to cancel the ongoing download?",
 					"Stop?",
 					JOptionPane.YES_NO_OPTION,
 					JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
-				installer.stopDownload();
+				updateTracker.stopDownload();
 			} else
 				return;
 		}
 
-		if (installer != null && installer.successfulChangesMade())
+		if (updateTracker != null && updateTracker.successfulChangesMade())
 			mainUserInterface.exitWithRestartFijiMessage();
 		else
 			mainUserInterface.backToPluginManager();

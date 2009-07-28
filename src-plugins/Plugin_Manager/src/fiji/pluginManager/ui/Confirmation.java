@@ -1,4 +1,4 @@
-package fiji.pluginManager.userInterface;
+package fiji.pluginManager.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -19,12 +20,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
-import javax.swing.text.BadLocationException;
+
 import fiji.pluginManager.logic.DependencyCompiler;
 import fiji.pluginManager.logic.PluginCollection;
 import fiji.pluginManager.logic.PluginObject;
 
-public class FrameConfirmation extends JFrame {
+public class Confirmation extends JFrame {
 	private MainUserInterface mainUserInterface;
 	private JTextPane txtPluginList;
 	private JTextPane txtAdditionalList;
@@ -36,7 +37,7 @@ public class FrameConfirmation extends JFrame {
 	private String msgConflictNone = "No conflicts found. You may proceed.";
 	private DependencyCompiler dependencyCompiler;
 
-	public FrameConfirmation(MainUserInterface mainUserInterface) {
+	public Confirmation(MainUserInterface mainUserInterface) {
 		this.mainUserInterface = mainUserInterface;
 		setupUserInterface();
 		pack();
