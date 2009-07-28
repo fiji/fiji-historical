@@ -1,16 +1,13 @@
 package fiji.pluginManager.ui;
-
 import java.awt.Color;
 import java.util.Iterator;
 import java.util.List;
-
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-
 import fiji.pluginManager.logic.Dependency;
 import fiji.pluginManager.logic.UpdateTracker;
 import fiji.pluginManager.logic.PluginObject;
@@ -74,8 +71,7 @@ public class TextPaneDisplay extends JTextPane {
 				text.append((text.length() > 0 ? ",\n" : "")
 					+ dependency.getFilename() + " ("
 					+ dependency.getTimestamp() + ")");
-		normal("\n" + (text.length() > 0 ?
-					text.toString() : "None"));
+		normal("\n" + (text.length() > 0 ? text.toString() : "None"));
 	}
 
 	//appends plugin description to existing text
@@ -88,28 +84,19 @@ public class TextPaneDisplay extends JTextPane {
 	}
 
 	public void insertAuthors(List<String> authors) {
-		if (authors == null || authors.size() == 0) {
-			normal("Not specified.");
-		} else {
-			String authorNames = "";
-			for (int i = 0; i < authors.size(); i++) {
-				authorNames += authors.get(i);
-				if (i < authors.size() -1)
-					authorNames += ", ";
-			}
-			normal(authorNames);
-		}
+		StringBuilder text = new StringBuilder();
+		if (authors != null)
+			for (String author : authors)
+				text.append((text.length() > 0 ? ", " : "") + author);
+		normal(text.length() > 0 ? text.toString() : "Not specified");
 	}
 
 	public void insertLinks(List<String> links) {
-		if (links == null || links.size() == 0) {
-			normal("\nNone.");
-		} else {
-			String linkNames = "";
-			for (int i = 0; i < links.size(); i++)
-				linkNames += "\n- " + links.get(i);
-			normal(linkNames);
-		}
+		StringBuilder text = new StringBuilder();
+		if (links != null)
+			for (String link : links)
+				text.append((text.length() > 0 ? "\n- " : "- ") + link);
+		normal("\n" + (text.length() > 0 ? text.toString() : "None."));
 	}
 
 	//appends list of plugin names to existing text

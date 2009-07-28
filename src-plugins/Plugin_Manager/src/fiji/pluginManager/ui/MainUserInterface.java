@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -25,7 +24,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-
 import fiji.pluginManager.logic.DependencyCompiler;
 import fiji.pluginManager.logic.UpdateTracker;
 import fiji.pluginManager.logic.PluginCollection;
@@ -67,15 +65,15 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		viewList = pluginCollection; //initially, view all
 		List<PluginObject> readOnlyList = pluginManager.readOnlyList;
 		if (readOnlyList.size() > 0) {
-			String namelist = "";
+			StringBuilder namelist = new StringBuilder();
 			for (int i = 0; i < readOnlyList.size(); i++) {
 				if (i != 0 && i % 3 == 0)
-					namelist += "\n";
-				namelist += readOnlyList.get(i).getFilename();
-				if (i < readOnlyList.size() -1)
-					namelist += ", ";
+					namelist.append("\n");
+				namelist.append((namelist.length() > 0 ? ", " : "") +
+						readOnlyList.get(i).getFilename());
 			}
-			IJ.showMessage("Read-Only Plugins", "WARNING: The following plugin files are set to read-only, you are advised to quit Fiji and set to writable:\n" + namelist);
+			IJ.showMessage("Read-Only Plugins", "WARNING: The following plugin files are set to read-only, " +
+					"you are advised to quit Fiji and set to writable:\n" + namelist.toString());
 		}
 		setUpUserInterface();
 		pack();
@@ -161,8 +159,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		rightPanel.add(Box.createVerticalGlue());
 		if (isDeveloper) {
 			JPanel editButtonPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
-			btnEditDetails = SwingTools.createButton("Edit Plugin Details",
-					"Edit the details of selected plugin");
+			btnEditDetails = SwingTools.createButton("Edit Details", "Edit selected plugin's details");
 			btnEditDetails.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent e) {
@@ -186,8 +183,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		topPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 5, 15));
 
 		//Button to start actions
-		btnStart = SwingTools.createButton("Apply changes",
-				"Start installing/uninstalling specified plugins");
+		btnStart = SwingTools.createButton("Apply changes", "Start installing/uninstalling plugins");
 		btnStart.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
@@ -198,8 +194,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 		//includes button to upload to server if is a Developer using
 		if (isDeveloper) {
-			btnUpload = SwingTools.createButton("Upload to server",
-					"Upload the selected plugins to server");
+			btnUpload = SwingTools.createButton("Upload to server", "Upload selected plugins to server");
 			btnUpload.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent e) {
@@ -210,8 +205,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		}
 
 		//Button to quit Plugin Manager
-		btnOK = SwingTools.createButton("Cancel",
-				"Exit Plugin Manager without applying changes");
+		btnOK = SwingTools.createButton("Cancel", "Exit Plugin Manager without applying changes");
 		btnOK.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
@@ -389,11 +383,11 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		lblPluginSummary.setText(txtAction);
 		if (isDeveloper && btnEditDetails != null)
 			btnEditDetails.setEnabled(false);
-		enableButtonIfAnyActions(btnStart, PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
-		enableButtonIfAnyActions(btnUpload, PluginCollection.FILTER_ACTIONS_UPLOAD);
+		enableIfAction(btnStart, PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
+		enableIfAction(btnUpload, PluginCollection.FILTER_ACTIONS_UPLOAD);
 	}
 
-	private void enableButtonIfAnyActions(JButton button, PluginCollection.Filter filter) {
+	private void enableIfAction(JButton button, PluginCollection.Filter filter) {
 		if (button != null) {
 			List<PluginObject> myList = ((PluginCollection)pluginCollection).getList(filter);
 			if (myList.size() > 0)
