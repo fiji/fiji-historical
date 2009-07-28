@@ -7,6 +7,7 @@ import java.util.List;
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
@@ -15,81 +16,80 @@ import fiji.pluginManager.logic.Installer;
 import fiji.pluginManager.logic.PluginObject;
 
 public class TextPaneDisplay extends JTextPane {
-	public SimpleAttributeSet ITALIC_BLACK;
-	public SimpleAttributeSet BOLD_BLACK;
-	public SimpleAttributeSet BLACK;
-	public SimpleAttributeSet BOLD_BLACK_TITLE;
+	private AttributeSet italic;
+	private AttributeSet bold;
+	private AttributeSet normal;
+	private AttributeSet title;
 
 	public TextPaneDisplay() {
-		ITALIC_BLACK = new SimpleAttributeSet();
-		BOLD_BLACK = new SimpleAttributeSet();
-		BLACK = new SimpleAttributeSet();
-		BOLD_BLACK_TITLE = new SimpleAttributeSet();
-
-		StyleConstants.setForeground(ITALIC_BLACK, Color.black);
-		StyleConstants.setItalic(ITALIC_BLACK, true);
-		StyleConstants.setFontFamily(ITALIC_BLACK, "Verdana");
-		StyleConstants.setFontSize(ITALIC_BLACK, 12);
-
-		StyleConstants.setForeground(BOLD_BLACK, Color.black);
-		StyleConstants.setBold(BOLD_BLACK, true);
-		StyleConstants.setFontFamily(BOLD_BLACK, "Verdana");
-		StyleConstants.setFontSize(BOLD_BLACK, 12);
-
-		StyleConstants.setForeground(BLACK, Color.black);
-		StyleConstants.setFontFamily(BLACK, "Verdana");
-		StyleConstants.setFontSize(BLACK, 12);
-
-		StyleConstants.setForeground(BOLD_BLACK_TITLE, Color.black);
-		//StyleConstants.setBold(BOLD_BLACK_TITLE, true);
-		StyleConstants.setFontFamily(BOLD_BLACK_TITLE, "Impact");
-		StyleConstants.setFontSize(BOLD_BLACK_TITLE, 18);
-
+		italic = getStyle(Color.black, true, false, "Verdana", 12);
+		bold = getStyle(Color.black, false, true, "Verdana", 12);
+		normal =  getStyle(Color.black, false, false, "Verdana", 12);
+		title = getStyle(Color.black, false, false, "Impact", 18);
 		setEditable(false);
 	}
 
-	public void insertStyledText(String text, AttributeSet set) throws BadLocationException {
-		getDocument().insertString(getDocument().getLength(), text, set);
+	public static AttributeSet getStyle(Color color, boolean italic,
+			boolean bold, String fontName, int fontSize) {
+		SimpleAttributeSet style = new SimpleAttributeSet();
+		StyleConstants.setForeground(style, color);
+		StyleConstants.setItalic(style, italic);
+		StyleConstants.setBold(style, bold);
+		StyleConstants.setFontFamily(style, fontName);
+		StyleConstants.setFontSize(style, fontSize);
+		return style;
 	}
 
-	public void insertBoldText(String text) throws BadLocationException {
-		getDocument().insertString(getDocument().getLength(), text, BOLD_BLACK);
+	public void styled(String text, AttributeSet set) {
+		Document document = getDocument();
+		try {
+			document.insertString(document.getLength(), text, set);
+		} catch (BadLocationException e) {
+			// This is an internal error
+			throw new RuntimeException(e);
+		}
 	}
 
-	public void insertText(String text) throws BadLocationException {
-		getDocument().insertString(getDocument().getLength(), text, BLACK);
+	public void italic(String text) {
+		styled(text, italic);
+	}
+
+	public void bold(String text) {
+		styled(text, bold);
+	}
+
+	public void normal(String text) {
+		styled(text, normal);
+	}
+
+	public void title(String text) {
+		styled(text, title);
 	}
 
 	//appends list of dependencies to existing text
-	public void insertDependenciesList(List<Dependency> dependencyList) throws BadLocationException {
-		String strDependencies = "";
-		if (dependencyList != null) {
-			int noOfDependencies = dependencyList.size();
-			for (int i = 0; i < noOfDependencies; i++) {
-				Dependency dependency = dependencyList.get(i);
-				strDependencies +=  dependency.getFilename() + " (" + dependency.getTimestamp() + ")";
-				if (i != noOfDependencies -1 && noOfDependencies != 1) //if last index
-					strDependencies += ",\n";
-			}
-			if (strDependencies.equals("")) strDependencies = "None";
-		} else {
-			strDependencies = "None";
-		}
-		insertText("\n" + strDependencies);
+	public void insertDependenciesList(List<Dependency> list) {
+		StringBuilder text = new StringBuilder();
+		if (list != null)
+			for (Dependency dependency : list)
+				text.append((text.length() > 0 ? ",\n" : "")
+					+ dependency.getFilename() + " ("
+					+ dependency.getTimestamp() + ")");
+		normal("\n" + (text.length() > 0 ?
+					text.toString() : "None"));
 	}
 
 	//appends plugin description to existing text
-	public void insertDescription(String description) throws BadLocationException {
+	public void insertDescription(String description) {
 		if (description == null || description.trim().equals("")) {
-			insertText("\nNo description available.");
+			normal("\nNo description available.");
 		} else {
-			insertText("\n" + description);
+			normal("\n" + description);
 		}
 	}
 
-	public void insertAuthors(List<String> authors) throws BadLocationException {
+	public void insertAuthors(List<String> authors) {
 		if (authors == null || authors.size() == 0) {
-			insertText("Not specified.");
+			normal("Not specified.");
 		} else {
 			String authorNames = "";
 			for (int i = 0; i < authors.size(); i++) {
@@ -97,72 +97,72 @@ public class TextPaneDisplay extends JTextPane {
 				if (i < authors.size() -1)
 					authorNames += ", ";
 			}
-			insertText(authorNames);
+			normal(authorNames);
 		}
 	}
 
-	public void insertLinks(List<String> links) throws BadLocationException {
+	public void insertLinks(List<String> links) {
 		if (links == null || links.size() == 0) {
-			insertText("\nNone.");
+			normal("\nNone.");
 		} else {
 			String linkNames = "";
 			for (int i = 0; i < links.size(); i++)
 				linkNames += "\n- " + links.get(i);
-			insertText(linkNames);
+			normal(linkNames);
 		}
 	}
 
 	//appends list of plugin names to existing text
-	public void insertPluginNamelist(List<PluginObject> myList) throws BadLocationException {
-		insertText("\n");
+	public void insertPluginNamelist(List<PluginObject> myList) {
+		normal("\n");
 		for (int i = 0; i < myList.size(); i++) {
 			PluginObject myPlugin = myList.get(i);
-			insertText(myPlugin.getFilename() + "\n");
+			normal(myPlugin.getFilename() + "\n");
 		}
 	}
 
 	//inserts blank new line
-	public void insertBlankLine() throws BadLocationException {
-		insertText("\n\n");
+	public void insertBlankLine() {
+		normal("\n\n");
 	}
 
 	//rewrite the entire textpane with details of a plugin
-	public void showPluginDetails(PluginObject plugin) throws BadLocationException {
+	public void showPluginDetails(PluginObject plugin) {
 		setText("");
 		//Display plugin data, text with different formatting
-		insertStyledText(plugin.getFilename(), BOLD_BLACK_TITLE);
+		title(plugin.getFilename());
 		if (plugin.isUpdateable())
-			insertStyledText("\n(Update is available)", ITALIC_BLACK);
+			italic("\n(Update is available)");
 		insertBlankLine();
-		insertBoldText("Date: ");
-		insertText(plugin.getTimestamp());
+		bold("Date: ");
+		normal(plugin.getTimestamp());
 		insertBlankLine();
-		insertBoldText("Author(s): ");
+		bold("Author(s): ");
 		insertAuthors(plugin.getPluginDetails().getAuthors());
 		insertBlankLine();
-		insertBoldText("Description");
+		bold("Description");
 		insertDescription(plugin.getPluginDetails().getDescription());
 		insertBlankLine();
-		insertBoldText("Dependency");
+		bold("Dependency");
 		insertDependenciesList(plugin.getDependencies());
 		insertBlankLine();
-		insertBoldText("Reference Link(s):");
+		bold("Reference Link(s):");
 		insertLinks(plugin.getPluginDetails().getLinks());
 		insertBlankLine();
-		insertBoldText("Md5 Sum");
-		insertText("\n" + plugin.getmd5Sum());
+		bold("Md5 Sum");
+		normal("\n" + plugin.getmd5Sum());
 		insertBlankLine();
-		insertBoldText("Is Fiji Plugin: ");
-		insertText(plugin.isFijiPlugin() ? "Yes" : "No");
+		bold("Is Fiji Plugin: ");
+		normal(plugin.isFijiPlugin() ? "Yes" : "No");
 		if (plugin.isUpdateable()) {
 			insertBlankLine();
-			insertStyledText("Update Details", BOLD_BLACK_TITLE);
+			title("Update Details");
 			insertBlankLine();
-			insertBoldText("New Md5 Sum");
-			insertText("\n" + plugin.getNewMd5Sum());
+			bold("New Md5 Sum");
+			normal("\n" + plugin.getNewMd5Sum());
 			insertBlankLine();
-			insertBoldText("Released: ");
-			insertText(plugin.getNewTimestamp());
+			bold("Released: ");
+			normal(plugin.getNewTimestamp());
 		}
 
 		//ensure first line of text is always shown (i.e.: scrolled to top)

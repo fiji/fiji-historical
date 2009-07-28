@@ -10,9 +10,7 @@ import javax.swing.JTextPane;
 import javax.swing.JProgressBar;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
-
 import fiji.pluginManager.logic.Installer;
-
 import java.util.Timer;
 import java.util.TimerTask;
 import java.awt.BorderLayout;
@@ -51,12 +49,7 @@ class FrameInstaller extends JFrame {
 
 		/* Create textpane to hold the information */
 		txtProgressDetails = new TextPaneDisplay();
-		txtProgressDetails.setPreferredSize(new Dimension(555, 200));
-
-		/* Create scrollpane to hold the textpane */
-		JScrollPane txtScrollpane = new JScrollPane(txtProgressDetails);
-		txtScrollpane.getViewport().setBackground(txtProgressDetails.getBackground());
-		txtScrollpane.setPreferredSize(new Dimension(555, 200));
+		JScrollPane txtScrollpane = SwingTools.getTextScrollPane(txtProgressDetails, 555, 200);
 
 		/* Button to cancel progressing task (Or press done when complete) */
 		btnClose = new JButton();
@@ -66,13 +59,11 @@ class FrameInstaller extends JFrame {
             }
         });
 
-		JPanel btnPanel = new JPanel();
-		btnPanel.setLayout(new BoxLayout(btnPanel, BoxLayout.X_AXIS));
+		JPanel btnPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
 		btnPanel.add(Box.createHorizontalGlue());
 		btnPanel.add(btnClose);
 
-		JPanel panel = new JPanel();
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		JPanel panel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
 		panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 		panel.add(progressBar);
 		panel.add(Box.createRigidArea(new Dimension(0,15)));

@@ -4,10 +4,7 @@ import fiji.pluginManager.userInterface.MainUserInterface;
 import ij.IJ;
 import ij.plugin.PlugIn;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
-
 import javax.swing.JOptionPane;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;

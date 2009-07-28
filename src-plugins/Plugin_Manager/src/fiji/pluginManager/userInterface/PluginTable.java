@@ -76,11 +76,9 @@ public class PluginTable extends JTable {
 				int modelRow = table.convertRowIndexToModel(row);
 				PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
 
-				if (!myPlugin.actionSpecified()) {
-					//if there is no action
+				if (!myPlugin.actionSpecified()) { //no action specified
 					comp.setFont(comp.getFont().deriveFont(Font.PLAIN));
-				} else {
-					//if an action is specified by user, bold the field
+				} else { //action specified, thus bold it
 					comp.setFont(comp.getFont().deriveFont(Font.BOLD));
 				}
 
@@ -221,8 +219,6 @@ public class PluginTable extends JTable {
 					return optionsArray[1]; //"Install"
 				} else if (entry.toUpload()) {
 					return optionsArray[2]; //"Upload"
-				} else {
-					throw new Error("Invalid action value for Uninstalled Plugin");
 				}
 			} else if (entry.isRemovableOnly()) { //if installed and no updates
 				if (!entry.actionSpecified()) {
@@ -231,8 +227,6 @@ public class PluginTable extends JTable {
 					return optionsArray[1]; //"Remove"
 				} else if (entry.toUpload()) {
 					return optionsArray[2]; //"Upload"
-				} else {
-					throw new Error("Invalid action value for Installed Plugin");
 				}
 			} else if (entry.isUpdateable()) { //if installed and update-able
 				if (!entry.actionSpecified()) {
@@ -243,12 +237,9 @@ public class PluginTable extends JTable {
 					return optionsArray[2]; //"Update"
 				} else if (entry.toUpload()) {
 					return optionsArray[3]; //"Upload"
-				} else {
-					throw new Error("Invalid action value for Update-able Plugin");
 				}
-			} else {
-				throw new Error("Invalid state for " + entry.getFilename());
 			}
+			throw new Error("Invalid state or action for " + entry.getFilename());
 		}
 
 		public boolean isCellEditable(int rowIndex, int columnIndex) {

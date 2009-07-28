@@ -5,7 +5,6 @@ import fiji.pluginManager.logic.PluginCollection;
 import fiji.pluginManager.logic.PluginManager;
 import fiji.pluginManager.logic.PluginObject;
 import ij.IJ;
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,6 +14,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -28,7 +28,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.text.BadLocationException;
 
 /*
  * Main User Interface, where the user chooses his options...
@@ -84,7 +83,6 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 		//======== Start: LEFT PANEL ========
 		//Create text search
-		JLabel lblSearch1 = new JLabel("Search:", SwingConstants.LEFT);
 		txtSearch = new JTextField();
 		txtSearch.getDocument().addDocumentListener(new DocumentListener() {
 
@@ -99,17 +97,10 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 			public void insertUpdate(DocumentEvent e) {
 				changeListingListener();
 			}
-
 		});
-
-		JPanel searchPanel = new JPanel();
-		searchPanel.setLayout(new BoxLayout(searchPanel, BoxLayout.X_AXIS));
-		searchPanel.add(lblSearch1);
-		searchPanel.add(Box.createRigidArea(new Dimension(10,0)));
-		searchPanel.add(txtSearch);
+		JPanel searchPanel = createLabelledComponent("Search:", txtSearch);
 
 		//Create combo box of options
-		JLabel lblSearch2 = new JLabel("View Options:");
 		arrViewingOptions = new String[] {
 				"View all plugins",
 				"View installed plugins only",
@@ -125,35 +116,24 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 			public void actionPerformed(ActionEvent e) {
 				changeListingListener();
 			}
-
 		});
-		JPanel comboBoxPanel = new JPanel();
-		comboBoxPanel.setLayout(new BoxLayout(comboBoxPanel, BoxLayout.X_AXIS));
-		comboBoxPanel.add(lblSearch2);
-		comboBoxPanel.add(Box.createRigidArea(new Dimension(10,0)));
-		comboBoxPanel.add(comboBoxViewingOptions);
+		JPanel comboBoxPanel = createLabelledComponent("View Options:", comboBoxViewingOptions);
 
 		//Create labels to annotate table
-		JLabel lblTable = new JLabel("Please choose what you want to install/uninstall:");
-		JPanel lblTablePanel = new JPanel();
-		lblTablePanel.add(lblTable);
-		lblTablePanel.add(Box.createHorizontalGlue());
-		lblTablePanel.setLayout(new BoxLayout(lblTablePanel, BoxLayout.X_AXIS));
+		JPanel lblTablePanel = SwingTools.createLabelPanel("Please choose what you want to install/uninstall:");
 
 		//Label text for plugin summaries
 		lblPluginSummary = new JLabel();
-		JPanel lblSummaryPanel = new JPanel();
+		JPanel lblSummaryPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
 		lblSummaryPanel.add(lblPluginSummary);
 		lblSummaryPanel.add(Box.createHorizontalGlue());
-		lblSummaryPanel.setLayout(new BoxLayout(lblSummaryPanel, BoxLayout.X_AXIS));
 
 		//Create the plugin table and set up its scrollpane
 		table = new PluginTable(viewList, this);
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());
 
-		JPanel leftPanel = new JPanel();
-		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+		JPanel leftPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
 		leftPanel.add(searchPanel);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
 		leftPanel.add(comboBoxPanel);
@@ -168,34 +148,23 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		//======== Start: RIGHT PANEL ========
 		//Create textpane to hold the information and its scrollpane
 		txtPluginDetails = new TextPaneDisplay();
-		txtPluginDetails.setPreferredSize(new Dimension(350,315));
-		JScrollPane txtScrollpane = new JScrollPane(txtPluginDetails);
-		txtScrollpane.getViewport().setBackground(txtPluginDetails.getBackground());
-		txtScrollpane.setPreferredSize(new Dimension(350,315));
+		JScrollPane txtScrollpane = SwingTools.getTextScrollPane(txtPluginDetails, 350, 315);
 
 		//Tabbed pane of plugin details to hold the textpane (w/ scrollpane)
-		JTabbedPane tabbedPane = new JTabbedPane();
-		JPanel panelPluginDetails = new JPanel();
-		panelPluginDetails.setLayout(new BorderLayout());
-		panelPluginDetails.add(txtScrollpane, BorderLayout.CENTER);
-		tabbedPane.addTab("Details", null, panelPluginDetails, "Individual Plugin information");
-		tabbedPane.setPreferredSize(new Dimension(350,315));
+		JTabbedPane tabbedPane = SwingTools.getSingleTabbedPane(txtScrollpane,
+				"Details", "Individual Plugin information", 350, 315);
 
-		JPanel rightPanel = new JPanel();
-		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+		JPanel rightPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
 		rightPanel.add(Box.createVerticalGlue());
-
 		if (isDeveloper) {
-			JPanel editButtonPanel = new JPanel();
-			editButtonPanel.setLayout(new BoxLayout(editButtonPanel, BoxLayout.X_AXIS));
-			btnEditDetails = new JButton("Edit Plugin Details");
-			btnEditDetails.setToolTipText("Edit the details of selected plugin");
+			JPanel editButtonPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
+			btnEditDetails = SwingTools.createButton("Edit Plugin Details",
+					"Edit the details of selected plugin");
 			btnEditDetails.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent e) {
 					clickToEditDescriptions();
 				}
-
 			});
 			btnEditDetails.setEnabled(false);
 			editButtonPanel.add(Box.createHorizontalGlue());
@@ -207,54 +176,49 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		//======== End: RIGHT PANEL ========
 
 		//======== Start: TOP PANEL (LEFT + RIGHT) ========
-		JPanel topPanel = new JPanel();
-		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
+		JPanel topPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
 		topPanel.add(leftPanel);
 		topPanel.add(Box.createRigidArea(new Dimension(15,0)));
 		topPanel.add(rightPanel);
 		topPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 5, 15));
 
 		//Button to start actions
-		btnStart = new JButton("Apply changes");
-		btnStart.setToolTipText("Start installing/uninstalling specified plugins");
+		btnStart = SwingTools.createButton("Apply changes",
+				"Start installing/uninstalling specified plugins");
 		btnStart.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
 				clickToBeginOperations();
 			}
-
 		});
 		btnStart.setEnabled(false);
 
 		//includes button to upload to server if is a Developer using
 		if (isDeveloper) {
-			btnUpload = new JButton("Upload to server");
-			btnUpload.setToolTipText("Upload the selected plugins to server");
+			btnUpload = SwingTools.createButton("Upload to server",
+					"Upload the selected plugins to server");
 			btnUpload.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent e) {
 					clickToUploadRecords();
 				}
-
 			});
 			btnUpload.setEnabled(false);
 		}
 
 		//Button to quit Plugin Manager
-		btnOK = new JButton("Cancel");
-		btnOK.setToolTipText("Exit Plugin Manager without applying changes");
+		btnOK = SwingTools.createButton("Cancel",
+				"Exit Plugin Manager without applying changes");
 		btnOK.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
 				clickToQuitPluginManager();
 			}
-
 		});
 		//======== End: TOP PANEL (LEFT + RIGHT) ========
 
 		//======== Start: BOTTOM PANEL ========
-		JPanel bottomPanel = new JPanel();
-		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
+		JPanel bottomPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
 		bottomPanel.add(btnStart);
 		if (isDeveloper) {
 			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
@@ -271,6 +235,15 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 		//initial selection
 		table.changeSelection(0, 0, false, false);
+	}
+
+	private JPanel createLabelledComponent(String text, JComponent component) {
+		JPanel panel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
+		JLabel label = new JLabel(text, SwingConstants.LEFT);
+		panel.add(label);
+		panel.add(Box.createRigidArea(new Dimension(10,0)));
+		panel.add(component);
+		return panel;
 	}
 
 	//Whenever search text or ComboBox has been changed
@@ -377,12 +350,9 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	public void displayPluginDetails(PluginObject currentPlugin) {
 		this.currentPlugin = currentPlugin;
-		try {
-			if (txtPluginDetails != null)
-				((TextPaneDisplay)txtPluginDetails).showPluginDetails(currentPlugin);
-		} catch (BadLocationException e) {
-			throw new Error("Problem with printing Plugin information: " + e.getMessage());
-		}
+		if (txtPluginDetails != null)
+			((TextPaneDisplay)txtPluginDetails).showPluginDetails(currentPlugin);
+
 		//Enable/Disable edit button depending on _Action_ user wants of selected plugin
 		if (isDeveloper && currentPlugin.toUpload())
 			btnEditDetails.setEnabled(true);
@@ -433,5 +403,4 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	public boolean isDeveloper() {
 		return isDeveloper;
 	}
-
 }
