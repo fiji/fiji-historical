@@ -1022,3 +1022,30 @@ What are the last implementation step(s)?
 - Maybe a little refactoring on DependencyCompiler? At least the name...
 
 Should be able to finish that within a day, and then continue on Plugin readings (And testings).
+
+
+
+29th July, Wednesday
+- Saving unnecessary download time
+   ==> Okay, instead of using if-Modified-Since header, I made use of "Last-Modified" header
+   ==> Saves the time value and later retrieves it to compare with the time on server
+
+- A copy of the edited plugin records is saved in case of a failed upload
+   ==> If upload is successful however, this "db.bak" will be removed, along with "db.xml.gz.lock" and "current.txt"
+   ==> If upload failed, "db.bak", "db.xml.gz.lock" and "current.txt" will remain undeleted
+      ==> This is for ease such that for future versions of Plugin Manager, code can be written simply just to read these files at start-up
+         ==> (Such as, db.xml on the local side can be compared with db.bak for differences)
+
+- <relation> tag of <dependency> tag of db.xml is now made optional.
+   ==> Default relation state is "at-least"
+   ==> Removed <relation> tag entirely from db.xml contents, since right now all are "at-least" relation state
+   ==> Also, db.xml's dependency dates updated to be consistent with that of latest updates' timestamps
+
+And there it!!! The almost-completely implemented 1st version of Plugin Manager (AKA Fiji Updater)!!!
+   ==> With the exception of:
+      1.) Plugin descriptions, not yet complete
+      2.) How are the developers gonna log in???, not yet done
+      3.) Maybe a few more minor stuff if I still have a couple of days left before school began...
+         ==> Namely, installing a 3rd party plugin? (Removal was long implemented ago)
+
+Now I must really get back to Plugin readings (And testings).
