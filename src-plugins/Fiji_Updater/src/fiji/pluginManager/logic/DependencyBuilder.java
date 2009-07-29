@@ -10,7 +10,7 @@ import java.util.Map;
  * The dependencies are determined based on the assumption that the user has already
  * selected the plugins he/she wanted to add or remove and indicated to take action.
  */
-public class DependencyCompiler {
+public class DependencyBuilder {
 	private List<PluginObject> pluginList; //current states of all plugins
 
 	//The different structures of the same information that the user can retrieve
@@ -22,7 +22,7 @@ public class DependencyCompiler {
 	public List<PluginObject> toUpdateList;
 	public List<PluginObject> toRemoveList;
 
-	public DependencyCompiler(List<PluginObject> pluginList) {
+	public DependencyBuilder(List<PluginObject> pluginList) {
 		this.pluginList = pluginList;
 		changeList = ((PluginCollection)pluginList).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
 		List<PluginObject> change_addOrUpdateList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
@@ -38,7 +38,7 @@ public class DependencyCompiler {
 			//Generate lists of dependencies for each plugin
 			List<PluginObject> toInstallList = new ArrayList<PluginObject>();
 			List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
-			addDependency(toInstallList, toUpdateList, myPlugin);
+			addDependsOn(toInstallList, toUpdateList, myPlugin);
 			installDependenciesMap.put(myPlugin, toInstallList);
 			updateDependenciesMap.put(myPlugin, toUpdateList);
 		}
@@ -47,7 +47,7 @@ public class DependencyCompiler {
 		for (PluginObject myPlugin : change_removeList) {
 			//Generate lists of dependents for each plugin
 			List<PluginObject> toRemoveList = new ArrayList<PluginObject>();
-			addDependent(toRemoveList, myPlugin);
+			addRequiredBy(toRemoveList, myPlugin);
 			uninstallDependentsMap.put(myPlugin, toRemoveList);
 		}
 
@@ -63,7 +63,7 @@ public class DependencyCompiler {
 	}
 
 	//comes up with a list of plugins needed for download to go with this selected plugin
-	private void addDependency(List<PluginObject> changeToInstallList, List<PluginObject> changeToUpdateList, PluginObject selectedPlugin) {
+	private void addDependsOn(List<PluginObject> changeToInstallList, List<PluginObject> changeToUpdateList, PluginObject selectedPlugin) {
 		//First retrieve the dependency list
 		List<Dependency> dependencyList = selectedPlugin.getDependencies();
 
@@ -96,14 +96,14 @@ public class DependencyCompiler {
 						if (plugin.isRemovableOnly() || plugin.isInstallable()) {
 							//add to list
 							changeToInstallList.add(plugin);
-							addDependency(changeToInstallList, changeToUpdateList, plugin);
+							addDependsOn(changeToInstallList, changeToUpdateList, plugin);
 						}
 						//if prerequisite is update-able
 						else if (plugin.isUpdateable()) {
 							//if current dependency's plugin is outdated
 							if (plugin.getTimestamp().compareTo(dependency.getTimestamp()) < 0) {
 								changeToUpdateList.add(plugin); //add to update list ("special" case)
-								addDependency(changeToInstallList, changeToUpdateList, plugin);
+								addDependsOn(changeToInstallList, changeToUpdateList, plugin);
 							} else { //if not, just remain as it is should be fine
 								changeToInstallList.add(plugin);
 							}
@@ -115,7 +115,7 @@ public class DependencyCompiler {
 						if (plugin.getTimestamp().compareTo(dependency.getTimestamp()) < 0) {
 							changeToInstallList.remove(plugin);
 							changeToUpdateList.add(plugin); //add to update list ("special" case)
-							addDependency(changeToInstallList, changeToUpdateList, plugin);
+							addDependsOn(changeToInstallList, changeToUpdateList, plugin);
 						}
 					}
 				}
@@ -125,7 +125,7 @@ public class DependencyCompiler {
 	}
 
 	//comes up with a list of plugins needed to be removed if selected is removed
-	private void addDependent(List<PluginObject> changeToUninstallList, PluginObject selectedPlugin) {
+	private void addRequiredBy(List<PluginObject> changeToUninstallList, PluginObject selectedPlugin) {
 		if (!changeToUninstallList.contains(selectedPlugin)) {
 			changeToUninstallList.add(selectedPlugin);
 		}
@@ -144,7 +144,7 @@ public class DependencyCompiler {
 						String dependencyFilename = dependency.getFilename();
 						if (dependencyFilename.equals(selectedPlugin.getFilename())) {
 							changeToUninstallList.add(plugin);
-							addDependent(changeToUninstallList, plugin);
+							addRequiredBy(changeToUninstallList, plugin);
 							break;
 						}
 					}

@@ -21,7 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
 
-import fiji.pluginManager.logic.DependencyCompiler;
+import fiji.pluginManager.logic.DependencyBuilder;
 import fiji.pluginManager.logic.PluginCollection;
 import fiji.pluginManager.logic.PluginObject;
 
@@ -35,7 +35,7 @@ public class Confirmation extends JFrame {
 	private JButton btnCancel;
 	private String msgConflictExists = "Conflicts exist. Please return to resolve them.";
 	private String msgConflictNone = "No conflicts found. You may proceed.";
-	private DependencyCompiler dependencyCompiler;
+	private DependencyBuilder dependencyBuilder;
 
 	public Confirmation(MainUserInterface mainUserInterface) {
 		this.mainUserInterface = mainUserInterface;
@@ -114,10 +114,10 @@ public class Confirmation extends JFrame {
 
 	private void startActualChanges() {
 		//indicate the actions as reference for Downloader (Installer) to refer to
-		((PluginCollection)dependencyCompiler.toInstallList).setToInstall();
-		((PluginCollection)dependencyCompiler.toUpdateList).setToUpdate();
-		((PluginCollection)dependencyCompiler.toRemoveList).setToRemove();
-		dependencyCompiler = null;
+		((PluginCollection)dependencyBuilder.toInstallList).setToInstall();
+		((PluginCollection)dependencyBuilder.toUpdateList).setToUpdate();
+		((PluginCollection)dependencyBuilder.toRemoveList).setToRemove();
+		dependencyBuilder = null;
 		mainUserInterface.openDownloader();
 	}
 
@@ -125,17 +125,17 @@ public class Confirmation extends JFrame {
 		mainUserInterface.backToPluginManager();
 	}
 
-	public void displayInformation(DependencyCompiler dependencyCompiler) {
-		this.dependencyCompiler = dependencyCompiler;
+	public void displayInformation(DependencyBuilder dependencyBuilder) {
+		this.dependencyBuilder = dependencyBuilder;
 
 		//Gets the necessary information
-		List<PluginObject> changeList = dependencyCompiler.changeList;
-		Map<PluginObject,List<PluginObject>> installDependenciesMap = dependencyCompiler.installDependenciesMap;
-		Map<PluginObject,List<PluginObject>> updateDependenciesMap = dependencyCompiler.updateDependenciesMap;
-		Map<PluginObject,List<PluginObject>> uninstallDependentsMap = dependencyCompiler.uninstallDependentsMap;
-		List<PluginObject> toInstallList = dependencyCompiler.toInstallList;
-		List<PluginObject> toUpdateList = dependencyCompiler.toUpdateList;
-		List<PluginObject> toRemoveList = dependencyCompiler.toRemoveList;
+		List<PluginObject> changeList = dependencyBuilder.changeList;
+		Map<PluginObject,List<PluginObject>> installDependenciesMap = dependencyBuilder.installDependenciesMap;
+		Map<PluginObject,List<PluginObject>> updateDependenciesMap = dependencyBuilder.updateDependenciesMap;
+		Map<PluginObject,List<PluginObject>> uninstallDependentsMap = dependencyBuilder.uninstallDependentsMap;
+		List<PluginObject> toInstallList = dependencyBuilder.toInstallList;
+		List<PluginObject> toUpdateList = dependencyBuilder.toUpdateList;
+		List<PluginObject> toRemoveList = dependencyBuilder.toRemoveList;
 
 		//Compile a list of plugin names that conflicts with uninstalling (if any)
 		List<String[]> installConflicts = new ArrayList<String[]>();
@@ -150,7 +150,7 @@ public class Confirmation extends JFrame {
 				PluginObject pluginUninstall = iterUninstall.next();
 				List<PluginObject> pluginUninstallList = uninstallDependentsMap.get(pluginUninstall);
 
-				if (dependencyCompiler.conflicts(pluginInstallList, pluginUpdateList, pluginUninstallList)) {
+				if (dependencyBuilder.conflicts(pluginInstallList, pluginUpdateList, pluginUninstallList)) {
 					String installName = pluginAdd.getFilename();
 					String uninstallName = pluginUninstall.getFilename();
 					String[] arrNames = {installName, uninstallName};

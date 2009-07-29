@@ -203,7 +203,8 @@ public class Updater extends PluginData {
 						handler.startElement("", "", "dependency", attrib);
 						writeSimpleTag("filename", attrib, dependency.getFilename());
 						writeSimpleTag("date", attrib, dependency.getTimestamp());
-						writeSimpleTag("relation", attrib, "at-least");
+						if (dependency.getRelation() != null)
+							writeSimpleTag("relation", attrib, dependency.getRelation());
 						handler.endElement("", "", "dependency");
 					}
 				}

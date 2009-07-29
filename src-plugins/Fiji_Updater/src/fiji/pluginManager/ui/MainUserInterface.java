@@ -24,7 +24,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import fiji.pluginManager.logic.DependencyCompiler;
+import fiji.pluginManager.logic.DependencyBuilder;
 import fiji.pluginManager.logic.UpdateTracker;
 import fiji.pluginManager.logic.PluginCollection;
 import fiji.pluginManager.logic.PluginManager;
@@ -293,7 +293,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private void clickToBeginOperations() {
 		loadedFrame = new Confirmation(this);
 		Confirmation confirmation = (Confirmation)loadedFrame;
-		confirmation.displayInformation(new DependencyCompiler(pluginCollection));
+		confirmation.displayInformation(new DependencyBuilder(pluginCollection));
 		loadedFrame.setVisible(true);
 		setEnabled(false);
 	}
