@@ -66,7 +66,8 @@ public class PluginDetails {
 		if (authors != null)
 			for (String author : authors)
 				if (author.trim().toLowerCase().indexOf(lcText) >= 0) return true;
-		if (description.trim().toLowerCase().indexOf(lcText) >= 0)
+		if (description != null &&
+				description.trim().toLowerCase().indexOf(lcText) >= 0)
 			return true;
 		return false;
 	}

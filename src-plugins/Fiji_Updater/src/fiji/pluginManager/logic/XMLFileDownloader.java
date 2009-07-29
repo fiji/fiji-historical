@@ -1,9 +1,14 @@
 package fiji.pluginManager.logic;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,20 +22,48 @@ import fiji.pluginManager.utilities.Downloader.FileDownload;
 public class XMLFileDownloader extends PluginDataObservable implements Downloader.DownloadListener {
 	private List<FileDownload> sources;
 	private long xmlLastModified;
+	private final String dateRecords = "dates.dat";
 
 	public void startDownload() throws IOException {
 		sources = new ArrayList<FileDownload>();
-		String xml_url = PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED;
-		addToDownload(xml_url, PluginManager.XML_COMPRESSED);
-		addToDownload(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME,
-				PluginManager.DTD_FILENAME);
 
-		//Record last modified date of XML, used for uploading purposes (Lock conflict)
+		//Read the file dates.dat, get recorded download date of XML
+		long dateRecorded = 0;
 		try {
-			xmlLastModified = new URL(xml_url).openConnection().getLastModified();
+			DataInputStream datesFile = new DataInputStream(new
+					FileInputStream(prefix(dateRecords)));
+			dateRecorded = datesFile.readLong();
+			datesFile.close();
+		} catch (IOException e) {
+			dateRecorded = 0;
+		}
+
+		//Record last modified date of XML for uploading purposes (Lock conflict)
+		String xml_url = PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED;
+		try {
+			URLConnection myConnection = new URL(xml_url).openConnection();
+			myConnection.setUseCaches(false);
+			xmlLastModified = myConnection.getLastModified();
 		} catch (Exception ex) {
 			throw new Error("Failed to get last modified date of XML document");
 		}
+
+		//if values are different, download XML and record new last modified date
+		if (dateRecorded != xmlLastModified ||
+				!new File(prefix(PluginManager.XML_COMPRESSED)).exists()) {
+			try {
+				DataOutputStream datesWriter = new DataOutputStream(new
+					FileOutputStream(prefix(dateRecords)));
+				datesWriter.writeLong(xmlLastModified);
+				datesWriter.close();
+			} catch (IOException e) {
+				System.out.println("Warning: Unable to record XML last modified date.");
+			}
+			//In other words, only download XML when it has been modified
+			addToDownload(xml_url, PluginManager.XML_COMPRESSED);
+		}
+		addToDownload(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME,
+				PluginManager.DTD_FILENAME);
 
 		//Start downloading the required files
 		Downloader downloader = new Downloader(sources.iterator());

@@ -4,9 +4,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -153,14 +152,11 @@ public class FileUploader {
 		channel.connect();
 	}
 
-	private boolean verifyXMLFileDidNotChange(long xmlModifiedSince) throws MalformedURLException, IOException {
-		//Use isModifiedSince header field to identify
-		URL xmlURL = new URL(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED);
-		HttpURLConnection uc = (HttpURLConnection)xmlURL.openConnection();
-		/*uc.setIfModifiedSince(xmlModifiedSince);
-		System.out.println("xmlModifiedSince... " + xmlModifiedSince);
-		return (uc.getInputStream().read() == -1);*/
-		if (xmlModifiedSince != uc.getLastModified()) return false;
+	private boolean verifyXMLFileDidNotChange(long xmlLastModified) throws IOException {
+		//Use lastModified header field to identify
+		URLConnection uc = new URL(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED).openConnection();
+		uc.setUseCaches(false);
+		if (xmlLastModified != uc.getLastModified()) return false;
 		else return true;
 	}
 
