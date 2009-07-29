@@ -23,6 +23,7 @@ public class PluginManager implements PlugIn, Observer {
 	public static final String XML_COMPRESSED = "db.xml.gz";
 	public static final String XML_FILENAME = "db.xml";
 	public static final String DTD_FILENAME = "plugins.dtd";
+	public static final String XML_BACKUP = "db.bak";
 	public static final String UPDATE_DIRECTORY = "update";
 
 	//PluginObjects for output at User Interface

@@ -37,7 +37,7 @@ public class DetailsEditor extends JFrame {
 	}
 
 	private void setUpUserInterface() {
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
 		changeListener = new DocumentListener() {
 			public void changedUpdate(DocumentEvent e) {

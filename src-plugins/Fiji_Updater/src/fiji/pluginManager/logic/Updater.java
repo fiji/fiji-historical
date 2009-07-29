@@ -1,7 +1,6 @@
 package fiji.pluginManager.logic;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,10 +24,8 @@ import fiji.pluginManager.utilities.PluginData;
  * plugin records (Map of plugins to all versions).
  * 
  * 1st Step: Generates the updated records (newPluginRecords & filesToUpload)
- * 2nd Step: Writes XML and current.txt contents and connect to server
- * 3rd Step: Upload plugin file(s) and/or other information to server
- * 4th Step: Write XML file using pluginRecords, save to server
- * 5th Step: Write text file using pluginRecords, save to server
+ * 2nd Step: Write and validate XML file, and write current.txt contents too
+ * 3rd Step: Upload XML, text and plugin file(s) to server
  * 
  * Note: Plugins are uploaded differently
  * - Non-Fiji plugins & new versions of Fiji Plugins will have files AND details uploaded
@@ -41,10 +38,10 @@ public class Updater extends PluginData {
 			PluginManager.XML_LOCK,
 			PluginManager.TXT_FILENAME
 	};
-	private String[] savePaths;
+	private String[] savePaths; //paths for getting the required files to upload
+	private String backupXMLPath;
 	private long xmlLastModified; //Use for lock conflict check
 	private TransformerHandler handler; //tool for writing of XML contents
-	private ByteArrayOutputStream xmlWriter; //writes to memory
 
 	//accessible information after uploading tasks are done
 	public List<PluginObject> changesList;
@@ -64,6 +61,7 @@ public class Updater extends PluginData {
 		savePaths = new String[relativePaths.length];
 		for (int i = 0; i < savePaths.length; i++)
 			savePaths[i] = prefix(relativePaths[i]);
+		backupXMLPath = prefix(PluginManager.XML_BACKUP);
 	}
 
 	public synchronized void generateNewPluginRecords() throws IOException {
@@ -112,7 +110,6 @@ public class Updater extends PluginData {
 
 	public synchronized void uploadFilesToServer(UploadListener uploadListener) throws Exception  {
 		System.out.println("********** Upload Process begins **********");
-
 		fileUploader = new FileUploader();
 		fileUploader.addListener(uploadListener);
 
@@ -126,14 +123,22 @@ public class Updater extends PluginData {
 		information.add(1, new UpdateSource(savePaths[1], relativePaths[1], "C0664"));
 		fileUploader.beganUpload(xmlLastModified, information, filesToUpload);
 
+		//No errors thrown, implies successful upload, so just remove temporary files
+		new File(backupXMLPath).delete();
+		for (String path : savePaths)
+			new File(path).delete();
+
 		System.out.println("********** Upload Process ended **********");
 	}
 
-	private void saveXMLFile() throws IOException { //assumed validation is done
+	//assumed validation is done
+	private void saveXMLFile() throws IOException {
 		//Compress and save using given path
-		FileOutputStream xmlOutputStream = new FileOutputStream(savePaths[0]);
-		Compressor.compressAndSave(xmlWriter.toByteArray(), xmlOutputStream);
+		FileOutputStream xmlOutputStream = new FileOutputStream(savePaths[0]); //to compress to
+		FileInputStream xmlInputStream = new FileInputStream(backupXMLPath); //to get data from
+		Compressor.compressAndSave(Compressor.readStream(xmlInputStream), xmlOutputStream);
 		xmlOutputStream.close();
+		xmlInputStream.close();
 	}
 
 	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
@@ -149,20 +154,18 @@ public class Updater extends PluginData {
 			txtPrintStream.println(latestPlugin.getFilename() + " " +
 				latestPlugin.getTimestamp() + " " + latestPlugin.getmd5Sum());
 		}
-
 		txtPrintStream.close();
 	}
 
 	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
 	private void generateAndValidateXML() throws SAXException,
 	TransformerConfigurationException, IOException, ParserConfigurationException {
-		//Prepare XML writing for later purposes of validation
-		xmlWriter = new ByteArrayOutputStream();
-		
-		XMLFileHandler xmlFileHandler = new XMLFileHandler(xmlWriter);
-		handler = xmlFileHandler.getXMLHandler();
+		//Prepare XML writing
+		FileOutputStream xmlOutputStream = new FileOutputStream(backupXMLPath);
+		XMLFileHandler xmlHandler = new XMLFileHandler(xmlOutputStream);
+		handler = xmlHandler.getXMLHandler();
 
-		//Start writing to memory
+		//Start actual writing
 		handler.startDocument();
 		AttributesImpl attrib = new AttributesImpl();
 		handler.startElement("", "", "pluginRecords", attrib);
@@ -222,10 +225,13 @@ public class Updater extends PluginData {
 		}
 		handler.endElement("", "", "pluginRecords");
 		handler.endDocument();
-		System.out.println("XML contents written to memory, checking for validation");
+		xmlOutputStream.close();
+		System.out.println("XML contents written, checking for validation");
 
-		//Validate XML contents
-		xmlFileHandler.validateXMLContents(new ByteArrayInputStream(xmlWriter.toByteArray()));
+		//Validate XML contents (Reading the saved XML file)
+		FileInputStream xmlInputStream = new FileInputStream(backupXMLPath);
+		xmlHandler.validateXMLContents(xmlInputStream);
+		xmlInputStream.close();
 		System.out.println("XML contents validated");
 	}
 
@@ -243,5 +249,4 @@ public class Updater extends PluginData {
 		handler.characters(value.toCharArray(), 0, value.length());
 		handler.endElement("", "", tagName);
 	}
-
 }

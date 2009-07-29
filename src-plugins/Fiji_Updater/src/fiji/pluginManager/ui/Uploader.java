@@ -48,41 +48,42 @@ public class Uploader implements UploadListener, Runnable {
 	}
 
 	public synchronized void uploadProcessComplete() {
-		IJ.showStatus("");
-		System.out.println("Upload process complete!");
-		mainUserInterface.exitWithRestartMessage("Updated",
-				"Files successfully uploaded to server!\n\n"
-				+ "You need to restart Plugin Manager for changes to take effect."); //exit if successful
+		System.out.println("Upload process was a success!");
 	}
 
 	public void run() {
-		String message = null;
+		String error_message = null;
 		try {
 			updater = new Updater(pluginManager);
 			updater.generateNewPluginRecords();
 			updater.uploadFilesToServer(this);
 		} catch (TransformerConfigurationException e1) {
-			message = e1.getLocalizedMessage();
+			error_message = e1.getLocalizedMessage();
 		} catch (IOException e2) {
-			message = e2.getLocalizedMessage();
+			error_message = e2.getLocalizedMessage();
 		} catch (SAXException e3) {
-			message = e3.getLocalizedMessage();
+			error_message = e3.getLocalizedMessage();
 		} catch (ParserConfigurationException e4) {
-			message = e4.getLocalizedMessage();
+			error_message = e4.getLocalizedMessage();
 		} catch (JSchException e5) {
-			message = e5.getLocalizedMessage();
+			error_message = e5.getLocalizedMessage();
 		} catch (Exception e6) {
-			message = e6.getLocalizedMessage();
+			error_message = e6.getLocalizedMessage();
 		} catch (Error e7) {
-			message = e7.getLocalizedMessage();
+			error_message = e7.getLocalizedMessage();
 		}
 
-		if (message != null) {
-			//TODO  Instructions to delete unclean db.xml.lock.gz and unlock db.xml.gz again?
+		//If there is an error message, show it
+		if (error_message != null) {
 			mainUserInterface.exitWithRestartMessage("Error",
-					"Failed to upload changes to server: " + message + "\n\n" +
+					"Failed to upload changes to server: " + error_message + "\n\n" +
 					"You need to restart Plugin Manager again."); //exit if failure
+		} else {
+			IJ.showStatus(""); //exit if successful
+			mainUserInterface.exitWithRestartMessage("Updated",
+					"Files successfully uploaded to server!\n\n"
+					+ "You need to restart Plugin Manager for changes to take effect.");
 		}
-		//Doesn't need usual task of re-enabling MainUserInterface, as program will always exit after this
+		//Doesn't need usual task of re-enabling MainUserInterface, as program always exit after this
 	}
 }
