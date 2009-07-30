@@ -18,6 +18,7 @@ import ij.Prefs;
 public class XMLFileDownloader extends PluginDataObservable implements Downloader.DownloadListener {
 	private List<FileDownload> sources;
 	private long xmlLastModified;
+	private byte[] data;
 
 	public void startDownload() throws IOException {
 		sources = new ArrayList<FileDownload>();
@@ -58,16 +59,18 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 
 		//Uncompress the XML file
 		String compressedFileLocation = prefix(PluginManager.XML_COMPRESSED);
-		String xmlFileLocation = prefix(PluginManager.XML_FILENAME);
-		byte[] data = Compressor.getDecompressedData(
+		data = Compressor.getDecompressedData(
 				new FileInputStream(compressedFileLocation));
-		FileOutputStream saveFile = new FileOutputStream(xmlFileLocation); //if needed...
-		saveFile.write(data);
-		saveFile.close();
 
 		setStatusComplete(); //indicate to observer there's no more tasks
 	}
 
+	//should be called only after all tasks in class are done
+	public byte[] getXMLFileData() {
+		return data;
+	}
+
+	//should be called only after all tasks in class are done
 	public long getXMLLastModified() {
 		return xmlLastModified;
 	}

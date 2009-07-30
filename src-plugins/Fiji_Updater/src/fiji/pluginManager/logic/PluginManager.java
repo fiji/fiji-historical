@@ -4,6 +4,7 @@ import fiji.pluginManager.utilities.UpdateFiji;
 import ij.IJ;
 import ij.plugin.PlugIn;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -85,7 +86,8 @@ public class PluginManager implements PlugIn, Observer {
 				if (xmlFileDownloader.allTasksComplete()) {
 					System.out.println("Download complete.");
 					xmlLastModified = xmlFileDownloader.getXMLLastModified();
-					xmlFileReader = new XMLFileReader(PluginManager.XML_FILENAME);
+					xmlFileReader = new XMLFileReader(
+							new ByteArrayInputStream(xmlFileDownloader.getXMLFileData()));
 
 					//Start to build a list from the information
 					pluginListBuilder = new PluginListBuilder(xmlFileReader);

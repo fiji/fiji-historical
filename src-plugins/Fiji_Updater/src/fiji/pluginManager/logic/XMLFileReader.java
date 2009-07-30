@@ -1,5 +1,6 @@
 package fiji.pluginManager.logic;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -44,8 +45,17 @@ public class XMLFileReader extends DefaultHandler {
 
 	public XMLFileReader(String fileLocation) throws ParserConfigurationException,
 	IOException, SAXException {
+		initialize(new InputSource(fileLocation));
+	}
+
+	public XMLFileReader(InputStream in) throws ParserConfigurationException,
+	IOException, SAXException {
+		initialize(new InputSource(in));
+	}
+
+	private void initialize(InputSource inputSource) throws ParserConfigurationException,
+	SAXException, IOException {
 		pluginRecords = new TreeMap<String, List<PluginObject>>();
-		
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		//factory.setValidating(true); //commented out per postel's law
 		factory.setNamespaceAware(true);
@@ -54,7 +64,7 @@ public class XMLFileReader extends DefaultHandler {
 		XMLReader xr = parser.getXMLReader();
 		xr.setContentHandler(this);
 		xr.setErrorHandler(new XMLFileErrorHandler());
-		xr.parse(new InputSource(fileLocation));
+		xr.parse(inputSource);
 	}
 
 	public void getLatestDigestsAndDates(Map<String, String> latestDigests, Map<String, String> latestDates) {
