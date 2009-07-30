@@ -353,7 +353,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		//Enable/Disable edit button depending on _Action_ user wants of selected plugin
 		if (isDeveloper && currentPlugin.toUpload())
 			btnEditDetails.setEnabled(true);
-		else
+		else if (isDeveloper)
 			btnEditDetails.setEnabled(false);
 	}
 

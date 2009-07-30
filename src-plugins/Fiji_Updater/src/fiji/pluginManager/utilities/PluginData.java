@@ -77,7 +77,7 @@ public abstract class PluginData {
 	}
 
 	protected String prefix(String path) {
-		return fijiPath + File.separator + path;
+		return fijiPath + path;
 	}
 
 	protected String initializeFilename(String filename) {

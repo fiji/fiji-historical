@@ -3,6 +3,8 @@ import fiji.pluginManager.ui.MainUserInterface;
 import fiji.pluginManager.utilities.UpdateFiji;
 import ij.IJ;
 import ij.plugin.PlugIn;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -30,6 +32,7 @@ public class PluginManager implements PlugIn, Observer {
 	//Key names for ij.Prefs for saved values ("cookies")
 	//Note: ij.Prefs only work after Fiji itself is closed (Does not work if you close the console)
 	public static final String PREFS_XMLDATE = "fiji.updater.xmlDate";
+	private long xmlLastModified; //Track when was file modified (Lock conflict purposes)
 
 	//PluginObjects for output at User Interface
 	public List<PluginObject> pluginCollection;
@@ -39,9 +42,6 @@ public class PluginManager implements PlugIn, Observer {
 	private XMLFileDownloader xmlFileDownloader;
 	private PluginListBuilder pluginListBuilder;
 	public XMLFileReader xmlFileReader;
-
-	private long xmlLastModified; //Track when was file modified (Lock conflict purposes)
-	boolean isDeveloper = true;
 
 	public void run(String arg) {
 		try {
@@ -103,6 +103,8 @@ public class PluginManager implements PlugIn, Observer {
 					IJ.showStatus("");
 					pluginCollection = pluginListBuilder.pluginCollection;
 					readOnlyList = pluginListBuilder.readOnlyList;
+
+					boolean isDeveloper = new File(UpdateFiji.getFijiRootPath() + "fiji.cxx").exists();
 					MainUserInterface mainUserInterface = new MainUserInterface(this, isDeveloper);
 					mainUserInterface.setVisible(true);
 					System.out.println("********** Startup Ended **********");
