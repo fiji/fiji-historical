@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -25,19 +26,11 @@ import org.xml.sax.helpers.DefaultHandler;
  * 
  */
 public class XMLFileReader extends DefaultHandler {
-	private String filename;
-	private String timestamp;
-	private String digest;
-	private String description;
-	private String filesize;
-	private String link;
+	private Properties properties; //properties of a _single_ version of a single plugin
+	private String currentFilename;
 	private List<String> links;
-	private String author;
 	private List<String> authors;
 	private List<Dependency> dependencyList;
-	private String dependencyFilename;
-	private String dependencyTimestamp;
-	private String dependencyRelation;
 	private String currentTag;
 
 	//plugin names mapped to list of their respective versions
@@ -55,6 +48,7 @@ public class XMLFileReader extends DefaultHandler {
 
 	private void initialize(InputSource inputSource) throws ParserConfigurationException,
 	SAXException, IOException {
+		properties = new Properties();
 		pluginRecords = new TreeMap<String, List<PluginObject>>();
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		//factory.setValidating(true); //commented out per postel's law
@@ -123,19 +117,11 @@ public class XMLFileReader extends DefaultHandler {
 
 	public void endDocument () {
 		//no longer needed after parsing, set back to default values
-		filename = null;
-		timestamp = null;
-		digest = null;
-		description = null;
-		filesize = null;
-		link = null;
+		properties = null;
+		currentFilename = null;
 		links = null;
-		author = null;
 		authors = null;
 		dependencyList = null;
-		dependencyFilename = null;
-		dependencyTimestamp = null;
-		dependencyRelation = null;
 		currentTag = null;
 	}
 
@@ -145,31 +131,20 @@ public class XMLFileReader extends DefaultHandler {
 		else
 			currentTag = name;
 
+		properties.setProperty(currentTag, ""); //cannot put null value
 		if (currentTag.equals("plugin")) {
-			filename = atts.getValue("filename");
-		} else if (currentTag.equals("version")) {
 			resetPluginValues();
-		} else if (currentTag.equals("dependency")) {
-			dependencyFilename = "";
-			dependencyTimestamp = "";
-			dependencyRelation = "";
-		} else if (currentTag.equals("link")) {
-			link = "";
-		} else if (currentTag.equals("author")) {
-			author = "";
+			currentFilename = atts.getValue("filename");
 		} else if (currentTag.equals("previous-version")) {
 			resetPluginValues();
-			timestamp = atts.getValue("timestamp");
-			digest = atts.getValue("checksum");
-			filesize = "0";
+			properties.setProperty("timestamp", atts.getValue("timestamp"));
+			properties.setProperty("checksum", atts.getValue("checksum"));
+			properties.setProperty("filesize", "0");
 		}
 	}
 
 	private void resetPluginValues() {
-		digest = "";
-		timestamp = "";
-		description = "";
-		filesize = "";
+		properties = new Properties();
 		dependencyList = new ArrayList<Dependency>();
 		links = new ArrayList<String>();
 		authors = new ArrayList<String>();
@@ -183,11 +158,14 @@ public class XMLFileReader extends DefaultHandler {
 			tagName = name;
 
 		if (tagName.equals("version") || tagName.equals("previous-version")) {
-			PluginObject plugin = new PluginObject(filename, digest, timestamp,
+			PluginObject plugin = new PluginObject(currentFilename,
+					properties.getProperty("checksum"),
+					properties.getProperty("timestamp"),
 					PluginObject.STATUS_UNINSTALLED, true, true);
 			if (tagName.equals("version"))
-				plugin.setPluginDetails(new PluginDetails(description, links, authors));
-			plugin.setFilesize(Integer.parseInt(filesize));
+				plugin.setPluginDetails(new PluginDetails(
+						properties.getProperty("description"), links, authors));
+			plugin.setFilesize(Integer.parseInt(properties.getProperty("filesize")));
 			if (dependencyList.size() > 0)
 				plugin.setDependency(dependencyList);
 
@@ -201,38 +179,27 @@ public class XMLFileReader extends DefaultHandler {
 			versions.add(plugin);
 
 		} else if (tagName.equals("dependency")) {
-			Dependency dependency = new Dependency(dependencyFilename, dependencyTimestamp, dependencyRelation);
+			Dependency dependency = new Dependency(
+					properties.getProperty("filename"),
+					properties.getProperty("date"),
+					properties.getProperty("relation"));
 			dependencyList.add(dependency);
 
-		} else if (tagName.equals("link")) {
-			links.add(link);
-		} else if (tagName.equals("author")) {
-			authors.add(author);
+		} else {
+			String value = properties.getProperty(tagName);
+			if (value != null) {
+				if (tagName.equals("link"))
+					links.add(value);
+				else if (tagName.equals("author"))
+					authors.add(value);
+			}
+
 		}
 	}
 
 	public void characters(char ch[], int start, int length) {
-		for (int i = start; i < start + length; i++) {
-			if (currentTag.equals("checksum")) {
-				digest += ch[i];
-			} else if (currentTag.equals("timestamp")) {
-				timestamp += ch[i];
-			} else if (currentTag.equals("description")) {
-				description += ch[i];
-			} else if (currentTag.equals("filesize")) {
-				filesize += ch[i];
-			} else if (currentTag.equals("filename")) {
-				dependencyFilename += ch[i];
-			} else if (currentTag.equals("date")) {
-				dependencyTimestamp += ch[i];
-			} else if (currentTag.equals("relation")) {
-				dependencyRelation += ch[i];
-			} else if (currentTag.equals("link")) {
-				link += ch[i];
-			} else if (currentTag.equals("author")) {
-				author += ch[i];
-			}
-		}
+		String value = new String(ch, start, length);
+		properties.setProperty(currentTag, properties.getProperty(currentTag, "") + value);
 	}
 
 }

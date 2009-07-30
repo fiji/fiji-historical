@@ -123,7 +123,7 @@ public class TextPaneDisplay extends JTextPane {
 		if (plugin.isFijiPlugin() && !plugin.isInRecords()) {
 			insertBlankLine();
 			bold("Warning: ");
-			normal("This version is not in Fiji's records.");
+			italic("This version is not in Fiji's records.");
 		}
 		insertBlankLine();
 		bold("Date: ");
