@@ -120,6 +120,11 @@ public class TextPaneDisplay extends JTextPane {
 		title(plugin.getFilename());
 		if (plugin.isUpdateable())
 			italic("\n(Update is available)");
+		if (plugin.isFijiPlugin() && !plugin.isInRecords()) {
+			insertBlankLine();
+			bold("Warning: ");
+			normal("This version is not in Fiji's records.");
+		}
 		insertBlankLine();
 		bold("Date: ");
 		normal(plugin.getTimestamp());

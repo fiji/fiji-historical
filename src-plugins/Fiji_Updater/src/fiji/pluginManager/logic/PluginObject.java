@@ -10,7 +10,10 @@ public class PluginObject {
 	private PluginDetails pluginDetails;
 	private int filesize;
 	private List<Dependency> dependency; //Dependency object: filename and timestamp
-	private boolean isFiji;
+
+	//Status of its record in database
+	private boolean isFiji; //name in records or not
+	private boolean isRecorded; //its md5 sum in records or not
 
 	//Current physical state and action-to-take of plugin as the User sees it
 	public static final byte STATUS_UNINSTALLED = 0; //Meaning current status is not installed
@@ -27,12 +30,14 @@ public class PluginObject {
 	public static enum ChangeStatus { NONE, SUCCESS, FAIL };
 	private ChangeStatus changedStatus = ChangeStatus.NONE; //default
 
-	public PluginObject(String strFilename, String md5Sum, String timestamp, byte status, boolean isFiji) {
+	public PluginObject(String strFilename, String md5Sum, String timestamp, byte status,
+			boolean isFiji, boolean isRecorded) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
 		this.timestamp = timestamp;
 		this.status = status;
 		this.isFiji = isFiji;
+		this.isRecorded = isRecorded;
 		pluginDetails = new PluginDetails(); //default: no information, empty
 	}
 
@@ -187,9 +192,12 @@ public class PluginObject {
 		return (action == PluginObject.ACTION_UPLOAD);
 	}
 
-	//TODO: I think we should add another function verifying if plugin exists in XML records
 	public boolean isFijiPlugin() {
 		return isFiji;
+	}
+
+	public boolean isInRecords() {
+		return isRecorded;
 	}
 
 	public boolean changeSucceeded() {

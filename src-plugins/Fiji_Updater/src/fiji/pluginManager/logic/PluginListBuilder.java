@@ -69,10 +69,6 @@ public class PluginListBuilder extends PluginDataObservable {
 			//null indicate XML records does not have such plugin filename and md5 sums
 			String outputDate = xmlFileReader.getTimestampFromRecords(outputFilename,
 					outputDigest);
-			if (outputDate == null) {
-				//use local plugin's last modified timestamp instead
-				outputDate = getTimestampFromFile(outputFilename);
-			}
 			dates.put(outputFilename, outputDate);
 
 			changeStatus(outputFilename, ++currentlyLoaded, totalToLoad);
@@ -123,12 +119,23 @@ public class PluginListBuilder extends PluginDataObservable {
 			String remoteDate = latestDates.get(pluginName);
 			PluginObject myPlugin = null;
 
+			//null implies that although Fiji plugin, version indicates it does not exist in records
+			boolean isRecorded = true;
+			if (date == null) {
+				//use local plugin's last modified timestamp instead
+				date = getTimestampFromFile(pluginName);
+				isRecorded = false;
+			}
+
 			if (digest != null && remoteDigest.equals(digest)) { //if latest version installed
-				myPlugin = new PluginObject(pluginName, digest, date, PluginObject.STATUS_INSTALLED, true);
+				myPlugin = new PluginObject(pluginName, digest, date,
+						PluginObject.STATUS_INSTALLED, true, true);
 			} else if (digest == null) { //if new file (Not installed yet)
-				myPlugin = new PluginObject(pluginName, remoteDigest, remoteDate, PluginObject.STATUS_UNINSTALLED, true);
+				myPlugin = new PluginObject(pluginName, remoteDigest, remoteDate,
+						PluginObject.STATUS_UNINSTALLED, true, true);
 			} else { //if its installed but can be updated
-				myPlugin = new PluginObject(pluginName, digest, date, PluginObject.STATUS_MAY_UPDATE, true);
+				myPlugin = new PluginObject(pluginName, digest, date,
+						PluginObject.STATUS_MAY_UPDATE, true, isRecorded);
 				//set latest update details
 				myPlugin.setUpdateDetails(remoteDigest, remoteDate);
 			}
@@ -147,9 +154,10 @@ public class PluginListBuilder extends PluginDataObservable {
 			//If it is not a Fiji plugin (Not found in list of up-to-date versions)
 			if (!latestDigests.containsKey(name)) {
 				String digest = digests.get(name);
-				String date = dates.get(name);
+				String date = getTimestampFromFile(name);
 				//implies third-party plugin, no description nor dependency information available
-				PluginObject myPlugin = new PluginObject(name, digest, date, PluginObject.STATUS_INSTALLED, false);
+				PluginObject myPlugin = new PluginObject(name, digest, date,
+						PluginObject.STATUS_INSTALLED, false, false);
 				myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
 				pluginCollection.add(myPlugin);
 			}

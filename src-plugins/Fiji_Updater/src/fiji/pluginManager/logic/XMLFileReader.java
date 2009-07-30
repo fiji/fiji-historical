@@ -183,7 +183,8 @@ public class XMLFileReader extends DefaultHandler {
 			tagName = name;
 
 		if (tagName.equals("version") || tagName.equals("previous-version")) {
-			PluginObject plugin = new PluginObject(filename, digest, timestamp, PluginObject.STATUS_UNINSTALLED, true);
+			PluginObject plugin = new PluginObject(filename, digest, timestamp,
+					PluginObject.STATUS_UNINSTALLED, true, true);
 			if (tagName.equals("version"))
 				plugin.setPluginDetails(new PluginDetails(description, links, authors));
 			plugin.setFilesize(Integer.parseInt(filesize));
