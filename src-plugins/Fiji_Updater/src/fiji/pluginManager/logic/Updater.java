@@ -130,12 +130,11 @@ public class Updater extends PluginData {
 		generateAndValidateXML();
 		saveXMLFile();
 		saveTextFile();
-		List<SourceFile> information = new ArrayList<SourceFile>();
 		//_Lock_ file, writable for none but current uploader
-		information.add(0, new UpdateSource(savePaths[0], relativePaths[0], "C0644"));
+		filesToUpload.add(0, new UpdateSource(savePaths[0], relativePaths[0], "C0644"));
 		//Text file for old Fiji Updater, writable for all uploaders
-		information.add(1, new UpdateSource(savePaths[1], relativePaths[1], "C0664"));
-		fileUploader.beganUpload(xmlLastModified, information, filesToUpload);
+		filesToUpload.add(new UpdateSource(savePaths[1], relativePaths[1], "C0664"));
+		fileUploader.beganUpload(xmlLastModified, filesToUpload);
 
 		//No errors thrown, implies successful upload, so just remove temporary files
 		new File(backupXMLPath).delete();

@@ -80,8 +80,7 @@ public class FileUploader {
 
 	//Steps to accomplish entire upload task
 	//Note: For information list, index 0 is XML lock file, 1 is text file
-	public synchronized void beganUpload(long xmlLastModified, List<SourceFile> information,
-			List<SourceFile> sources) throws Exception {
+	public synchronized void beganUpload(long xmlLastModified, List<SourceFile> sources) throws Exception {
 		//Set db.xml.gz to read-only
 		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED);
 		System.out.println("db.xml.gz set to read-only mode");
@@ -101,10 +100,8 @@ public class FileUploader {
 		}
 		System.out.println("XML file was not modified since last download, clear!");
 
-		//Start actual upload
-		uploadSingleFile(information.get(0)); //XML lock file
+		//Start actual upload (First one should be XML lock file)
 		uploadFiles(sources);
-		uploadSingleFile(information.get(1)); //current.txt file
 
 		//Unlock process
 		String cmd1 = "chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED;
@@ -158,13 +155,6 @@ public class FileUploader {
 		uc.setUseCaches(false);
 		if (xmlLastModified != uc.getLastModified()) return false;
 		else return true;
-	}
-
-	//Upload and tracks the status of this single file
-	private void uploadSingleFile(SourceFile source) throws Exception {
-		List<SourceFile> singleSource = new ArrayList<SourceFile>();
-		singleSource.add(source);
-		uploadFiles(singleSource);
 	}
 
 	private void uploadFiles(List<SourceFile> sources) throws Exception {
