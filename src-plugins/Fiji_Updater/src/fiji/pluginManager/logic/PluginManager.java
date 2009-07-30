@@ -110,6 +110,7 @@ public class PluginManager implements PlugIn, Observer {
 					boolean isDeveloper = new File(UpdateFiji.getFijiRootPath() + "fiji.cxx").exists();
 					MainUserInterface mainUserInterface = new MainUserInterface(this, isDeveloper);
 					mainUserInterface.setVisible(true);
+					mainUserInterface.setLocationRelativeTo(null); //center of the screen
 					System.out.println("********** Startup Ended **********");
 				}
 

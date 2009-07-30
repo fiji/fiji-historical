@@ -95,7 +95,7 @@ public class TextPaneDisplay extends JTextPane {
 		StringBuilder text = new StringBuilder();
 		if (links != null)
 			for (String link : links)
-				text.append((text.length() > 0 ? "\n- " : "- ") + link);
+				text.append((text.length() > 0 ? "\n-" : "-") + link);
 		normal("\n" + (text.length() > 0 ? text.toString() : "None."));
 	}
 
@@ -130,11 +130,11 @@ public class TextPaneDisplay extends JTextPane {
 		bold("Description");
 		insertDescription(plugin.getPluginDetails().getDescription());
 		insertBlankLine();
-		bold("Dependency");
-		insertDependenciesList(plugin.getDependencies());
-		insertBlankLine();
 		bold("Reference Link(s):");
 		insertLinks(plugin.getPluginDetails().getLinks());
+		insertBlankLine();
+		bold("Dependency");
+		insertDependenciesList(plugin.getDependencies());
 		insertBlankLine();
 		bold("Md5 Sum");
 		normal("\n" + plugin.getmd5Sum());
