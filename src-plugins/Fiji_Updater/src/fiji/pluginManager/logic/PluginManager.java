@@ -15,6 +15,7 @@ import org.xml.sax.SAXException;
  * required list of PluginObjects that interface will use for display.
  */
 public class PluginManager implements PlugIn, Observer {
+	//For downloading/upload files
 	//TODO
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/";
 	//public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
@@ -25,6 +26,10 @@ public class PluginManager implements PlugIn, Observer {
 	public static final String DTD_FILENAME = "plugins.dtd";
 	public static final String XML_BACKUP = "db.bak";
 	public static final String UPDATE_DIRECTORY = "update";
+
+	//Key names for ij.Prefs for saved values ("cookies")
+	//Note: ij.Prefs only work after Fiji itself is closed (Does not work if you close the console)
+	public static final String PREFS_XMLDATE = "fiji.updater.xmlDate";
 
 	//PluginObjects for output at User Interface
 	public List<PluginObject> pluginCollection;
