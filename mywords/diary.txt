@@ -1049,3 +1049,19 @@ And there it!!! The almost-completely implemented 1st version of Plugin Manager 
          ==> Namely, installing a 3rd party plugin? (Removal was long implemented ago)
 
 Now I must really get back to Plugin readings (And testings).
+
+
+
+30th July, Thursday
+
+Implementation
+- Use IJ's Prefs object to record values for:
+   ==> last-modified date of XML file
+   ==> Username (Authentication) when uploading files
+- Used existence of fiji.cxx at Fiji's root directory to check if User is a developer (Able to upload plugins)
+- GenericDialog is used at Uploader class to ask for authentication, so as to be able to upload plugin information
+- Some slight interface issues addressed
+- Some heck of a refactoring...
+- Somewhat major change: Plugin Manager's main user interface can detect whether a particular version is part of Fiji's plugin records.
+
+Now.. Need some sleep...
