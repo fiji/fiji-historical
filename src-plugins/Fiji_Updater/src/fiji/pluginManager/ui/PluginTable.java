@@ -12,6 +12,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
@@ -107,8 +108,10 @@ public class PluginTable extends JTable {
 
 	//Set up table model, to be called each time display list is to be changed
 	public void setupTableModel(List<PluginObject> myList) {
+		getModel().removeTableModelListener(this);
 		getModel().removeTableModelListener(mainUserInterface);
 		setModel(pluginTableModel = new PluginTableModel(myList, isDeveloper));
+		getModel().addTableModelListener(this);
 		getModel().addTableModelListener(mainUserInterface); //listen for changes (tableChanged(TableModelEvent e))
 		setColumnWidths(250, 100);
 		pluginTableModel.fireTableChanged(new TableModelEvent(pluginTableModel));

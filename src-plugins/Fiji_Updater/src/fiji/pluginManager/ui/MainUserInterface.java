@@ -357,14 +357,14 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	public void tableChanged(TableModelEvent e) {
-		//TODO: should we count objects in the view-table or objects in the entire list?
-		int size = viewList.size();
+		int size = pluginCollection.size();
 		int installCount = 0;
 		int removeCount = 0;
 		int updateCount = 0;
 		int uploadCount = 0;
 
-		for (PluginObject myPlugin : viewList) {
+		//Refresh count information
+		for (PluginObject myPlugin : pluginCollection) {
 			if (myPlugin.toInstall()) {
 				installCount += 1;
 			} else if (myPlugin.toRemove()) {
@@ -378,10 +378,15 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		String txtAction = "Total: " + size + ", To install: " + installCount +
 		", To remove: " + removeCount + ", To update: " + updateCount;
 		if (isDeveloper) txtAction += ", To upload: " + uploadCount;
-
 		lblPluginSummary.setText(txtAction);
-		if (isDeveloper && btnEditDetails != null)
-			btnEditDetails.setEnabled(false);
+
+		//Refresh plugin details and status
+		if (isDeveloper && btnEditDetails != null) {
+			if (currentPlugin != null)
+				displayPluginDetails(currentPlugin);
+			else
+				btnEditDetails.setEnabled(false);
+		}
 		enableIfAction(btnStart, PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
 		enableIfAction(btnUpload, PluginCollection.FILTER_ACTIONS_UPLOAD);
 	}
