@@ -3,14 +3,11 @@ import fiji.pluginManager.ui.MainUserInterface;
 import fiji.pluginManager.utilities.UpdateFiji;
 import ij.IJ;
 import ij.plugin.PlugIn;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import javax.swing.JOptionPane;
-import javax.xml.parsers.ParserConfigurationException;
-import org.xml.sax.SAXException;
 
 /*
  * Start up class of Plugin Manager Application:
@@ -60,8 +57,9 @@ public class PluginManager implements PlugIn, Observer {
 			//Scenario if decompression fails
 			if (JOptionPane.showConfirmDialog(null,
 					"Plugin Manager has failed to decompress plugin information db.xml.gz." +
-					"\nAn upgrade may be necessary. Do you want to use an older version to help download " +
-					"the latest version of Plugin Manager?", "Using UpdateFiji", JOptionPane.YES_NO_OPTION,
+					"\nEither db.xml.gz is corrupted, or Plugin Manager requires an upgrade." +
+					"\nDo you want to use an older version to help download the latest version " +
+					"of Plugin Manager?", "Using UpdateFiji", JOptionPane.YES_NO_OPTION,
 					JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
 				//Load the older version of Fiji Updater instead
 				UpdateFiji updateFiji = new UpdateFiji();
@@ -115,12 +113,8 @@ public class PluginManager implements PlugIn, Observer {
 				}
 
 			}
-		} catch (ParserConfigurationException e1) {
-			throw new Error(e1.getLocalizedMessage());
-		} catch (IOException e2) {
-			throw new Error(e2.getLocalizedMessage());
-		} catch (SAXException e3) {
-			throw new Error(e3.getLocalizedMessage());
+		} catch (Throwable e) {
+			throw new Error(e.getLocalizedMessage());
 		}
 	}
 }

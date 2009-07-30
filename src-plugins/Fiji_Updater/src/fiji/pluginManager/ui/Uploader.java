@@ -3,11 +3,6 @@ import ij.IJ;
 import ij.Prefs;
 import ij.gui.GenericDialog;
 import java.awt.TextField;
-import java.io.IOException;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerConfigurationException;
-import org.xml.sax.SAXException;
-import com.jcraft.jsch.JSchException;
 import fiji.pluginManager.logic.PluginManager;
 import fiji.pluginManager.logic.UpdateSource;
 import fiji.pluginManager.logic.Updater;
@@ -79,20 +74,8 @@ public class Uploader implements UploadListener, Runnable {
 			updater.generateNewPluginRecords();
 			updater.uploadFilesToServer(this);
 
-		} catch (TransformerConfigurationException e1) {
-			error_message = e1.getLocalizedMessage();
-		} catch (IOException e2) {
-			error_message = e2.getLocalizedMessage();
-		} catch (SAXException e3) {
-			error_message = e3.getLocalizedMessage();
-		} catch (ParserConfigurationException e4) {
-			error_message = e4.getLocalizedMessage();
-		} catch (JSchException e5) {
-			error_message = e5.getLocalizedMessage();
-		} catch (Exception e6) {
-			error_message = e6.getLocalizedMessage();
-		} catch (Error e7) {
-			error_message = e7.getLocalizedMessage();
+		} catch (Throwable e) {
+			error_message = e.getLocalizedMessage();
 		}
 
 		//If there is an error message, show it
