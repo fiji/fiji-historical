@@ -14,6 +14,9 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
+
+import com.jcraft.jsch.JSchException;
+
 import fiji.pluginManager.logic.FileUploader.SourceFile;
 import fiji.pluginManager.logic.FileUploader.UploadListener;
 import fiji.pluginManager.utilities.Compressor;
@@ -24,8 +27,9 @@ import fiji.pluginManager.utilities.PluginData;
  * plugin records (Map of plugins to all versions).
  * 
  * 1st Step: Generates the updated records (newPluginRecords & filesToUpload)
- * 2nd Step: Write and validate XML file, and write current.txt contents too
- * 3rd Step: Upload XML, text and plugin file(s) to server
+ * 2nd Step: Login details _must_ be authenticated before below steps can proceed
+ * 3rd Step: Write and validate XML file, and write current.txt contents too
+ * 4th Step: Upload XML, text and plugin file(s) to server
  * 
  * Note: Plugins are uploaded differently
  * - Non-Fiji plugins & new versions of Fiji Plugins will have files AND details uploaded
@@ -44,11 +48,11 @@ public class Updater extends PluginData {
 	private TransformerHandler handler; //tool for writing of XML contents
 
 	//accessible information after uploading tasks are done
-	public List<PluginObject> changesList;
-	public Map<String, List<PluginObject>> newPluginRecords;
-	private ArrayList<SourceFile> filesToUpload; //list of plugins whose files has to be uploaded
-	private DependencyAnalyzer dependencyAnalyzer;
 	private XMLFileReader xmlFileReader;
+	public Map<String, List<PluginObject>> newPluginRecords;
+	private ArrayList<SourceFile> filesToUpload; //list of plugin files to be uploaded
+	public List<PluginObject> changesList;
+	private DependencyAnalyzer dependencyAnalyzer;
 
 	public Updater(PluginManager pluginManager) {
 		PluginCollection pluginCollection = (PluginCollection)pluginManager.pluginCollection;
@@ -62,6 +66,17 @@ public class Updater extends PluginData {
 		for (int i = 0; i < savePaths.length; i++)
 			savePaths[i] = prefix(relativePaths[i]);
 		backupXMLPath = prefix(PluginManager.XML_BACKUP);
+	}
+
+	public synchronized boolean setLogin(String username, String password) {
+		try {
+			fileUploader = new FileUploader(username, password);
+			System.out.println("User " + username + " logged in successfully.");
+			return true;
+		} catch (JSchException e) {
+			System.out.println("Failed to login. Username or password incorrect.");
+			return false;
+		}
 	}
 
 	public synchronized void generateNewPluginRecords() throws IOException {
@@ -110,7 +125,6 @@ public class Updater extends PluginData {
 
 	public synchronized void uploadFilesToServer(UploadListener uploadListener) throws Exception  {
 		System.out.println("********** Upload Process begins **********");
-		fileUploader = new FileUploader();
 		fileUploader.addListener(uploadListener);
 
 		generateAndValidateXML();

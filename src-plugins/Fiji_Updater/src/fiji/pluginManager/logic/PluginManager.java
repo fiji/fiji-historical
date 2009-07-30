@@ -32,6 +32,7 @@ public class PluginManager implements PlugIn, Observer {
 	//Key names for ij.Prefs for saved values ("cookies")
 	//Note: ij.Prefs only work after Fiji itself is closed (Does not work if you close the console)
 	public static final String PREFS_XMLDATE = "fiji.updater.xmlDate";
+	public static final String PREFS_USER = "fiji.updater.login";
 	private long xmlLastModified; //Track when was file modified (Lock conflict purposes)
 
 	//PluginObjects for output at User Interface

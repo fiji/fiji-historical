@@ -280,7 +280,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private void clickToUploadRecords() {
 		//There's no frame interface for Uploader, makes disabling pointless, thus set invisible
 		Uploader uploader = new Uploader(this);
-		setVisible(false);
+		setEnabled(false);
 		uploader.setUploadInformationAndStart(pluginManager);
 	}
 

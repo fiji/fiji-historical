@@ -31,7 +31,6 @@ import com.jcraft.jsch.Session;
  * 
  */
 public class FileUploader {
-	private final String user = "uploads";
 	private final String host = "pacific.mpi-cbg.de";
 	private final int hostKeyType = HostKey.SSHRSA;
 	private final String hostKey =
@@ -53,7 +52,8 @@ public class FileUploader {
 		" 0a 46 44 72 c4 83 5d 4d 23 1b d9 92 7b 02 98 e4" +
 		" 9a 55 db 33 82 a0 c7 96 86 78 bf 31 fd b4 6c 62" +
 		" bf 42 3a 05 63";
-	private final String password = "fiji";
+	//private final String user = "uploads";
+	//private final String password = "fiji";
 
 	private final String uploadDir = "/incoming/"; //TODO: Change to the LIVE version
 	private Session session;
@@ -65,7 +65,7 @@ public class FileUploader {
 	private OutputStream out;
 	private InputStream in;
 
-	public FileUploader() throws JSchException, IOException {
+	public FileUploader(String username, String password) throws JSchException {
 		listeners = new ArrayList<UploadListener>();
 
 		JSch jsch = new JSch();
@@ -73,7 +73,7 @@ public class FileUploader {
 			getHostKeyBytes());
 		jsch.getHostKeyRepository().add(hostKeyObject, null);
 
-		session = jsch.getSession(user, host, 22);
+		session = jsch.getSession(username, host, 22);
 		session.setPassword(password);
 		session.connect();
 	}

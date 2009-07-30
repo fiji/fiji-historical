@@ -1,16 +1,13 @@
 package fiji.pluginManager.ui;
-
 import ij.IJ;
-
+import ij.Prefs;
+import ij.gui.GenericDialog;
+import java.awt.TextField;
 import java.io.IOException;
-
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
-
 import org.xml.sax.SAXException;
-
 import com.jcraft.jsch.JSchException;
-
 import fiji.pluginManager.logic.PluginManager;
 import fiji.pluginManager.logic.UpdateSource;
 import fiji.pluginManager.logic.Updater;
@@ -18,7 +15,7 @@ import fiji.pluginManager.logic.FileUploader.SourceFile;
 import fiji.pluginManager.logic.FileUploader.UploadListener;
 
 /*
- * The "interface" for uploading plugins (Actually, it mainly consists of IJ progress bar).
+ * The "interface" for uploading plugins (Consists of IJ progress bar & IJ GenericDialog).
  */
 public class Uploader implements UploadListener, Runnable {
 	private volatile MainUserInterface mainUserInterface;
@@ -30,6 +27,7 @@ public class Uploader implements UploadListener, Runnable {
 		this.mainUserInterface = mainUserInterface;
 	}
 
+	//Ask for login details and then began upload process
 	public synchronized void setUploadInformationAndStart(PluginManager pluginManager) {
 		this.pluginManager = pluginManager;
 		uploadThread = new Thread(this);
@@ -53,10 +51,35 @@ public class Uploader implements UploadListener, Runnable {
 
 	public void run() {
 		String error_message = null;
+		boolean loginSuccess = false;
 		try {
+			String username = "";
+			String password = "";
 			updater = new Updater(pluginManager);
-			updater.generateNewPluginRecords();
-			updater.uploadFilesToServer(this);
+			do {
+				//Dialog to enter username and password
+				GenericDialog gd = new GenericDialog("Login");
+				gd.addStringField("Username", Prefs.get(PluginManager.PREFS_USER, ""), 20);
+				gd.addStringField("Password", "", 20);
+				((TextField)gd.getStringFields().lastElement()).setEchoChar('*');
+				gd.showDialog();
+				if (gd.wasCanceled()) {
+					break;
+				}
+
+				//Get the required login information
+				username = gd.getNextString();
+				password = gd.getNextString();
+				Prefs.set(PluginManager.PREFS_USER, username);
+
+			} while ((loginSuccess = updater.setLogin(username, password)) == false);
+
+			if (loginSuccess) {
+				mainUserInterface.setVisible(false); //this UI not needed for upload
+				updater.generateNewPluginRecords();
+				updater.uploadFilesToServer(this);
+			}
+
 		} catch (TransformerConfigurationException e1) {
 			error_message = e1.getLocalizedMessage();
 		} catch (IOException e2) {
@@ -79,11 +102,16 @@ public class Uploader implements UploadListener, Runnable {
 					"Failed to upload changes to server: " + error_message + "\n\n" +
 					"You need to restart Plugin Manager again."); //exit if failure
 		} else {
-			IJ.showStatus(""); //exit if successful
-			mainUserInterface.exitWithRestartMessage("Updated",
+			if (loginSuccess) {
+				IJ.showStatus(""); //exit if successful
+				mainUserInterface.exitWithRestartMessage("Updated",
 					"Files successfully uploaded to server!\n\n"
 					+ "You need to restart Plugin Manager for changes to take effect.");
+			} else {
+				//Implies user declines entering login details, thus return to main UI
+				mainUserInterface.backToPluginManager();
+			}
 		}
-		//Doesn't need usual task of re-enabling MainUserInterface, as program always exit after this
 	}
+
 }
