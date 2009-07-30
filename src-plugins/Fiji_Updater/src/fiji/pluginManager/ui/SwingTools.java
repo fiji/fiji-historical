@@ -1,16 +1,15 @@
 package fiji.pluginManager.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 
 //Specialized functions to ease repetitive creation of Swing components
@@ -29,7 +28,7 @@ public class SwingTools {
 	}
 
 	//Creates a JScrollPane for the given textpane of specified width and height
-	public static JScrollPane getTextScrollPane(JTextPane textPane, int width, int height) {
+	public static JScrollPane getTextScrollPane(JEditorPane textPane, int width, int height) {
 		textPane.setPreferredSize(new Dimension(width, height));
 		JScrollPane scrollpane = new JScrollPane(textPane);
 		scrollpane.getViewport().setBackground(textPane.getBackground());

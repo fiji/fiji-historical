@@ -51,7 +51,7 @@ public class Uploader implements UploadListener, Runnable {
 
 	public void run() {
 		String error_message = null;
-		boolean loginSuccess = false;
+		//boolean loginSuccess = false;
 		try {
 			String username = "";
 			String password = "";
@@ -64,21 +64,20 @@ public class Uploader implements UploadListener, Runnable {
 				((TextField)gd.getStringFields().lastElement()).setEchoChar('*');
 				gd.showDialog();
 				if (gd.wasCanceled()) {
-					break;
+					mainUserInterface.backToPluginManager();
+					return; //return back to user interface
 				}
 
 				//Get the required login information
 				username = gd.getNextString();
 				password = gd.getNextString();
-				Prefs.set(PluginManager.PREFS_USER, username);
 
-			} while ((loginSuccess = updater.setLogin(username, password)) == false);
+			} while (!updater.setLogin(username, password));
 
-			if (loginSuccess) {
-				mainUserInterface.setVisible(false); //this UI not needed for upload
-				updater.generateNewPluginRecords();
-				updater.uploadFilesToServer(this);
-			}
+			Prefs.set(PluginManager.PREFS_USER, username);
+			mainUserInterface.setVisible(false); //this UI not needed for upload
+			updater.generateNewPluginRecords();
+			updater.uploadFilesToServer(this);
 
 		} catch (TransformerConfigurationException e1) {
 			error_message = e1.getLocalizedMessage();
@@ -102,15 +101,10 @@ public class Uploader implements UploadListener, Runnable {
 					"Failed to upload changes to server: " + error_message + "\n\n" +
 					"You need to restart Plugin Manager again."); //exit if failure
 		} else {
-			if (loginSuccess) {
-				IJ.showStatus(""); //exit if successful
-				mainUserInterface.exitWithRestartMessage("Updated",
+			IJ.showStatus(""); //exit if successful
+			mainUserInterface.exitWithRestartMessage("Updated",
 					"Files successfully uploaded to server!\n\n"
 					+ "You need to restart Plugin Manager for changes to take effect.");
-			} else {
-				//Implies user declines entering login details, thus return to main UI
-				mainUserInterface.backToPluginManager();
-			}
 		}
 	}
 
