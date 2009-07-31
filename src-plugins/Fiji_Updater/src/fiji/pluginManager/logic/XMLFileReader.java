@@ -135,11 +135,12 @@ public class XMLFileReader extends DefaultHandler {
 		if (currentTag.equals("plugin")) {
 			resetPluginValues();
 			currentFilename = atts.getValue("filename");
-		} else if (currentTag.equals("previous-version")) {
+		} else if (currentTag.equals("version") || currentTag.equals("previous-version")) {
 			resetPluginValues();
 			properties.setProperty("timestamp", atts.getValue("timestamp"));
 			properties.setProperty("checksum", atts.getValue("checksum"));
-			properties.setProperty("filesize", "0");
+			String filesize = atts.getValue("filesize");
+			properties.setProperty("filesize", (filesize == null ? "0" : filesize));
 		}
 	}
 

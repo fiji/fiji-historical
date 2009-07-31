@@ -1,11 +1,8 @@
 <!ELEMENT pluginRecords (plugin*)>
 <!ELEMENT plugin (version, previous-version*)>
-<!ELEMENT version (checksum, timestamp, description, filesize, dependency*, link*, author*)>
+<!ELEMENT version (description?, dependency*, link*, author*)>
 <!ELEMENT previous-version EMPTY>
-<!ELEMENT checksum (#PCDATA)>
-<!ELEMENT timestamp (#PCDATA)>
 <!ELEMENT description (#PCDATA)>
-<!ELEMENT filesize (#PCDATA)>
 <!ELEMENT dependency (filename, date, relation?)>
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT date (#PCDATA)>
@@ -13,5 +10,8 @@
 <!ELEMENT link (#PCDATA)>
 <!ELEMENT author (#PCDATA)>
 <!ATTLIST plugin filename CDATA #REQUIRED>
+<!ATTLIST version timestamp CDATA #REQUIRED>
+<!ATTLIST version checksum CDATA #REQUIRED>
+<!ATTLIST version filesize CDATA #REQUIRED>
 <!ATTLIST previous-version timestamp CDATA #REQUIRED>
 <!ATTLIST previous-version checksum CDATA #REQUIRED>

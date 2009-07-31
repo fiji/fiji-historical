@@ -43,6 +43,8 @@ public class PluginDetails {
 	}
 
 	public String getDescription() {
+		if (description != null && description.trim().length() == 0)
+			return null;
 		return description;
 	}
 

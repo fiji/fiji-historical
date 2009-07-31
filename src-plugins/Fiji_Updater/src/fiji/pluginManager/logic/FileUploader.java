@@ -82,6 +82,8 @@ public class FileUploader {
 	//Note: For information list, index 0 is XML lock file, 1 is text file
 	public synchronized void beganUpload(long xmlLastModified, List<SourceFile> sources) throws Exception {
 		//Set db.xml.gz to read-only
+		//TODO
+		setCommand("chmod u+w " + uploadDir + PluginManager.DTD_FILENAME);
 		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED);
 		System.out.println("db.xml.gz set to read-only mode");
 
