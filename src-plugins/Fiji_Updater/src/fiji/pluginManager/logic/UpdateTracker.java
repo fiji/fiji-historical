@@ -56,10 +56,8 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 
 	//start processing on contents of Delete List (Mark them for deletion)
 	public void startDelete() {
-		Iterator<PluginObject> iterToUninstall = ((PluginCollection)changeList).getIterator(
-				PluginCollection.FILTER_ACTIONS_UNINSTALL);
-		while (iterToUninstall.hasNext()) {
-			PluginObject plugin = iterToUninstall.next();
+		for (PluginObject plugin : ((PluginCollection)changeList).getList(
+				PluginCollection.FILTER_ACTIONS_UNINSTALL)) {
 			String filename = plugin.getFilename();
 			try {
 				//checking status of existing file
@@ -97,12 +95,9 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 	//Marking files for removal assumed finished here, thus begin download tasks
 	public void run() {
 		Thread thisThread = Thread.currentThread();
-
-		Iterator<PluginObject> iterDownload = ((PluginCollection)changeList).getIterator(
-				PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
 		downloaderList = new ArrayList<FileDownload>();
-		while (iterDownload.hasNext()) {
-			PluginObject plugin = iterDownload.next();
+		for (PluginObject plugin : ((PluginCollection)changeList).getList(
+				PluginCollection.FILTER_ACTIONS_ADDORUPDATE)) {
 			//For each selected plugin, get target path to save to
 			String name = plugin.getFilename();
 			String saveToPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
@@ -128,10 +123,8 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 
 		if (thisThread != downloadThread) {
 			//if cancelled, remove any unfinished downloads
-			Iterator<PluginObject> iterator = ((PluginCollection)changeList).getIterator(
-					PluginCollection.FILTER_NO_SUCCESSFUL_CHANGE);
-			while (iterator.hasNext()) {
-				PluginObject plugin = iterator.next();
+			for (PluginObject plugin : ((PluginCollection)changeList).getList(
+					PluginCollection.FILTER_NO_SUCCESSFUL_CHANGE)) {
 				String fullPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY,
 						plugin.getFilename());
 				try {
