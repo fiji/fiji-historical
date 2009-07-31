@@ -22,18 +22,19 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 	private List<FileDownload> downloaderList;
 
 	//Keeping track of status
-	public List<PluginObject> changeList; //list of plugins specified to uninstall/download
+	public PluginCollection changeList; //list of plugins specified to uninstall/download
 	public PluginObject currentlyDownloading;
 	private int totalBytes;
 	private int completedBytesTotal; //bytes downloaded so far of all completed files
 	private int currentBytesSoFar; //bytes downloaded so far of current file
 	private boolean isDownloading;
 
-	public UpdateTracker(List<PluginObject> pluginList) {
+	public UpdateTracker(List<PluginObject> plugins) {
 		super();
-		PluginCollection pluginCollection = (PluginCollection)pluginList;
-		changeList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
-		((PluginCollection)changeList).resetChangeStatuses();
+		PluginCollection pluginList = (PluginCollection)plugins;
+		changeList = (PluginCollection)pluginList.getList(
+				PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
+		changeList.resetChangeStatuses();
 	}
 
 	public int getBytesDownloaded() {
@@ -56,8 +57,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 
 	//start processing on contents of Delete List (Mark them for deletion)
 	public void startDelete() {
-		for (PluginObject plugin : ((PluginCollection)changeList).getList(
-				PluginCollection.FILTER_ACTIONS_UNINSTALL)) {
+		for (PluginObject plugin : changeList.getList(PluginCollection.FILTER_ACTIONS_UNINSTALL)) {
 			String filename = plugin.getFilename();
 			try {
 				//checking status of existing file
@@ -96,8 +96,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 	public void run() {
 		Thread thisThread = Thread.currentThread();
 		downloaderList = new ArrayList<FileDownload>();
-		for (PluginObject plugin : ((PluginCollection)changeList).getList(
-				PluginCollection.FILTER_ACTIONS_ADDORUPDATE)) {
+		for (PluginObject plugin : changeList.getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE)) {
 			//For each selected plugin, get target path to save to
 			String name = plugin.getFilename();
 			String saveToPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
@@ -123,8 +122,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 
 		if (thisThread != downloadThread) {
 			//if cancelled, remove any unfinished downloads
-			for (PluginObject plugin : ((PluginCollection)changeList).getList(
-					PluginCollection.FILTER_NO_SUCCESSFUL_CHANGE)) {
+			for (PluginObject plugin : changeList.getList(PluginCollection.FILTER_NO_SUCCESSFUL_CHANGE)) {
 				String fullPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY,
 						plugin.getFilename());
 				try {
@@ -147,48 +145,39 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 	}
 
 	public Iterator<PluginObject> iterDownloaded() {
-		return ((PluginCollection)changeList).getIterator(
-				PluginCollection.FILTER_DOWNLOAD_SUCCESS);
+		return changeList.getIterator(PluginCollection.FILTER_DOWNLOAD_SUCCESS);
 	}
 
 	public int getNumberOfSuccessfulDownloads() {
-		return ((PluginCollection)changeList).getList(
-				PluginCollection.FILTER_DOWNLOAD_SUCCESS).size();
+		return changeList.getList(PluginCollection.FILTER_DOWNLOAD_SUCCESS).size();
 	}
 
 	public Iterator<PluginObject> iterFailedDownloads() {
-		return ((PluginCollection)changeList).getIterator(
-				PluginCollection.FILTER_DOWNLOAD_FAIL);
+		return changeList.getIterator(PluginCollection.FILTER_DOWNLOAD_FAIL);
 	}
 
 	public int getNumberOfFailedDownloads() {
-		return ((PluginCollection)changeList).getList(
-				PluginCollection.FILTER_DOWNLOAD_SUCCESS).size();
+		return changeList.getList(PluginCollection.FILTER_DOWNLOAD_SUCCESS).size();
 	}
 
 	public Iterator<PluginObject> iterMarkedUninstall() {
-		return ((PluginCollection)changeList).getIterator(
-				PluginCollection.FILTER_REMOVE_SUCCESS);
+		return changeList.getIterator(PluginCollection.FILTER_REMOVE_SUCCESS);
 	}
 
 	public int getNumberOfMarkedUninstalls() {
-		return ((PluginCollection)changeList).getList(
-				PluginCollection.FILTER_REMOVE_SUCCESS).size();
+		return changeList.getList(PluginCollection.FILTER_REMOVE_SUCCESS).size();
 	}
 
 	public Iterator<PluginObject> iterFailedUninstalls() {
-		return ((PluginCollection)changeList).getIterator(
-				PluginCollection.FILTER_REMOVE_FAIL);
+		return changeList.getIterator(PluginCollection.FILTER_REMOVE_FAIL);
 	}
 
 	public int getNumberOfFailedUninstalls() {
-		return ((PluginCollection)changeList).getList(
-				PluginCollection.FILTER_REMOVE_FAIL).size();
+		return changeList.getList(PluginCollection.FILTER_REMOVE_FAIL).size();
 	}
 
 	public boolean successfulChangesMade() {
-		Iterator<PluginObject> iterator = ((PluginCollection)changeList).getIterator(
-				PluginCollection.FILTER_CHANGE_SUCCEEDED);
+		Iterator<PluginObject> iterator = changeList.getIterator(PluginCollection.FILTER_CHANGE_SUCCEEDED);
 		return iterator.hasNext();
 	}
 
