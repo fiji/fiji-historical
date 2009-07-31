@@ -1065,3 +1065,53 @@ Implementation
 - Somewhat major change: Plugin Manager's main user interface can detect whether a particular version is part of Fiji's plugin records.
 
 Now.. Need some sleep...
+
+
+
+31st July, Friday
+== Analysis of structure of XML for extensibility ==
+Requirements for Normal User:
+- To install
+- To remove
+- To update
+
+Requirements for Developer:
+- Same as User, and...
+- Upload new to records
+- Undo current version in records
+- Render obselete the entire plugin in records
+
+== New scenarios ==
+(1) Undo current version meaning its possible to remove the most recent and revert back to a previous version.
+
+Suggestions for (1):
+Well, its only a matter of implementation on the application's part.
+If there is a previous version to revert to then:
+   Move information (description, links, author) over to the latest <previous-version> tag.
+   This will become the new <version>, with the <version> you wanted to remove gone.
+If not, then:
+   Either render this plugin as superceded, or remove it from records entirely.
+
+
+(2) Render obselete means to treat the entire <plugin> as superceded/no longer used/no longer supported.
+
+Suggestions for (2):
+Right now <plugin> tag has a _required_ attribute called "filename".
+In the future developers may extend by including an _optional_ attribute: <!ATTLIST plugin obselete (true|false) CDATA "false">.
+If no "obselete" attribute is given for <plugin> tag, the default "false" value will be taken into reading.
+
+For implementation-wise, PluginObject requires a new attribute that:
+- Determines whether is it installable (If not installed yet), or recommended for removal (If already installed)
+   ==> Developers may change descriptions to indicate that Plugin is no longer supported, pointing them to another Plugin.
+
+Anymore scenarios for extensibility? Can't think of anything else yet...
+Will be updated if any more thoughts come to mind.
+
+== Notable implementation changes ==
+- XML structure changed, converted <checksum>, <timestamp> and <filesize> of <version> tag into its attributes instead
+- <description> tag is now optional
+- So...... when to switch the final String values to "/var/www/update/" and "http://pacific.mpi-cbg.de/update/"?
+- Another note: This version of Plugin Manager does not deal with Fiji launchers yet.
+
+Phew, now what should really be done is testing out by both downloading and uploading plugins.
+Which is next week (final)...
