@@ -70,7 +70,7 @@ class Installer extends JFrame {
 		panel.add(progressBar);
 		panel.add(Box.createRigidArea(new Dimension(0,15)));
 		panel.add(txtScrollpane);
-		panel.add(Box.createRigidArea(new Dimension(0, 15)));
+		panel.add(Box.createRigidArea(new Dimension(0,15)));
 		panel.add(btnPanel);
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(panel, BorderLayout.CENTER);
@@ -98,12 +98,13 @@ class Installer extends JFrame {
 		if (updateTracker.isDownloading()) {
 			btnClose.setText("Cancel");
 			btnClose.setToolTipText("Stop downloads and return");
+			setPercentageComplete(downloadedBytes, totalBytes);
 		} else {
 			btnClose.setText("Done");
 			btnClose.setToolTipText("Close Window");
+			setPercentageComplete(1,1);
 		}
 		((TextPaneDisplay)txtProgressDetails).showDownloadProgress(updateTracker);
-		setPercentageComplete(downloadedBytes, totalBytes);
 	}
 
 	private class DownloadStatus extends TimerTask {
