@@ -80,15 +80,10 @@ class Installer extends JFrame {
 		if (this.updateTracker != null) throw new Error("Installer object already exists.");
 		else {
 			this.updateTracker = updateTracker;
-			updateTracker.beginOperations();
-			if (updateTracker.isDownloading()) {
-				//Timer to check for download
-				timer = new Timer();
-				timer.schedule(new DownloadStatus(), 0, 100); //status refreshes every 100 ms
-			} else {
-				//no progressing tasks, then just display one-time
-				setFrameDisplay();
-			}
+			updateTracker.markToDelete(); //uninstall
+			updateTracker.startDownload(); //download
+			timer = new Timer();
+			timer.schedule(new DownloadStatus(), 0, 100); //status refreshes every 100 ms
 		}
 	}
 
@@ -109,9 +104,9 @@ class Installer extends JFrame {
 
 	private class DownloadStatus extends TimerTask {
 		public void run() {
-			setFrameDisplay();
 			if (updateTracker.isDownloading() == false)
 				timer.cancel(); //Not downloading anything, no progress to refresh
+			setFrameDisplay();
 		}
 	}
 

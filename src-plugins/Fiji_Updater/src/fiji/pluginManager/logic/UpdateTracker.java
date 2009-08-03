@@ -49,14 +49,8 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 		return isDownloading;
 	}
 
-	//Convenience method to run both tasks
-	public void beginOperations() {
-		startDelete();
-		startDownload();
-	}
-
 	//start processing on contents of Delete List (Mark them for deletion)
-	public void startDelete() {
+	public void markToDelete() {
 		for (PluginObject plugin : changeList.getList(PluginCollection.FILTER_ACTIONS_UNINSTALL)) {
 			String filename = plugin.getFilename();
 			try {
@@ -66,8 +60,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 					plugin.setChangeStatusToFail();
 				else {
 					//write a 0-byte file
-					String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY,
-							filename);
+					String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);
 					new File(pluginPath).getParentFile().mkdirs();
 					new File(pluginPath).createNewFile();
 					plugin.setChangeStatusToSuccess();
@@ -125,14 +118,12 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 		if (thisThread != downloadThread) {
 			//if cancelled, remove any unfinished downloads
 			for (PluginObject plugin : changeList.getList(PluginCollection.FILTER_NO_SUCCESSFUL_CHANGE)) {
-				String fullPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY,
-						plugin.getFilename());
+				String fullPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, plugin.getFilename());
 				try {
 					new File(fullPath).delete(); //delete file, if it exists
 				} catch (Exception e2) { }
 			}
 		}
-
 		isDownloading = false;
 	}
 
