@@ -58,8 +58,9 @@ public class PluginManager implements PlugIn, Observer {
 			if (JOptionPane.showConfirmDialog(null,
 					"Plugin Manager has failed to decompress plugin information db.xml.gz." +
 					"\nEither db.xml.gz is corrupted, or Plugin Manager requires an upgrade." +
-					"\nDo you want to use an older version to help download the latest version " +
-					"of Plugin Manager?", "Using UpdateFiji", JOptionPane.YES_NO_OPTION,
+					"\nYou may want to delete db.xml.gz and then restart Plugin Manager again." +
+					"\n\nIf this doesn't work, do you want to use an older version to help " +
+					"download the latest version?", "Using UpdateFiji", JOptionPane.YES_NO_CANCEL_OPTION,
 					JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
 				//Load the older version of Fiji Updater instead
 				UpdateFiji updateFiji = new UpdateFiji();
