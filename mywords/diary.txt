@@ -1115,3 +1115,30 @@ Will be updated if any more thoughts come to mind.
 
 Phew, now what should really be done is testing out by both downloading and uploading plugins.
 Which is next week (final)...
+
+
+
+3rd August, Monday
+
+Additional scenario to consider:
+
+(3) Rendering a plugin obselete and bringing it back again
+
+Using "00000..." as an md5 sum record for Fiji plugins marked obselete
+   ==> When plugin is obselete, developer should not be allowed to upload any new version
+   ==> When plugin is obselete, user is not allowed to upgrade it further (Options: Installed, Uninstalled)
+
+Thus to bring it back, there should be a new option along lines of: "Forced Upload"
+   ==> Plugin will be brought back into Fiji plugin circulation
+   ==> "00000..." will still be in XML records.
+   ==> This "00000..." md5 sum would be marked with latest date (timestamp attribute) as well.
+   ==> So as to have a history
+
+These scenarios are cleared, thus XML file is safe for these scenarios should there be future extensions.
+
+== Implementations ==
+- To prepare development for future actions, PluginObject now uses enum instead of integer objects for states
+- Same goes for Read Only state, in which its state PluginObject is in charge of (Wherever relevant)
+- Mainly did just bug-fixing and interface re-work/touch-up as testing continues
+
+Next day: Continue writing descriptions (And thus testing Plugin Manager use, along the way)
