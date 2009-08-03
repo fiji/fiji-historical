@@ -35,26 +35,24 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	//take in only plugins that are neither installed nor told to do so
 	public static final Filter FILTER_UNLISTED_TO_INSTALL = new Filter() {
 		public boolean matchesFilter(PluginObject plugin) {
-			boolean currentActionUninstall = plugin.toRemove();
-			boolean currentActionNone = (plugin.isInstallable() && !plugin.actionSpecified());
-			return (currentActionUninstall || currentActionNone);
+			boolean actionNone = (plugin.isInstallable() && !plugin.actionSpecified());
+			return (plugin.toRemove() || actionNone || plugin.toUpload());
 		}
 	};
 
 	//take in only update-able plugins not instructed to update
 	public static final Filter FILTER_UNLISTED_TO_UPDATE = new Filter() {
 		public boolean matchesFilter(PluginObject plugin) {
-			return (plugin.isUpdateable() && !plugin.toUpdate());
+			boolean actionNoUpdate = plugin.isUpdateable() && !plugin.toUpdate();
+			return (actionNoUpdate || plugin.toUpload());
 		}
 	};
 
 	//take in only plugins that are not instructed to uninstall
 	public static final Filter FILTER_UNLISTED_TO_UNINSTALL = new Filter() {
 		public boolean matchesFilter(PluginObject plugin) {
-			boolean currentActionNone = (plugin.isRemovableOnly() && !plugin.actionSpecified());
-			boolean currentActionInstall = plugin.toInstall();
-			boolean currentActionNotUninstall = (plugin.isUpdateable() && !plugin.toRemove());
-			return (currentActionNone || currentActionInstall || currentActionNotUninstall);
+			boolean actionNotRemove = plugin.isRemovable() && !plugin.toRemove();
+			return (actionNotRemove || plugin.toInstall() || plugin.toUpload());
 		}
 	};
 
