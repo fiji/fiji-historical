@@ -213,7 +213,6 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 		PluginDownload src = (PluginDownload)source;
 		currentlyDownloading = src.getPlugin();
 		currentBytesSoFar = bytesSoFar;
-		System.out.println("Downloaded so far: " + (completedBytesTotal + currentBytesSoFar));
 	}
 
 	public void fileFailed(FileDownload source, Exception e) {

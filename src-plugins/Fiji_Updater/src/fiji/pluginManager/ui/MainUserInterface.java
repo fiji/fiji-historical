@@ -286,7 +286,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	private void clickToEditDescriptions() {
 		loadedFrame = new DetailsEditor(this, currentPlugin);
-		loadedFrame.setVisible(true);
+		showFrame();
 		setEnabled(false);
 	}
 
@@ -294,7 +294,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		loadedFrame = new Confirmation(this);
 		Confirmation confirmation = (Confirmation)loadedFrame;
 		confirmation.displayInformation(new DependencyBuilder(pluginCollection));
-		loadedFrame.setVisible(true);
+		showFrame();
 		setEnabled(false);
 	}
 
@@ -311,10 +311,17 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		dispose();
 	}
 
+	private void showFrame() {
+		if (loadedFrame != null) {
+			loadedFrame.setVisible(true);
+			loadedFrame.setLocationRelativeTo(null); //center of the screen
+		}
+	}
+
 	public void openDownloader() {
 		backToPluginManager();
 		loadedFrame = new Installer(this);
-		loadedFrame.setVisible(true);
+		showFrame();
 		Installer installer = (Installer)loadedFrame;
 		installer.setInstaller(new UpdateTracker(pluginCollection));
 		setEnabled(false);
@@ -328,7 +335,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	public void exitWithRestartFijiMessage() {
 		removeLoadedFrameIfExists();
-		IJ.showMessage("Restart Fiji", "You need to restart Fiji application for the Plugin status changes to take effect.");
+		IJ.showMessage("Restart Fiji", "You must restart Fiji application for the Plugin status changes to take effect.");
 		dispose();
 	}
 
