@@ -100,11 +100,20 @@ public class TextPaneDisplay extends JTextPane {
 	}
 
 	//appends list of plugin names to existing text
-	public void insertPluginNamelist(List<PluginObject> myList) {
-		normal("\n");
-		for (int i = 0; i < myList.size(); i++) {
-			PluginObject myPlugin = myList.get(i);
-			normal(myPlugin.getFilename() + "\n");
+	public void insertPluginNamelist(String title, List<PluginObject> myList) {
+		title(title);
+		for (PluginObject plugin : myList)
+			normal("\n" + plugin.getFilename());
+	}
+
+	//appends list of plugin names and each of their descriptions to existing text
+	public void insertPluginDescriptions(String title, List<PluginObject> myList) {
+		title(title);
+		insertBlankLine();
+		for (PluginObject plugin : myList) {
+			bold(plugin.getFilename());
+			insertDescription(plugin.getPluginDetails().getDescription());
+			insertBlankLine();
 		}
 	}
 

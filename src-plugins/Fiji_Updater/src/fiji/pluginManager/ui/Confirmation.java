@@ -126,16 +126,60 @@ public class Confirmation extends JFrame {
 	public void displayInformation(DependencyBuilder dependencyBuilder) {
 		this.dependencyBuilder = dependencyBuilder;
 
-		//Gets the necessary information
-		List<PluginObject> changeList = dependencyBuilder.changeList;
+		// ********** Display of plugins listed by user **********
+		List<PluginObject> installs = ((PluginCollection)dependencyBuilder.toInstallList).getList(
+				PluginCollection.FILTER_ACTIONS_INSTALL);
+		List<PluginObject> updates = ((PluginCollection)dependencyBuilder.toUpdateList).getList(
+				PluginCollection.FILTER_ACTIONS_UPDATE);
+		List<PluginObject> removals = ((PluginCollection)dependencyBuilder.toRemoveList).getList(
+				PluginCollection.FILTER_ACTIONS_UNINSTALL);
+
+		// Actual display of information, textpane explicitly set by user to take action
+		TextPaneDisplay txtPluginList = (TextPaneDisplay) this.txtPluginList;
+		if (installs.size() > 0)
+			txtPluginList.insertPluginDescriptions("Install", installs);
+		if (updates.size() > 0)
+			txtPluginList.insertPluginDescriptions("Update", updates);
+		if (removals.size() > 0)
+			txtPluginList.insertPluginDescriptions("Remove", removals);
+		txtPluginList.scrollToTop();
+		// ********** End display of plugins listed by user **********
+
+		// ********** Display of involved plugins which are not listed by user **********
+		//Objective is to show user only information that was previously invisible
+		List<PluginObject> additionalInstalls = ((PluginCollection)dependencyBuilder.toInstallList).getList(
+				PluginCollection.FILTER_UNLISTED_TO_INSTALL);
+		List<PluginObject> addtionalUpdates = ((PluginCollection)dependencyBuilder.toUpdateList).getList(
+				PluginCollection.FILTER_UNLISTED_TO_UPDATE);
+		List<PluginObject> addtionalRemovals = ((PluginCollection)dependencyBuilder.toRemoveList).getList(
+				PluginCollection.FILTER_UNLISTED_TO_UNINSTALL);
+
+		// textpane listing additional plugins to add/remove
+		TextPaneDisplay txtAdditionalList = (TextPaneDisplay) this.txtAdditionalList;
+		if (additionalInstalls.size() > 0)
+			txtAdditionalList.insertPluginNamelist("To Install", additionalInstalls);
+		if (addtionalUpdates.size() > 0) {
+			if (additionalInstalls.size() > 0)
+				txtAdditionalList.insertBlankLine();
+			txtAdditionalList.insertPluginNamelist("To Update", addtionalUpdates);
+		}
+		if (addtionalRemovals.size() > 0) {
+			if (additionalInstalls.size() > 0 || addtionalUpdates.size() > 0)
+				txtAdditionalList.insertBlankLine();
+			txtAdditionalList.insertPluginNamelist("To Remove", addtionalRemovals);
+		}
+		if (additionalInstalls.size() == 0 && addtionalUpdates.size() == 0
+				&& addtionalRemovals.size() == 0)
+			txtAdditionalList.setText("None.");
+		txtAdditionalList.scrollToTop();
+		// ********** End display of involved plugins which are not listed by user **********
+
+		// ********** Display of conflicts (if any) **********
+		//Compile a list of plugin names that conflicts with uninstalling (if any)
 		Map<PluginObject,List<PluginObject>> installDependenciesMap = dependencyBuilder.installDependenciesMap;
 		Map<PluginObject,List<PluginObject>> updateDependenciesMap = dependencyBuilder.updateDependenciesMap;
 		Map<PluginObject,List<PluginObject>> uninstallDependentsMap = dependencyBuilder.uninstallDependentsMap;
-		List<PluginObject> toInstallList = dependencyBuilder.toInstallList;
-		List<PluginObject> toUpdateList = dependencyBuilder.toUpdateList;
-		List<PluginObject> toRemoveList = dependencyBuilder.toRemoveList;
 
-		//Compile a list of plugin names that conflicts with uninstalling (if any)
 		List<String[]> installConflicts = new ArrayList<String[]>();
 		List<String[]> updateConflicts = new ArrayList<String[]>();
 		Iterator<PluginObject> iterInstall = installDependenciesMap.keySet().iterator();
@@ -161,66 +205,6 @@ public class Confirmation extends JFrame {
 			}
 		}
 
-		//Objective is to show user only information that was previously invisible
-		toInstallList = ((PluginCollection)toInstallList).getList(PluginCollection.FILTER_UNLISTED_TO_INSTALL);
-		toUpdateList = ((PluginCollection)toUpdateList).getList(PluginCollection.FILTER_UNLISTED_TO_UPDATE);
-		toRemoveList = ((PluginCollection)toRemoveList).getList(PluginCollection.FILTER_UNLISTED_TO_UNINSTALL);
-
-		// Actual display of information, textpane explicitly set by user to take action
-		TextPaneDisplay txtPluginList = (TextPaneDisplay) this.txtPluginList;
-		for (int i = 0; i < changeList.size(); i++) {
-			PluginObject myPlugin = changeList.get(i);
-			String pluginName = myPlugin.getFilename();
-			String pluginDescription = myPlugin.getPluginDetails()
-					.getDescription();
-
-			String strAction = "";
-			if (myPlugin.isRemovableOnly()) {
-				// obviously, if its in "changes" list, then action is uninstall
-				strAction = "To Uninstall";
-			} else if (myPlugin.isInstallable()) {
-				// obviously, if its in "changes" list, then action is install
-				strAction = "To install";
-			} else if (myPlugin.isUpdateable() && myPlugin.toRemove()) {
-				strAction = "To Uninstall";
-			} else if (myPlugin.toUpdate()) {
-				strAction = "To Update";
-			}
-
-			txtPluginList.title(pluginName);
-			txtPluginList.insertDescription(pluginDescription);
-			txtPluginList.insertBlankLine();
-			txtPluginList.bold("Action: ");
-			txtPluginList.normal(strAction + "\n\n");
-		}
-		// ensure first line of text is always shown (i.e.: scrolled to top)
-		txtPluginList.scrollToTop();
-
-		// textpane listing additional plugins to add/remove
-		TextPaneDisplay txtAdditionalList = (TextPaneDisplay) this.txtAdditionalList;
-		if (toInstallList.size() > 0) {
-			txtAdditionalList.title("To Install");
-			txtAdditionalList.insertPluginNamelist(toInstallList);
-		}
-		if (toUpdateList.size() > 0) {
-			if (toInstallList.size() > 0)
-				txtAdditionalList.insertBlankLine();
-			txtAdditionalList.title("To Update");
-			txtAdditionalList.insertPluginNamelist(toUpdateList);
-		}
-		if (toRemoveList.size() > 0) {
-			if (toInstallList.size() > 0 || toUpdateList.size() > 0)
-				txtAdditionalList.insertBlankLine();
-			txtAdditionalList.title("To Remove");
-			txtAdditionalList.insertPluginNamelist(toRemoveList);
-		}
-		if (toInstallList.size() == 0 && toUpdateList.size() == 0
-				&& toRemoveList.size() == 0) {
-			txtAdditionalList.setText("None.");
-		}
-		// ensure first line of text is always shown (i.e.: scrolled to top)
-		txtAdditionalList.scrollToTop();
-
 		// conflicts list textpane
 		TextPaneDisplay txtConflictsList = (TextPaneDisplay) this.txtConflictsList;
 		for (String[] names : installConflicts)
@@ -229,9 +213,8 @@ public class Confirmation extends JFrame {
 		for (String[] names : updateConflicts)
 			txtConflictsList.normal("Updating " + names[0]
 					+ " would conflict with uninstalling " + names[1] + "\n");
-
-		// ensure first line of text is always shown (i.e.: scrolled to top)
 		txtConflictsList.scrollToTop();
+		// ********** End display of conflicts (if any) **********
 
 		// enable download button if no conflicts recorded
 		if (installConflicts.size() == 0 && updateConflicts.size() == 0) {

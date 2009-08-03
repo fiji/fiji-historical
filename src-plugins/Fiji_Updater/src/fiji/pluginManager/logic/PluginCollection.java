@@ -80,6 +80,18 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 	};
 
+	public static final Filter FILTER_ACTIONS_UPDATE = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return plugin.toUpdate();
+		}
+	};
+
+	public static final Filter FILTER_ACTIONS_INSTALL = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return plugin.toInstall();
+		}
+	};
+
 	public static final Filter FILTER_ACTIONS_ADDORUPDATE = new Filter() {
 		public boolean matchesFilter(PluginObject plugin) {
 			return (plugin.toInstall() || plugin.toUpdate());
