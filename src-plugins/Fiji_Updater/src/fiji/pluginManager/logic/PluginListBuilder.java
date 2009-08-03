@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
+import fiji.pluginManager.logic.PluginObject.CurrentStatus;
 
 /*
  * PluginListBuilder's overall role is to be in charge of building of a plugin list
@@ -129,13 +130,13 @@ public class PluginListBuilder extends PluginDataObservable {
 
 			if (digest != null && remoteDigest.equals(digest)) { //if latest version installed
 				myPlugin = new PluginObject(pluginName, digest, date,
-						PluginObject.STATUS_INSTALLED, true, true);
+						CurrentStatus.INSTALLED, true, true);
 			} else if (digest == null) { //if new file (Not installed yet)
 				myPlugin = new PluginObject(pluginName, remoteDigest, remoteDate,
-						PluginObject.STATUS_UNINSTALLED, true, true);
+						CurrentStatus.UNINSTALLED, true, true);
 			} else { //if its installed but can be updated
 				myPlugin = new PluginObject(pluginName, digest, date,
-						PluginObject.STATUS_MAY_UPDATE, true, isRecorded);
+						CurrentStatus.UPDATEABLE, true, isRecorded);
 				//set latest update details
 				myPlugin.setUpdateDetails(remoteDigest, remoteDate);
 			}
@@ -157,7 +158,7 @@ public class PluginListBuilder extends PluginDataObservable {
 				String date = getTimestampFromFile(name);
 				//implies third-party plugin, no description nor dependency information available
 				PluginObject myPlugin = new PluginObject(name, digest, date,
-						PluginObject.STATUS_INSTALLED, false, false);
+						CurrentStatus.INSTALLED, false, false);
 				myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
 				pluginCollection.add(myPlugin);
 			}

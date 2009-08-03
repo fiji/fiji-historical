@@ -15,22 +15,20 @@ public class PluginObject {
 	private boolean isFiji; //name in records or not
 	private boolean isRecorded; //its md5 sum in records or not
 
-	//Current physical state and action-to-take of plugin as the User sees it
-	public static final byte STATUS_UNINSTALLED = 0; //Meaning current status is not installed
-	public static final byte STATUS_INSTALLED = 1; //Meaning current status is installed
-	public static final byte STATUS_MAY_UPDATE = 2; //Meaning installed AND update-able
-	private byte status = 0; //default
-	public static final byte ACTION_NONE = 0; //No action; Remain as it is
-	public static final byte ACTION_REVERSE = 1; //Install if not installed, Uninstall if installed
-	public static final byte ACTION_UPDATE = 2; //Only possibly valid for (status == 2)
-	public static final byte ACTION_UPLOAD = 3; //Only possible for Developers
-	private byte action = ACTION_NONE; //default
+	//Current physical state of plugin
+	public static enum CurrentStatus { UNINSTALLED, INSTALLED, UPDATEABLE };
+	private CurrentStatus status = CurrentStatus.UNINSTALLED;
+
+	//Action that user indicates to take
+	//Note here, "REVERSE" means install if not installed; uninstall if installed
+	public static enum Action { NONE, REVERSE, UPDATE, UPLOAD };
+	private Action action = Action.NONE;
 
 	//State to indicate whether Plugin removed/downloaded successfully
 	public static enum ChangeStatus { NONE, SUCCESS, FAIL };
 	private ChangeStatus changedStatus = ChangeStatus.NONE; //default
 
-	public PluginObject(String strFilename, String md5Sum, String timestamp, byte status,
+	public PluginObject(String strFilename, String md5Sum, String timestamp, CurrentStatus status,
 			boolean isFiji, boolean isRecorded) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
@@ -42,12 +40,12 @@ public class PluginObject {
 	}
 
 	public void setUpdateDetails(String newMd5Sum, String newTimestamp) {
-		setStatus(PluginObject.STATUS_MAY_UPDATE); //set status, if not done so already
+		setStatus(CurrentStatus.UPDATEABLE); //set status, if not done so already
 		this.newMd5Sum = newMd5Sum;
 		this.newTimestamp = newTimestamp;
 	}
 
-	private void setStatus(byte status) {
+	private void setStatus(CurrentStatus status) {
 		this.status = status;
 	}
 
@@ -68,31 +66,31 @@ public class PluginObject {
 
 	public void setActionToInstall() {
 		if (isInstallable())
-			setAction(PluginObject.ACTION_REVERSE);
+			setAction(Action.REVERSE);
 		else
 			throw new Error("Plugin " + strFilename + " cannot install as its current state is not UNINSTALLED.");
 	}
 
 	public void setActionToRemove() {
 		if (isRemovable())
-			setAction(PluginObject.ACTION_REVERSE);
+			setAction(Action.REVERSE);
 		else
 			throw new Error("Plugin " + strFilename + " cannot remove as its current state was never installed.");
 	}
 
 	public void setActionToUpdate() {
 		if (isUpdateable())
-			setAction(PluginObject.ACTION_UPDATE);
+			setAction(Action.UPDATE);
 		else
 			throw new Error("Plugin " + strFilename + " cannot update as its current state is not UPDATEABLE.");
 	}
 
 	public void setActionToUpload() {
-		setAction(PluginObject.ACTION_UPLOAD);
+		setAction(Action.UPLOAD);
 	}
 
 	public void setActionNone() {
-		setAction(PluginObject.ACTION_NONE);
+		setAction(Action.NONE);
 	}
 
 	public void resetChangeStatuses() {
@@ -107,7 +105,7 @@ public class PluginObject {
 		this.changedStatus = ChangeStatus.FAIL;
 	}
 
-	private void setAction(byte action) {
+	private void setAction(Action action) {
 		this.action = action;
 	}
 
@@ -147,49 +145,48 @@ public class PluginObject {
 		return dependency.get(index);
 	}
 
-	public byte getStatus() {
+	public CurrentStatus getStatus() {
 		return status;
 	}
 
-	public byte getAction() {
+	public Action getAction() {
 		return action;
 	}
 
 	public boolean isInstallable() {
-		return (status == PluginObject.STATUS_UNINSTALLED);
+		return (status == CurrentStatus.UNINSTALLED);
 	}
 
 	public boolean isUpdateable() {
-		return (status == PluginObject.STATUS_MAY_UPDATE);
+		return (status == CurrentStatus.UPDATEABLE);
 	}
 
 	public boolean isRemovableOnly() {
-		return (status == PluginObject.STATUS_INSTALLED);
+		return (status == CurrentStatus.INSTALLED);
 	}
 
 	public boolean isRemovable() {
-		return (status == PluginObject.STATUS_INSTALLED ||
-				status == PluginObject.STATUS_MAY_UPDATE);
+		return (status == CurrentStatus.INSTALLED || status == CurrentStatus.UPDATEABLE);
 	}
 
 	public boolean actionSpecified() {
-		return (action != PluginObject.ACTION_NONE);
+		return (action != Action.NONE);
 	}
 
 	public boolean toUpdate() {
-		return (isUpdateable() && action == PluginObject.ACTION_UPDATE);
+		return (isUpdateable() && action == Action.UPDATE);
 	}
 
 	public boolean toRemove() {
-		return (isRemovable() && action == PluginObject.ACTION_REVERSE);
+		return (isRemovable() && action == Action.REVERSE);
 	}
 
 	public boolean toInstall() {
-		return (isInstallable() && action == PluginObject.ACTION_REVERSE);
+		return (isInstallable() && action == Action.REVERSE);
 	}
 
 	public boolean toUpload() {
-		return (action == PluginObject.ACTION_UPLOAD);
+		return (action == Action.UPLOAD);
 	}
 
 	public boolean isFijiPlugin() {

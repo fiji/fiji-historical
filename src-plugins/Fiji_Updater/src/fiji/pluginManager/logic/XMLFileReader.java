@@ -162,7 +162,7 @@ public class XMLFileReader extends DefaultHandler {
 			PluginObject plugin = new PluginObject(currentFilename,
 					properties.getProperty("checksum"),
 					properties.getProperty("timestamp"),
-					PluginObject.STATUS_UNINSTALLED, true, true);
+					PluginObject.CurrentStatus.UNINSTALLED, true, true);
 			if (tagName.equals("version"))
 				plugin.setPluginDetails(new PluginDetails(
 						properties.getProperty("description"), links, authors));
