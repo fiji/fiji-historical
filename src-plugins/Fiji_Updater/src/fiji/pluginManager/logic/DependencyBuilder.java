@@ -179,13 +179,8 @@ public class DependencyBuilder {
 		while (iterUpdateLists.hasNext())
 			addToListWithNoDuplicates(updateList, iterUpdateLists.next());
 
-		Iterator<PluginObject> iterInstall = installList.iterator();
-		while (iterInstall.hasNext()) {
-			PluginObject plugin = iterInstall.next();
-			if (updateList.contains(plugin)) {
-				installList.remove(plugin); //since it already exists in "Update list"
-			}
-		}
+		for (PluginObject plugin : updateList)
+			installList.remove(plugin); //remove any plugin already in update list
 	}
 
 	//combine the mapping of uninstalls into one single list of "to uninstall" plugins
