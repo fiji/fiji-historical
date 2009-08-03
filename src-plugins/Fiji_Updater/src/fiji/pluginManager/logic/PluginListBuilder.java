@@ -25,7 +25,6 @@ import fiji.pluginManager.logic.PluginObject.CurrentStatus;
 public class PluginListBuilder extends PluginDataObservable {
 	private final String[] pluginDirectories = {"plugins", "jars", "retro", "misc"};
 	public List<PluginObject> pluginCollection; //info available after list is built
-	public List<PluginObject> readOnlyList; //info available after list is built
 	private Map<String, String> digests;
 	private Map<String, String> dates;
 	private Map<String, String> latestDates;
@@ -42,7 +41,6 @@ public class PluginListBuilder extends PluginDataObservable {
 		latestDates = new TreeMap<String, String>();
 		latestDigests = new TreeMap<String, String>();
 		pluginCollection = new PluginCollection();
-		readOnlyList = new PluginCollection();
 	}
 
 	public void buildFullPluginList() throws ParserConfigurationException, IOException, SAXException {
@@ -168,7 +166,7 @@ public class PluginListBuilder extends PluginDataObservable {
 			File file = new File(prefix(plugin.getFilename()));
 			if (!file.exists() || file.canWrite())
 				continue;
-			readOnlyList.add(plugin);
+			plugin.setIsReadOnly(true);
 			IJ.log(plugin.getFilename() + " is read-only file.");
 		} //Still remains in pluginCollection for dependency reference purposes
 

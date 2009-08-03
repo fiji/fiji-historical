@@ -41,14 +41,14 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 	};
 
-	//take in only update-able plugins that are not indicated to update
+	//take in only update-able plugins not instructed to update
 	public static final Filter FILTER_UNLISTED_TO_UPDATE = new Filter() {
 		public boolean matchesFilter(PluginObject plugin) {
 			return (plugin.isUpdateable() && !plugin.toUpdate());
 		}
 	};
 
-	//take in only plugins that are not indicated to uninstall
+	//take in only plugins that are not instructed to uninstall
 	public static final Filter FILTER_UNLISTED_TO_UNINSTALL = new Filter() {
 		public boolean matchesFilter(PluginObject plugin) {
 			boolean currentActionNone = (plugin.isRemovableOnly() && !plugin.actionSpecified());
@@ -171,6 +171,12 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public static final Filter FILTER_REMOVE_FAIL = new Filter() {
 		public boolean matchesFilter(PluginObject plugin) {
 			return (plugin.toRemove() && plugin.changeFailed());
+		}
+	};
+
+	public static final Filter FILTER_READONLY = new Filter() {
+		public boolean matchesFilter(PluginObject plugin) {
+			return plugin.isReadOnly();
 		}
 	};
 

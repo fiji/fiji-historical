@@ -12,8 +12,9 @@ public class PluginObject {
 	private List<Dependency> dependency; //Dependency object: filename and timestamp
 
 	//Status of its record in database
-	private boolean isFiji; //name in records or not
-	private boolean isRecorded; //its md5 sum in records or not
+	private boolean fiji; //name in records or not
+	private boolean recorded; //its md5 sum in records or not
+	private boolean readOnly; //physical file (local side) read-only?
 
 	//Current physical state of plugin
 	public static enum CurrentStatus { UNINSTALLED, INSTALLED, UPDATEABLE };
@@ -29,13 +30,13 @@ public class PluginObject {
 	private ChangeStatus changedStatus = ChangeStatus.NONE; //default
 
 	public PluginObject(String strFilename, String md5Sum, String timestamp, CurrentStatus status,
-			boolean isFiji, boolean isRecorded) {
+			boolean fiji, boolean recorded) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
 		this.timestamp = timestamp;
 		this.status = status;
-		this.isFiji = isFiji;
-		this.isRecorded = isRecorded;
+		this.fiji = fiji;
+		this.recorded = recorded;
 		pluginDetails = new PluginDetails(); //default: no information, empty
 	}
 
@@ -108,6 +109,10 @@ public class PluginObject {
 	private void setAction(Action action) {
 		this.action = action;
 	}
+	
+	public void setIsReadOnly(boolean readOnly) {
+		this.readOnly = readOnly;
+	}
 
 	public String getFilename() {
 		return strFilename;
@@ -139,10 +144,6 @@ public class PluginObject {
 
 	public List<Dependency> getDependencies() {
 		return dependency;
-	}
-
-	public Dependency getDependency(int index) {
-		return dependency.get(index);
 	}
 
 	public CurrentStatus getStatus() {
@@ -190,11 +191,15 @@ public class PluginObject {
 	}
 
 	public boolean isFijiPlugin() {
-		return isFiji;
+		return fiji;
 	}
 
 	public boolean isInRecords() {
-		return isRecorded;
+		return recorded;
+	}
+
+	public boolean isReadOnly() {
+		return readOnly;
 	}
 
 	public boolean changeSucceeded() {

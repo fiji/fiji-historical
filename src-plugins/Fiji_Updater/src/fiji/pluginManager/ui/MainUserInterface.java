@@ -34,8 +34,8 @@ import fiji.pluginManager.logic.PluginObject;
  */
 public class MainUserInterface extends JFrame implements TableModelListener {
 	private PluginManager pluginManager;
-	private List<PluginObject> pluginCollection;
-	private List<PluginObject> viewList;
+	private PluginCollection pluginCollection;
+	private PluginCollection viewList;
 
 	//User Interface elements
 	private boolean isDeveloper;
@@ -60,9 +60,9 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		this.pluginManager = pluginManager;
 
 		//Pulls required information from pluginManager
-		pluginCollection = pluginManager.pluginCollection;
+		pluginCollection = (PluginCollection)pluginManager.pluginCollection;
 		viewList = pluginCollection; //initially, view all
-		List<PluginObject> readOnlyList = pluginManager.readOnlyList;
+		List<PluginObject> readOnlyList = pluginCollection.getList(PluginCollection.FILTER_READONLY);
 		if (readOnlyList.size() > 0) {
 			StringBuilder namelist = new StringBuilder();
 			for (int i = 0; i < readOnlyList.size(); i++) {
@@ -246,11 +246,12 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private void changeListingListener() {
 		viewList = pluginCollection;
 		if (!txtSearch.getText().trim().isEmpty())
-			viewList = ((PluginCollection)pluginCollection).getList(PluginCollection.getFilterForText(txtSearch.getText().trim()));
+			viewList = (PluginCollection)pluginCollection.getList(PluginCollection.getFilterForText(
+					txtSearch.getText().trim()));
 
 		PluginCollection.Filter viewFilter = getCorrespondingFilter(comboBoxViewingOptions.getSelectedIndex());
 		if (viewFilter != null) {
-			viewList = ((PluginCollection)viewList).getList(viewFilter);
+			viewList = (PluginCollection)viewList.getList(viewFilter);
 		}
 		//Directly update the table for display
 		table.setupTableModel(viewList);

@@ -36,7 +36,6 @@ public class PluginManager implements PlugIn, Observer {
 
 	//PluginObjects for output at User Interface
 	public List<PluginObject> pluginCollection;
-	public List<PluginObject> readOnlyList;
 
 	//Used for generating Plugin information
 	private XMLFileDownloader xmlFileDownloader;
@@ -104,7 +103,6 @@ public class PluginManager implements PlugIn, Observer {
 					System.out.println("Finished building up plugin data.");
 					IJ.showStatus("");
 					pluginCollection = pluginListBuilder.pluginCollection;
-					readOnlyList = pluginListBuilder.readOnlyList;
 
 					boolean isDeveloper = new File(UpdateFiji.getFijiRootPath() + "fiji.cxx").exists();
 					MainUserInterface mainUserInterface = new MainUserInterface(this, isDeveloper);
