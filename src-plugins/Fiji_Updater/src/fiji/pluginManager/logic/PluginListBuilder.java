@@ -100,9 +100,11 @@ public class PluginListBuilder extends PluginDataObservable {
 		for (int i = 0; i < list.length; i++)
 			if (list[i].equals(".") || list[i].equals(".."))
 				continue;
-			else if (list[i].endsWith(".jar"))
-				queue.add(path + File.separator + list[i]);
-			else
+			else if (list[i].endsWith(".jar")) {
+				//Ignore any empty files (Indicates the plugin is uninstalled)
+				if (new File(prefix(path + File.separator + list[i])).length() > 0)
+					queue.add(path + File.separator + list[i]);
+			} else
 				queueDirectory(queue,
 					path + File.separator + list[i]);
 	}
