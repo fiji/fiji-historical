@@ -16,7 +16,8 @@ import javax.swing.JOptionPane;
  */
 public class PluginManager implements PlugIn, Observer {
 	//For downloading/upload files
-	//TODO
+	//TODO fix it!
+	public static final String TEMP_DOWNLOADURL = "http://pacific.mpi-cbg.de/update/";
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/";
 	//public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
 	public static final String TXT_FILENAME = "current.txt";
