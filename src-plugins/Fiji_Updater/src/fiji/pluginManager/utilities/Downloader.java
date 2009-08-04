@@ -6,7 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
+import java.net.URLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,7 +19,7 @@ import java.util.List;
 public class Downloader {
 	private int downloadedBytes;
 	private int downloadSize;
-	private HttpURLConnection connection;
+	private URLConnection connection;
 	private List<DownloadListener> listeners;
 	private InputStream in;
 	private OutputStream out;
@@ -42,7 +42,7 @@ public class Downloader {
 
 			try {
 				//Start connection
-				connection = (HttpURLConnection)(new URL(currentSource.getURL())).openConnection();
+				connection = new URL(currentSource.getURL()).openConnection();
 				connection.setUseCaches(false);
 				downloadedBytes = 0; //start with nothing downloaded
 				downloadSize = connection.getContentLength();
@@ -65,7 +65,6 @@ public class Downloader {
 				//end connection once download done
 				in.close();
 				out.close();
-				connection.disconnect();
 				notifyListenersCompletion();
 
 			} catch (FileNotFoundException e1) {
