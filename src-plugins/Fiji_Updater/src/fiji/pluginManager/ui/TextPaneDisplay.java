@@ -2,24 +2,18 @@ package fiji.pluginManager.ui;
 import ij.plugin.BrowserLauncher;
 import java.awt.Color;
 import java.awt.Cursor;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.Iterator;
 import java.util.List;
-import javax.swing.AbstractAction;
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-import javax.swing.text.Element;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
 import fiji.pluginManager.logic.Dependency;
 import fiji.pluginManager.logic.UpdateTracker;
 import fiji.pluginManager.logic.PluginObject;
@@ -101,8 +95,7 @@ public class TextPaneDisplay extends JTextPane {
 		try {
 			document.insertString(document.getLength(), text, set);
 		} catch (BadLocationException e) {
-			// This is an internal error
-			throw new RuntimeException(e);
+			throw new RuntimeException(e); //This is an internal error
 		}
 	}
 
