@@ -1,13 +1,25 @@
 package fiji.pluginManager.ui;
+import ij.plugin.BrowserLauncher;
 import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.Iterator;
 import java.util.List;
+import javax.swing.AbstractAction;
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.Element;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import fiji.pluginManager.logic.Dependency;
 import fiji.pluginManager.logic.UpdateTracker;
 import fiji.pluginManager.logic.PluginObject;
@@ -17,13 +29,60 @@ public class TextPaneDisplay extends JTextPane {
 	private AttributeSet bold;
 	private AttributeSet normal;
 	private AttributeSet title;
+	private final String LINK_ATTRIBUTE = "URLSOURCE";
 
 	public TextPaneDisplay() {
 		italic = getStyle(Color.black, true, false, "Verdana", 12);
 		bold = getStyle(Color.black, false, true, "Verdana", 12);
 		normal =  getStyle(Color.black, false, false, "Verdana", 12);
 		title = getStyle(Color.black, false, false, "Impact", 18);
+
+		final JTextPane textPane = this;
+		addMouseListener(new MouseListener() {
+			public void mouseClicked(MouseEvent e) {
+				try {
+					AttributeSet as = getAttributes(textPane, e);
+					//execute the url if it exists
+					String url = (String)as.getAttribute(LINK_ATTRIBUTE);
+					if (url != null)
+						BrowserLauncher.openURL(url);
+				} catch(Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+
+			public void mouseEntered(MouseEvent e) { }
+
+			public void mouseExited(MouseEvent e) { }
+
+			public void mousePressed(MouseEvent e) { }
+
+			public void mouseReleased(MouseEvent e) { }
+		});
+		addMouseMotionListener(new MouseMotionListener() {
+			public void mouseMoved(MouseEvent e) {
+				if (getAttributes(textPane, e).getAttribute(LINK_ATTRIBUTE) != null)
+					textPane.setCursor(new Cursor(Cursor.HAND_CURSOR));
+				else
+					textPane.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+			}
+
+			public void mouseDragged(MouseEvent e) { }
+		});
 		setEditable(false);
+	}
+
+	private AttributeSet getAttributes(JTextPane textPane, MouseEvent e) { //mouse event use
+		StyledDocument document = textPane.getStyledDocument();
+		return document.getCharacterElement(
+				textPane.viewToModel(e.getPoint())).getAttributes();
+	}
+
+	private AttributeSet getLinkElement(String url) {
+		SimpleAttributeSet style = (SimpleAttributeSet)
+			getStyle(Color.blue, false, false, "Verdana", 12);
+		style.addAttribute(LINK_ATTRIBUTE, url);
+		return style;
 	}
 
 	public static AttributeSet getStyle(Color color, boolean italic,
@@ -45,6 +104,10 @@ public class TextPaneDisplay extends JTextPane {
 			// This is an internal error
 			throw new RuntimeException(e);
 		}
+	}
+
+	public void link(String url) {
+		styled(url, getLinkElement(url));
 	}
 
 	public void italic(String text) {
@@ -92,11 +155,14 @@ public class TextPaneDisplay extends JTextPane {
 	}
 
 	public void insertLinks(List<String> links) {
-		StringBuilder text = new StringBuilder();
-		if (links != null)
-			for (String link : links)
-				text.append((text.length() > 0 ? "\n-" : "-") + link);
-		normal("\n" + (text.length() > 0 ? text.toString() : "None."));
+		if (links != null && links.size() > 0)
+			for (String link : links) {
+				normal("\n-");
+				link(link);
+			}
+		else {
+			normal("\nNone.");
+		}
 	}
 
 	//appends list of plugin names to existing text
