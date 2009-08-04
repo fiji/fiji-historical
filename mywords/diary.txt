@@ -1142,3 +1142,17 @@ These scenarios are cleared, thus XML file is safe for these scenarios should th
 - Mainly did just bug-fixing and interface re-work/touch-up as testing continues
 
 Next day: Continue writing descriptions (And thus testing Plugin Manager use, along the way)
+
+
+
+4th August, Tuesday
+
+Implementations:
+- Oh well, I guess this implementation is inevitable for usability: Clicking on link opens up browser
+   ==> Made use of BrowserLauncher of ImageJ's plugin utilities.
+
+Did more testing via writing even more plugin descriptions. Seems fine so far.
+
+And one more issue I thought of that I haven't tested out yet, TODO:
+- Test scenario: Select to upload a plugin, edited its descriptions and later changed my mind by deselecting it.
+   ==> The entries for that plugin are _not_ supposed to be updated.
