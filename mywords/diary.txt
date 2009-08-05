@@ -1156,3 +1156,31 @@ Did more testing via writing even more plugin descriptions. Seems fine so far.
 And one more issue I thought of that I haven't tested out yet, TODO:
 - Test scenario: Select to upload a plugin, edited its descriptions and later changed my mind by deselecting it.
    ==> The entries for that plugin are _not_ supposed to be updated.
+
+
+
+5th August, Wednesday
+
+== Bugs found and unable to fix ==
+Those who compile their own JAR files:
+- When a JAR File on /jars/ folder has been removed (Replaced with a 0-byte file), attempts to compile a JAR file using Fiji fails
+   ==> Suggestion is to delete the 0-byte file completely when Fiji restarts?
+
+For normal users:
+- Uninstalling a plugin and then attempt to reinstall it right after restart - Received access denial during downloading
+- Suspected that Update folder was unsucessful in removing itself
+   ==> Somehow denies access to the plugins creating new files there
+   ==> Problem is only solved when update folder is completely gone by restarting Fiji a _second_ time.
+
+I'm guessing this is an issue with the fiji.cxx? But I thought removal of the folders/0-byte files upon startup were already implemented...
+
+== Implementation ==
+- Fixed bug when uploading plugin information (Bug is that info is uploaded anyway even if user changes his/her mind)
+- And uhm... completed plugin descriptions of /plugins/ folder?
+   ==> But there's only so much I can understand for now...
+
+== Testing ==
+- Tested application out as a normal user.
+- So continue testing out or?
+
+Hmmm what else can be done for the next 15 work-hours before school begins?
