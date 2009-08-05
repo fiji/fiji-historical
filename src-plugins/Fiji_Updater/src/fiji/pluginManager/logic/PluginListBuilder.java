@@ -141,7 +141,9 @@ public class PluginListBuilder extends PluginDataObservable {
 				myPlugin.setUpdateDetails(remoteDigest, remoteDate);
 			}
 			//Plugin shall only contains the latest version's details
-			myPlugin.setPluginDetails(xmlFileReader.getPluginDetailsFrom(pluginName));
+			PluginDetails details = xmlFileReader.getPluginDetailsFrom(pluginName);
+			myPlugin.setPluginDetails(new PluginDetails(details.getDescription(), details.getLinks(),
+					details.getAuthors()));
 			myPlugin.setDependency(xmlFileReader.getDependenciesFrom(pluginName));
 			myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(pluginName));
 
