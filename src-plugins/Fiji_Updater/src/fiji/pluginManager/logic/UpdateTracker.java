@@ -60,10 +60,15 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 				if (!file.canWrite()) //if unable to override existing file
 					plugin.setChangeStatusToFail();
 				else {
-					//write a 0-byte file
-					String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);
-					new File(pluginPath).getParentFile().mkdirs();
-					new File(pluginPath).createNewFile();
+					if (!filename.startsWith("fiji-")) {
+						//If it's a normal plugin, write a 0-byte file
+						String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);
+						new File(pluginPath).getParentFile().mkdirs();
+						new File(pluginPath).createNewFile();
+					} else {
+						//If it's a launcher (?!), try removing
+						file.renameTo(new File(prefix(filename + ".old")));
+					}
 					plugin.setChangeStatusToSuccess();
 				}
 			} catch (IOException e) {
@@ -97,7 +102,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 			if (name.startsWith("fiji-")) { //if downloading launcher, overwrite instead
 				saveToPath = prefix((getUseMacPrefix() ? getMacPrefix() : "") + name);
 				File orig = new File(saveToPath);
-				orig.renameTo(new File(saveToPath + ".old"));
+				orig.renameTo(new File(saveToPath + ".old")); //Save backup copy of older version
 			}
 
 			//For each selected plugin, get download URL
