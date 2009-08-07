@@ -84,6 +84,8 @@ public class FileUploader {
 		//Set db.xml.gz to read-only
 		//TODO
 		setCommand("chmod u+w " + uploadDir + PluginManager.DTD_FILENAME);
+		setCommand("chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED);
+
 		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED);
 		System.out.println("db.xml.gz set to read-only mode");
 

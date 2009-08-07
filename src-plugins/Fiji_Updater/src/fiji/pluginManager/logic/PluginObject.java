@@ -8,7 +8,7 @@ public class PluginObject {
 	private String newMd5Sum; //if any
 	private String newTimestamp; //if any
 	private PluginDetails pluginDetails;
-	private int filesize;
+	private long filesize;
 	private List<Dependency> dependency; //Dependency object: filename and timestamp
 
 	//Status of its record in database
@@ -61,7 +61,7 @@ public class PluginObject {
 		this.dependency = dependency;
 	}
 
-	public void setFilesize(int filesize) {
+	public void setFilesize(long filesize) {
 		this.filesize = filesize;
 	}
 
@@ -138,7 +138,7 @@ public class PluginObject {
 		return pluginDetails;
 	}
 
-	public int getFilesize() {
+	public long getFilesize() {
 		return filesize;
 	}
 

@@ -22,7 +22,7 @@ public class PluginDownload implements FileDownload {
 		return plugin;
 	}
 
-	public int getRecordedFileSize() {
+	public long getRecordedFileSize() {
 		return plugin.getFilesize(); //always return the latest version's size
 	}
 

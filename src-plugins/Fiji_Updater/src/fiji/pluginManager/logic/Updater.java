@@ -55,6 +55,8 @@ public class Updater extends PluginData {
 	private DependencyAnalyzer dependencyAnalyzer;
 
 	public Updater(PluginManager pluginManager) {
+		super(pluginManager.isDeveloper());
+
 		PluginCollection pluginCollection = (PluginCollection)pluginManager.pluginCollection;
 		changesList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
 		((PluginCollection)changesList).resetChangeStatuses();
@@ -99,11 +101,12 @@ public class Updater extends PluginData {
 					//Newer version which does not exist in records yet, thus requires upload
 					pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(
 							pluginToUpload.getFilename()));
-					filesToUpload.add(new UpdateSource(prefix(pluginToUpload.getFilename()),
-							pluginToUpload, "C0644"));
+					String absolutePath = prefix(pluginToUpload.getFilename());
+					pluginToUpload.setFilesize(new File(absolutePath).length());
+					filesToUpload.add(new UpdateSource(absolutePath, pluginToUpload, "C0644"));
 					//Add to existing records
 					versions.add(pluginToUpload);
-					
+
 				}
 			}
 		}
@@ -113,8 +116,9 @@ public class Updater extends PluginData {
 			List<PluginObject> pluginVersions = newPluginRecords.get(name);
 			if (pluginVersions == null) { //non-Fiji plugin doesn't exist in records yet
 				pluginToUpload.setDependency(dependencyAnalyzer.getDependencyListFromFile(name));
-				filesToUpload.add(new UpdateSource(prefix(pluginToUpload.getFilename()),
-						pluginToUpload, "C0644"));
+				String absolutePath = prefix(pluginToUpload.getFilename());
+				pluginToUpload.setFilesize(new File(absolutePath).length());
+				filesToUpload.add(new UpdateSource(absolutePath, pluginToUpload, "C0644"));
 				//therefore add it as a Fiji Plugin
 				PluginCollection newPluginRecord = new PluginCollection();
 				newPluginRecord.add(pluginToUpload);

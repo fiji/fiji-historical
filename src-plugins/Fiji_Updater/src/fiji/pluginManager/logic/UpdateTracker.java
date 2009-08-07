@@ -182,8 +182,8 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 
 		try {
 			//Check filesize
-			int recordedSize = src.getRecordedFileSize();
-			int actualFilesize = getFilesizeFromFile(src.getDestination());
+			long recordedSize = src.getRecordedFileSize();
+			long actualFilesize = getFilesizeFromFile(src.getDestination());
 			if (recordedSize != actualFilesize)
 				throw new Exception("Recorded filesize of " + filename + " is " +
 						recordedSize + ". It is not equal to actual filesize of " +

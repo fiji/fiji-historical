@@ -20,7 +20,16 @@ public abstract class PluginData {
 	private String fijiPath;
 	private String platform;
 
+	//default (For developers, local files' path may be different), only crucial for uploading purposes
+	private boolean isDeveloper = false;
+
 	public PluginData() {
+		this(false);
+	}
+
+	public PluginData(boolean isDeveloper) {
+		this.isDeveloper = isDeveloper;
+
 		fijiPath = UpdateFiji.getFijiRootPath();
 		platform = UpdateFiji.getPlatform(); //gets the platform string value
 
@@ -29,6 +38,10 @@ public abstract class PluginData {
 		String macLauncher = macPrefix + "fiji-macosx";
 		if (platform.equals("macosx") && new File(prefix(macLauncher)).exists())
 			useMacPrefix = true;
+	}
+
+	protected boolean isDeveloper() {
+		return isDeveloper;
 	}
 
 	protected String getMacPrefix() {
@@ -61,10 +74,8 @@ public abstract class PluginData {
 		return UpdateFiji.timestamp(modified);
 	}
 
-	protected int getFilesizeFromFile(String filename) {
-		long filesize = new File(filename).length();
-		int intValue = new Long(filesize).intValue();
-		return intValue;
+	protected long getFilesizeFromFile(String filename) {
+		return new File(filename).length();
 	}
 
 	protected String getDigestFromFile(String filename) {
@@ -77,7 +88,8 @@ public abstract class PluginData {
 	}
 
 	protected String prefix(String path) {
-		return fijiPath + path;
+		return fijiPath + (isDeveloper && path.startsWith("fiji-") ?
+				"precompiled/" : "") + path;
 	}
 
 	protected String initializeFilename(String filename) {

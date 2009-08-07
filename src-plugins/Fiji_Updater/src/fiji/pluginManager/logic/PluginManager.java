@@ -41,10 +41,13 @@ public class PluginManager implements PlugIn, Observer {
 	private XMLFileDownloader xmlFileDownloader;
 	private PluginListBuilder pluginListBuilder;
 	public XMLFileReader xmlFileReader;
+	private boolean isDeveloper;
 
 	public void run(String arg) {
 		try {
 			System.out.println("********** Plugin Manager Startup **********");
+			isDeveloper = new File(UpdateFiji.getFijiRootPath() + "fiji.cxx").exists();
+
 			//First download the required information, which starts the program running
 			xmlFileDownloader = new XMLFileDownloader();
 			xmlFileDownloader.register(this);
@@ -89,7 +92,7 @@ public class PluginManager implements PlugIn, Observer {
 							new ByteArrayInputStream(xmlFileDownloader.getXMLFileData()));
 
 					//Start to build a list from the information
-					pluginListBuilder = new PluginListBuilder(xmlFileReader);
+					pluginListBuilder = new PluginListBuilder(xmlFileReader, isDeveloper);
 					pluginListBuilder.register(this);
 					pluginListBuilder.buildFullPluginList();
 				}
@@ -105,7 +108,6 @@ public class PluginManager implements PlugIn, Observer {
 					IJ.showStatus("");
 					pluginCollection = pluginListBuilder.pluginCollection;
 
-					boolean isDeveloper = new File(UpdateFiji.getFijiRootPath() + "fiji.cxx").exists();
 					MainUserInterface mainUserInterface = new MainUserInterface(this, isDeveloper);
 					mainUserInterface.setVisible(true);
 					mainUserInterface.setLocationRelativeTo(null); //center of the screen
@@ -116,5 +118,9 @@ public class PluginManager implements PlugIn, Observer {
 		} catch (Throwable e) {
 			throw new Error(e.getLocalizedMessage());
 		}
+	}
+
+	public boolean isDeveloper() {
+		return isDeveloper;
 	}
 }

@@ -30,8 +30,14 @@ public class PluginListBuilder extends PluginDataObservable {
 	private Map<String, String> latestDates;
 	private Map<String, String> latestDigests;
 	private XMLFileReader xmlFileReader;
+	private String[] launchers = {
+			"linux", "linux64",
+			"macosx", "tiger",
+			"win32.exe", "win64.exe"
+	};
 
-	public PluginListBuilder(XMLFileReader xmlFileReader) {
+	public PluginListBuilder(XMLFileReader xmlFileReader, boolean isDeveloper) {
+		super(isDeveloper);
 		if (xmlFileReader == null) throw new Error("XMLFileReader object is null");
 		this.xmlFileReader = xmlFileReader;
 
@@ -77,9 +83,23 @@ public class PluginListBuilder extends PluginDataObservable {
 	private List<String> generatePluginNamelist() {
 		List<String> queue = new ArrayList<String>();
 
-		//Gather filenames of all local plugins
-		if (fileExists("ij.jar")) queue.add("ij.jar");
+		//Add Fiji launchers
+		if (isDeveloper()) {
+			//add all launchers from precompiled/
+			for (String launcher : launchers)
+				addFileIfExists("fiji-" + launcher, queue);
+		} else {
+			//add only appropriate launcher if it exists
+			String platform = getPlatform();
+			if (platform.equals("macosx")) {
+				addFileIfExists((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-macosx", queue);
+				addFileIfExists((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-tiger", queue);
+			} else
+				addFileIfExists("fiji-" + platform, queue);
+		}
 
+		//Gather filenames of all local plugins
+		addFileIfExists("ij.jar", queue);
 		for (String directory : pluginDirectories) {
 			File dir = new File(prefix(directory));
 			if (!dir.isDirectory())
@@ -89,6 +109,11 @@ public class PluginListBuilder extends PluginDataObservable {
 		}
 
 		return queue;
+	}
+
+	private void addFileIfExists(String filename, List<String> queue) {
+		if (fileExists(filename))
+			queue.add(filename);
 	}
 
 	//recursively looks into a directory and adds the relevant file
@@ -161,7 +186,7 @@ public class PluginListBuilder extends PluginDataObservable {
 				//implies third-party plugin, no description nor dependency information available
 				PluginObject myPlugin = new PluginObject(name, digest, date,
 						CurrentStatus.INSTALLED, false, false);
-				myPlugin.setFilesize(getFilesizeFromFile(myPlugin.getFilename()));
+				myPlugin.setFilesize(getFilesizeFromFile(prefix(myPlugin.getFilename())));
 				pluginCollection.add(myPlugin);
 			}
 		}

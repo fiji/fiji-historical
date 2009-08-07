@@ -87,7 +87,7 @@ public class XMLFileReader extends DefaultHandler {
 	}
 
 	//Get filesize associated with latest version, assumed filename is correct
-	public int getFilesizeFrom(String filename) {
+	public long getFilesizeFrom(String filename) {
 		return getPluginMatching(filename).getFilesize(); //only useful for latest
 	}
 

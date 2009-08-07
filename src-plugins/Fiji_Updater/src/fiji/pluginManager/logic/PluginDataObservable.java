@@ -19,6 +19,11 @@ public class PluginDataObservable extends PluginData implements Observable {
 	protected boolean allTasksComplete;
 
 	public PluginDataObservable() {
+		this(false);
+	}
+
+	public PluginDataObservable(boolean isDeveloper) {
+		super(isDeveloper);
 		observersList = new Vector<Observer>();
 	}
 
