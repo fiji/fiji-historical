@@ -51,24 +51,41 @@ public class PluginManager implements PlugIn, Observer {
 			//First download the required information, which starts the program running
 			xmlFileDownloader = new XMLFileDownloader();
 			xmlFileDownloader.register(this);
+
+			IJ.showStatus("Starting up Plugin Manager...");
 			System.out.println("Attempting to download required information.");
 			xmlFileDownloader.startDownload();
+
 		} catch (Error e) {
 			//Interface side: This should handle presentation side of exceptions
 			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getLocalizedMessage());
 		} catch (IOException e) {
-			//Scenario if decompression fails
-			if (JOptionPane.showConfirmDialog(null,
-					"Plugin Manager has failed to decompress plugin information db.xml.gz." +
-					"\nEither db.xml.gz is corrupted, or Plugin Manager requires an upgrade." +
-					"\nYou may want to delete db.xml.gz and then restart Plugin Manager again." +
-					"\n\nIf this doesn't work, do you want to use an older version to help " +
-					"download the latest version?", "Using UpdateFiji", JOptionPane.YES_NO_CANCEL_OPTION,
-					JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
-				//Load the older version of Fiji Updater instead
-				UpdateFiji updateFiji = new UpdateFiji();
-				updateFiji.hasGUI = true;
-				updateFiji.exec(UpdateFiji.defaultURL);
+			try {
+				new File(UpdateFiji.getFijiRootPath() + PluginManager.XML_COMPRESSED).deleteOnExit();
+				//Scenario if decompression fails
+				JOptionPane.showMessageDialog(null,
+						"Plugin Manager has failed to decompress plugin information db.xml.gz." +
+						"\nEither db.xml.gz is corrupted, or Plugin Manager requires an upgrade." +
+						"\nPlease restart Fiji application and then start up Plugin Manager to try again.",
+						"Failed compression", JOptionPane.ERROR_MESSAGE);
+				if (JOptionPane.showConfirmDialog(null,
+						"If this problem persists, you may want to check your connection settings," +
+						"\notherwise it may be that Plugin Manager requires an upgrade." +
+						"\n\nIf so, do you want to use an older version to help download the " +
+						"latest version?", "Using UpdateFiji", JOptionPane.YES_NO_OPTION,
+						JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
+					//Load the older version of Fiji Updater instead
+					UpdateFiji updateFiji = new UpdateFiji();
+					updateFiji.hasGUI = true;
+					updateFiji.exec(UpdateFiji.defaultURL);
+				}
+			} catch (SecurityException se) {
+				JOptionPane.showMessageDialog(null,
+					"Plugin Manager has failed to decompress plugin information db.xml.gz," +
+					"\nand deletion of db.xml.gz did not succeed as well." +
+					"\n\nYou are advised to quit Fiji, remove db.xml.gz manually, and then " +
+					"restart Fiji and Plugin Manager to try again.",
+					"Delete access denied", JOptionPane.ERROR_MESSAGE);
 			}
 		}
 	}
