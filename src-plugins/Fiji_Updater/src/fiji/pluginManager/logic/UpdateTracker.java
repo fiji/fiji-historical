@@ -30,6 +30,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 	private boolean isDownloading;
 
 	public UpdateTracker(List<PluginObject> plugins) {
+		//For downloading files, it is the same whether or not user is a developer
 		super();
 		PluginCollection pluginList = (PluginCollection)plugins;
 		changeList = (PluginCollection)pluginList.getList(
@@ -93,6 +94,11 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 			//For each selected plugin, get target path to save to
 			String name = plugin.getFilename();
 			String saveToPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
+			if (name.startsWith("fiji-")) { //if downloading launcher, overwrite instead
+				saveToPath = prefix((getUseMacPrefix() ? getMacPrefix() : "") + name);
+				File orig = new File(saveToPath);
+				orig.renameTo(new File(saveToPath + ".old"));
+			}
 
 			//For each selected plugin, get download URL
 			String date = null;
@@ -196,6 +202,12 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 				throw new Exception("Wrong checksum for " + filename +
 						": Recorded Md5 sum " + recordedDigest + " != Actual Md5 sum " +
 						actualDigest);
+
+			//This involves non-Windows launcher only
+			if (filename.startsWith("fiji-") && !getPlatform()
+					.startsWith("win"))
+				Runtime.getRuntime().exec(new String[] {
+					"chmod", "0755", source.getDestination()});
 
 			currentlyDownloading.setChangeStatusToSuccess();
 			System.out.println(currentlyDownloading.getFilename() + " finished download.");

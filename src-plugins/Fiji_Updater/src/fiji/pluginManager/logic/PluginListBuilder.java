@@ -83,14 +83,13 @@ public class PluginListBuilder extends PluginDataObservable {
 	private List<String> generatePluginNamelist() {
 		List<String> queue = new ArrayList<String>();
 
-		//Add Fiji launchers
+		//Add Fiji launchers if they exist
 		if (isDeveloper()) {
-			//add all launchers from precompiled/
-			for (String launcher : launchers)
+			for (String launcher : launchers) //From precompiled
 				addFileIfExists("fiji-" + launcher, queue);
 		} else {
-			//add only appropriate launcher if it exists
 			String platform = getPlatform();
+			//Relevant launcher added
 			if (platform.equals("macosx")) {
 				addFileIfExists((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-macosx", queue);
 				addFileIfExists((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-tiger", queue);
@@ -139,6 +138,13 @@ public class PluginListBuilder extends PluginDataObservable {
 		Iterator<String> iterLatest = latestDigests.keySet().iterator();
 		while (iterLatest.hasNext()) {
 			String pluginName = iterLatest.next();
+			//launcher is platform-specific, don't list if not relevant
+			if (!isDeveloper() && pluginName.startsWith("fiji-")) {
+				String platform = getPlatform();
+				if (!pluginName.equals("fiji-" + platform) &&
+						(!platform.equals("macosx") || !pluginName.startsWith("fiji-tiger")))
+					continue;
+			}
 			String digest = digests.get(pluginName);
 			String remoteDigest = latestDigests.get(pluginName);
 			String date = dates.get(pluginName);
