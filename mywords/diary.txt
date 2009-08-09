@@ -1200,3 +1200,16 @@ Assumption is that Launchers are located at the root and start with "fiji-".
 What is next:
 - Perhaps I could look into installing non-Fiji plugins for users (3rd party)
 - Or continue to work on refining the text descriptions?
+
+
+
+9th August, Sunday
+
+== Thoughts ==
+Well its National Day. Besides that, I've thought about the feature to install 3rd party plugins.
+   ==> I doubt its necessary to include that option as part of Plugin Manager's main interface
+   ==> Those who made 3rd party plugins usually have instructions to publish as well, as seen on past ImageJ websites
+   ==> If not, well...
+      ==> There could be a second menu option in Fiji - "Install 3rd Party Plugins"
+      ==> Where a separate UI class would be created to be called just for that purpose?
+
