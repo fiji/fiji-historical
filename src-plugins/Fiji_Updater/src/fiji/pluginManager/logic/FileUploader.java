@@ -312,21 +312,18 @@ public class FileUploader {
 	}
 
 	private void notifyListenersUpdate() {
-		for (UploadListener listener : listeners) {
+		for (UploadListener listener : listeners)
 			listener.update(currentUpload, uploadedBytes, uploadSize);
-		}
 	}
 
 	private void notifyListenersCompletionAll() {
-		for (UploadListener listener : listeners) {
+		for (UploadListener listener : listeners)
 			listener.uploadProcessComplete();
-		}
 	}
 
 	private void notifyListenersFileComplete() {
-		for (UploadListener listener : listeners) {
+		for (UploadListener listener : listeners)
 			listener.uploadFileComplete(currentUpload);
-		}
 	}
 
 	public synchronized void addListener(UploadListener listener) {

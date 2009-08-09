@@ -207,15 +207,8 @@ public class Updater extends PluginData {
 				attrib.addAttribute("", "", "checksum", "CDATA", latest.getmd5Sum());
 				attrib.addAttribute("", "", "filesize", "CDATA", "" + latest.getFilesize());
 				handler.startElement("", "", "version", attrib);
-				//writeSimpleTag("checksum", attrib, latest.getmd5Sum());
-				//writeSimpleTag("timestamp", attrib, latest.getTimestamp());
 				if (latest.getPluginDetails().getDescription() != null)
 					writeSimpleTag("description", attrib, latest.getPluginDetails().getDescription());
-				//String description = (latest.getPluginDetails().getDescription() == null ?
-				//		"" : latest.getPluginDetails().getDescription());
-				//writeSimpleTag("description", attrib, description);
-				//String strFilesize = "" + latest.getFilesize();
-				//writeSimpleTag("filesize", attrib, strFilesize);
 
 				//Write dependencies if any
 				if (latest.getDependencies() != null && latest.getDependencies().size() > 0) {
