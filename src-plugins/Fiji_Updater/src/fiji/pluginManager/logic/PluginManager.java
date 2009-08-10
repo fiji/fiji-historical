@@ -1,5 +1,6 @@
 package fiji.pluginManager.logic;
 import fiji.pluginManager.ui.MainUserInterface;
+import fiji.pluginManager.utilities.PluginData;
 import ij.IJ;
 import ij.plugin.PlugIn;
 import java.io.ByteArrayInputStream;
@@ -45,7 +46,7 @@ public class PluginManager implements PlugIn, Observer {
 	public void run(String arg) {
 		try {
 			System.out.println("********** Plugin Manager Startup **********");
-			isDeveloper = new File(UpdateFiji.getFijiRootPath() + "fiji.cxx").exists();
+			isDeveloper = new File(PluginData.getFijiRootPath() + "fiji.cxx").exists();
 
 			//First download the required information, which starts the program running
 			xmlFileDownloader = new XMLFileDownloader();
@@ -60,7 +61,7 @@ public class PluginManager implements PlugIn, Observer {
 			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getLocalizedMessage());
 		} catch (IOException e) {
 			try {
-				new File(UpdateFiji.getFijiRootPath() + PluginManager.XML_COMPRESSED).deleteOnExit();
+				new File(PluginData.getFijiRootPath() + PluginManager.XML_COMPRESSED).deleteOnExit();
 				//Scenario if decompression fails
 				JOptionPane.showMessageDialog(null,
 						"Plugin Manager has failed to decompress plugin information db.xml.gz." +

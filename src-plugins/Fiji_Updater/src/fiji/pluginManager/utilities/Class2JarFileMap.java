@@ -1,5 +1,4 @@
 package fiji.pluginManager.utilities;
-import fiji.pluginManager.logic.UpdateFiji;
 import ij.IJ;
 import ij.ImageJ;
 import ij.Menus;
@@ -23,7 +22,7 @@ public class Class2JarFileMap extends HashMap<String, String> {
 	}
 
 	private String getFijiDirectory() {
-		return UpdateFiji.stripSuffix(UpdateFiji.stripSuffix(Menus.getPlugInsPath(),
+		return PluginData.stripSuffix(PluginData.stripSuffix(Menus.getPlugInsPath(),
 				File.separator), File.separator + "plugins").replace('\\', '/');
 	}
 
@@ -51,7 +50,7 @@ public class Class2JarFileMap extends HashMap<String, String> {
 			String name =
 				((JarEntry)entries.nextElement()).getName();
 			if (name.endsWith(".class"))
-				addClass(UpdateFiji.stripSuffix(name,
+				addClass(PluginData.stripSuffix(name,
 					".class").replace('/', '.'), jar);
 		}
 	}
