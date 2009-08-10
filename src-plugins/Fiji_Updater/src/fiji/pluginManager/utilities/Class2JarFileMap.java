@@ -1,4 +1,5 @@
 package fiji.pluginManager.utilities;
+import fiji.pluginManager.logic.UpdateFiji;
 import ij.IJ;
 import ij.ImageJ;
 import ij.Menus;

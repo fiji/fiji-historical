@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
+import fiji.pluginManager.logic.UpdateFiji;
+
 /*
  * Class functionality:
  * Extend from it if you need to

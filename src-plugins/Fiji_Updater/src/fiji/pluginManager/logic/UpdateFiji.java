@@ -1,4 +1,4 @@
-package fiji.pluginManager.utilities;
+package fiji.pluginManager.logic;
 import ij.IJ;
 import ij.Menus;
 

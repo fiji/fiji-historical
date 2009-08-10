@@ -1,6 +1,5 @@
 package fiji.pluginManager.logic;
 import fiji.pluginManager.ui.MainUserInterface;
-import fiji.pluginManager.utilities.UpdateFiji;
 import ij.IJ;
 import ij.plugin.PlugIn;
 import java.io.ByteArrayInputStream;
