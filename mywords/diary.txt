@@ -1213,3 +1213,14 @@ Well its National Day. Besides that, I've thought about the feature to install 3
       ==> There could be a second menu option in Fiji - "Install 3rd Party Plugins"
       ==> Where a separate UI class would be created to be called just for that purpose?
 
+
+
+10th August, Monday
+
+== TODO before pens-down date ==
+- DependencyAnalyzer, PluginListBuilder, UpdateTracker, currently by themselves determines whether a filename is that of a Fiji Launcher
+   ==> PluginData should have a function that checks whether the filename is that of a Launcher (boolean isFijiLauncher)
+   ==> Thus keeps in with DRY principle
+
+- And yea, I nearly forget, if possible introduce new attribute (optional) "platform" --> Determines platform dependent files
+   ==> I'm not sure how PluginListBuilder can use that since it only uses the filename, md5 checksums, and timestamp records
