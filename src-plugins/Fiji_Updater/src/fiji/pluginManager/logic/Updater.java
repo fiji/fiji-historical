@@ -49,7 +49,7 @@ public class Updater extends PluginData {
 
 	//accessible information after uploading tasks are done
 	private XMLFileReader xmlFileReader;
-	public Map<String, List<PluginObject>> newPluginRecords;
+	public Map<String, PluginCollection> newPluginRecords;
 	private ArrayList<SourceFile> filesToUpload; //list of plugin files to be uploaded
 	public List<PluginObject> changesList;
 	private DependencyAnalyzer dependencyAnalyzer;

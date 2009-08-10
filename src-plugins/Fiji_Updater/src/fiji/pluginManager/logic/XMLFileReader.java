@@ -34,7 +34,7 @@ public class XMLFileReader extends DefaultHandler {
 	private String currentTag;
 
 	//plugin names mapped to list of their respective versions
-	private Map<String, List<PluginObject>> pluginRecords;
+	private Map<String, PluginCollection> pluginRecords;
 
 	public XMLFileReader(String fileLocation) throws ParserConfigurationException,
 	IOException, SAXException {
@@ -49,7 +49,7 @@ public class XMLFileReader extends DefaultHandler {
 	private void initialize(InputSource inputSource) throws ParserConfigurationException,
 	SAXException, IOException {
 		properties = new Properties();
-		pluginRecords = new TreeMap<String, List<PluginObject>>();
+		pluginRecords = new TreeMap<String, PluginCollection>();
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		//factory.setValidating(true); //commented out per postel's law
 		factory.setNamespaceAware(true);
@@ -62,10 +62,8 @@ public class XMLFileReader extends DefaultHandler {
 	}
 
 	public void getLatestDigestsAndDates(Map<String, String> latestDigests, Map<String, String> latestDates) {
-		//Iterator<PluginObject> iterPlugins = pluginRecords.values().iterator();
 		Iterator<String> iterNamelist = pluginRecords.keySet().iterator();
-		while (iterNamelist.hasNext()) {
-			String pluginName = iterNamelist.next();
+		for (String pluginName : pluginRecords.keySet()) {
 			PluginCollection versions = (PluginCollection)pluginRecords.get(pluginName);
 			PluginObject plugin = versions.getLatestPlugin();
 			latestDigests.put(plugin.getFilename(), plugin.getmd5Sum());
@@ -73,7 +71,7 @@ public class XMLFileReader extends DefaultHandler {
 		}
 	}
 
-	public Map<String, List<PluginObject>> getAllPluginRecords() {
+	public Map<String, PluginCollection> getAllPluginRecords() {
 		return pluginRecords;
 	}
 
@@ -170,7 +168,7 @@ public class XMLFileReader extends DefaultHandler {
 			if (dependencyList.size() > 0)
 				plugin.setDependency(dependencyList);
 
-			List<PluginObject> versions;
+			PluginCollection versions;
 			if (pluginRecords.containsKey(plugin.getFilename())) {
 				versions = pluginRecords.get(plugin.getFilename());
 			} else {
