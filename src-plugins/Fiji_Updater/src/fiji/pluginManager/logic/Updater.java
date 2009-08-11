@@ -57,7 +57,7 @@ public class Updater extends PluginData {
 		super(pluginManager.isDeveloper());
 
 		pluginCollection = pluginManager.pluginCollection;
-		changesList = pluginCollection.getList(PluginCollection.FILTER_ACTIONS_UPLOAD);
+		changesList = pluginCollection.getToUpload();
 		changesList.resetChangeStatuses();
 		dependencyAnalyzer = new DependencyAnalyzer();
 		xmlFileReader = pluginManager.xmlFileReader;

@@ -29,12 +29,10 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 	private int currentBytesSoFar; //bytes downloaded so far of current file
 	private boolean isDownloading;
 
-	public UpdateTracker(List<PluginObject> plugins) {
+	public UpdateTracker(PluginCollection pluginList) {
 		//For downloading files, it is the same whether or not user is a developer
 		super();
-		PluginCollection pluginList = (PluginCollection)plugins;
-		changeList = (PluginCollection)pluginList.getList(
-				PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
+		changeList = pluginList.getNonUploadActions();
 		changeList.resetChangeStatuses();
 	}
 
@@ -52,7 +50,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 
 	//start processing on contents of Delete List (Mark them for deletion)
 	public void markToDelete() {
-		for (PluginObject plugin : changeList.getList(PluginCollection.FILTER_ACTIONS_UNINSTALL)) {
+		for (PluginObject plugin : changeList.getToUninstall()) {
 			String filename = plugin.getFilename();
 			try {
 				//checking status of existing file
@@ -95,7 +93,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 	public void run() {
 		Thread thisThread = Thread.currentThread();
 		downloaderList = new ArrayList<FileDownload>();
-		for (PluginObject plugin : changeList.getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE)) {
+		for (PluginObject plugin : changeList.getToAddOrUpdate()) {
 			//For each selected plugin, get target path to save to
 			String name = plugin.getFilename();
 			String saveToPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
@@ -128,7 +126,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 
 		if (thisThread != downloadThread) {
 			//if cancelled, remove any unfinished downloads
-			for (PluginObject plugin : changeList.getList(PluginCollection.FILTER_NO_SUCCESSFUL_CHANGE)) {
+			for (PluginObject plugin : changeList.getNoSuccessfulChanges()) {
 				String fullPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, plugin.getFilename());
 				try {
 					new File(fullPath).delete(); //delete file, if it exists
@@ -148,40 +146,8 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 				": " + e.getLocalizedMessage());
 	}
 
-	public Iterator<PluginObject> iterDownloaded() {
-		return changeList.getIterator(PluginCollection.FILTER_DOWNLOAD_SUCCESS);
-	}
-
-	public int getNumberOfSuccessfulDownloads() {
-		return changeList.getList(PluginCollection.FILTER_DOWNLOAD_SUCCESS).size();
-	}
-
-	public Iterator<PluginObject> iterFailedDownloads() {
-		return changeList.getIterator(PluginCollection.FILTER_DOWNLOAD_FAIL);
-	}
-
-	public int getNumberOfFailedDownloads() {
-		return changeList.getList(PluginCollection.FILTER_DOWNLOAD_SUCCESS).size();
-	}
-
-	public Iterator<PluginObject> iterMarkedUninstall() {
-		return changeList.getIterator(PluginCollection.FILTER_REMOVE_SUCCESS);
-	}
-
-	public int getNumberOfMarkedUninstalls() {
-		return changeList.getList(PluginCollection.FILTER_REMOVE_SUCCESS).size();
-	}
-
-	public Iterator<PluginObject> iterFailedUninstalls() {
-		return changeList.getIterator(PluginCollection.FILTER_REMOVE_FAIL);
-	}
-
-	public int getNumberOfFailedUninstalls() {
-		return changeList.getList(PluginCollection.FILTER_REMOVE_FAIL).size();
-	}
-
 	public boolean successfulChangesMade() {
-		Iterator<PluginObject> iterator = changeList.getIterator(PluginCollection.FILTER_CHANGE_SUCCEEDED);
+		Iterator<PluginObject> iterator = changeList.getChangeSucceeded().iterator();
 		return iterator.hasNext();
 	}
 

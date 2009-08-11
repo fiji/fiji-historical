@@ -230,13 +230,13 @@ public class TextPaneDisplay extends JTextPane {
 	}
 
 	public void showDownloadProgress(UpdateTracker updateTracker) {
-		Iterator<PluginObject> iterDownloaded = updateTracker.iterDownloaded();
+		Iterator<PluginObject> iterDownloaded = updateTracker.changeList.getSuccessfulDownloads().iterator();
 		int downloadedSize = 0;
-		Iterator<PluginObject> iterFailedDownloads = updateTracker.iterFailedDownloads();
+		Iterator<PluginObject> iterFailedDownloads = updateTracker.changeList.getFailedDownloads().iterator();
 		int failedDownloads = 0;
-		Iterator<PluginObject> iterMarkedUninstall = updateTracker.iterMarkedUninstall();
+		Iterator<PluginObject> iterMarkedUninstall = updateTracker.changeList.getSuccessfulRemoves().iterator();
 		int markedUninstallSize = 0;
-		Iterator<PluginObject> iterFailedUninstalls = updateTracker.iterFailedUninstalls();
+		Iterator<PluginObject> iterFailedUninstalls = updateTracker.changeList.getFailedRemovals().iterator();
 		int failedUninstalls = 0;
 
 		PluginObject currentlyDownloading = updateTracker.currentlyDownloading;

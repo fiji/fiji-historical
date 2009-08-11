@@ -59,7 +59,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 		//Pulls required information from pluginManager
 		viewList = pluginManager.pluginCollection; //initially, view all
-		PluginCollection readOnlyList = pluginManager.pluginCollection.getList(PluginCollection.FILTER_READONLY);
+		PluginCollection readOnlyList = pluginManager.pluginCollection.getReadOnly();
 		if (readOnlyList.size() > 0) {
 			StringBuilder namelist = new StringBuilder();
 			for (int i = 0; i < readOnlyList.size(); i++) {
@@ -243,35 +243,24 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private void changeListingListener() {
 		viewList = pluginManager.pluginCollection;
 		if (!txtSearch.getText().trim().isEmpty())
-			viewList = pluginManager.pluginCollection.getList(PluginCollection.getFilterForText(
-					txtSearch.getText().trim()));
+			viewList = pluginManager.pluginCollection.getMatchingText(txtSearch.getText().trim());
 
-		PluginCollection.Filter viewFilter = getCorrespondingFilter(comboBoxViewingOptions.getSelectedIndex());
-		if (viewFilter != null) {
-			viewList = viewList.getList(viewFilter);
-		}
+		int index = comboBoxViewingOptions.getSelectedIndex();
+		if (index == 1)
+			viewList = viewList.getStatusesFullyUpdated();
+		else if (index == 2)
+			viewList = viewList.getStatusesUninstalled();
+		else if (index == 3)
+			viewList = viewList.getStatusesInstalled();
+		else if (index == 4)
+			viewList = viewList.getStatusesUpdateable();
+		else if (index == 5)
+			viewList = viewList.getFijiPlugins();
+		else if (index == 6)
+			viewList = viewList.getNonFiji();
+
 		//Directly update the table for display
 		table.setupTableModel(viewList);
-	}
-
-	private PluginCollection.Filter getCorrespondingFilter(int selectedIndex) {
-		switch (selectedIndex) {
-		case 0:
-			return null; //no filter needed
-		case 1:
-			return PluginCollection.FILTER_STATUS_ALREADYINSTALLED;
-		case 2:
-			return PluginCollection.FILTER_STATUS_UNINSTALLED;
-		case 3:
-			return PluginCollection.FILTER_STATUS_INSTALLED;
-		case 4:
-			return PluginCollection.FILTER_STATUS_MAYUPDATE;
-		case 5:
-			return PluginCollection.FILTER_FIJI;
-		case 6:
-			return PluginCollection.FILTER_NOT_FIJI;
-		}
-		throw new Error("Viewing Option specified does not exist!");
 	}
 
 	private void clickToUploadRecords() {
@@ -297,7 +286,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	private void clickToQuitPluginManager() {
 		//if there exists plugins where actions have been specified by user
-		if (pluginManager.pluginCollection.getList(PluginCollection.FILTER_ACTIONS_SPECIFIED).size() > 0) {
+		if (pluginManager.pluginCollection.getActionsSpecified().size() > 0) {
 			if (JOptionPane.showConfirmDialog(this,
 					"You have specified changes. Are you sure you want to quit?",
 					"Quit?", JOptionPane.YES_NO_OPTION,
@@ -392,13 +381,21 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 			else
 				btnEditDetails.setEnabled(false);
 		}
-		enableIfAction(btnStart, PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
-		enableIfAction(btnUpload, PluginCollection.FILTER_ACTIONS_UPLOAD);
+		enableIfAnyChange(btnStart);
+		enableIfAnyUpload(btnUpload);
 	}
 
-	private void enableIfAction(JButton button, PluginCollection.Filter filter) {
+	private void enableIfAnyUpload(JButton button) {
+		enableIfActions(button, pluginManager.pluginCollection.getToUpload().size());
+	}
+
+	private void enableIfAnyChange(JButton button) {
+		enableIfActions(button, pluginManager.pluginCollection.getNonUploadActions().size());
+	}
+
+	private void enableIfActions(JButton button, int size) {
 		if (button != null) {
-			if (pluginManager.pluginCollection.getList(filter).size() > 0)
+			if (size > 0)
 				button.setEnabled(true);
 			else
 				button.setEnabled(false);

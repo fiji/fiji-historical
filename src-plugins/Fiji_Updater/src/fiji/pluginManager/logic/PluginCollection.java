@@ -1,12 +1,13 @@
 package fiji.pluginManager.logic;
-
-import java.util.Iterator;
-import java.util.List;
 import java.util.ArrayList;
 
 public class PluginCollection extends ArrayList<PluginObject> {
-	public interface Filter {
+	private interface Filter {
 		boolean matchesFilter(PluginObject plugin);
+	}
+
+	public PluginCollection getMatchingText(String searchText) {
+		return getList(new TextFilter(searchText));
 	}
 
 	private static class TextFilter implements Filter {
@@ -28,173 +29,213 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 	}
 
-	public static Filter getFilterForText(String searchText) {
-		return new TextFilter(searchText);
-	}
-
 	//take in only plugins that are neither installed nor told to do so
-	public static final Filter FILTER_UNLISTED_TO_INSTALL = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			boolean actionNone = (plugin.isInstallable() && !plugin.actionSpecified());
-			return (plugin.toRemove() || actionNone || plugin.toUpload());
-		}
-	};
+	public PluginCollection getUnlistedForInstall() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				boolean actionNone = (plugin.isInstallable() && !plugin.actionSpecified());
+				return (plugin.toRemove() || actionNone || plugin.toUpload());
+			}
+		});
+	}
 
 	//take in only update-able plugins not instructed to update
-	public static final Filter FILTER_UNLISTED_TO_UPDATE = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			boolean actionNoUpdate = plugin.isUpdateable() && !plugin.toUpdate();
-			return (actionNoUpdate || plugin.toUpload());
-		}
-	};
-
-	//take in only plugins that are not instructed to uninstall
-	public static final Filter FILTER_UNLISTED_TO_UNINSTALL = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			boolean actionNotRemove = plugin.isRemovable() && !plugin.toRemove();
-			return (actionNotRemove || plugin.toInstall() || plugin.toUpload());
-		}
-	};
-
-	public static final Filter FILTER_ACTIONS_SPECIFIED = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.actionSpecified();
-		}
-	};
-
-	public static final Filter FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return (plugin.actionSpecified() && !plugin.toUpload());
-		}
-	};
-
-	public static final Filter FILTER_ACTIONS_UPLOAD = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.toUpload();
-		}
-	};
-
-	public static final Filter FILTER_ACTIONS_UNINSTALL = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.toRemove();
-		}
-	};
-
-	public static final Filter FILTER_ACTIONS_UPDATE = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.toUpdate();
-		}
-	};
-
-	public static final Filter FILTER_ACTIONS_INSTALL = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.toInstall();
-		}
-	};
-
-	public static final Filter FILTER_ACTIONS_ADDORUPDATE = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return (plugin.toInstall() || plugin.toUpdate());
-		}
-	};
-
-	public static final Filter FILTER_STATUS_ALREADYINSTALLED = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.isRemovable();
-		}
-	};
-
-	public static final Filter FILTER_STATUS_UNINSTALLED = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.isInstallable();
-		}
-	};
-
-	public static final Filter FILTER_STATUS_INSTALLED = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.isRemovableOnly();
-		}
-	};
-
-	public static final Filter FILTER_STATUS_MAYUPDATE = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.isUpdateable();
-		}
-	};
-
-	public static final Filter FILTER_FIJI = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.isFijiPlugin();
-		}
-	};
-
-	public static final Filter FILTER_NOT_FIJI = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return !plugin.isFijiPlugin();
-		}
-	};
-
-	public static final Filter FILTER_CHANGE_SUCCEEDED = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.changeSucceeded();
-		}
-	};
-
-	public static final Filter FILTER_CHANGE_FAILED = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.changeFailed();
-		}
-	};
-
-	public static final Filter FILTER_NO_CHANGE_YET = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.changeNotDone();
-		}
-	};
-
-	public static final Filter FILTER_NO_SUCCESSFUL_CHANGE = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return !plugin.changeSucceeded();
-		}
-	};
-
-	public static final Filter FILTER_DOWNLOAD_SUCCESS = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return ((plugin.toInstall() || plugin.toUpdate()) &&
-					plugin.changeSucceeded());
-		}
-	};
-
-	public static final Filter FILTER_DOWNLOAD_FAIL = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return ((plugin.toInstall() || plugin.toUpdate()) &&
-					plugin.changeFailed());
-		}
-	};
-
-	public static final Filter FILTER_REMOVE_SUCCESS = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return (plugin.toRemove() && plugin.changeSucceeded());
-		}
-	};
-
-	public static final Filter FILTER_REMOVE_FAIL = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return (plugin.toRemove() && plugin.changeFailed());
-		}
-	};
-
-	public static final Filter FILTER_READONLY = new Filter() {
-		public boolean matchesFilter(PluginObject plugin) {
-			return plugin.isReadOnly();
-		}
-	};
-
-	public Iterator<PluginObject> getIterator(Filter filter) {
-		return getList(filter).iterator();
+	public PluginCollection getUnlistedForUpdate() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				boolean actionNoUpdate = plugin.isUpdateable() && !plugin.toUpdate();
+				return (actionNoUpdate || plugin.toUpload());
+			}
+		});
 	}
 
-	public PluginCollection getList(Filter filter) {
+	//take in only plugins that are not instructed to uninstall
+	public PluginCollection getUnlistedForUninstall() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				boolean actionNotRemove = plugin.isRemovable() && !plugin.toRemove();
+				return (actionNotRemove || plugin.toInstall() || plugin.toUpload());
+			}
+		});
+	}
+
+	public PluginCollection getActionsSpecified() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.actionSpecified();
+			}
+		});
+	}
+
+	public PluginCollection getNonUploadActions() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return (plugin.actionSpecified() && !plugin.toUpload());
+			}
+		});
+	}
+
+	public PluginCollection getToUpload() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.toUpload();
+			}
+		});
+	}
+
+	public PluginCollection getToUninstall() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.toRemove();
+			}
+		});
+	}
+
+	public PluginCollection getToUpdate() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.toUpdate();
+			}
+		});
+	}
+
+	public PluginCollection getToInstall() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.toInstall();
+			}
+		});
+	}
+
+	public PluginCollection getToAddOrUpdate() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return (plugin.toInstall() || plugin.toUpdate());
+			}
+		});
+	}
+
+	public PluginCollection getStatusesInstalled() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.isRemovable();
+			}
+		});
+	}
+
+	public PluginCollection getStatusesUninstalled() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.isInstallable();
+			}
+		});
+	}
+
+	public PluginCollection getStatusesFullyUpdated() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.isRemovableOnly();
+			}
+		});
+	}
+
+	public PluginCollection getStatusesUpdateable() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.isUpdateable();
+			}
+		});
+	}
+
+	public PluginCollection getFijiPlugins() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.isFijiPlugin();
+			}
+		});
+	}
+
+	public PluginCollection getNonFiji() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return !plugin.isFijiPlugin();
+			}
+		});
+	}
+
+	public PluginCollection getChangeSucceeded() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.changeSucceeded();
+			}
+		});
+	}
+
+	public PluginCollection getChangeFailed() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.changeFailed();
+			}
+		});
+	}
+
+	public PluginCollection getNoChangeYet() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.changeNotDone();
+			}
+		});
+	}
+
+	public PluginCollection getNoSuccessfulChanges() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return !plugin.changeSucceeded();
+			}
+		});
+	}
+
+	public PluginCollection getSuccessfulDownloads() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return ((plugin.toInstall() || plugin.toUpdate()) && plugin.changeSucceeded());
+			}
+		});
+	}
+
+	public PluginCollection getFailedDownloads() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return ((plugin.toInstall() || plugin.toUpdate()) && plugin.changeFailed());
+			}
+		});
+	}
+
+	public PluginCollection getSuccessfulRemoves() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return (plugin.toRemove() && plugin.changeSucceeded());
+			}
+		});
+	}
+
+	public PluginCollection getFailedRemovals() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return (plugin.toRemove() && plugin.changeFailed());
+			}
+		});
+	}
+
+	public PluginCollection getReadOnly() {
+		return getList(new Filter() {
+			public boolean matchesFilter(PluginObject plugin) {
+				return plugin.isReadOnly();
+			}
+		});
+	}
+
+	private PluginCollection getList(Filter filter) {
 		PluginCollection myList = new PluginCollection();
 		for (PluginObject plugin : this)
 			if (filter.matchesFilter(plugin)) myList.add(plugin);
@@ -210,8 +251,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginObject getPluginFromTimestamp(String filename, String timestamp) {
 		for (PluginObject plugin : this) {
-			if (plugin.getFilename().equals(filename) &&
-					plugin.getTimestamp().equals(timestamp)) {
+			if (plugin.getFilename().equals(filename) && plugin.getTimestamp().equals(timestamp)) {
 				return plugin;
 			}
 		}

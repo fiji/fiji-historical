@@ -23,9 +23,9 @@ public class DependencyBuilder {
 
 	public DependencyBuilder(PluginCollection pluginList) {
 		this.pluginList = pluginList;
-		changeList = pluginList.getList(PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
-		PluginCollection change_addOrUpdateList = changeList.getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
-		PluginCollection change_removeList = changeList.getList(PluginCollection.FILTER_ACTIONS_UNINSTALL);
+		changeList = pluginList.getNonUploadActions();
+		PluginCollection change_addOrUpdateList = changeList.getToAddOrUpdate();
+		PluginCollection change_removeList = changeList.getToUninstall();
 
 		//Generates a map of plugins and their individual dependencies/dependents
 		installDependenciesMap = new HashMap<PluginObject,PluginCollection>();

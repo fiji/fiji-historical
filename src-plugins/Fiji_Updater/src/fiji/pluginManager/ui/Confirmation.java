@@ -127,12 +127,9 @@ public class Confirmation extends JFrame {
 		this.dependencyBuilder = dependencyBuilder;
 
 		// ********** Display of plugins listed by user **********
-		PluginCollection installs = dependencyBuilder.toInstallList.getList(
-				PluginCollection.FILTER_ACTIONS_INSTALL);
-		PluginCollection updates = dependencyBuilder.toUpdateList.getList(
-				PluginCollection.FILTER_ACTIONS_UPDATE);
-		PluginCollection removals = dependencyBuilder.toRemoveList.getList(
-				PluginCollection.FILTER_ACTIONS_UNINSTALL);
+		PluginCollection installs = dependencyBuilder.toInstallList.getToInstall();
+		PluginCollection updates = dependencyBuilder.toUpdateList.getToUpdate();
+		PluginCollection removals = dependencyBuilder.toRemoveList.getToUninstall();
 
 		// Actual display of information, textpane explicitly set by user to take action
 		TextPaneDisplay txtPluginList = (TextPaneDisplay) this.txtPluginList;
@@ -147,12 +144,9 @@ public class Confirmation extends JFrame {
 
 		// ********** Display of involved plugins which are not listed by user **********
 		//Objective is to show user only information that was previously invisible
-		PluginCollection additionalInstalls = dependencyBuilder.toInstallList.getList(
-				PluginCollection.FILTER_UNLISTED_TO_INSTALL);
-		PluginCollection addtionalUpdates = dependencyBuilder.toUpdateList.getList(
-				PluginCollection.FILTER_UNLISTED_TO_UPDATE);
-		PluginCollection addtionalRemovals = dependencyBuilder.toRemoveList.getList(
-				PluginCollection.FILTER_UNLISTED_TO_UNINSTALL);
+		PluginCollection additionalInstalls = dependencyBuilder.toInstallList.getUnlistedForInstall();
+		PluginCollection addtionalUpdates = dependencyBuilder.toUpdateList.getUnlistedForUpdate();
+		PluginCollection addtionalRemovals = dependencyBuilder.toRemoveList.getUnlistedForUninstall();
 
 		// textpane listing additional plugins to add/remove
 		TextPaneDisplay txtAdditionalList = (TextPaneDisplay) this.txtAdditionalList;
