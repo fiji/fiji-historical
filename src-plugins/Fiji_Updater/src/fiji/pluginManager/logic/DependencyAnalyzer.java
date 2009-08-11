@@ -60,7 +60,7 @@ public class DependencyAnalyzer extends PluginData {
 							//if plugin exists (It should, as pluginList is prebuilt)
 							String timestamp = plugin.getTimestamp();
 							//For now, assume "at-least"
-							result.add(new Dependency(strJarDependency, timestamp, "at-least"));
+							result.add(new Dependency(strJarDependency, timestamp, null));
 							filenameList.add(strJarDependency);
 						} else {
 							System.out.println("Is it possible to reach here? Apparently so.");

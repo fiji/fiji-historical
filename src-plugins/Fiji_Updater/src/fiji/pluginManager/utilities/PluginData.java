@@ -245,10 +245,21 @@ public abstract class PluginData {
 		return false;
 	}
 
-	protected String getRelevantLauncher() {
+	protected String[] getRelevantLaunchers() {
 		int index = Arrays.binarySearch(launchers, "fiji-" + platform);
 		if (index < 0)
 			throw new Error("Failed to get Fiji launcher.");
-		return launchers[index];
+
+		String[] relevantLaunchers = new String[1];
+		//some platform may have more than 1 launcher
+		if (platform.equals("macosx")) {
+			relevantLaunchers = new String[2];
+			relevantLaunchers[0] = launchers[index];
+			relevantLaunchers[1] = "fiji-tiger";
+		} else { //otherwise it is only 1 default launcher
+			relevantLaunchers[0] = launchers[index];
+		}
+		Arrays.sort(relevantLaunchers);
+		return relevantLaunchers;
 	}
 }

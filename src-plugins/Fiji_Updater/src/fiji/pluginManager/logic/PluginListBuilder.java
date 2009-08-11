@@ -3,6 +3,7 @@ import ij.IJ;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -82,14 +83,9 @@ public class PluginListBuilder extends PluginDataObservable {
 		if (isDeveloper()) {
 			for (String launcher : launchers) //From precompiled
 				addFileIfExists(launcher, queue);
-		} else {
-			//Relevant launcher added
-			if (platform.equals("macosx")) {
-				addFileIfExists((getUseMacPrefix() ? getMacPrefix() : "") + getRelevantLauncher(), queue);
-				addFileIfExists((getUseMacPrefix() ? getMacPrefix() : "") + "fiji-tiger", queue);
-			} else
-				addFileIfExists(getRelevantLauncher(), queue);
-		}
+		} else //Relevant launcher added
+			for (String launcher : getRelevantLaunchers())
+				addFileIfExists((getUseMacPrefix() ? getMacPrefix() : "") + launcher, queue);
 
 		//Gather filenames of all local plugins
 		addFileIfExists("ij.jar", queue);
@@ -132,11 +128,9 @@ public class PluginListBuilder extends PluginDataObservable {
 		Iterator<String> iterLatest = latestDigests.keySet().iterator();
 		while (iterLatest.hasNext()) {
 			String pluginName = iterLatest.next();
-			//launcher is platform-specific, don't list if not relevant
 			if (!isDeveloper() && isFijiLauncher(pluginName)) {
-				if (!pluginName.equals(getRelevantLauncher()) &&
-						(!platform.equals("macosx") || !pluginName.startsWith("fiji-tiger")))
-					continue;
+				if (Arrays.binarySearch(getRelevantLaunchers(), pluginName) < 0)
+					continue; //don't list if not relevant (platform-specific)
 			}
 			String digest = digests.get(pluginName);
 			String remoteDigest = latestDigests.get(pluginName);
