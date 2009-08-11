@@ -60,7 +60,7 @@ public class XMLFileReader extends DefaultHandler {
 		xr.parse(inputSource);
 	}
 
-	public void getLatestDigestsAndDates(Map<String,String> latestDigests, Map<String,String> latestDates) {
+	public void getLatestDigestsAndDates(Map<String, String> latestDigests, Map<String, String> latestDates) {
 		for (String pluginName : pluginRecords.keySet()) {
 			PluginObject plugin = pluginRecords.get(pluginName).getLatestPlugin();
 			latestDigests.put(plugin.getFilename(), plugin.getmd5Sum());
