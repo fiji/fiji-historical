@@ -1,9 +1,11 @@
 package fiji.pluginManager.logic;
 import java.io.IOException;
+
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import fiji.pluginManager.utilities.Class2JarFileMap;
