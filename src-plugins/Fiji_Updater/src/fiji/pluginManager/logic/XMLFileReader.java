@@ -60,10 +60,9 @@ public class XMLFileReader extends DefaultHandler {
 		xr.parse(inputSource);
 	}
 
-	public void getLatestDigestsAndDates(Map<String, String> latestDigests, Map<String, String> latestDates) {
+	public void getLatestDigestsAndDates(Map<String,String> latestDigests, Map<String,String> latestDates) {
 		for (String pluginName : pluginRecords.keySet()) {
-			PluginCollection versions = (PluginCollection)pluginRecords.get(pluginName);
-			PluginObject plugin = versions.getLatestPlugin();
+			PluginObject plugin = pluginRecords.get(pluginName).getLatestPlugin();
 			latestDigests.put(plugin.getFilename(), plugin.getmd5Sum());
 			latestDates.put(plugin.getFilename(), plugin.getTimestamp());
 		}
@@ -75,7 +74,7 @@ public class XMLFileReader extends DefaultHandler {
 
 	//Get the latest version, which _will_ have all the important details/information
 	private PluginObject getPluginMatching(String filename) {
-		PluginCollection versions = (PluginCollection)pluginRecords.get(filename);
+		PluginCollection versions = pluginRecords.get(filename);
 		if (versions != null) {
 			return versions.getLatestPlugin();
 		}
@@ -99,7 +98,7 @@ public class XMLFileReader extends DefaultHandler {
 
 	//Get timestamp associated with specified version, assumed filename & digest are correct
 	public String getTimestampFromRecords(String filename, String digest) {
-		PluginCollection versions = (PluginCollection)pluginRecords.get(filename);
+		PluginCollection versions = pluginRecords.get(filename);
 		String timestamp = null;
 		if (versions != null) {
 			PluginObject match = versions.getPluginFromDigest(filename, digest);
