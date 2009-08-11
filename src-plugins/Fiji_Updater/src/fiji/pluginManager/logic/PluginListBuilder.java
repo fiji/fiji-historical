@@ -1,16 +1,24 @@
 package fiji.pluginManager.logic;
+
+import fiji.pluginManager.logic.PluginObject.CurrentStatus;
+
+import fiji.pluginManager.utilities.PluginData;
+
 import ij.IJ;
+
 import java.io.File;
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
 import javax.xml.parsers.ParserConfigurationException;
+
 import org.xml.sax.SAXException;
-import fiji.pluginManager.logic.PluginObject.CurrentStatus;
 
 /*
  * PluginListBuilder's overall role is to be in charge of building of a plugin list
@@ -31,9 +39,10 @@ public class PluginListBuilder extends PluginDataObservable {
 	private Map<String, String> latestDates;
 	private Map<String, String> latestDigests;
 	private XMLFileReader xmlFileReader;
+	private PluginData util;
 
-	public PluginListBuilder(XMLFileReader xmlFileReader, boolean isDeveloper) {
-		super(isDeveloper);
+	public PluginListBuilder(XMLFileReader xmlFileReader, PluginData util) {
+		this.util = util;
 		if (xmlFileReader == null) throw new Error("XMLFileReader object is null");
 		this.xmlFileReader = xmlFileReader;
 
@@ -63,8 +72,8 @@ public class PluginListBuilder extends PluginDataObservable {
 		currentlyLoaded = 0;
 		totalToLoad = queue.size();
 		while (iter.hasNext()) {
-			String outputFilename = initializeFilename(iter.next());
-			String outputDigest = getDigestFromFile(outputFilename);
+			String outputFilename = util.initializeFilename(iter.next());
+			String outputDigest = util.getDigestFromFile(outputFilename);
 			digests.put(outputFilename, outputDigest);
 
 			//null indicate XML records does not have such plugin filename and md5 sums
@@ -80,17 +89,17 @@ public class PluginListBuilder extends PluginDataObservable {
 		List<String> queue = new ArrayList<String>();
 
 		//Add Fiji launchers if they exist
-		if (isDeveloper()) {
-			for (String launcher : launchers) //From precompiled
+		if (util.isDeveloper()) {
+			for (String launcher : util.getLaunchers()) //From precompiled
 				addFileIfExists(launcher, queue);
 		} else //Only relevant launcher(s) added
-			for (String launcher : getRelevantLaunchers())
-				addFileIfExists((getUseMacPrefix() ? getMacPrefix() : "") + launcher, queue);
+			for (String launcher : util.getRelevantLaunchers())
+				addFileIfExists((util.getUseMacPrefix() ? util.getMacPrefix() : "") + launcher, queue);
 
 		//Gather filenames of all local plugins
 		addFileIfExists("ij.jar", queue);
 		for (String directory : pluginDirectories) {
-			File dir = new File(prefix(directory));
+			File dir = new File(util.prefix(directory));
 			if (!dir.isDirectory())
 				throw new Error("Plugin Directory " + directory + " does not exist!");
 			else
@@ -101,13 +110,13 @@ public class PluginListBuilder extends PluginDataObservable {
 	}
 
 	private void addFileIfExists(String filename, List<String> queue) {
-		if (fileExists(filename))
+		if (util.fileExists(filename))
 			queue.add(filename);
 	}
 
 	//recursively looks into a directory and adds the relevant file
 	private void queueDirectory(List<String> queue, String path) {
-		File dir = new File(prefix(path));
+		File dir = new File(util.prefix(path));
 		if (!dir.isDirectory())
 			return;
 		String[] list = dir.list();
@@ -116,7 +125,7 @@ public class PluginListBuilder extends PluginDataObservable {
 				continue;
 			else if (list[i].endsWith(".jar")) {
 				//Ignore any empty files (Indicates the plugin is uninstalled)
-				if (new File(prefix(path + File.separator + list[i])).length() > 0)
+				if (new File(util.prefix(path + File.separator + list[i])).length() > 0)
 					queue.add(path + File.separator + list[i]);
 			} else
 				queueDirectory(queue,
@@ -128,8 +137,8 @@ public class PluginListBuilder extends PluginDataObservable {
 		Iterator<String> iterLatest = latestDigests.keySet().iterator();
 		while (iterLatest.hasNext()) {
 			String pluginName = iterLatest.next();
-			if (!isDeveloper() && isFijiLauncher(pluginName)) {
-				if (Arrays.binarySearch(getRelevantLaunchers(), pluginName) < 0)
+			if (!util.isDeveloper() && util.isFijiLauncher(pluginName)) {
+				if (Arrays.binarySearch(util.getRelevantLaunchers(), pluginName) < 0)
 					continue; //don't list if not relevant (platform-specific)
 			}
 			String digest = digests.get(pluginName);
@@ -142,7 +151,7 @@ public class PluginListBuilder extends PluginDataObservable {
 			boolean isRecorded = true;
 			if (date == null) {
 				//use local plugin's last modified timestamp instead
-				date = getTimestampFromFile(pluginName);
+				date = util.getTimestampFromFile(pluginName);
 				isRecorded = false;
 			}
 
@@ -175,17 +184,17 @@ public class PluginListBuilder extends PluginDataObservable {
 			//If it is not a Fiji plugin (Not found in list of up-to-date versions)
 			if (!latestDigests.containsKey(name)) {
 				String digest = digests.get(name);
-				String date = getTimestampFromFile(name);
+				String date = util.getTimestampFromFile(name);
 				//implies third-party plugin, no description nor dependency information available
 				PluginObject myPlugin = new PluginObject(name, digest, date,
 						CurrentStatus.INSTALLED, false, false);
-				myPlugin.setFilesize(getFilesizeFromFile(prefix(myPlugin.getFilename())));
+				myPlugin.setFilesize(util.getFilesizeFromFile(util.prefix(myPlugin.getFilename())));
 				pluginCollection.add(myPlugin);
 			}
 		}
 
 		for (PluginObject plugin : pluginCollection) {
-			File file = new File(prefix(plugin.getFilename()));
+			File file = new File(util.prefix(plugin.getFilename()));
 			if (!file.exists() || file.canWrite())
 				continue;
 			plugin.setIsReadOnly(true);

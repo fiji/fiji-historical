@@ -34,7 +34,7 @@ import fiji.pluginManager.utilities.PluginData;
  * - Uninstalled & up-to-date plugins will ONLY have their details uploaded (i.e.: XML file)
  * - Updater's FileUploader does NOT upload the DTD file. It assumes the DTD file is up to date.
  */
-public class Updater extends PluginData {
+public class Updater {
 	private FileUploader fileUploader;
 	private String[] relativePaths = { //@ Fiji root
 			PluginManager.XML_LOCK,
@@ -52,9 +52,10 @@ public class Updater extends PluginData {
 	public PluginCollection changesList;
 	private DependencyAnalyzer dependencyAnalyzer;
 	protected PluginCollection pluginCollection;
+	protected PluginData util;
 
 	public Updater(PluginManager pluginManager) {
-		super(pluginManager.isDeveloper());
+		util = pluginManager;
 
 		pluginCollection = pluginManager.pluginCollection;
 		changesList = pluginCollection.getToUpload();
@@ -65,8 +66,8 @@ public class Updater extends PluginData {
 		xmlLastModified = pluginManager.getXMLLastModified();
 		savePaths = new String[relativePaths.length];
 		for (int i = 0; i < savePaths.length; i++)
-			savePaths[i] = prefix(relativePaths[i]);
-		backupXMLPath = prefix(PluginManager.XML_BACKUP);
+			savePaths[i] = util.prefix(relativePaths[i]);
+		backupXMLPath = util.prefix(PluginManager.XML_BACKUP);
 	}
 
 	public synchronized boolean setLogin(String username, String password) {
@@ -100,7 +101,7 @@ public class Updater extends PluginData {
 					//Newer version which does not exist in records yet, thus requires upload
 					pluginToUpload.setDependency(dependencyAnalyzer.getDependentJarsForFile(
 							pluginToUpload.getFilename()), pluginCollection);
-					String absolutePath = prefix(pluginToUpload.getFilename());
+					String absolutePath = util.prefix(pluginToUpload.getFilename());
 					pluginToUpload.setFilesize(new File(absolutePath).length());
 					filesToUpload.add(new UpdateSource(absolutePath, pluginToUpload, "C0644"));
 					//Add to existing records
@@ -115,7 +116,7 @@ public class Updater extends PluginData {
 			List<PluginObject> pluginVersions = newPluginRecords.get(name);
 			if (pluginVersions == null) { //non-Fiji plugin doesn't exist in records yet
 				pluginToUpload.setDependency(dependencyAnalyzer.getDependentJarsForFile(name), pluginCollection);
-				String absolutePath = prefix(pluginToUpload.getFilename());
+				String absolutePath = util.prefix(pluginToUpload.getFilename());
 				pluginToUpload.setFilesize(new File(absolutePath).length());
 				filesToUpload.add(new UpdateSource(absolutePath, pluginToUpload, "C0644"));
 				//therefore add it as a Fiji Plugin

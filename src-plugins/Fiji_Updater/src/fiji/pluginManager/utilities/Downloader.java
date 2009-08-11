@@ -39,7 +39,6 @@ public class Downloader {
 	public synchronized void startDownload() {
 		while (sourceFiles.hasNext() && !cancelled) {
 			currentSource = sourceFiles.next();
-
 			try {
 				//Start connection
 				connection = new URL(currentSource.getURL()).openConnection();

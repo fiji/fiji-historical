@@ -1,6 +1,7 @@
 package fiji.pluginManager.logic;
 
-import java.util.Vector;
+import java.util.Observable;
+import java.util.Observer;
 
 import fiji.pluginManager.utilities.PluginData;
 
@@ -11,21 +12,11 @@ import fiji.pluginManager.utilities.PluginData;
  * Allows a user interface to observe it. Class is designed for performing multiple
  * tasks, allowing the user to decide when to inform the interface of its status.
  */
-public class PluginDataObservable extends PluginData implements Observable {
-	private Vector<Observer> observersList;
+public class PluginDataObservable extends Observable {
 	protected String taskname; //Generic title of the current task, namely a filename
 	protected int currentlyLoaded;
 	protected int totalToLoad;
 	protected boolean allTasksComplete;
-
-	public PluginDataObservable() {
-		this(false);
-	}
-
-	public PluginDataObservable(boolean isDeveloper) {
-		super(isDeveloper);
-		observersList = new Vector<Observer>();
-	}
 
 	public String getTaskname() {
 		return taskname;
@@ -43,31 +34,17 @@ public class PluginDataObservable extends PluginData implements Observable {
 		return allTasksComplete;
 	}
 
-	//PluginDataObservable notifies its observers
-	public void notifyObservers() {
-		// Send notify to all Observers
-		for (int i = 0; i < observersList.size(); i++) {
-			Observer observer = (Observer) observersList.elementAt(i);
-			observer.refreshData(this);
-		}
-	}
-
-	//PluginDataObservable adds observers to inform them of any changes
-	public void register(Observer obs) {
-		if (obs != null)
-			observersList.addElement(obs);
-	}
-
 	protected void changeStatus(String taskname, int currentlyLoaded, int totalToLoad) {
 		this.taskname = taskname;
 		this.currentlyLoaded = currentlyLoaded;
 		this.totalToLoad = totalToLoad;
+		setChanged();
 		notifyObservers();
 	}
 
 	protected void setStatusComplete() {
 		allTasksComplete = true;
+		setChanged();
 		notifyObservers();
 	}
-
 }

@@ -45,13 +45,8 @@ public abstract class PluginData {
 	private boolean isDeveloper = false;
 
 	public PluginData() {
-		this(false);
-	}
-
-	public PluginData(boolean isDeveloper) {
-		this.isDeveloper = isDeveloper;
-
 		fijiPath = getFijiRootPath();
+		isDeveloper = fileExists("fiji.cxx");
 		platform = getPlatform(); //gets the platform string value
 
 		//useMacPrefix initially is false, set to true if macLauncher exist
@@ -74,11 +69,11 @@ public abstract class PluginData {
 		return string.substring(0, string.length() - suffix.length());
 	}
 
-	protected boolean isDeveloper() {
+	public boolean isDeveloper() {
 		return isDeveloper;
 	}
 
-	protected String getMacPrefix() {
+	public String getMacPrefix() {
 		return macPrefix;
 	}
 
@@ -96,7 +91,7 @@ public abstract class PluginData {
 		return osName;
 	}
 
-	protected boolean getUseMacPrefix() {
+	public boolean getUseMacPrefix() {
 		return useMacPrefix;
 	}
 
@@ -184,7 +179,7 @@ public abstract class PluginData {
 		return prefix(saveDirectory + File.separator + filename);
 	}
 
-	protected String getTimestampFromFile(String filename) {
+	public String getTimestampFromFile(String filename) {
 		String fullPath = prefix(filename);
 		long modified = new File(fullPath).lastModified();
 		return timestamp(modified);
@@ -209,25 +204,24 @@ public abstract class PluginData {
 			format.format(second);
 	}
 
-	protected long getFilesizeFromFile(String filename) {
+	public long getFilesizeFromFile(String filename) {
 		return new File(filename).length();
 	}
 
-	protected String getDigestFromFile(String filename) {
+	public String getDigestFromFile(String filename) {
 		try {
-			String fullPath = prefix(filename);
-			return getDigest(filename, fullPath);
+			return getDigest(filename, prefix(filename));
 		} catch (Exception e) {
 			throw new Error("Could not get digest: " + prefix(filename) + " (" + e + ")");
 		}
 	}
 
-	protected String prefix(String path) {
+	public String prefix(String path) {
 		return fijiPath + (isDeveloper && path.startsWith("fiji-") ?
 				"precompiled/" : "") + path;
 	}
 
-	protected String initializeFilename(String filename) {
+	public String initializeFilename(String filename) {
 		if (getUseMacPrefix() && filename.startsWith(getMacPrefix()))
 			filename = filename.substring(getMacPrefix().length());
 		if (File.separator.equals("\\"))
@@ -235,17 +229,21 @@ public abstract class PluginData {
 		return filename;
 	}
 
-	protected boolean fileExists(String filename) {
+	public boolean fileExists(String filename) {
 		return new File(prefix(filename)).exists();
 	}
 
-	protected boolean isFijiLauncher(String filename) {
+	public String[] getLaunchers() {
+		return launchers;
+	}
+
+	public boolean isFijiLauncher(String filename) {
 		if (Arrays.binarySearch(launchers, filename) >= 0)
 			return true;
 		return false;
 	}
 
-	protected String[] getRelevantLaunchers() {
+	public String[] getRelevantLaunchers() {
 		int index = Arrays.binarySearch(launchers, "fiji-" + platform);
 		if (index < 0)
 			throw new Error("Failed to get Fiji launcher.");

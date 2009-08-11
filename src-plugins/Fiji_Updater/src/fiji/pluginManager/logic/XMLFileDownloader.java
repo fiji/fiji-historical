@@ -1,15 +1,21 @@
 package fiji.pluginManager.logic;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.List;
+
 import fiji.pluginManager.utilities.Downloader;
 import fiji.pluginManager.utilities.Compressor;
 import fiji.pluginManager.utilities.Downloader.FileDownload;
+import fiji.pluginManager.utilities.PluginData;
+
 import ij.Prefs;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import java.net.URL;
+import java.net.URLConnection;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /*
  * Directly in charge of downloading and saving start-up files (i.e.: XML file and related).
@@ -18,6 +24,11 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 	private List<FileDownload> sources;
 	private long xmlLastModified;
 	private byte[] data;
+	private PluginData util;
+
+	public XMLFileDownloader(PluginData util) {
+		this.util = util;
+	}
 
 	public void startDownload() throws IOException {
 		sources = new ArrayList<FileDownload>();
@@ -30,7 +41,6 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 			System.out.println("Warning: " + PluginManager.PREFS_XMLDATE + " contains invalid value.");
 			dateRecorded = 0;
 		}
-
 		//From server, record modified date of XML for uploading purposes (Check lock conflict)
 		String xml_url = PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED;
 		try {
@@ -43,7 +53,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 
 		//Download XML file either when it has been modified again, or if local version does not exist 
 		if (dateRecorded != xmlLastModified ||
-				!new File(prefix(PluginManager.XML_COMPRESSED)).exists()) {
+				!new File(util.prefix(PluginManager.XML_COMPRESSED)).exists()) {
 			//Record new last modified date of XML, and then select to download XML
 			Prefs.set(PluginManager.PREFS_XMLDATE, "" + xmlLastModified);
 			addToDownload(xml_url, PluginManager.XML_COMPRESSED);
@@ -57,7 +67,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		downloader.startDownload();
 
 		//Uncompress the XML file
-		String compressedFileLocation = prefix(PluginManager.XML_COMPRESSED);
+		String compressedFileLocation = util.prefix(PluginManager.XML_COMPRESSED);
 		data = Compressor.getDecompressedData(
 				new FileInputStream(compressedFileLocation));
 
@@ -76,7 +86,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 
 	private void addToDownload(String url, String filename) {
 		System.out.println("To download: " + filename);
-		sources.add(new InformationSource(filename, url, prefix(filename)));
+		sources.add(new InformationSource(filename, url, util.prefix(filename)));
 	}
 
 	private class InformationSource implements FileDownload {
