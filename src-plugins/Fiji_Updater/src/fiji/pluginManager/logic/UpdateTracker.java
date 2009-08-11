@@ -60,7 +60,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 				if (!file.canWrite()) //if unable to override existing file
 					plugin.setChangeStatusToFail();
 				else {
-					if (!filename.startsWith("fiji-")) {
+					if (!isFijiLauncher(filename)) {
 						//If it's a normal plugin, write a 0-byte file
 						String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);
 						new File(pluginPath).getParentFile().mkdirs();
@@ -99,7 +99,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 			//For each selected plugin, get target path to save to
 			String name = plugin.getFilename();
 			String saveToPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
-			if (name.startsWith("fiji-")) { //if downloading launcher, overwrite instead
+			if (isFijiLauncher(name)) { //if downloading launcher, overwrite instead
 				saveToPath = prefix((getUseMacPrefix() ? getMacPrefix() : "") + name);
 				File orig = new File(saveToPath);
 				orig.renameTo(new File(saveToPath + ".old")); //Save backup copy of older version
@@ -209,8 +209,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 						actualDigest);
 
 			//This involves non-Windows launcher only
-			if (filename.startsWith("fiji-") && !getPlatform()
-					.startsWith("win"))
+			if (isFijiLauncher(filename) && !platform.startsWith("win"))
 				Runtime.getRuntime().exec(new String[] {
 					"chmod", "0755", source.getDestination()});
 

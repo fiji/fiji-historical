@@ -31,7 +31,7 @@ public class DependencyAnalyzer extends PluginData {
 
 	public List<Dependency> getDependencyListFromFile(String pluginFilename) throws IOException {
 		List<Dependency> result = new ArrayList<Dependency>();
-		if (pluginFilename.startsWith("fiji-"))
+		if (isFijiLauncher(pluginFilename))
 			return result; //fiji launchers not defined to have dependencies anyway
 
 		List<String> filenameList = new ArrayList<String>();

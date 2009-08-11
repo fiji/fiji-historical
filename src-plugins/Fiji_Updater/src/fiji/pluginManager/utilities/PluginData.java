@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.Arrays;
 
 /*
  * Class functionality:
@@ -33,6 +34,12 @@ public abstract class PluginData {
 	private final String macPrefix = "Contents/MacOS/";
 	private boolean useMacPrefix;
 	private String fijiPath;
+	protected String[] launchers = {
+			"fiji-linux", "fiji-linux64",
+			"fiji-macosx", "fiji-tiger",
+			"fiji-win32.exe", "fiji-win64.exe"
+	};
+	protected String platform;
 
 	//default (For developers, local files' path may be different), only crucial for uploading purposes
 	private boolean isDeveloper = false;
@@ -45,13 +52,15 @@ public abstract class PluginData {
 		this.isDeveloper = isDeveloper;
 
 		fijiPath = getFijiRootPath();
-		String platform = getPlatform(); //gets the platform string value
+		platform = getPlatform(); //gets the platform string value
 
 		//useMacPrefix initially is false, set to true if macLauncher exist
 		useMacPrefix = false;
 		String macLauncher = macPrefix + "fiji-macosx";
 		if (platform.equals("macosx") && new File(prefix(macLauncher)).exists())
 			useMacPrefix = true;
+
+		Arrays.sort(launchers);
 	}
 
 	public static String getFijiRootPath() {
@@ -228,5 +237,18 @@ public abstract class PluginData {
 
 	protected boolean fileExists(String filename) {
 		return new File(prefix(filename)).exists();
+	}
+
+	protected boolean isFijiLauncher(String filename) {
+		if (Arrays.binarySearch(launchers, filename) >= 0)
+			return true;
+		return false;
+	}
+
+	protected String getRelevantLauncher() {
+		int index = Arrays.binarySearch(launchers, "fiji-" + platform);
+		if (index < 0)
+			throw new Error("Failed to get Fiji launcher.");
+		return launchers[index];
 	}
 }
