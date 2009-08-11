@@ -28,6 +28,17 @@ import java.lang.reflect.Method;
  */
 public class Refresh_Javas extends RefreshScripts {
 
+	boolean ifDebug=false;
+
+	public Refresh_Javas() {
+		super();
+	}
+
+	public Refresh_Javas(boolean debug) {
+		super();
+		ifDebug=debug;
+	}
+
 	public void run(String arg) {
 		setLanguageProperties(".java", "Java");
 		setVerbose(false);
@@ -41,7 +52,7 @@ public class Refresh_Javas extends RefreshScripts {
 			c = c.substring(0, c.length() - 5);
 			try {
 				if (!upToDate(path, c + ".class") &&
-						!compile(path))
+						!compile(path,ifDebug))
 					return;
 			} catch(Exception e) {
 				IJ.error("Could not invoke javac compiler for "
@@ -72,15 +83,32 @@ public class Refresh_Javas extends RefreshScripts {
 
 	static Method javac;
 
+	public void setIfDebug(boolean option) {
+		ifDebug=option;
+	}
+
 	boolean compile(String path) throws ClassNotFoundException,
+			NoSuchMethodException, IllegalAccessException,
+			InvocationTargetException {
+		return(compile(path,false));
+	}
+
+	boolean compile(String path,boolean debug) throws ClassNotFoundException,
 			NoSuchMethodException, IllegalAccessException,
 			InvocationTargetException {
 		String[] arguments = { path };
 		String classPath = getPluginsClasspath();
 		if (!classPath.equals(""))
 			arguments = new String[] {
-				"-g", "-classpath", classPath, path
+				"-classpath", classPath, path
 			};
+		if(debug) {
+			String[] newArgs = new String[arguments.length + 1];
+			newArgs[0] = "-g";
+			System.arraycopy(arguments, 0, newArgs, 1,
+					arguments.length);
+			arguments = newArgs;
+		}
 		if (javac == null) {
 			String className = "com.sun.tools.javac.Main";
 			ClassLoader loader = getClass().getClassLoader();
