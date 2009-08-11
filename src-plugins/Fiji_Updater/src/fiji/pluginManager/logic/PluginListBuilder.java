@@ -25,7 +25,7 @@ import fiji.pluginManager.logic.PluginObject.CurrentStatus;
  */
 public class PluginListBuilder extends PluginDataObservable {
 	private final String[] pluginDirectories = {"plugins", "jars", "retro", "misc"};
-	public List<PluginObject> pluginCollection; //info available after list is built
+	public PluginCollection pluginCollection; //info available after list is built
 	private Map<String, String> digests;
 	private Map<String, String> dates;
 	private Map<String, String> latestDates;
@@ -83,7 +83,7 @@ public class PluginListBuilder extends PluginDataObservable {
 		if (isDeveloper()) {
 			for (String launcher : launchers) //From precompiled
 				addFileIfExists(launcher, queue);
-		} else //Relevant launcher added
+		} else //Only relevant launcher(s) added
 			for (String launcher : getRelevantLaunchers())
 				addFileIfExists((getUseMacPrefix() ? getMacPrefix() : "") + launcher, queue);
 

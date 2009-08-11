@@ -2,7 +2,6 @@ package fiji.pluginManager.logic;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -62,7 +61,6 @@ public class XMLFileReader extends DefaultHandler {
 	}
 
 	public void getLatestDigestsAndDates(Map<String, String> latestDigests, Map<String, String> latestDates) {
-		Iterator<String> iterNamelist = pluginRecords.keySet().iterator();
 		for (String pluginName : pluginRecords.keySet()) {
 			PluginCollection versions = (PluginCollection)pluginRecords.get(pluginName);
 			PluginObject plugin = versions.getLatestPlugin();

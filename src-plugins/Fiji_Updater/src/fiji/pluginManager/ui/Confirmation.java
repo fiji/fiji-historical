@@ -112,9 +112,9 @@ public class Confirmation extends JFrame {
 
 	private void startActualChanges() {
 		//indicate the actions as reference for Downloader (Installer) to refer to
-		((PluginCollection)dependencyBuilder.toInstallList).setToInstall();
-		((PluginCollection)dependencyBuilder.toUpdateList).setToUpdate();
-		((PluginCollection)dependencyBuilder.toRemoveList).setToRemove();
+		dependencyBuilder.toInstallList.setToInstall();
+		dependencyBuilder.toUpdateList.setToUpdate();
+		dependencyBuilder.toRemoveList.setToRemove();
 		dependencyBuilder = null;
 		mainUserInterface.openDownloader();
 	}
@@ -127,11 +127,11 @@ public class Confirmation extends JFrame {
 		this.dependencyBuilder = dependencyBuilder;
 
 		// ********** Display of plugins listed by user **********
-		List<PluginObject> installs = ((PluginCollection)dependencyBuilder.toInstallList).getList(
+		PluginCollection installs = dependencyBuilder.toInstallList.getList(
 				PluginCollection.FILTER_ACTIONS_INSTALL);
-		List<PluginObject> updates = ((PluginCollection)dependencyBuilder.toUpdateList).getList(
+		PluginCollection updates = dependencyBuilder.toUpdateList.getList(
 				PluginCollection.FILTER_ACTIONS_UPDATE);
-		List<PluginObject> removals = ((PluginCollection)dependencyBuilder.toRemoveList).getList(
+		PluginCollection removals = dependencyBuilder.toRemoveList.getList(
 				PluginCollection.FILTER_ACTIONS_UNINSTALL);
 
 		// Actual display of information, textpane explicitly set by user to take action
@@ -147,11 +147,11 @@ public class Confirmation extends JFrame {
 
 		// ********** Display of involved plugins which are not listed by user **********
 		//Objective is to show user only information that was previously invisible
-		List<PluginObject> additionalInstalls = ((PluginCollection)dependencyBuilder.toInstallList).getList(
+		PluginCollection additionalInstalls = dependencyBuilder.toInstallList.getList(
 				PluginCollection.FILTER_UNLISTED_TO_INSTALL);
-		List<PluginObject> addtionalUpdates = ((PluginCollection)dependencyBuilder.toUpdateList).getList(
+		PluginCollection addtionalUpdates = dependencyBuilder.toUpdateList.getList(
 				PluginCollection.FILTER_UNLISTED_TO_UPDATE);
-		List<PluginObject> addtionalRemovals = ((PluginCollection)dependencyBuilder.toRemoveList).getList(
+		PluginCollection addtionalRemovals = dependencyBuilder.toRemoveList.getList(
 				PluginCollection.FILTER_UNLISTED_TO_UNINSTALL);
 
 		// textpane listing additional plugins to add/remove
@@ -176,21 +176,21 @@ public class Confirmation extends JFrame {
 
 		// ********** Display of conflicts (if any) **********
 		//Compile a list of plugin names that conflicts with uninstalling (if any)
-		Map<PluginObject,List<PluginObject>> installDependenciesMap = dependencyBuilder.installDependenciesMap;
-		Map<PluginObject,List<PluginObject>> updateDependenciesMap = dependencyBuilder.updateDependenciesMap;
-		Map<PluginObject,List<PluginObject>> uninstallDependentsMap = dependencyBuilder.uninstallDependentsMap;
+		Map<PluginObject,PluginCollection> installDependenciesMap = dependencyBuilder.installDependenciesMap;
+		Map<PluginObject,PluginCollection> updateDependenciesMap = dependencyBuilder.updateDependenciesMap;
+		Map<PluginObject,PluginCollection> uninstallDependentsMap = dependencyBuilder.uninstallDependentsMap;
 
 		List<String[]> installConflicts = new ArrayList<String[]>();
 		List<String[]> updateConflicts = new ArrayList<String[]>();
 		Iterator<PluginObject> iterInstall = installDependenciesMap.keySet().iterator();
 		while (iterInstall.hasNext()) {
 			PluginObject pluginAdd = iterInstall.next();
-			List<PluginObject> pluginInstallList = installDependenciesMap.get(pluginAdd);
-			List<PluginObject> pluginUpdateList = updateDependenciesMap.get(pluginAdd);
+			PluginCollection pluginInstallList = installDependenciesMap.get(pluginAdd);
+			PluginCollection pluginUpdateList = updateDependenciesMap.get(pluginAdd);
 			Iterator<PluginObject> iterUninstall = uninstallDependentsMap.keySet().iterator();
 			while (iterUninstall.hasNext()) {
 				PluginObject pluginUninstall = iterUninstall.next();
-				List<PluginObject> pluginUninstallList = uninstallDependentsMap.get(pluginUninstall);
+				PluginCollection pluginUninstallList = uninstallDependentsMap.get(pluginUninstall);
 
 				if (dependencyBuilder.conflicts(pluginInstallList, pluginUpdateList, pluginUninstallList)) {
 					String installName = pluginAdd.getFilename();

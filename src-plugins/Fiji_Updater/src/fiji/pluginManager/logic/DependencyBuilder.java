@@ -1,9 +1,8 @@
 package fiji.pluginManager.logic;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.List;
 
 /*
  * Determine the dependencies of the plugin through ADD and REMOVE scenarios.
@@ -11,33 +10,33 @@ import java.util.Map;
  * selected the plugins he/she wanted to add or remove and indicated to take action.
  */
 public class DependencyBuilder {
-	private List<PluginObject> pluginList; //current states of all plugins
+	private PluginCollection pluginList; //current states of all plugins
 
 	//The different structures of the same information that the user can retrieve
-	public List<PluginObject> changeList;
-	public Map<PluginObject,List<PluginObject>> installDependenciesMap;
-	public Map<PluginObject,List<PluginObject>> updateDependenciesMap;
-	public Map<PluginObject,List<PluginObject>> uninstallDependentsMap;
-	public List<PluginObject> toInstallList;
-	public List<PluginObject> toUpdateList;
-	public List<PluginObject> toRemoveList;
+	public PluginCollection changeList;
+	public Map<PluginObject,PluginCollection> installDependenciesMap;
+	public Map<PluginObject,PluginCollection> updateDependenciesMap;
+	public Map<PluginObject,PluginCollection> uninstallDependentsMap;
+	public PluginCollection toInstallList;
+	public PluginCollection toUpdateList;
+	public PluginCollection toRemoveList;
 
-	public DependencyBuilder(List<PluginObject> pluginList) {
+	public DependencyBuilder(PluginCollection pluginList) {
 		this.pluginList = pluginList;
-		changeList = ((PluginCollection)pluginList).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
-		List<PluginObject> change_addOrUpdateList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
-		List<PluginObject> change_removeList = ((PluginCollection)changeList).getList(PluginCollection.FILTER_ACTIONS_UNINSTALL);
+		changeList = pluginList.getList(PluginCollection.FILTER_ACTIONS_SPECIFIED_NOT_UPLOAD);
+		PluginCollection change_addOrUpdateList = changeList.getList(PluginCollection.FILTER_ACTIONS_ADDORUPDATE);
+		PluginCollection change_removeList = changeList.getList(PluginCollection.FILTER_ACTIONS_UNINSTALL);
 
 		//Generates a map of plugins and their individual dependencies/dependents
-		installDependenciesMap = new HashMap<PluginObject,List<PluginObject>>();
-		updateDependenciesMap = new HashMap<PluginObject,List<PluginObject>>();
-		uninstallDependentsMap = new HashMap<PluginObject,List<PluginObject>>();
+		installDependenciesMap = new HashMap<PluginObject,PluginCollection>();
+		updateDependenciesMap = new HashMap<PluginObject,PluginCollection>();
+		uninstallDependentsMap = new HashMap<PluginObject,PluginCollection>();
 
 		//Going through list requesting for ADD or UPDATE
 		for (PluginObject myPlugin : change_addOrUpdateList) {
 			//Generate lists of dependencies for each plugin
-			List<PluginObject> toInstallList = new ArrayList<PluginObject>();
-			List<PluginObject> toUpdateList = new ArrayList<PluginObject>();
+			PluginCollection toInstallList = new PluginCollection();
+			PluginCollection toUpdateList = new PluginCollection();
 			addDependsOn(toInstallList, toUpdateList, myPlugin);
 			installDependenciesMap.put(myPlugin, toInstallList);
 			updateDependenciesMap.put(myPlugin, toUpdateList);
@@ -46,7 +45,7 @@ public class DependencyBuilder {
 		//Going through list requesting for REMOVE
 		for (PluginObject myPlugin : change_removeList) {
 			//Generate lists of dependents for each plugin
-			List<PluginObject> toRemoveList = new ArrayList<PluginObject>();
+			PluginCollection toRemoveList = new PluginCollection();
 			addRequiredBy(toRemoveList, myPlugin);
 			uninstallDependentsMap.put(myPlugin, toRemoveList);
 		}
@@ -63,7 +62,8 @@ public class DependencyBuilder {
 	}
 
 	//comes up with a list of plugins needed for download to go with this selected plugin
-	private void addDependsOn(List<PluginObject> changeToInstallList, List<PluginObject> changeToUpdateList, PluginObject selectedPlugin) {
+	private void addDependsOn(PluginCollection changeToInstallList,
+			PluginCollection changeToUpdateList, PluginObject selectedPlugin) {
 		//First retrieve the dependency list
 		List<Dependency> dependencyList = selectedPlugin.getDependencies();
 
@@ -83,8 +83,7 @@ public class DependencyBuilder {
 		} else {
 			//if there are dependencies, check for prerequisites
 			for (Dependency dependency : dependencyList) {
-				PluginCollection pluginCollection = (PluginCollection)pluginList;
-				PluginObject plugin = pluginCollection.getPlugin(dependency.getFilename());
+				PluginObject plugin = pluginList.getPlugin(dependency.getFilename());
 
 				//When prerequisite is found
 				if (plugin != null) {
@@ -125,7 +124,7 @@ public class DependencyBuilder {
 	}
 
 	//comes up with a list of plugins needed to be removed if selected is removed
-	private void addRequiredBy(List<PluginObject> changeToUninstallList, PluginObject selectedPlugin) {
+	private void addRequiredBy(PluginCollection changeToUninstallList, PluginObject selectedPlugin) {
 		if (!changeToUninstallList.contains(selectedPlugin)) {
 			changeToUninstallList.add(selectedPlugin);
 		}
@@ -154,7 +153,7 @@ public class DependencyBuilder {
 		} //end of search through pluginList
 	}
 
-	private void addToListWithNoDuplicates(List<PluginObject> existingList, List<PluginObject> additional) {
+	private void addToListWithNoDuplicates(PluginCollection existingList, PluginCollection additional) {
 		//For every plugin in this list
 		for (PluginObject plugin : additional) {
 			//if existing list does not contain the plugin yet, add it
@@ -166,16 +165,16 @@ public class DependencyBuilder {
 
 	//combine the mapping of installs into one single list of "to install" plugins
 	//the same goes for the mapping of updates ==> "to update" list
-	private void unifyInstallAndUpdateList(Map<PluginObject,List<PluginObject>> installDependenciesMap,
-			Map<PluginObject,List<PluginObject>> updateDependenciesMap,
-			List<PluginObject> installList,
-			List<PluginObject> updateList) {
+	private void unifyInstallAndUpdateList(Map<PluginObject,PluginCollection> installDependenciesMap,
+			Map<PluginObject,PluginCollection> updateDependenciesMap,
+			PluginCollection installList,
+			PluginCollection updateList) {
 
-		Iterator<List<PluginObject>> iterInstallLists = installDependenciesMap.values().iterator();
+		Iterator<PluginCollection> iterInstallLists = installDependenciesMap.values().iterator();
 		while (iterInstallLists.hasNext())
 			addToListWithNoDuplicates(installList, iterInstallLists.next());
 
-		Iterator<List<PluginObject>> iterUpdateLists = updateDependenciesMap.values().iterator();
+		Iterator<PluginCollection> iterUpdateLists = updateDependenciesMap.values().iterator();
 		while (iterUpdateLists.hasNext())
 			addToListWithNoDuplicates(updateList, iterUpdateLists.next());
 
@@ -184,15 +183,15 @@ public class DependencyBuilder {
 	}
 
 	//combine the mapping of uninstalls into one single list of "to uninstall" plugins
-	private void unifyUninstallList(Map<PluginObject,List<PluginObject>> uninstallDependentsMap,
-			List<PluginObject> uninstallList) {
+	private void unifyUninstallList(Map<PluginObject,PluginCollection> uninstallDependentsMap,
+			PluginCollection uninstallList) {
 
-		Iterator<List<PluginObject>> iterUninstallLists = uninstallDependentsMap.values().iterator();
+		Iterator<PluginCollection> iterUninstallLists = uninstallDependentsMap.values().iterator();
 		while (iterUninstallLists.hasNext())
 			addToListWithNoDuplicates(uninstallList, iterUninstallLists.next());
 	}
 
-	private boolean conflicts(List<PluginObject> list1, List<PluginObject> list2) {
+	private boolean conflicts(PluginCollection list1, PluginCollection list2) {
 		Iterator<PluginObject> iter = list1.iterator();
 		while (iter.hasNext()) {
 			PluginObject thisPlugin = iter.next();
@@ -201,7 +200,8 @@ public class DependencyBuilder {
 		return false;
 	}
 
-	public boolean conflicts(List<PluginObject> installList, List<PluginObject> updateList, List<PluginObject> uninstallList) {
+	public boolean conflicts(PluginCollection installList, PluginCollection updateList,
+			PluginCollection uninstallList) {
 		if (!conflicts(installList, uninstallList) && !conflicts(updateList, uninstallList))
 			return false;
 		else

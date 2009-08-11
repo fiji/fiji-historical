@@ -194,8 +194,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return getList(filter).iterator();
 	}
 
-	public List<PluginObject> getList(Filter filter) {
-		List<PluginObject> myList = new PluginCollection();
+	public PluginCollection getList(Filter filter) {
+		PluginCollection myList = new PluginCollection();
 		for (PluginObject plugin : this)
 			if (filter.matchesFilter(plugin)) myList.add(plugin);
 		return myList;

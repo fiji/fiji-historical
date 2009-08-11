@@ -3,7 +3,6 @@ import ij.IJ;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -34,7 +33,6 @@ import fiji.pluginManager.logic.PluginObject;
  */
 public class MainUserInterface extends JFrame implements TableModelListener {
 	private PluginManager pluginManager;
-	private PluginCollection pluginCollection;
 	private PluginCollection viewList;
 
 	//User Interface elements
@@ -60,9 +58,8 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		this.pluginManager = pluginManager;
 
 		//Pulls required information from pluginManager
-		pluginCollection = (PluginCollection)pluginManager.pluginCollection;
-		viewList = pluginCollection; //initially, view all
-		List<PluginObject> readOnlyList = pluginCollection.getList(PluginCollection.FILTER_READONLY);
+		viewList = pluginManager.pluginCollection; //initially, view all
+		PluginCollection readOnlyList = pluginManager.pluginCollection.getList(PluginCollection.FILTER_READONLY);
 		if (readOnlyList.size() > 0) {
 			StringBuilder namelist = new StringBuilder();
 			for (int i = 0; i < readOnlyList.size(); i++) {
@@ -244,14 +241,14 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	//Whenever search text or ComboBox has been changed
 	private void changeListingListener() {
-		viewList = pluginCollection;
+		viewList = pluginManager.pluginCollection;
 		if (!txtSearch.getText().trim().isEmpty())
-			viewList = (PluginCollection)pluginCollection.getList(PluginCollection.getFilterForText(
+			viewList = pluginManager.pluginCollection.getList(PluginCollection.getFilterForText(
 					txtSearch.getText().trim()));
 
 		PluginCollection.Filter viewFilter = getCorrespondingFilter(comboBoxViewingOptions.getSelectedIndex());
 		if (viewFilter != null) {
-			viewList = (PluginCollection)viewList.getList(viewFilter);
+			viewList = viewList.getList(viewFilter);
 		}
 		//Directly update the table for display
 		table.setupTableModel(viewList);
@@ -293,14 +290,14 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private void clickToBeginOperations() {
 		loadedFrame = new Confirmation(this);
 		Confirmation confirmation = (Confirmation)loadedFrame;
-		confirmation.displayInformation(new DependencyBuilder(pluginCollection));
+		confirmation.displayInformation(new DependencyBuilder(pluginManager.pluginCollection));
 		showFrame();
 		setEnabled(false);
 	}
 
 	private void clickToQuitPluginManager() {
 		//if there exists plugins where actions have been specified by user
-		if (((PluginCollection)pluginCollection).getList(PluginCollection.FILTER_ACTIONS_SPECIFIED).size() > 0) {
+		if (pluginManager.pluginCollection.getList(PluginCollection.FILTER_ACTIONS_SPECIFIED).size() > 0) {
 			if (JOptionPane.showConfirmDialog(this,
 					"You have specified changes. Are you sure you want to quit?",
 					"Quit?", JOptionPane.YES_NO_OPTION,
@@ -323,7 +320,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		loadedFrame = new Installer(this);
 		showFrame();
 		Installer installer = (Installer)loadedFrame;
-		installer.setInstaller(new UpdateTracker(pluginCollection));
+		installer.setInstaller(new UpdateTracker(pluginManager.pluginCollection));
 		setEnabled(false);
 	}
 
@@ -365,14 +362,14 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	public void tableChanged(TableModelEvent e) {
-		int size = pluginCollection.size();
+		int size = pluginManager.pluginCollection.size();
 		int installCount = 0;
 		int removeCount = 0;
 		int updateCount = 0;
 		int uploadCount = 0;
 
 		//Refresh count information
-		for (PluginObject myPlugin : pluginCollection) {
+		for (PluginObject myPlugin : pluginManager.pluginCollection) {
 			if (myPlugin.toInstall()) {
 				installCount += 1;
 			} else if (myPlugin.toRemove()) {
@@ -401,8 +398,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	private void enableIfAction(JButton button, PluginCollection.Filter filter) {
 		if (button != null) {
-			List<PluginObject> myList = ((PluginCollection)pluginCollection).getList(filter);
-			if (myList.size() > 0)
+			if (pluginManager.pluginCollection.getList(filter).size() > 0)
 				button.setEnabled(true);
 			else
 				button.setEnabled(false);

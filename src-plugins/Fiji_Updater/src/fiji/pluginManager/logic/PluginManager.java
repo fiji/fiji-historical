@@ -6,7 +6,6 @@ import ij.plugin.PlugIn;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import javax.swing.JOptionPane;
 
 /*
@@ -35,7 +34,7 @@ public class PluginManager implements PlugIn, Observer {
 	private long xmlLastModified; //Track when was file modified (Lock conflict purposes)
 
 	//PluginObjects for output at User Interface
-	public List<PluginObject> pluginCollection;
+	public PluginCollection pluginCollection;
 
 	//Used for generating Plugin information
 	private XMLFileDownloader xmlFileDownloader;

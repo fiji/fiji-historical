@@ -1,4 +1,5 @@
 package fiji.pluginManager.logic;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PluginObject {
@@ -59,6 +60,18 @@ public class PluginObject {
 
 	public void setDependency(List<Dependency> dependency) {
 		this.dependency = dependency;
+	}
+
+	public void setDependency(Iterable<String> dependencies, PluginCollection allPlugins) {
+		dependency = new ArrayList<Dependency>();
+		if (dependencies == null)
+			return;
+		for (String file : dependencies) {
+			//Only add if JAR file is in Fiji records
+			PluginObject other = allPlugins.getPlugin(file);
+			if (other != null)
+				dependency.add(new Dependency(file, other.getTimestamp(), "at-least"));
+		}
 	}
 
 	public void setFilesize(long filesize) {

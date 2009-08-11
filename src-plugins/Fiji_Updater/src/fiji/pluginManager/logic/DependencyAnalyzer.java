@@ -1,13 +1,11 @@
 package fiji.pluginManager.logic;
-
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-
 import fiji.pluginManager.utilities.Class2JarFileMap;
 import fiji.pluginManager.utilities.Compressor;
 import fiji.pluginManager.utilities.PluginData;
@@ -22,57 +20,41 @@ import fiji.pluginManager.utilities.PluginData;
  */
 public class DependencyAnalyzer extends PluginData {
 	private Class2JarFileMap map;
-	private List<PluginObject> pluginList;
 
-	public DependencyAnalyzer(List<PluginObject> pluginList) {
-		this.pluginList = pluginList;
+	public DependencyAnalyzer() {
 		map = new Class2JarFileMap();
 	}
 
-	public List<Dependency> getDependencyListFromFile(String pluginFilename) throws IOException {
-		List<Dependency> result = new ArrayList<Dependency>();
-		if (isFijiLauncher(pluginFilename))
-			return result; //fiji launchers not defined to have dependencies anyway
+	public Iterable<String> getDependentJarsForFile(String filename) throws IOException {
+		if (!filename.endsWith(".jar"))
+			return null; //only .jar files can have dependencies anyway
 
-		List<String> filenameList = new ArrayList<String>();
-		JarFile jarfile = new JarFile(prefix(pluginFilename));
+		Map<String, Object> result = new LinkedHashMap<String, Object>();
+
+		JarFile jarfile = new JarFile(prefix(filename));
 		Enumeration<JarEntry> fileEnum = jarfile.entries();
 		//For each file in the selected jar file
 		while (fileEnum.hasMoreElements()) {
 			JarEntry file = fileEnum.nextElement();
 
-			//Read only class files inside the selected jar file
-			if (file.getName().endsWith(".class")) {
-				//Analyze each class file for dependent classes
-				ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(
-						Compressor.readStream(jarfile.getInputStream(file)));
+			if (!file.getName().endsWith(".class"))
+				continue; //Read only class files inside the selected jar file
 
-				//For each dependent class
-				Iterator<String> iter = analyzer.getClassNames();
-				while (iter.hasNext()) {
-					String strJarDependency = map.get(iter.next().replace('/', '.'));
-					if (strJarDependency != null &&
-						!pluginFilename.equals(strJarDependency) &&
-						!filenameList.contains(strJarDependency)) {
-						//Only require direct dependencies, need not go recursive...
-						PluginObject plugin = ((PluginCollection)pluginList).getPlugin(strJarDependency);
-						if (plugin != null) {
-							//if plugin exists (It should, as pluginList is prebuilt)
-							String timestamp = plugin.getTimestamp();
-							//For now, assume "at-least"
-							result.add(new Dependency(strJarDependency, timestamp, null));
-							filenameList.add(strJarDependency);
-						} else {
-							System.out.println("Is it possible to reach here? Apparently so.");
-						}
-					}
-				}
+			//Analyze each class file for dependent classes
+			ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(
+					Compressor.readStream(jarfile.getInputStream(file)));
+
+			for (String name : analyzer) {
+				String otherJar = map.get(name);
+				if (otherJar == null || otherJar.equals(filename) || result.containsKey(filename))
+					continue;
+				result.put(name, (Object)null);
 			}
 		}
-		return result;
+		return result.keySet();
 	}
 
-	static class ByteCodeAnalyzer {
+	static class ByteCodeAnalyzer implements Iterable<String> {
 		byte[] buffer;
 		int[] poolOffsets;
 		int endOffset;
@@ -143,16 +125,15 @@ public class DependencyAnalyzer extends PluginData {
 			public String next() {
 				int offset = poolOffsets[index];
 				findNext();
-				return getString(dereferenceOffset(offset + 1));
+				return getString(dereferenceOffset(offset + 1)).replace('/', '.');
 			}
 
-			public void remove()
-					throws UnsupportedOperationException {
+			public void remove() throws UnsupportedOperationException {
 				throw new UnsupportedOperationException();
 			}
 		}
 
-		public Iterator<String> getClassNames() {
+		public Iterator<String> iterator() {
 			return new ClassNameIterator();
 		}
 
