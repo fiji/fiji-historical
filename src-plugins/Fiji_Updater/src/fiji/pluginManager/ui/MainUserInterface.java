@@ -197,7 +197,6 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 					clickToUploadRecords();
 				}
 			});
-			btnUpload.setEnabled(false);
 		}
 
 		//Button to quit Plugin Manager
@@ -344,10 +343,8 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 			((TextPaneDisplay)txtPluginDetails).showPluginDetails(currentPlugin);
 
 		//Enable/Disable edit button depending on _Action_ user wants of selected plugin
-		if (isDeveloper && currentPlugin.toUpload())
-			btnEditDetails.setEnabled(true);
-		else if (isDeveloper)
-			btnEditDetails.setEnabled(false);
+		btnEditDetails.setEnabled(isDeveloper &&
+				currentPlugin.toUpload());
 	}
 
 	public void tableChanged(TableModelEvent e) {
@@ -394,12 +391,8 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	private void enableIfActions(JButton button, int size) {
-		if (button != null) {
-			if (size > 0)
-				button.setEnabled(true);
-			else
-				button.setEnabled(false);
-		}
+		if (button != null)
+			button.setEnabled(size > 0);
 	}
 
 	public boolean isDeveloper() {
