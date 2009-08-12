@@ -109,7 +109,7 @@ public class PluginTable extends JTable {
 	public void setupTableModel(PluginCollection myList) {
 		getModel().removeTableModelListener(this);
 		getModel().removeTableModelListener(mainUserInterface);
-		setModel(pluginTableModel = new PluginTableModel(myList, mainUserInterface.isDeveloper()));
+		setModel(pluginTableModel = new PluginTableModel(myList));
 		getModel().addTableModelListener(this);
 		getModel().addTableModelListener(mainUserInterface); //listen for changes (tableChanged(TableModelEvent e))
 		setColumnWidths(250, 100);
@@ -160,10 +160,8 @@ public class PluginTable extends JTable {
 
 	class PluginTableModel extends AbstractTableModel {
 		private PluginCollection entries;
-		private boolean isDeveloper;
 
-		public PluginTableModel(PluginCollection entries, boolean isDeveloper) {
-			this.isDeveloper = isDeveloper;
+		public PluginTableModel(PluginCollection entries) {
 			this.entries = entries;
 		}
 
