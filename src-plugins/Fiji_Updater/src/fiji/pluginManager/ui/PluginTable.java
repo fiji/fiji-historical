@@ -48,12 +48,10 @@ public class PluginTable extends JTable {
 			//Called when a row is selected
 			public void valueChanged(ListSelectionEvent event) {
 				int viewRow = getSelectedRow();
-				if (viewRow < 0) {
-					//Selection got filtered away
-				} else {
+				if (viewRow >= 0) {
 					int modelRow = convertRowIndexToModel(viewRow);
-					PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
-					mainUserInterface.displayPluginDetails(myPlugin);
+					PluginObject plugin = pluginTableModel.getEntry(modelRow);
+					mainUserInterface.displayPluginDetails(plugin);
 				}
 			}
 
@@ -74,13 +72,9 @@ public class PluginTable extends JTable {
 				Component comp = super.getTableCellRendererComponent(table, value,
 						isSelected, hasFocus, row, column);
 				int modelRow = table.convertRowIndexToModel(row);
-				PluginObject myPlugin = pluginTableModel.getEntry(modelRow);
+				PluginObject plugin = pluginTableModel.getEntry(modelRow);
 
-				if (!myPlugin.actionSpecified()) { //no action specified
-					comp.setFont(comp.getFont().deriveFont(Font.PLAIN));
-				} else { //action specified, thus bold it
-					comp.setFont(comp.getFont().deriveFont(Font.BOLD));
-				}
+				comp.setFont(comp.getFont().deriveFont(plugin.actionSpecified() ? Font.BOLD : Font.PLAIN));
 
 				return comp;
 			}
@@ -106,10 +100,10 @@ public class PluginTable extends JTable {
 	}
 
 	//Set up table model, to be called each time display list is to be changed
-	public void setupTableModel(PluginCollection myList) {
+	public void setupTableModel(PluginCollection plugins) {
 		getModel().removeTableModelListener(this);
 		getModel().removeTableModelListener(mainUserInterface);
-		setModel(pluginTableModel = new PluginTableModel(myList));
+		setModel(pluginTableModel = new PluginTableModel(plugins));
 		getModel().addTableModelListener(this);
 		getModel().addTableModelListener(mainUserInterface); //listen for changes (tableChanged(TableModelEvent e))
 		setColumnWidths(250, 100);
@@ -117,40 +111,36 @@ public class PluginTable extends JTable {
 	}
 
 	public TableCellEditor getCellEditor(int row, int col) {
-		PluginObject myPlugin = getPluginFromRow(row);
+		PluginObject plugin = getPluginFromRow(row);
 
 		//As we follow PluginTableModel, 1st column is filename
-		if (col == 0) {
+		if (col == 0)
 			return super.getCellEditor(row,col);
-		} else if (col == 1) {
-			String[] arrOptions = getOptionsAccordingToState(myPlugin, mainUserInterface.isDeveloper());
-			return new DefaultCellEditor(new JComboBox(arrOptions));
-		} else
-			throw new Error("Unidentified Column number for Plugin Table");
+		String[] arrOptions = getOptions(plugin, mainUserInterface.isDeveloper());
+		return new DefaultCellEditor(new JComboBox(arrOptions));
 	}
 
-	public static String[] getOptionsAccordingToState(PluginObject entry, boolean isDeveloper) {
+	public static String[] getOptions(PluginObject plugin, boolean isDeveloper) {
 		String[] optionsArray = null;
-		if (entry.isInstallable()) {
+		if (plugin.isInstallable()) {
 			if (isDeveloper)
-				optionsArray = PluginTable.arrDevelUninstalledOptions;
+				optionsArray = arrDevelUninstalledOptions;
 			else
-				optionsArray = PluginTable.arrUninstalledOptions;
-		} else if (entry.isRemovableOnly()) {
+				optionsArray = arrUninstalledOptions;
+		} else if (plugin.isRemovableOnly()) {
 			if (isDeveloper)
-				optionsArray = PluginTable.arrDevelInstalledOptions;
+				optionsArray = arrDevelInstalledOptions;
 			else
-				optionsArray = PluginTable.arrInstalledOptions;
-		} else if (entry.isUpdateable()) {
+				optionsArray = arrInstalledOptions;
+		} else if (plugin.isUpdateable()) {
 			if (isDeveloper)
-				optionsArray = PluginTable.arrDevelUpdateableOptions;
+				optionsArray = arrDevelUpdateableOptions;
 			else
-				optionsArray = PluginTable.arrUpdateableOptions;
+				optionsArray = arrUpdateableOptions;
 		}
 		if (optionsArray == null)
 			throw new Error("Failed to get available display options for Plugin's ComboBoxes.");
-		else
-			return optionsArray;
+		return optionsArray;
 	}
 
 	public PluginObject getPluginFromRow(int viewRow) {
@@ -159,10 +149,10 @@ public class PluginTable extends JTable {
 	}
 
 	class PluginTableModel extends AbstractTableModel {
-		private PluginCollection entries;
+		private PluginCollection plugins;
 
-		public PluginTableModel(PluginCollection entries) {
-			this.entries = entries;
+		public PluginTableModel(PluginCollection plugins) {
+			this.plugins = plugins;
 		}
 
 		public int getColumnCount() {
@@ -185,32 +175,27 @@ public class PluginTable extends JTable {
 			}
 		}
 
-		public Iterator<PluginObject> getEntries() {
-			return entries.iterator();
-		}
-
 		public PluginObject getEntry(int rowIndex) {
-			return entries.get(rowIndex);
+			return plugins.get(rowIndex);
 		}
 
 		public int getRowCount() {
-			return entries.size();
+			return plugins.size();
 		}
 
 		public Object getValueAt(int rowIndex, int columnIndex) {
-			PluginObject entry = (PluginObject)entries.get(rowIndex);
+			PluginObject plugin = plugins.get(rowIndex);
 			switch (columnIndex) {
 				case 0:
-					return entry.getFilename();
+					return plugin.getFilename();
 				case 1:
-					return getValue(entry);
-				default:
-					throw new Error("Column out of range");
+					return getValue(plugin);
 			}
+			throw new Error("Column out of range");
 		}
 
 		private String getValue(PluginObject entry) {
-			String[] optionsArray = PluginTable.getOptionsAccordingToState(entry, mainUserInterface.isDeveloper());
+			String[] optionsArray = PluginTable.getOptions(entry, mainUserInterface.isDeveloper());
 
 			if (entry.isInstallable()) { //if not installed
 				if (!entry.actionSpecified()) {
@@ -247,47 +232,45 @@ public class PluginTable extends JTable {
 		}
 
 		public void setValueAt(Object value, int rowIndex, int columnIndex) {
-			PluginObject entry = (PluginObject)entries.get(rowIndex);
 			if (columnIndex == 1) {
-				String newValue = (String)value;
-				setValue(newValue, entry);
+				setValue((String)value, plugins.get(rowIndex));
 				fireTableChanged(new TableModelEvent(this));
 			}
 		}
 
-		private void setValue(String newValue, PluginObject entry) {
-			String[] optionsArray = PluginTable.getOptionsAccordingToState(entry, mainUserInterface.isDeveloper());
-			if (entry.isInstallable()) {
-				if (newValue.equals(optionsArray[0])) //status "Not installed"
-					entry.setActionNone();
-				else if (newValue.equals(optionsArray[1])) //option "Install"
-					entry.setActionToInstall();
-				else if (mainUserInterface.isDeveloper() && newValue.equals(optionsArray[2])) //option "Upload"
-					entry.setActionToUpload();
+		private void setValue(String value, PluginObject plugin) {
+			String[] optionsArray = PluginTable.getOptions(plugin, mainUserInterface.isDeveloper());
+			if (plugin.isInstallable()) {
+				if (value.equals(optionsArray[0])) //status "Not installed"
+					plugin.setActionNone();
+				else if (value.equals(optionsArray[1])) //option "Install"
+					plugin.setActionToInstall();
+				else if (mainUserInterface.isDeveloper() && value.equals(optionsArray[2])) //option "Upload"
+					plugin.setActionToUpload();
 				else //otherwise...
-					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isInstallable() ? "Installable" : "NOT Installable"));
-			} else if (entry.isRemovableOnly()) {
-				if (newValue.equals(optionsArray[0])) //status "Installed"
-					entry.setActionNone();
-				else if (newValue.equals(optionsArray[1])) //option "Remove/Uninstall"
-					entry.setActionToRemove();
-				else if (mainUserInterface.isDeveloper() && newValue.equals(optionsArray[2])) //option "Upload"
-					entry.setActionToUpload();
+					throw new Error("Invalid string value specified for " + plugin.getFilename() + "; String object: " + value + ", Plugin status: " + (plugin.isInstallable() ? "Installable" : "NOT Installable"));
+			} else if (plugin.isRemovableOnly()) {
+				if (value.equals(optionsArray[0])) //status "Installed"
+					plugin.setActionNone();
+				else if (value.equals(optionsArray[1])) //option "Remove/Uninstall"
+					plugin.setActionToRemove();
+				else if (mainUserInterface.isDeveloper() && value.equals(optionsArray[2])) //option "Upload"
+					plugin.setActionToUpload();
 				else //otherwise...
-					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isRemovableOnly() ? "Uninstallable" : "NOT Uninstallable"));
-			} else if (entry.isUpdateable()) {
-				if (newValue.equals(optionsArray[0])) //status "Installed"
-					entry.setActionNone();
-				else if (newValue.equals(optionsArray[1])) //option "Remove/Uninstall"
-					entry.setActionToRemove();
-				else if (newValue.equals(optionsArray[2])) //option "To Update"
-					entry.setActionToUpdate();
-				else if (mainUserInterface.isDeveloper() && newValue.equals(optionsArray[3])) //option "Upload"
-					entry.setActionToUpload();
+					throw new Error("Invalid string value specified for " + plugin.getFilename() + "; String object: " + value + ", Plugin status: " + (plugin.isRemovableOnly() ? "Uninstallable" : "NOT Uninstallable"));
+			} else if (plugin.isUpdateable()) {
+				if (value.equals(optionsArray[0])) //status "Installed"
+					plugin.setActionNone();
+				else if (value.equals(optionsArray[1])) //option "Remove/Uninstall"
+					plugin.setActionToRemove();
+				else if (value.equals(optionsArray[2])) //option "To Update"
+					plugin.setActionToUpdate();
+				else if (mainUserInterface.isDeveloper() && value.equals(optionsArray[3])) //option "Upload"
+					plugin.setActionToUpload();
 				else //otherwise
-					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isUpdateable() ? "Updateable" : "NOT Updateable"));
+					throw new Error("Invalid string value specified for " + plugin.getFilename() + "; String object: " + value + ", Plugin status: " + (plugin.isUpdateable() ? "Updateable" : "NOT Updateable"));
 			} else {
-				throw new Error("Invalid status specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + entry.getStatus());
+				throw new Error("Invalid status specified for " + plugin.getFilename() + "; String object: " + value + ", Plugin status: " + plugin.getStatus());
 			}
 		}
 
