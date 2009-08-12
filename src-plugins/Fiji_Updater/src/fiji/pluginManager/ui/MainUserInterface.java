@@ -36,7 +36,6 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private PluginCollection viewList;
 
 	//User Interface elements
-	private boolean isDeveloper;
 	private JFrame loadedFrame;
 	private String[] arrViewingOptions;
 	private JTextField txtSearch;
@@ -52,9 +51,8 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private JButton btnUpload;
 	private JButton btnEditDetails;
 
-	public MainUserInterface(PluginManager pluginManager, boolean isDeveloper) {
+	public MainUserInterface(PluginManager pluginManager) {
 		super("Plugin Manager");
-		this.isDeveloper = isDeveloper;
 		this.pluginManager = pluginManager;
 
 		//Pulls required information from pluginManager
@@ -153,7 +151,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 		JPanel rightPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
 		rightPanel.add(Box.createVerticalGlue());
-		if (isDeveloper) {
+		if (pluginManager.isDeveloper()) {
 			JPanel editButtonPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
 			btnEditDetails = SwingTools.createButton("Edit Details", "Edit selected plugin's details");
 			btnEditDetails.addActionListener(new ActionListener() {
@@ -189,7 +187,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		btnStart.setEnabled(false);
 
 		//includes button to upload to server if is a Developer using
-		if (isDeveloper) {
+		if (pluginManager.isDeveloper()) {
 			btnUpload = SwingTools.createButton("Upload to server", "Upload selected plugins to server");
 			btnUpload.addActionListener(new ActionListener() {
 
@@ -212,7 +210,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		//======== Start: BOTTOM PANEL ========
 		JPanel bottomPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
 		bottomPanel.add(btnStart);
-		if (isDeveloper) {
+		if (pluginManager.isDeveloper()) {
 			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
 			bottomPanel.add(btnUpload);
 		}
@@ -343,7 +341,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 			((TextPaneDisplay)txtPluginDetails).showPluginDetails(currentPlugin);
 
 		//Enable/Disable edit button depending on _Action_ user wants of selected plugin
-		btnEditDetails.setEnabled(isDeveloper &&
+		btnEditDetails.setEnabled(pluginManager.isDeveloper() &&
 				currentPlugin.toUpload());
 	}
 
@@ -362,17 +360,19 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 				removeCount += 1;
 			} else if (myPlugin.toUpdate()) {
 				updateCount += 1;
-			} else if (isDeveloper && myPlugin.toUpload()) {
+			} else if (pluginManager.isDeveloper() &&
+					myPlugin.toUpload()) {
 				uploadCount += 1;
 			}
 		}
 		String txtAction = "Total: " + size + ", To install: " + installCount +
 		", To remove: " + removeCount + ", To update: " + updateCount;
-		if (isDeveloper) txtAction += ", To upload: " + uploadCount;
+		if (pluginManager.isDeveloper())
+			txtAction += ", To upload: " + uploadCount;
 		lblPluginSummary.setText(txtAction);
 
 		//Refresh plugin details and status
-		if (isDeveloper && btnEditDetails != null) {
+		if (pluginManager.isDeveloper() && btnEditDetails != null) {
 			if (currentPlugin != null)
 				displayPluginDetails(currentPlugin);
 			else
@@ -396,6 +396,6 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	public boolean isDeveloper() {
-		return isDeveloper;
+		return pluginManager.isDeveloper();
 	}
 }

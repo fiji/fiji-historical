@@ -25,7 +25,6 @@ import fiji.pluginManager.logic.PluginObject;
 public class PluginTable extends JTable {
 	private PluginTableModel pluginTableModel;
 	private MainUserInterface mainUserInterface;
-	private boolean isDeveloper;
 
 	private static final String[] arrUninstalledOptions = { "Not installed", "Install it" };
 	private static final String[] arrInstalledOptions = { "Installed", "Remove it" };
@@ -36,7 +35,6 @@ public class PluginTable extends JTable {
 
 	public PluginTable(List<PluginObject> pluginList, MainUserInterface mainUserInterface) {
 		this.mainUserInterface = mainUserInterface;
-		isDeveloper = mainUserInterface.isDeveloper();
 		setupTable(pluginList);
 	}
 
@@ -110,7 +108,7 @@ public class PluginTable extends JTable {
 	public void setupTableModel(List<PluginObject> myList) {
 		getModel().removeTableModelListener(this);
 		getModel().removeTableModelListener(mainUserInterface);
-		setModel(pluginTableModel = new PluginTableModel(myList, isDeveloper));
+		setModel(pluginTableModel = new PluginTableModel(myList, mainUserInterface.isDeveloper()));
 		getModel().addTableModelListener(this);
 		getModel().addTableModelListener(mainUserInterface); //listen for changes (tableChanged(TableModelEvent e))
 		setColumnWidths(250, 100);
@@ -124,7 +122,7 @@ public class PluginTable extends JTable {
 		if (col == 0) {
 			return super.getCellEditor(row,col);
 		} else if (col == 1) {
-			String[] arrOptions = getOptionsAccordingToState(myPlugin, isDeveloper);
+			String[] arrOptions = getOptionsAccordingToState(myPlugin, mainUserInterface.isDeveloper());
 			return new DefaultCellEditor(new JComboBox(arrOptions));
 		} else
 			throw new Error("Unidentified Column number for Plugin Table");
@@ -213,7 +211,7 @@ public class PluginTable extends JTable {
 		}
 
 		private String getValue(PluginObject entry) {
-			String[] optionsArray = PluginTable.getOptionsAccordingToState(entry, isDeveloper);
+			String[] optionsArray = PluginTable.getOptionsAccordingToState(entry, mainUserInterface.isDeveloper());
 
 			if (entry.isInstallable()) { //if not installed
 				if (!entry.actionSpecified()) {
@@ -259,13 +257,13 @@ public class PluginTable extends JTable {
 		}
 
 		private void setValue(String newValue, PluginObject entry) {
-			String[] optionsArray = PluginTable.getOptionsAccordingToState(entry, isDeveloper);
+			String[] optionsArray = PluginTable.getOptionsAccordingToState(entry, mainUserInterface.isDeveloper());
 			if (entry.isInstallable()) {
 				if (newValue.equals(optionsArray[0])) //status "Not installed"
 					entry.setActionNone();
 				else if (newValue.equals(optionsArray[1])) //option "Install"
 					entry.setActionToInstall();
-				else if (isDeveloper && newValue.equals(optionsArray[2])) //option "Upload"
+				else if (mainUserInterface.isDeveloper() && newValue.equals(optionsArray[2])) //option "Upload"
 					entry.setActionToUpload();
 				else //otherwise...
 					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isInstallable() ? "Installable" : "NOT Installable"));
@@ -274,7 +272,7 @@ public class PluginTable extends JTable {
 					entry.setActionNone();
 				else if (newValue.equals(optionsArray[1])) //option "Remove/Uninstall"
 					entry.setActionToRemove();
-				else if (isDeveloper && newValue.equals(optionsArray[2])) //option "Upload"
+				else if (mainUserInterface.isDeveloper() && newValue.equals(optionsArray[2])) //option "Upload"
 					entry.setActionToUpload();
 				else //otherwise...
 					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isRemovableOnly() ? "Uninstallable" : "NOT Uninstallable"));
@@ -285,7 +283,7 @@ public class PluginTable extends JTable {
 					entry.setActionToRemove();
 				else if (newValue.equals(optionsArray[2])) //option "To Update"
 					entry.setActionToUpdate();
-				else if (isDeveloper && newValue.equals(optionsArray[3])) //option "Upload"
+				else if (mainUserInterface.isDeveloper() && newValue.equals(optionsArray[3])) //option "Upload"
 					entry.setActionToUpload();
 				else //otherwise
 					throw new Error("Invalid string value specified for " + entry.getFilename() + "; String object: " + newValue + ", Plugin status: " + (entry.isUpdateable() ? "Updateable" : "NOT Updateable"));

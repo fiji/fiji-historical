@@ -130,7 +130,7 @@ public class PluginManager extends PluginData implements PlugIn, Observer {
 					IJ.showStatus("");
 					pluginCollection = pluginListBuilder.pluginCollection;
 
-					MainUserInterface mainUserInterface = new MainUserInterface(this, isDeveloper());
+					MainUserInterface mainUserInterface = new MainUserInterface(this);
 					mainUserInterface.setVisible(true);
 					mainUserInterface.setLocationRelativeTo(null); //center of the screen
 					System.out.println("********** Startup Ended **********");
