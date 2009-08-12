@@ -113,7 +113,7 @@ public class Updater {
 		//Checking list for non-Fiji plugins to add to new records
 		for (PluginObject pluginToUpload : changesList) {
 			String name = pluginToUpload.getFilename();
-			List<PluginObject> pluginVersions = newPluginRecords.get(name);
+			PluginCollection pluginVersions = newPluginRecords.get(name);
 			if (pluginVersions == null) { //non-Fiji plugin doesn't exist in records yet
 				pluginToUpload.setDependency(dependencyAnalyzer.getDependentJarsForFile(name), pluginCollection);
 				String absolutePath = util.prefix(pluginToUpload.getFilename());

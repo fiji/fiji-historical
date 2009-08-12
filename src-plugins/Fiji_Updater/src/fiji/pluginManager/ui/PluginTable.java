@@ -17,6 +17,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
+import fiji.pluginManager.logic.PluginCollection;
 import fiji.pluginManager.logic.PluginObject;
 
 /*
@@ -33,12 +34,12 @@ public class PluginTable extends JTable {
 	private static final String[] arrDevelInstalledOptions = { "Installed", "Remove it", "Upload" };
 	private static final String[] arrDevelUpdateableOptions = { "Installed", "Remove it", "Update it", "Upload" };
 
-	public PluginTable(List<PluginObject> pluginList, MainUserInterface mainUserInterface) {
+	public PluginTable(PluginCollection pluginList, MainUserInterface mainUserInterface) {
 		this.mainUserInterface = mainUserInterface;
 		setupTable(pluginList);
 	}
 
-	public void setupTable(List<PluginObject> pluginList) {
+	public void setupTable(PluginCollection pluginList) {
 		//default display: All plugins shown
 		setupTableModel(pluginList);
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -105,7 +106,7 @@ public class PluginTable extends JTable {
 	}
 
 	//Set up table model, to be called each time display list is to be changed
-	public void setupTableModel(List<PluginObject> myList) {
+	public void setupTableModel(PluginCollection myList) {
 		getModel().removeTableModelListener(this);
 		getModel().removeTableModelListener(mainUserInterface);
 		setModel(pluginTableModel = new PluginTableModel(myList, mainUserInterface.isDeveloper()));
@@ -158,10 +159,10 @@ public class PluginTable extends JTable {
 	}
 
 	class PluginTableModel extends AbstractTableModel {
-		private List<PluginObject> entries;
+		private PluginCollection entries;
 		private boolean isDeveloper;
 
-		public PluginTableModel(List<PluginObject> entries, boolean isDeveloper) {
+		public PluginTableModel(PluginCollection entries, boolean isDeveloper) {
 			this.isDeveloper = isDeveloper;
 			this.entries = entries;
 		}

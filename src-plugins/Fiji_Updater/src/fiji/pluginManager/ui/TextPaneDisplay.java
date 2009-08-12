@@ -16,6 +16,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import fiji.pluginManager.logic.Dependency;
 import fiji.pluginManager.logic.UpdateTracker;
+import fiji.pluginManager.logic.PluginCollection;
 import fiji.pluginManager.logic.PluginObject;
 
 public class TextPaneDisplay extends JTextPane {
@@ -159,14 +160,14 @@ public class TextPaneDisplay extends JTextPane {
 	}
 
 	//appends list of plugin names to existing text
-	public void insertPluginNamelist(String title, List<PluginObject> myList) {
+	public void insertPluginNamelist(String title, PluginCollection myList) {
 		title(title);
 		for (PluginObject plugin : myList)
 			normal("\n" + plugin.getFilename());
 	}
 
 	//appends list of plugin names and each of their descriptions to existing text
-	public void insertPluginDescriptions(String title, List<PluginObject> myList) {
+	public void insertPluginDescriptions(String title, PluginCollection myList) {
 		title(title);
 		insertBlankLine();
 		for (PluginObject plugin : myList) {
