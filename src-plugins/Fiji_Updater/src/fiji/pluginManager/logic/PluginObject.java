@@ -24,8 +24,7 @@ public class PluginObject {
 	private CurrentStatus status = CurrentStatus.UNINSTALLED;
 
 	//Action that user indicates to take
-	//Note here, "REVERSE" means install if not installed; uninstall if installed
-	public static enum Action { NONE, REVERSE, UPDATE, UPLOAD };
+	public static enum Action { NONE, UNINSTALL, INSTALL, UPDATE, UPLOAD };
 	private Action action = Action.NONE;
 
 	//State to indicate whether Plugin removed/downloaded successfully
@@ -82,14 +81,14 @@ public class PluginObject {
 
 	public void setActionToInstall() {
 		if (isInstallable())
-			setAction(Action.REVERSE);
+			setAction(Action.INSTALL);
 		else
 			throw new Error("Plugin " + strFilename + " cannot install as its current state is not UNINSTALLED.");
 	}
 
 	public void setActionToRemove() {
 		if (isRemovable())
-			setAction(Action.REVERSE);
+			setAction(Action.UNINSTALL);
 		else
 			throw new Error("Plugin " + strFilename + " cannot remove as its current state was never installed.");
 	}
@@ -194,11 +193,11 @@ public class PluginObject {
 	}
 
 	public boolean toRemove() {
-		return (isRemovable() && action == Action.REVERSE);
+		return (isRemovable() && action == Action.UNINSTALL);
 	}
 
 	public boolean toInstall() {
-		return (isInstallable() && action == Action.REVERSE);
+		return (isInstallable() && action == Action.INSTALL);
 	}
 
 	public boolean toUpload() {
