@@ -21,9 +21,7 @@ public class DetailsEditor extends JFrame {
 	private DocumentListener changeListener;
 	private MainUserInterface mainUserInterface;
 	private PluginObject selectedPlugin;
-	private JTextPane txtDescription;
-	private JTextPane txtAuthors;
-	private JTextPane txtLinks;
+	private JTextPane[] txtEdits; //0: Authors, 1: Description, 2: Links
 	private JButton btnSave;
 	private JButton btnCancel;
 	private boolean textChanged;
@@ -53,24 +51,22 @@ public class DetailsEditor extends JFrame {
 			}
 		};
 
+		txtEdits = new JTextPane[3];
+		for (int i = 0; i < txtEdits.length; i++)
+			txtEdits[i] = new JTextPane();
+
 		JPanel panelTitle = SwingTools.createLabelPanel(
 				"For multiple authors or links, separate each using a new line.");
 		JPanel panelAuthors = SwingTools.createLabelPanel("Authors(s):");
-		txtAuthors = new JTextPane();
-		txtAuthors.getDocument().addDocumentListener(changeListener);
-		JScrollPane authScrollpane = getTextScrollPane(txtAuthors, 450, 120,
+		JScrollPane authScrollpane = getTextScrollPane(txtEdits[0], 450, 120,
 				selectedPlugin.getPluginDetails().getAuthors());
 
 		JPanel panelDescription = SwingTools.createLabelPanel("Description:");
-		txtDescription = new JTextPane();
-		txtDescription.getDocument().addDocumentListener(changeListener);
-		JScrollPane descScrollpane = getTextScrollPane(txtDescription, 450, 200,
+		JScrollPane descScrollpane = getTextScrollPane(txtEdits[1], 450, 200,
 				selectedPlugin.getPluginDetails().getDescription());
 
 		JPanel panelLinks = SwingTools.createLabelPanel("Link(s):");
-		txtLinks = new JTextPane();
-		txtLinks.getDocument().addDocumentListener(changeListener);
-		JScrollPane linkScrollpane = getTextScrollPane(txtLinks, 450, 120,
+		JScrollPane linkScrollpane = getTextScrollPane(txtEdits[2], 450, 120,
 				selectedPlugin.getPluginDetails().getLinks());
 
 		textChanged = false;
@@ -113,6 +109,7 @@ public class DetailsEditor extends JFrame {
 	}
 
 	private JScrollPane getTextScrollPane(JTextPane textPane, int width, int height, String contents) {
+		textPane.getDocument().addDocumentListener(changeListener);
 		JScrollPane scrollpane = SwingTools.getTextScrollPane(textPane, width, height);
 		if (contents != null)
 			textPane.setText(contents);
@@ -151,9 +148,9 @@ public class DetailsEditor extends JFrame {
 	}
 
 	private void saveText() {
-		selectedPlugin.getPluginDetails().setDescription(txtDescription.getText().trim());
-		selectedPlugin.getPluginDetails().setLinks(txtLinks.getText().trim().split("\n"));
-		selectedPlugin.getPluginDetails().setAuthors(txtAuthors.getText().trim().split("\n"));
+		selectedPlugin.getPluginDetails().setDescription(txtEdits[1].getText().trim());
+		selectedPlugin.getPluginDetails().setLinks(txtEdits[2].getText().trim().split("\n"));
+		selectedPlugin.getPluginDetails().setAuthors(txtEdits[0].getText().trim().split("\n"));
 		mainUserInterface.displayPluginDetails(selectedPlugin);
 		textChanged = false;
 	}
