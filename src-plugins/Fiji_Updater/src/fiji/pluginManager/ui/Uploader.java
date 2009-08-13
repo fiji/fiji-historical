@@ -31,13 +31,13 @@ public class Uploader implements UploadListener, Runnable {
 
 	public synchronized void update(SourceFile source, long bytesSoFar, long bytesTotal) {
 		UpdateSource updateSource = (UpdateSource)source;
-		IJ.showStatus("Uploading " + updateSource.getRelativePath() + "...");
+		IJ.showStatus("Uploading " + updateSource.getFilename() + "...");
 		IJ.showProgress((int)bytesSoFar, (int)bytesTotal);
 	}
 
 	public synchronized void uploadFileComplete(SourceFile source) {
 		UpdateSource updateSource = (UpdateSource)source;
-		System.out.println("File " + updateSource.getRelativePath() + " uploaded.");
+		System.out.println("File " + updateSource.getFilename() + " uploaded.");
 	}
 
 	public synchronized void uploadProcessComplete() {

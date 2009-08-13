@@ -1,22 +1,27 @@
 package fiji.pluginManager.logic;
-import ij.IJ;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.HostKey;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+
+import ij.IJ;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import java.net.URL;
+import java.net.URLConnection;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /*
  * This FileUploader is highly specialized to upload plugins and XML information over to
@@ -79,28 +84,22 @@ public class FileUploader {
 	}
 
 	//Steps to accomplish entire upload task
-	//Note: For information list, index 0 is XML lock file, 1 is text file
-	public synchronized void beganUpload(long xmlLastModified, List<SourceFile> sources) throws Exception {
+	public synchronized void beganUpload(long xmlLastModified, List<SourceFile> sources) throws IOException, JSchException {
 		//Set db.xml.gz to read-only
 		//TODO
 		setCommand("chmod u+w " + uploadDir + PluginManager.DTD_FILENAME);
-		setCommand("chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED);
-
-		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED);
-		System.out.println("db.xml.gz set to read-only mode");
-
 		//Prepare for uploading of files
 		String uploadFilesCommand = "scp -p -t -r " + uploadDir;
 		setCommand(uploadFilesCommand);
 		if(checkAck(in) != 0) { //Error check
-			throw new Exception("Failed to set command " + uploadFilesCommand);
+			throw new IOException("Failed to set command " + uploadFilesCommand);
 		}
 		System.out.println("Acknowledgement done, prepared to upload file(s)");
 
 		//Verify that XML file did not change since last downloaded
 		System.out.println("Checking if XML file has been modified since last download...");
 		if (!verifyXMLFileDidNotChange(xmlLastModified)) {
-			throw new Exception("Conflict: XML file has been modified since it was last downloaded.");
+			throw new IOException("Conflict: XML file has been modified since it was last downloaded.");
 		}
 		System.out.println("XML file was not modified since last download, clear!");
 
@@ -111,7 +110,6 @@ public class FileUploader {
 		String cmd1 = "chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED;
 		String cmd2 = "mv " + uploadDir + PluginManager.XML_LOCK + " " +
 		uploadDir + PluginManager.XML_COMPRESSED;
-		String cmd3 = "rm -f " + uploadDir + PluginManager.XML_LOCK;
 
 		setCommand(cmd1);
 		System.out.println("Command ran: " + cmd1);
@@ -119,27 +117,12 @@ public class FileUploader {
 		setCommand(cmd2);
 		System.out.println("Command ran: " + cmd2);
 
-		setCommand(cmd3);
-		System.out.println("Command ran: " + cmd3);
-
-		//setCommand("sh -c \"" + cmd1 + " && " + cmd2 + " && " + cmd3 + "\"");
-		//System.out.println("Command ran: sh -c " + cmd1 + "," + cmd2 + "," + cmd3);
-
-		//Force rename db.xml.gz.lock to db.xml.gz
-		/*setCommand("sh -c \"trap 'rm -f " + uploadDir + PluginManager.XML_COMPRESSED_LOCK + "' EXIT && " +
-				"scp -p -t " + uploadDir + " && " +
-				"chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED_FILENAME + " && " +
-				"mv " + uploadDir + PluginManager.XML_COMPRESSED_LOCK + " " +
-				uploadDir + PluginManager.XML_COMPRESSED_FILENAME + "\"");
-		System.out.println("db.xml.gz.lock renamed back to db.xml.gz");*/
-
-		//No exceptions occurred, thus inform listener of upload completion
 		out.close();
 		channel.disconnect();
 		notifyListenersCompletionAll();
 	}
 
-	private void setCommand(String command) throws Exception {
+	private void setCommand(String command) throws IOException, JSchException {
 		if (out != null) {
 			out.close();
 			channel.disconnect();
@@ -157,11 +140,10 @@ public class FileUploader {
 		//Use lastModified header field to identify
 		URLConnection uc = new URL(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED).openConnection();
 		uc.setUseCaches(false);
-		if (xmlLastModified != uc.getLastModified()) return false;
-		else return true;
+		return xmlLastModified == uc.getLastModified();
 	}
 
-	private void uploadFiles(List<SourceFile> sources) throws Exception {
+	private void uploadFiles(List<SourceFile> sources) throws IOException {
 		uploadSize = 0;
 		uploadedBytes = 0;
 
@@ -169,74 +151,41 @@ public class FileUploader {
 		for (SourceFile source : sources)
 			uploadSize += source.getFilesize();
 
-		//Write files to server
-		Map<String, List<SourceFile>> mapDirToSources = compileMapDirToFiles(sources);
-		Iterator<String> directories = mapDirToSources.keySet().iterator();
-		while (directories.hasNext()) {
-			String directory = directories.next();
-			writeFilesInsideDirectory(mapDirToSources.get(directory), directory);
-		}
-	}
-
-	//creates a TreeMap of directory locations that map to corresponding files
-	private Map<String, List<SourceFile>> compileMapDirToFiles(List<SourceFile> sources) {
-		Map<String, List<SourceFile>> mapDirToSources = new TreeMap<String, List<SourceFile>>();
+		String prefix = "";
+		byte[] buf = new byte[16384];
 		for (SourceFile source : sources) {
-			String directory = source.getDirectory();
+			String target = source.getFilename();
 
-			//Add the location and its file
-			if (!mapDirToSources.containsKey(directory)) {
-				//if no mapping to files for this directory yet
-				List<SourceFile> dirSources = new ArrayList<SourceFile>();
-				dirSources.add(source);
-				mapDirToSources.put(directory, dirSources);
-			} else {
-				List<SourceFile> dirSources = mapDirToSources.get(directory);
-				dirSources.add(source);
-			}
-		}
-		return mapDirToSources;
-	}
+			// maybe need to leave directory
+			while (!target.startsWith(prefix))
+				prefix = cdUp(prefix);
 
-	private void writeFilesInsideDirectory(List<SourceFile> sources,
-			String directory) throws Exception {
-		String[] directoryList = null;
-		if (!directory.equals("")) {
-			directoryList = directory.split("/");
+			// maybe need to enter directory
+			int slash = target.lastIndexOf('/');
+			String directory = target.substring(0, slash + 1);
+			cdInto(directory.substring(prefix.length()));
+			prefix = directory;
 
-			//Go into the directory where the files should lie
-			for (String name : directoryList) {
-				String command = "D0755 0 " + name + "\n";
-				out.write(command.getBytes());
-				out.flush();
-				if (checkAck(in) != 0) {
-					throw new Exception("Cannot enter directory " + name);
-				}
-			}
-		}
-
-		//Write the file, one by one
-		for (SourceFile source : sources) {
 			currentUpload = source;
 			notifyListenersUpdate();
 
 			// notification that file is about to be written
-			String command = source.getPermissions() + " " + source.getFilesize() + " " +
-				source.getFilenameToWrite() + "\n";
+			String command = source.getPermissions() + " "
+				+ source.getFilesize() + " "
+				+ target.substring(slash + 1) + "\n";
 			out.write(command.getBytes());
 			out.flush();
 			checkAckUploadError();
 
 			// send contents of file
-			FileInputStream input = new FileInputStream(source.getAbsolutePath());
-			byte[] buf = new byte[16384];
+			InputStream input = source.getInputStream();
 			for (;;) {
 				int len = input.read(buf, 0, buf.length);
 				if (len <= 0)
 					break;
 				out.write(buf, 0, len);
 				uploadedBytes += len;
-				notifyListenersUpdate(); //update listeners every data upload
+				notifyListenersUpdate();
 			}
 			input.close();
 
@@ -247,21 +196,39 @@ public class FileUploader {
 			checkAckUploadError();
 			notifyListenersFileComplete();
 		}
+		while (!prefix.equals(""))
+			prefix = cdUp(prefix);
+		notifyListenersCompletionAll();
+	}
 
-		//Exiting the directories (Go back to home) after writing the files
-		if (directoryList != null) {
-			for (int i = 0; i < directoryList.length; i++) {
-				out.write("E\n".getBytes());
-				out.flush();
-				checkAckUploadError();
-			}
+	private String cdUp(String directory) throws IOException {
+		out.write("E\n".getBytes());
+		out.flush();
+		checkAckUploadError();
+		return directory.substring(0, directory.lastIndexOf('/') + 1);
+	}
+
+	private void cdInto(String directory) throws IOException {
+		while (!directory.equals("")) {
+			int slash = directory.indexOf('/');
+			String name = (slash < 0 ?  directory :
+					directory.substring(0, slash));
+			String command = "D0755 0 " + name + "\n";
+			out.write(command.getBytes());
+			out.flush();
+			if (checkAck(in) != 0)
+				throw new IOException("Cannot enter directory " + name);
+			if (slash < 0)
+				return;
+			directory = directory.substring(slash + 1);
 		}
 	}
 
-	private void checkAckUploadError() throws Exception {
+
+	private void checkAckUploadError() throws IOException {
 		if (checkAck(in) != 0)
-			throw new Exception("checkAck failed during uploading " +
-				currentUpload.getDirectory() + "/" + currentUpload.getFilenameToWrite());
+			throw new IOException("Failed to upload " +
+				currentUpload.getFilename());
 	}
 
 	public void disconnectSession() throws IOException {
@@ -337,10 +304,9 @@ public class FileUploader {
 	}
 
 	public interface SourceFile {
-		public String getAbsolutePath();
-		public String getDirectory();
-		public String getFilenameToWrite();
+		public String getFilename();
 		public String getPermissions();
 		public long getFilesize();
+		public InputStream getInputStream() throws IOException;
 	}
 }
