@@ -157,8 +157,11 @@ public class FileUploader {
 			String target = source.getFilename();
 
 			// maybe need to leave directory
-			while (!target.startsWith(prefix))
+			while (!target.startsWith(prefix)) {
+				System.out.println("line 161");
+				System.out.println("cdUp(" + prefix + ")");
 				prefix = cdUp(prefix);
+			}
 
 			// maybe need to enter directory
 			int slash = target.lastIndexOf('/');
@@ -196,8 +199,11 @@ public class FileUploader {
 			checkAckUploadError();
 			notifyListenersFileComplete();
 		}
-		while (!prefix.equals(""))
+		while (!prefix.equals("")) {
+			System.out.println("line 203");
+			System.out.println("cdUp(" + prefix + ")");
 			prefix = cdUp(prefix);
+		}
 		notifyListenersCompletionAll();
 	}
 
@@ -205,6 +211,7 @@ public class FileUploader {
 		out.write("E\n".getBytes());
 		out.flush();
 		checkAckUploadError();
+		System.out.println("returns " + directory.substring(0, directory.lastIndexOf('/') + 1));
 		return directory.substring(0, directory.lastIndexOf('/') + 1);
 	}
 
@@ -214,6 +221,7 @@ public class FileUploader {
 			String name = (slash < 0 ?  directory :
 					directory.substring(0, slash));
 			String command = "D0755 0 " + name + "\n";
+			System.out.println(command);
 			out.write(command.getBytes());
 			out.flush();
 			if (checkAck(in) != 0)
