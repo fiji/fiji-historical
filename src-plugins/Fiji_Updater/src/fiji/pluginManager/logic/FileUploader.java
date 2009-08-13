@@ -158,7 +158,7 @@ public class FileUploader {
 
 			// maybe need to leave directory
 			while (!target.startsWith(prefix)) {
-				System.out.println("line 161");
+				System.out.println(target + " does not start with " + prefix);
 				System.out.println("cdUp(" + prefix + ")");
 				prefix = cdUp(prefix);
 			}
@@ -200,7 +200,7 @@ public class FileUploader {
 			notifyListenersFileComplete();
 		}
 		while (!prefix.equals("")) {
-			System.out.println("line 203");
+			System.out.println(prefix + " is not empty.");
 			System.out.println("cdUp(" + prefix + ")");
 			prefix = cdUp(prefix);
 		}
@@ -211,8 +211,9 @@ public class FileUploader {
 		out.write("E\n".getBytes());
 		out.flush();
 		checkAckUploadError();
-		System.out.println("returns " + directory.substring(0, directory.lastIndexOf('/') + 1));
-		return directory.substring(0, directory.lastIndexOf('/') + 1);
+		int slash = directory.lastIndexOf('/', directory.length() - 1);
+		System.out.println("returns " + directory.substring(0, slash + 1));
+		return directory.substring(0, slash + 1);
 	}
 
 	private void cdInto(String directory) throws IOException {
