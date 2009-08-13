@@ -1,6 +1,6 @@
 package fiji.pluginManager.logic;
 
-import fiji.pluginManager.logic.PluginObject.CurrentStatus;
+import fiji.pluginManager.logic.PluginObject.Status;
 
 import fiji.pluginManager.utilities.PluginData;
 
@@ -157,13 +157,13 @@ public class PluginListBuilder extends PluginDataObservable {
 
 			if (digest != null && remoteDigest.equals(digest)) { //if latest version installed
 				myPlugin = new PluginObject(pluginName, digest, date,
-						CurrentStatus.INSTALLED, true, true);
+						Status.INSTALLED, true, true);
 			} else if (digest == null) { //if new file (Not installed yet)
 				myPlugin = new PluginObject(pluginName, remoteDigest, remoteDate,
-						CurrentStatus.UNINSTALLED, true, true);
+						Status.NOT_INSTALLED, true, true);
 			} else { //if its installed but can be updated
 				myPlugin = new PluginObject(pluginName, digest, date,
-						CurrentStatus.UPDATEABLE, true, isRecorded);
+						Status.UPDATEABLE, true, isRecorded);
 				//set latest update details
 				myPlugin.setUpdateDetails(remoteDigest, remoteDate);
 			}
@@ -187,7 +187,7 @@ public class PluginListBuilder extends PluginDataObservable {
 				String date = util.getTimestampFromFile(name);
 				//implies third-party plugin, no description nor dependency information available
 				PluginObject myPlugin = new PluginObject(name, digest, date,
-						CurrentStatus.INSTALLED, false, false);
+						Status.INSTALLED, false, false);
 				myPlugin.setFilesize(util.getFilesizeFromFile(util.prefix(myPlugin.getFilename())));
 				pluginCollection.add(myPlugin);
 			}

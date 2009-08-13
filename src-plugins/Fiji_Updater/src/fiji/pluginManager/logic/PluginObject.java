@@ -2,7 +2,9 @@ package fiji.pluginManager.logic;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PluginObject {
 	private String strFilename; //Main identifier
@@ -19,19 +21,63 @@ public class PluginObject {
 	private boolean recorded; //its md5 sum in records or not
 	private boolean readOnly; //physical file (local side) read-only?
 
-	//Current physical state of plugin
-	public static enum CurrentStatus { UNINSTALLED, INSTALLED, UPDATEABLE };
-	private CurrentStatus status = CurrentStatus.UNINSTALLED;
+	public static enum Action {
+		NOT_INSTALLED ("Not installed"),
+		INSTALLED ("Installed"),
+		REMOVE ("Remove it"),
+		INSTALL ("Install it"),
+		UPDATE ("Update it"),
+		UPLOAD ("Upload it");
 
-	//Action that user indicates to take
-	public static enum Action { NONE, UNINSTALL, INSTALL, UPDATE, UPLOAD };
-	private Action action = Action.NONE;
+		private String label;
+		Action(String label) {
+			this.label = label;
+		}
+		public String getLabel() {
+			return label;
+		}
+	};
+
+	public static enum Status {
+		NOT_INSTALLED (new Action[] { Action.NOT_INSTALLED, Action.INSTALL }),
+		INSTALLED (new Action[] { Action.INSTALLED, Action.REMOVE }),
+		UPDATEABLE (new Action[] { Action.INSTALLED, Action.REMOVE, Action.UPDATE });
+
+		private String[] labels, develLabels;
+		Status(Action[] actions) {
+			labels = new String[actions.length];
+			for (int i = 0; i < labels.length; i++)
+				labels[i] = actions[i].getLabel();
+
+			develLabels = new String[actions.length + 1];
+			System.arraycopy(labels, 0,
+					develLabels, 0, labels.length);
+			develLabels[labels.length] = Action.UPLOAD.getLabel();
+		}
+
+		public String[] getActionLabels(boolean isDeveloper) {
+			return isDeveloper ? develLabels : labels;
+		}
+	};
+	private Status status;
+
+	private Action action;
+
+	private static Map<String, Action> actionMap;
+	static {
+		actionMap = new HashMap<String, Action>();
+		for (Action action : Action.values())
+			actionMap.put(action.getLabel(), action);
+	}
+	public static Action getAction(String label) {
+		return actionMap.get(label);
+	}
 
 	//State to indicate whether Plugin removed/downloaded successfully
 	public static enum ChangeStatus { NONE, SUCCESS, FAIL };
-	private ChangeStatus changedStatus = ChangeStatus.NONE; //default
+	private ChangeStatus changedStatus = ChangeStatus.NONE;
 
-	public PluginObject(String strFilename, String md5Sum, String timestamp, CurrentStatus status,
+	public PluginObject(String strFilename, String md5Sum, String timestamp, Status status,
 			boolean fiji, boolean recorded) {
 		this.strFilename = strFilename;
 		this.md5Sum = md5Sum;
@@ -40,22 +86,16 @@ public class PluginObject {
 		this.fiji = fiji;
 		this.recorded = recorded;
 		pluginDetails = new PluginDetails(); //default: no information, empty
+		setNoAction();
 	}
 
 	public void setUpdateDetails(String newMd5Sum, String newTimestamp) {
-		setStatus(CurrentStatus.UPDATEABLE); //set status, if not done so already
+		status = Status.UPDATEABLE; //set status, if not done so already
 		this.newMd5Sum = newMd5Sum;
 		this.newTimestamp = newTimestamp;
 	}
 
-	private void setStatus(CurrentStatus status) {
-		this.status = status;
-	}
-
-	//set description details
 	public void setPluginDetails(PluginDetails pluginDetails) {
-		if (pluginDetails == null)
-			throw new Error("Plugin " + strFilename + " cannot have null PluginDetails object.");
 		this.pluginDetails = pluginDetails;
 	}
 
@@ -79,51 +119,36 @@ public class PluginObject {
 		this.filesize = filesize;
 	}
 
-	public void setActionToInstall() {
-		if (isInstallable())
-			setAction(Action.INSTALL);
-		else
-			throw new Error("Plugin " + strFilename + " cannot install as its current state is not UNINSTALLED.");
+	public void setChangeStatus(ChangeStatus status) {
+		this.changedStatus = status;
 	}
 
-	public void setActionToRemove() {
-		if (isRemovable())
-			setAction(Action.UNINSTALL);
-		else
-			throw new Error("Plugin " + strFilename + " cannot remove as its current state was never installed.");
+	public void success() {
+		setChangeStatus(ChangeStatus.SUCCESS);
 	}
 
-	public void setActionToUpdate() {
-		if (isUpdateable())
-			setAction(Action.UPDATE);
-		else
-			throw new Error("Plugin " + strFilename + " cannot update as its current state is not UPDATEABLE.");
+	public void fail() {
+		setChangeStatus(ChangeStatus.FAIL);
 	}
 
-	public void setActionToUpload() {
-		setAction(Action.UPLOAD);
+	public void setNoAction() {
+		action = (status == Status.NOT_INSTALLED ?
+				Action.NOT_INSTALLED : Action.INSTALLED);
 	}
 
-	public void setActionNone() {
-		setAction(Action.NONE);
-	}
-
-	public void resetChangeStatuses() {
-		this.changedStatus = ChangeStatus.NONE;
-	}
-
-	public void setChangeStatusToSuccess() { //Indicates successful download/uninstall
-		this.changedStatus = ChangeStatus.SUCCESS;
-	}
-
-	public void setChangeStatusToFail() {
-		this.changedStatus = ChangeStatus.FAIL;
-	}
-
-	private void setAction(Action action) {
+	public void setAction(Action action) {
+		if ((action == Action.REMOVE && !isRemovable()) ||
+				(action == Action.NOT_INSTALLED &&
+				 status != Status.NOT_INSTALLED) ||
+				(action == Action.INSTALLED &&
+				 status == Status.NOT_INSTALLED) ||
+				(action == Action.UPDATE && !isUpdateable()) ||
+				(action == Action.INSTALL && !isInstallable()))
+			throw new Error("Invalid action requested for plugin "
+					+ strFilename + "(" + action + ", " + status + ")");
 		this.action = action;
 	}
-	
+
 	public void setIsReadOnly(boolean readOnly) {
 		this.readOnly = readOnly;
 	}
@@ -160,7 +185,7 @@ public class PluginObject {
 		return dependency;
 	}
 
-	public CurrentStatus getStatus() {
+	public Status getStatus() {
 		return status;
 	}
 
@@ -169,39 +194,40 @@ public class PluginObject {
 	}
 
 	public boolean isInstallable() {
-		return (status == CurrentStatus.UNINSTALLED);
+		return status == Status.NOT_INSTALLED;
 	}
 
 	public boolean isUpdateable() {
-		return (status == CurrentStatus.UPDATEABLE);
+		return status == Status.UPDATEABLE;
 	}
 
 	public boolean isRemovableOnly() {
-		return (status == CurrentStatus.INSTALLED);
+		return status == Status.INSTALLED;
 	}
 
 	public boolean isRemovable() {
-		return (status == CurrentStatus.INSTALLED || status == CurrentStatus.UPDATEABLE);
+		return status == Status.INSTALLED || status == Status.UPDATEABLE;
 	}
 
 	public boolean actionSpecified() {
-		return (action != Action.NONE);
+		return action != Action.NOT_INSTALLED &&
+			action != Action.INSTALLED;
 	}
 
 	public boolean toUpdate() {
-		return (isUpdateable() && action == Action.UPDATE);
+		return isUpdateable() && action == Action.UPDATE;
 	}
 
 	public boolean toRemove() {
-		return (isRemovable() && action == Action.UNINSTALL);
+		return isRemovable() && action == Action.REMOVE;
 	}
 
 	public boolean toInstall() {
-		return (isInstallable() && action == Action.INSTALL);
+		return isInstallable() && action == Action.INSTALL;
 	}
 
 	public boolean toUpload() {
-		return (action == Action.UPLOAD);
+		return action == Action.UPLOAD;
 	}
 
 	public boolean isFijiPlugin() {
@@ -217,15 +243,14 @@ public class PluginObject {
 	}
 
 	public boolean changeSucceeded() {
-		return (changedStatus == ChangeStatus.SUCCESS); //managed to download/uninstall
+		return changedStatus == ChangeStatus.SUCCESS;
 	}
 
 	public boolean changeFailed() {
-		return (changedStatus == ChangeStatus.FAIL);
+		return changedStatus == ChangeStatus.FAIL;
 	}
 
 	public boolean changeNotDone() {
-		return (changedStatus == ChangeStatus.NONE);
+		return changedStatus == ChangeStatus.NONE;
 	}
-
 }

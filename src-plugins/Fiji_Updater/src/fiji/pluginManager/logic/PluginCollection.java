@@ -3,7 +3,7 @@ import java.util.ArrayList;
 
 public class PluginCollection extends ArrayList<PluginObject> {
 	private interface Filter {
-		boolean matchesFilter(PluginObject plugin);
+		boolean matches(PluginObject plugin);
 	}
 
 	public PluginCollection getMatchingText(String searchText) {
@@ -18,7 +18,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 
 		//determining whether search text fits description/title
-		public boolean matchesFilter(PluginObject plugin) {
+		public boolean matches(PluginObject plugin) {
 			String lcFilename = plugin.getFilename().trim().toLowerCase();
 			if (lcFilename.indexOf(text) >= 0)
 				return true;
@@ -32,9 +32,9 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	//take in only plugins that are neither installed nor told to do so
 	public PluginCollection getUnlistedForInstall() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				boolean actionNone = (plugin.isInstallable() && !plugin.actionSpecified());
-				return (plugin.toRemove() || actionNone || plugin.toUpload());
+				return plugin.toRemove() || actionNone || plugin.toUpload();
 			}
 		});
 	}
@@ -42,9 +42,9 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	//take in only update-able plugins not instructed to update
 	public PluginCollection getUnlistedForUpdate() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				boolean actionNoUpdate = plugin.isUpdateable() && !plugin.toUpdate();
-				return (actionNoUpdate || plugin.toUpload());
+				return actionNoUpdate || plugin.toUpload();
 			}
 		});
 	}
@@ -52,16 +52,16 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	//take in only plugins that are not instructed to uninstall
 	public PluginCollection getUnlistedForUninstall() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				boolean actionNotRemove = plugin.isRemovable() && !plugin.toRemove();
-				return (actionNotRemove || plugin.toInstall() || plugin.toUpload());
+				return actionNotRemove || plugin.toInstall() || plugin.toUpload();
 			}
 		});
 	}
 
 	public PluginCollection getActionsSpecified() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.actionSpecified();
 			}
 		});
@@ -69,15 +69,15 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getNonUploadActions() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
-				return (plugin.actionSpecified() && !plugin.toUpload());
+			public boolean matches(PluginObject plugin) {
+				return plugin.actionSpecified() && !plugin.toUpload();
 			}
 		});
 	}
 
 	public PluginCollection getToUpload() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.toUpload();
 			}
 		});
@@ -85,7 +85,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getToUninstall() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.toRemove();
 			}
 		});
@@ -93,7 +93,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getToUpdate() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.toUpdate();
 			}
 		});
@@ -101,7 +101,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getToInstall() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.toInstall();
 			}
 		});
@@ -109,7 +109,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getToAddOrUpdate() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return (plugin.toInstall() || plugin.toUpdate());
 			}
 		});
@@ -117,7 +117,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getStatusesInstalled() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.isRemovable();
 			}
 		});
@@ -125,7 +125,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getStatusesUninstalled() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.isInstallable();
 			}
 		});
@@ -133,7 +133,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getStatusesFullyUpdated() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.isRemovableOnly();
 			}
 		});
@@ -141,7 +141,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getStatusesUpdateable() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.isUpdateable();
 			}
 		});
@@ -149,7 +149,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getFijiPlugins() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.isFijiPlugin();
 			}
 		});
@@ -157,7 +157,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getNonFiji() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return !plugin.isFijiPlugin();
 			}
 		});
@@ -165,7 +165,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getChangeSucceeded() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.changeSucceeded();
 			}
 		});
@@ -173,7 +173,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getChangeFailed() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.changeFailed();
 			}
 		});
@@ -181,7 +181,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getNoChangeYet() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.changeNotDone();
 			}
 		});
@@ -189,7 +189,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getNoSuccessfulChanges() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return !plugin.changeSucceeded();
 			}
 		});
@@ -197,74 +197,72 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection getSuccessfulDownloads() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
-				return ((plugin.toInstall() || plugin.toUpdate()) && plugin.changeSucceeded());
+			public boolean matches(PluginObject plugin) {
+				return (plugin.toInstall() || plugin.toUpdate()) && plugin.changeSucceeded();
 			}
 		});
 	}
 
 	public PluginCollection getFailedDownloads() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
-				return ((plugin.toInstall() || plugin.toUpdate()) && plugin.changeFailed());
+			public boolean matches(PluginObject plugin) {
+				return (plugin.toInstall() || plugin.toUpdate()) && plugin.changeFailed();
 			}
 		});
 	}
 
 	public PluginCollection getSuccessfulRemoves() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
-				return (plugin.toRemove() && plugin.changeSucceeded());
+			public boolean matches(PluginObject plugin) {
+				return plugin.toRemove() && plugin.changeSucceeded();
 			}
 		});
 	}
 
 	public PluginCollection getFailedRemovals() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
-				return (plugin.toRemove() && plugin.changeFailed());
+			public boolean matches(PluginObject plugin) {
+				return plugin.toRemove() && plugin.changeFailed();
 			}
 		});
 	}
 
 	public PluginCollection getReadOnly() {
 		return getList(new Filter() {
-			public boolean matchesFilter(PluginObject plugin) {
+			public boolean matches(PluginObject plugin) {
 				return plugin.isReadOnly();
 			}
 		});
 	}
 
 	private PluginCollection getList(Filter filter) {
-		PluginCollection myList = new PluginCollection();
+		PluginCollection list = new PluginCollection();
 		for (PluginObject plugin : this)
-			if (filter.matchesFilter(plugin)) myList.add(plugin);
-		return myList;
+			if (filter.matches(plugin))
+				list.add(plugin);
+		return list;
 	}
 
 	public PluginObject getPlugin(String filename) { //filename is unique identifier
 		for (PluginObject plugin : this) {
-			if (plugin.getFilename().equals(filename)) return plugin;
+			if (plugin.getFilename().equals(filename))
+				return plugin;
 		}
 		return null;
 	}
 
 	public PluginObject getPluginFromTimestamp(String filename, String timestamp) {
-		for (PluginObject plugin : this) {
-			if (plugin.getFilename().equals(filename) && plugin.getTimestamp().equals(timestamp)) {
+		for (PluginObject plugin : this)
+			if (plugin.getFilename().equals(filename) && plugin.getTimestamp().equals(timestamp))
 				return plugin;
-			}
-		}
 		return null;
 	}
 
 	public PluginObject getPluginFromDigest(String filename, String digest) {
-		for (PluginObject plugin : this) {
+		for (PluginObject plugin : this)
 			if (plugin.getFilename().equals(filename) &&
-					plugin.getmd5Sum().equals(digest)) {
+					plugin.getmd5Sum().equals(digest))
 				return plugin;
-			}
-		}
 		return null;
 	}
 
@@ -278,37 +276,32 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public void resetChangeStatuses() {
-		for (PluginObject plugin : this) {
-			plugin.resetChangeStatuses();
-		}
+		for (PluginObject plugin : this)
+			plugin.setChangeStatus(PluginObject.ChangeStatus.NONE);
 	}
 
 	//forces action for every plugin in the list to "install"
 	public void setToInstall() {
-		for (PluginObject plugin : this) {
+		for (PluginObject plugin : this)
 			if (plugin.isRemovableOnly() || plugin.isUpdateable())
-				plugin.setActionNone();
-			else if (plugin.isInstallable())
-				plugin.setActionToInstall();
-		}
+				plugin.setNoAction();
+			else
+				plugin.setAction(PluginObject.Action.INSTALL);
 	}
 
 	//forces action for every update-able plugin in the list to be "update"
 	public void setToUpdate() {
 		for (PluginObject plugin : this)
 			if (plugin.isUpdateable())
-				plugin.setActionToUpdate();
+				plugin.setAction(PluginObject.Action.UPDATE);
 	}
 
 	//forces action for every plugin in the list to be "uninstall"
 	public void setToRemove() {
-		for (PluginObject plugin : this) {
-			if (plugin.isRemovableOnly())
-				plugin.setActionToRemove();
-			else if (plugin.isInstallable())
-				plugin.setActionNone();
-			else if (plugin.isUpdateable())
-				plugin.setActionToRemove();
-		}
+		for (PluginObject plugin : this)
+			if (plugin.isInstallable())
+				plugin.setNoAction();
+			else if (plugin.isRemovableOnly() || plugin.isUpdateable())
+				plugin.setAction(PluginObject.Action.REMOVE);
 	}
 }

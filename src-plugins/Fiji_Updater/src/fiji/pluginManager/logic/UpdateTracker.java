@@ -56,7 +56,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 				//checking status of existing file
 				File file = new File(prefix(filename));
 				if (!file.canWrite()) //if unable to override existing file
-					plugin.setChangeStatusToFail();
+					plugin.fail();
 				else {
 					if (!isFijiLauncher(filename)) {
 						//If it's a normal plugin, write a 0-byte file
@@ -67,10 +67,10 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 						//If it's a launcher (?!), try removing
 						file.renameTo(new File(prefix(filename + ".old")));
 					}
-					plugin.setChangeStatusToSuccess();
+					plugin.success();
 				}
 			} catch (IOException e) {
-				plugin.setChangeStatusToFail();
+				plugin.fail();
 			}
 		}
 	}
@@ -141,7 +141,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 		try {
 			new File(src.getDestination()).delete();
 		} catch (Exception e1) { }
-		src.getPlugin().setChangeStatusToFail();
+		src.getPlugin().fail();
 		System.out.println("Could not update " + src.getPlugin().getFilename() +
 				": " + e.getLocalizedMessage());
 	}
@@ -179,7 +179,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 				Runtime.getRuntime().exec(new String[] {
 					"chmod", "0755", source.getDestination()});
 
-			currentlyDownloading.setChangeStatusToSuccess();
+			currentlyDownloading.success();
 			System.out.println(currentlyDownloading.getFilename() + " finished download.");
 			currentlyDownloading = null;
 
