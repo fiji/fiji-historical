@@ -1,27 +1,18 @@
 package fiji.pluginManager.logic;
-
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.HostKey;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-
 import ij.IJ;
-
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 import java.net.URL;
 import java.net.URLConnection;
-
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 /*
  * This FileUploader is highly specialized to upload plugins and XML information over to
@@ -158,8 +149,6 @@ public class FileUploader {
 
 			// maybe need to leave directory
 			while (!target.startsWith(prefix)) {
-				System.out.println(target + " does not start with " + prefix);
-				System.out.println("cdUp(" + prefix + ")");
 				prefix = cdUp(prefix);
 			}
 
@@ -200,8 +189,6 @@ public class FileUploader {
 			notifyListenersFileComplete();
 		}
 		while (!prefix.equals("")) {
-			System.out.println(prefix + " is not empty.");
-			System.out.println("cdUp(" + prefix + ")");
 			prefix = cdUp(prefix);
 		}
 		notifyListenersCompletionAll();
@@ -211,8 +198,7 @@ public class FileUploader {
 		out.write("E\n".getBytes());
 		out.flush();
 		checkAckUploadError();
-		int slash = directory.lastIndexOf('/', directory.length() - 1);
-		System.out.println("returns " + directory.substring(0, slash + 1));
+		int slash = directory.lastIndexOf('/', directory.length() - 2);
 		return directory.substring(0, slash + 1);
 	}
 
@@ -222,7 +208,6 @@ public class FileUploader {
 			String name = (slash < 0 ?  directory :
 					directory.substring(0, slash));
 			String command = "D0755 0 " + name + "\n";
-			System.out.println(command);
 			out.write(command.getBytes());
 			out.flush();
 			if (checkAck(in) != 0)
@@ -232,7 +217,6 @@ public class FileUploader {
 			directory = directory.substring(slash + 1);
 		}
 	}
-
 
 	private void checkAckUploadError() throws IOException {
 		if (checkAck(in) != 0)
