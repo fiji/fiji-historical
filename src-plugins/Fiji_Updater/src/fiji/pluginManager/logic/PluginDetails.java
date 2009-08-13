@@ -10,10 +10,8 @@ public class PluginDetails {
 	private List<String> links;
 	private List<String> authors;
 
-	public PluginDetails() { //default
-		description = null;
-		links = null;
-		authors = null;
+	public PluginDetails() {
+		this(null, null, null);
 	}
 
 	public PluginDetails(String description, List<String> links, List<String> authors) {
@@ -53,23 +51,24 @@ public class PluginDetails {
 			return null;
 		List<String> list = new ArrayList<String>();
 		for (String value : array) {
-			value = value.replace("\r", "").replace("\n", "");
-			if (!value.trim().isEmpty())
-				list.add(value.trim());
+			value = value.replace("\r", "").replace("\n", "").trim();
+			if (!value.isEmpty())
+				list.add(value);
 		}
 		return list;
 	}
 
 	public boolean matchesDetails(String searchText) {
-		String lcText = searchText.trim().toLowerCase();
+		// TODO: move this to the caller, otherwise it is performed once for _every_ plugin!
+		String needle = searchText.toLowerCase().trim();
 		if (links != null)
 			for (String link : links)
-				if (link.trim().toLowerCase().indexOf(lcText) >= 0) return true;
+				if (link.toLowerCase().indexOf(needle) >= 0) return true;
 		if (authors != null)
 			for (String author : authors)
-				if (author.trim().toLowerCase().indexOf(lcText) >= 0) return true;
+				if (author.toLowerCase().indexOf(needle) >= 0) return true;
 		if (description != null &&
-				description.trim().toLowerCase().indexOf(lcText) >= 0)
+				description.toLowerCase().indexOf(needle) >= 0)
 			return true;
 		return false;
 	}
