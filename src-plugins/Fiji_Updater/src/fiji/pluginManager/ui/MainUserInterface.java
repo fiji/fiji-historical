@@ -8,16 +8,13 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
-import javax.swing.SwingConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
@@ -45,7 +42,6 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private JTextPane txtPluginDetails;
 	private PluginObject currentPlugin;
 	private JButton btnStart;
-	private JButton btnOK;
 
 	//For developers
 	private JButton btnUpload;
@@ -77,6 +73,8 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 		//======== Start: LEFT PANEL ========
+		JPanel leftPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
+
 		//Create text search
 		txtSearch = new JTextField();
 		txtSearch.getDocument().addDocumentListener(new DocumentListener() {
@@ -93,7 +91,8 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 				changeListingListener();
 			}
 		});
-		JPanel searchPanel = createLabelledComponent("Search:", txtSearch);
+		SwingTools.createLabelledComponent("Search:", txtSearch, leftPanel);
+		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
 
 		//Create combo box of options
 		arrViewingOptions = new String[] {
@@ -112,10 +111,12 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 				changeListingListener();
 			}
 		});
-		JPanel comboBoxPanel = createLabelledComponent("View Options:", comboBoxViewingOptions);
+		SwingTools.createLabelledComponent("View Options:", comboBoxViewingOptions, leftPanel);
+		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
 
 		//Create labels to annotate table
-		JPanel lblTablePanel = SwingTools.createLabelPanel("Please choose what you want to install/uninstall:");
+		SwingTools.createLabelPanel("Please choose what you want to install/uninstall:", leftPanel);
+		leftPanel.add(Box.createRigidArea(new Dimension(0,5)));
 
 		//Label text for plugin summaries
 		lblPluginSummary = new JLabel();
@@ -128,44 +129,32 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());
 
-		JPanel leftPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
-		leftPanel.add(searchPanel);
-		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
-		leftPanel.add(comboBoxPanel);
-		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
-		leftPanel.add(lblTablePanel);
-		leftPanel.add(Box.createRigidArea(new Dimension(0,5)));
 		leftPanel.add(pluginListScrollpane);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,5)));
 		leftPanel.add(lblSummaryPanel);
 		//======== End: LEFT PANEL ========
 
 		//======== Start: RIGHT PANEL ========
-		//Create textpane to hold the information and its scrollpane
-		txtPluginDetails = new TextPaneDisplay();
-		JScrollPane txtScrollpane = SwingTools.getTextScrollPane(txtPluginDetails, 350, 315);
-
-		//Tabbed pane of plugin details to hold the textpane (w/ scrollpane)
-		JTabbedPane tabbedPane = SwingTools.getSingleTabbedPane(txtScrollpane,
-				"Details", "Individual Plugin information", 350, 315);
-
 		JPanel rightPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
+
 		rightPanel.add(Box.createVerticalGlue());
 		if (pluginManager.isDeveloper()) {
 			JPanel editButtonPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
-			btnEditDetails = SwingTools.createButton("Edit Details", "Edit selected plugin's details");
-			btnEditDetails.addActionListener(new ActionListener() {
-
+			editButtonPanel.add(Box.createHorizontalGlue());
+			btnEditDetails = SwingTools.createButton("Edit Details",
+					"Edit selected plugin's details", new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					clickToEditDescriptions();
 				}
-			});
+			}, editButtonPanel);
 			btnEditDetails.setEnabled(false);
-			editButtonPanel.add(Box.createHorizontalGlue());
-			editButtonPanel.add(btnEditDetails);
 			rightPanel.add(editButtonPanel);
 		}
-		rightPanel.add(tabbedPane);
+
+		//Create textpane to hold the information and its container tabbed pane
+		txtPluginDetails = new TextPaneDisplay();
+		SwingTools.getSingleTabbedPane(txtPluginDetails,
+				"Details", "Individual Plugin information", 350, 315, rightPanel);
 		rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
 		//======== End: RIGHT PANEL ========
 
@@ -175,48 +164,40 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		topPanel.add(Box.createRigidArea(new Dimension(15,0)));
 		topPanel.add(rightPanel);
 		topPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 5, 15));
-
-		//Button to start actions
-		btnStart = SwingTools.createButton("Apply changes", "Start installing/uninstalling plugins");
-		btnStart.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent e) {
-				clickToBeginOperations();
-			}
-		});
-		btnStart.setEnabled(false);
-
-		//includes button to upload to server if is a Developer using
-		if (pluginManager.isDeveloper()) {
-			btnUpload = SwingTools.createButton("Upload to server", "Upload selected plugins to server");
-			btnUpload.addActionListener(new ActionListener() {
-
-				public void actionPerformed(ActionEvent e) {
-					clickToUploadRecords();
-				}
-			});
-		}
-
-		//Button to quit Plugin Manager
-		btnOK = SwingTools.createButton("Cancel", "Exit Plugin Manager without applying changes");
-		btnOK.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent e) {
-				clickToQuitPluginManager();
-			}
-		});
 		//======== End: TOP PANEL (LEFT + RIGHT) ========
 
 		//======== Start: BOTTOM PANEL ========
 		JPanel bottomPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
-		bottomPanel.add(btnStart);
+		bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
+
+		//Button to start actions
+		btnStart = SwingTools.createButton("Apply changes",
+				"Start installing/uninstalling plugins", new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				clickToBeginOperations();
+			}
+		}, bottomPanel);
+		btnStart.setEnabled(false);
+
+		//includes button to upload to server if is a Developer using
 		if (pluginManager.isDeveloper()) {
 			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-			bottomPanel.add(btnUpload);
+			btnUpload = SwingTools.createButton("Upload to server",
+					"Upload selected plugins to server", new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					clickToUploadRecords();
+				}
+			}, bottomPanel);
 		}
 		bottomPanel.add(Box.createHorizontalGlue());
-		bottomPanel.add(btnOK);
-		bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
+
+		//Button to quit Plugin Manager
+		SwingTools.createButton("Cancel",
+				"Exit Plugin Manager without applying changes", new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				clickToQuitPluginManager();
+			}
+		}, bottomPanel);
 		//======== End: BOTTOM PANEL ========
 
 		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
@@ -225,15 +206,6 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 		//initial selection
 		table.changeSelection(0, 0, false, false);
-	}
-
-	private JPanel createLabelledComponent(String text, JComponent component) {
-		JPanel panel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
-		JLabel label = new JLabel(text, SwingConstants.LEFT);
-		panel.add(label);
-		panel.add(Box.createRigidArea(new Dimension(10,0)));
-		panel.add(component);
-		return panel;
 	}
 
 	//Whenever search text or ComboBox has been changed

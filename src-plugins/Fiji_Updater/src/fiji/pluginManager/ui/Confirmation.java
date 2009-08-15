@@ -1,5 +1,4 @@
 package fiji.pluginManager.ui;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -17,7 +16,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
 import fiji.pluginManager.logic.DependencyBuilder;
 import fiji.pluginManager.logic.PluginCollection;
@@ -30,7 +28,6 @@ public class Confirmation extends JFrame {
 	private JTextPane txtConflictsList;
 	private JLabel lblStatus;
 	private JButton btnDownload;
-	private JButton btnCancel;
 	private String msgConflictExists = "Conflicts exist. Please return to resolve them.";
 	private String msgConflictNone = "No conflicts found. You may proceed.";
 	private DependencyBuilder dependencyBuilder;
@@ -45,64 +42,54 @@ public class Confirmation extends JFrame {
 		setTitle("Dependency and Conflict check");
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-		/* Create textpane to hold the information and its scrollpane */
-		txtPluginList = new TextPaneDisplay();
-		JScrollPane txtScrollpane = SwingTools.getTextScrollPane(txtPluginList, 400, 260);
-
-		/* Tabbed pane of plugin list to hold the textpane (w/ scrollpane) */
-		JTabbedPane tabbedPane = SwingTools.getSingleTabbedPane(txtScrollpane,
-				"Selected Plugins", "Your selection of plugins", 400, 260);
-
-		/* Create textpane to hold the information and its scrollpane */
-		txtAdditionalList = new TextPaneDisplay();
-		JScrollPane txtScrollpane2 = SwingTools.getTextScrollPane(txtAdditionalList, 260, 260);
-
-		/* Tabbed pane of additional plugin list to hold the textpane (w/ scrollpane) */
-		JTabbedPane tabbedPaneAdditional = SwingTools.getSingleTabbedPane(txtScrollpane2,
-				"Additional Changes", "Additional installations or removals to be made due to dependencies",
-				260, 260);
-
+		/* Create a panel to hold the text panes of plugin info */
 		JPanel listsPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
-		listsPanel.add(tabbedPane);
-		listsPanel.add(Box.createRigidArea(new Dimension(15,0)));
-		listsPanel.add(tabbedPaneAdditional);
 		listsPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+		/* Create textpane to hold the information and its container tabbed pane */
+		txtPluginList = new TextPaneDisplay();
+		SwingTools.getSingleTabbedPane(txtPluginList,
+				"Selected Plugins", "Your selection of plugins", 400, 260, listsPanel);
+
+		listsPanel.add(Box.createRigidArea(new Dimension(15,0)));
+
+		/* Create textpane to hold the information and its container tabbed pane */
+		txtAdditionalList = new TextPaneDisplay();
+		SwingTools.getSingleTabbedPane(txtAdditionalList,
+				"Additional Changes", "Additional installations or removals to be made due to dependencies",
+				260, 260, listsPanel);
 
 		/* Create textpane to hold the information and its scrollpane */
 		txtConflictsList = new TextPaneDisplay();
-		JScrollPane txtScrollpane3 = SwingTools.getTextScrollPane(txtConflictsList, 675, 120);
+		JScrollPane txtScrollpane3 = SwingTools.getTextScrollPane(txtConflictsList, 675, 120, null);
 		JPanel conflictsPanel = new JPanel();
 		conflictsPanel.setLayout(new BorderLayout());
 		conflictsPanel.add(txtScrollpane3, BorderLayout.CENTER);
 		conflictsPanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
 
+		JPanel buttonPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
+		buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
 		lblStatus = new JLabel();
+		buttonPanel.add(lblStatus);
+		buttonPanel.add(Box.createHorizontalGlue());
 
 		//Buttons to start actions
-		btnDownload = SwingTools.createButton("Confirm changes", "Start installing/uninstalling");
-		btnDownload.addActionListener(new ActionListener() {
-
+		btnDownload = SwingTools.createButton("Confirm changes",
+				"Start installing/uninstalling", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				startActualChanges();
 			}
-		});
+		}, buttonPanel);
 		btnDownload.setEnabled(false);
 
-		btnCancel = SwingTools.createButton("Cancel", "Cancel and return to Plugin Manager");
-		btnCancel.addActionListener(new ActionListener() {
+		buttonPanel.add(Box.createHorizontalGlue());
 
+		SwingTools.createButton("Cancel", "Cancel and return to Plugin Manager", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				backToframeManager();
 			}
-		});
-
-		JPanel buttonPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
-		buttonPanel.add(lblStatus);
-		buttonPanel.add(Box.createHorizontalGlue());
-		buttonPanel.add(btnDownload);
-		buttonPanel.add(Box.createRigidArea(new Dimension(15,0)));
-		buttonPanel.add(btnCancel);
-		buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+		}, buttonPanel);
 
 		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 		getContentPane().add(listsPanel);

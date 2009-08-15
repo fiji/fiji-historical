@@ -1,12 +1,10 @@
 package fiji.pluginManager.ui;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -15,9 +13,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
-
 import fiji.pluginManager.logic.UpdateTracker;
 
 /*
@@ -42,16 +38,22 @@ class Installer extends JFrame {
 		setTitle("Download");
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
+		JPanel panel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
+		panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
 		/* progress bar */
 		progressBar = new JProgressBar();
 		progressBar.setPreferredSize(new Dimension(555, 30));
 		progressBar.setStringPainted(true);
 		progressBar.setMinimum(0);
 		progressBar.setMaximum(100);
+		panel.add(progressBar);
+		panel.add(Box.createRigidArea(new Dimension(0,15)));
 
 		/* Create textpane to hold the information */
 		txtProgressDetails = new TextPaneDisplay();
-		JScrollPane txtScrollpane = SwingTools.getTextScrollPane(txtProgressDetails, 555, 200);
+		SwingTools.getTextScrollPane(txtProgressDetails, 555, 200, panel);
+		panel.add(Box.createRigidArea(new Dimension(0,15)));
 
 		/* Button to cancel progressing task (Or press done when complete) */
 		btnClose = new JButton();
@@ -64,14 +66,8 @@ class Installer extends JFrame {
 		JPanel btnPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
 		btnPanel.add(Box.createHorizontalGlue());
 		btnPanel.add(btnClose);
-
-		JPanel panel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
-		panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-		panel.add(progressBar);
-		panel.add(Box.createRigidArea(new Dimension(0,15)));
-		panel.add(txtScrollpane);
-		panel.add(Box.createRigidArea(new Dimension(0,15)));
 		panel.add(btnPanel);
+
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(panel, BorderLayout.CENTER);
 	}
