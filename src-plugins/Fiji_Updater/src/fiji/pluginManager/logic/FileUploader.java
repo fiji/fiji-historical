@@ -24,7 +24,6 @@ import java.util.List;
  * 3.) Upload db.xml.gz.lock (Lock file, prevent others from writing it ATM)
  * 4.) Upload plugin files and current.txt
  * 5.) If all goes well, force rename db.xml.gz.lock to db.xml.gz
- * 
  */
 public class FileUploader {
 	private final String host = "pacific.mpi-cbg.de";
@@ -48,10 +47,8 @@ public class FileUploader {
 		" 0a 46 44 72 c4 83 5d 4d 23 1b d9 92 7b 02 98 e4" +
 		" 9a 55 db 33 82 a0 c7 96 86 78 bf 31 fd b4 6c 62" +
 		" bf 42 3a 05 63";
-	//private final String user = "uploads";
-	//private final String password = "fiji";
 
-	private final String uploadDir = "/incoming/"; //TODO: Change to the LIVE version
+	private final String uploadDir = "/incoming/"; //TODO: Change
 	private Session session;
 	private Channel channel;
 	private List<UploadListener> listeners;
@@ -79,6 +76,7 @@ public class FileUploader {
 		//Set db.xml.gz to read-only
 		//TODO
 		setCommand("chmod u+w " + uploadDir + PluginManager.DTD_FILENAME);
+		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED);
 		//Prepare for uploading of files
 		String uploadFilesCommand = "scp -p -t -r " + uploadDir;
 		setCommand(uploadFilesCommand);

@@ -1,9 +1,5 @@
 package fiji.pluginManager.logic;
-
 import java.util.Observable;
-import java.util.Observer;
-
-import fiji.pluginManager.utilities.PluginData;
 
 /*
  * Class functionality:

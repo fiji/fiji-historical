@@ -57,19 +57,4 @@ public class PluginDetails {
 		}
 		return list;
 	}
-
-	public boolean matchesDetails(String searchText) {
-		// TODO: move this to the caller, otherwise it is performed once for _every_ plugin!
-		String needle = searchText.toLowerCase().trim();
-		if (links != null)
-			for (String link : links)
-				if (link.toLowerCase().indexOf(needle) >= 0) return true;
-		if (authors != null)
-			for (String author : authors)
-				if (author.toLowerCase().indexOf(needle) >= 0) return true;
-		if (description != null &&
-				description.toLowerCase().indexOf(needle) >= 0)
-			return true;
-		return false;
-	}
 }

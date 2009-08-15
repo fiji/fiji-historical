@@ -1,5 +1,6 @@
 package fiji.pluginManager.logic;
 import java.util.ArrayList;
+import java.util.List;
 
 public class PluginCollection extends ArrayList<PluginObject> {
 	private interface Filter {
@@ -20,12 +21,20 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		//determining whether search text fits description/title
 		public boolean matches(PluginObject plugin) {
 			String lcFilename = plugin.getFilename().trim().toLowerCase();
+			String description = plugin.getPluginDetails().getDescription();
+			List<String> links = plugin.getPluginDetails().getLinks();
+			List<String> authors = plugin.getPluginDetails().getAuthors();
 			if (lcFilename.indexOf(text) >= 0)
 				return true;
-			else if (plugin.getPluginDetails().matchesDetails(text))
+			if (description != null && description.indexOf(text) >= 0)
 				return true;
-			else
-				return false;
+			if (links != null)
+				for (String link : links)
+					if (link.toLowerCase().indexOf(text) >= 0) return true;
+			if (authors != null)
+				for (String author : authors)
+					if (author.toLowerCase().indexOf(text) >= 0) return true;
+			return false;
 		}
 	}
 

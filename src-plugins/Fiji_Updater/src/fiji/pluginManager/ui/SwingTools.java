@@ -93,7 +93,7 @@ public class SwingTools {
 		textPane.setSelectionEnd(0);
 		return scrollpane;
 	}
- 
+
 	public static JScrollPane getTextScrollPane(JTextPane textPane, int width, int height,
 			List<String> contentList, DocumentListener listener, JPanel addTo) {
 		textPane.getDocument().addDocumentListener(listener);
