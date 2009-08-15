@@ -1224,3 +1224,20 @@ Well its National Day. Besides that, I've thought about the feature to install 3
 
 - And yea, I nearly forget, if possible introduce new attribute (optional) "platform" --> Determines platform dependent files
    ==> I'm not sure how PluginListBuilder can use that since it only uses the filename, md5 checksums, and timestamp records
+
+
+
+15th August, Saturday
+
+== Clean ups ==
+- The code now looks more polished.
+- Bugs fixed.
+- Will take it out for another test ride, both Developer and Non-developer, on Sunday
+   ==> Apparently required to submit a copy of the code which was last modified at 17/08/09
+
+TODO Questions (After GSoC 2009, that is):
+- Uncertainty over ability to write embedded DTD files into XML files using SAX.
+   ==> All I can find on the net are tutorials assuming you want to write _external_ DTD files, not internal
+- Maybe some useful extensions....?
+   ==> Ability to edit dependencies' list (Option to remove, that is)?
+   ==> But that would mean in developer mode, dependencies must be generated before-hand
