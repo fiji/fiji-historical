@@ -74,7 +74,6 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 		//======== Start: LEFT PANEL ========
 		JPanel leftPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
-
 		//Create text search
 		txtSearch = new JTextField();
 		txtSearch.getDocument().addDocumentListener(new DocumentListener() {
@@ -312,9 +311,9 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		if (txtPluginDetails != null)
 			((TextPaneDisplay)txtPluginDetails).showPluginDetails(currentPlugin);
 
-		//Enable/Disable edit button depending on _Action_ user wants of selected plugin
-		btnEditDetails.setEnabled(pluginManager.isDeveloper() &&
-				currentPlugin.toUpload());
+		//Enable/Disable edit button depending on Action of selected plugin
+		if (pluginManager.isDeveloper()) //This button only exists if is a Developer
+			btnEditDetails.setEnabled(currentPlugin.toUpload());
 	}
 
 	public void tableChanged(TableModelEvent e) {
